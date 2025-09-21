@@ -1,4 +1,5 @@
 import {useMount} from "react-use"
+import {ProjectUrl} from "@shared/consts";
 import {useRegisterSW} from "virtual:pwa-register/react"
 
 import {useToast} from "./useToast"
@@ -18,7 +19,7 @@ export function usePWA() {
         action: {
           label: "查看更新",
           onClick: () => {
-            window.open(`${Homepage}/releases/tag/v${Version}`)
+              window.open(`${ProjectUrl}/releases/tag/v${Version}`)
           },
         },
       })

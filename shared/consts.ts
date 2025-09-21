@@ -9,7 +9,7 @@ export const TTL = 30 * 60 * 1000
  */
 export const Interval = 10 * 60 * 1000
 
-export const Homepage = packageJSON.homepage
+export const ProjectUrl = packageJSON.projectUrl
 
 export const Version = packageJSON.version
 export const Author = packageJSON.author

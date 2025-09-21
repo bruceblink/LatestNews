@@ -1,5 +1,6 @@
 import type {SourceID} from "@shared/types"
 
+import {ProjectUrl} from "@shared/consts";
 import {Link} from "@tanstack/react-router"
 import {useIsFetching} from "@tanstack/react-query"
 import {goToTopAtom, currentSourcesAtom} from "~/atoms"
@@ -21,7 +22,8 @@ function GoTop() {
 
 function Github() {
   return (
-    <button type="button" title="Github" className="i-ph:github-logo-duotone btn" onClick={() => window.open(Homepage)} />
+      <button type="button" title="Github" className="i-ph:github-logo-duotone btn"
+              onClick={() => window.open(ProjectUrl)}/>
   )
 }
 
@@ -61,7 +63,7 @@ export function Header() {
             </p>
           </span>
         </Link>
-        <a target="_blank" href={`${Homepage}/releases/tag/v${Version}`} className="btn text-sm ml-1 font-mono">
+        <a target="_blank" href={`${ProjectUrl}/releases/tag/v${Version}`} className="btn text-sm ml-1 font-mono">
           {`v${Version}`}
         </a>
       </span>
