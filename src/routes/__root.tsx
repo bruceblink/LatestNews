@@ -1,15 +1,17 @@
 import "~/styles/globals.css"
 import "virtual:uno.css"
-import { Outlet, createRootRouteWithContext } from "@tanstack/react-router"
-import { TanStackRouterDevtools } from "@tanstack/router-devtools"
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
-import type { QueryClient } from "@tanstack/react-query"
-import { isMobile } from "react-device-detect"
-import { Header } from "~/components/header"
-import { GlobalOverlayScrollbar } from "~/components/common/overlay-scrollbar"
-import { Footer } from "~/components/footer"
-import { Toast } from "~/components/common/toast"
-import { SearchBar } from "~/components/common/search-bar"
+
+import type {QueryClient} from "@tanstack/react-query"
+
+import {Header} from "~/components/header"
+import {Footer} from "~/components/footer"
+import {isMobile} from "react-device-detect"
+import {Toast} from "~/components/common/toast"
+import {SearchBar} from "~/components/common/search-bar"
+import {TanStackRouterDevtools} from "@tanstack/router-devtools"
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools"
+import {Outlet, createRootRouteWithContext} from "@tanstack/react-router"
+import {GlobalOverlayScrollbar} from "~/components/common/overlay-scrollbar"
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient

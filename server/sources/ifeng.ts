@@ -1,8 +1,8 @@
-import type { NewsItem } from "@shared/types"
+import type {NewsItem} from "@shared/types"
 
 export default defineSource(async () => {
   const html: string = await myFetch("https://www.ifeng.com/")
-  const regex = /var\s+allData\s*=\s*(\{[\s\S]*?\});/
+    const regex = /var\s+allData\s*=\s*(\{[\s\S]*?});/
   const match = regex.exec(html)
   const news: NewsItem[] = []
   if (match) {

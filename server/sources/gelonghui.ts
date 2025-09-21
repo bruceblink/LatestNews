@@ -1,5 +1,6 @@
+import type {NewsItem} from "@shared/types"
+
 import * as cheerio from "cheerio"
-import type { NewsItem } from "@shared/types"
 
 export default defineSource(async () => {
   const baseURL = "https://www.gelonghui.com"

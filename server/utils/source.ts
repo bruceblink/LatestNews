@@ -1,7 +1,8 @@
-import process from "node:process"
-import type { AllSourceID } from "@shared/types"
+import type {AllSourceID} from "@shared/types"
+import type {RSSHubOption, SourceGetter, SourceOption, RSSHubInfo as RSSHubResponse} from "#/types"
+
 import defu from "defu"
-import type { RSSHubOption, RSSHubInfo as RSSHubResponse, SourceGetter, SourceOption } from "#/types"
+import process from "node:process"
 
 type R = Partial<Record<AllSourceID, SourceGetter>>
 export function defineSource(source: SourceGetter): SourceGetter

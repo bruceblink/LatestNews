@@ -1,5 +1,6 @@
-import type { SourceID } from "@shared/types"
-import { useUpdateQuery } from "./query"
+import type {SourceID} from "@shared/types"
+
+import {useUpdateQuery} from "./query"
 
 export function useRefetch() {
   const { enableLogin, loggedIn, login } = useLogin()

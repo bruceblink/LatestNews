@@ -1,8 +1,8 @@
-import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
-import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine"
-import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview"
-import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source"
-import { createContext } from "react"
+import {createContext} from "react"
+import {combine} from "@atlaskit/pragmatic-drag-and-drop/combine"
+import {draggable, dropTargetForElements} from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+import {preserveOffsetOnSource} from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source"
+import {setCustomNativeDragPreview} from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview"
 
 export const InstanceIdContext = createContext<string | null>(null)
 
@@ -33,38 +33,38 @@ export function useSortable(props: SortableProps) {
   const [handleRef, setHandleRef] = useState<HTMLElement | null>(null)
   const [nodeRef, setNodeRef] = useState<HTMLElement | null>(null)
 
+    // eslint-disable-next-line consistent-return
   useEffect(() => {
     if (handleRef && nodeRef) {
-      const cleanup = combine(
-        draggable({
-          element: nodeRef,
-          dragHandle: handleRef,
-          getInitialData: () => ({ id: props.id, instanceId }),
-          onGenerateDragPreview({ nativeSetDragImage, location }) {
-            setCustomNativeDragPreview({
-              getOffset: preserveOffsetOnSource({
+        return combine(
+            draggable({
                 element: nodeRef,
-                input: location.current.input,
-              }),
-              render({ container }) {
-                container.style.width = `${nodeRef.clientWidth}px`
-                setDraggableState({ type: "dragging", container })
-              },
-              nativeSetDragImage,
-            })
-          },
-          onDrop: () => {
-            setDraggableState({ type: "idle" })
-          },
-        }),
-        dropTargetForElements({
-          element: nodeRef,
-          getData: () => ({ id: props.id }),
-          getIsSticky: () => true,
-          canDrop: ({ source }) => source.data.instanceId === instanceId,
-        }),
+                dragHandle: handleRef,
+                getInitialData: () => ({id: props.id, instanceId}),
+                onGenerateDragPreview({nativeSetDragImage, location}) {
+                    setCustomNativeDragPreview({
+                        getOffset: preserveOffsetOnSource({
+                            element: nodeRef,
+                            input: location.current.input,
+                        }),
+                        render({container}) {
+                            container.style.width = `${nodeRef.clientWidth}px`
+                            setDraggableState({type: "dragging", container})
+                        },
+                        nativeSetDragImage,
+                    })
+                },
+                onDrop: () => {
+                    setDraggableState({type: "idle"})
+                },
+            }),
+            dropTargetForElements({
+                element: nodeRef,
+                getData: () => ({id: props.id}),
+                getIsSticky: () => true,
+                canDrop: ({source}) => source.data.instanceId === instanceId,
+            }),
       )
-      return cleanup
     }
   }, [props.id, instanceId, handleRef, nodeRef])
   return {

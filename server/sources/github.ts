@@ -1,5 +1,6 @@
+import type {NewsItem} from "@shared/types"
+
 import * as cheerio from "cheerio"
-import type { NewsItem } from "@shared/types"
 
 const trending = defineSource(async () => {
   const baseURL = "https://github.com"

@@ -1,9 +1,11 @@
-import { Link } from "@tanstack/react-router"
-import { useIsFetching } from "@tanstack/react-query"
-import type { SourceID } from "@shared/types"
-import { NavBar } from "../navbar"
-import { Menu } from "./menu"
-import { currentSourcesAtom, goToTopAtom } from "~/atoms"
+import type {SourceID} from "@shared/types"
+
+import {Link} from "@tanstack/react-router"
+import {useIsFetching} from "@tanstack/react-query"
+import {goToTopAtom, currentSourcesAtom} from "~/atoms"
+
+import {Menu} from "./menu"
+import {NavBar} from "../navbar"
 
 function GoTop() {
   const { ok, fn: goToTop } = useAtomValue(goToTopAtom)

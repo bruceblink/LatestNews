@@ -1,5 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router"
-import { Column } from "~/components/column"
+import {Column} from "~/components/column"
+import {redirect, createFileRoute} from "@tanstack/react-router"
 
 export const Route = createFileRoute("/c/$column")({
   component: SectionComponent,

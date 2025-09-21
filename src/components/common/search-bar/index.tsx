@@ -1,12 +1,14 @@
-import { Command } from "cmdk"
-import { useMount } from "react-use"
-import type { SourceID } from "@shared/types"
-import { useMemo, useRef, useState } from "react"
-import pinyin from "@shared/pinyin.json"
-import { OverlayScrollbar } from "../overlay-scrollbar"
-import { CardWrapper } from "~/components/column/card"
-
 import "./cmdk.css"
+
+import type {SourceID} from "@shared/types"
+
+import {Command} from "cmdk"
+import {useMount} from "react-use"
+import pinyin from "@shared/pinyin.json"
+import {useRef, useMemo, useState} from "react"
+import {CardWrapper} from "~/components/column/card"
+
+import {OverlayScrollbar} from "../overlay-scrollbar"
 
 interface SourceItemProps {
   id: SourceID
@@ -130,7 +132,7 @@ function SourceItem({ item }: {
         <span>{item.name}</span>
         <span className="text-xs text-neutral-400/80 self-end mb-3px">{item.title}</span>
       </span>
-      <span className={$(isFocused ? "i-ph-star-fill" : "i-ph-star-duotone", "bg-primary op-40")}></span>
+        <span className={$(isFocused ? "i-ph-star-fill" : "i-ph-star-duotone", "bg-primary op-40")}/>
     </Command.Item>
   )
 }

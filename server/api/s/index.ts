@@ -1,13 +1,15 @@
-import type { SourceID, SourceResponse } from "@shared/types"
-import { getters } from "#/getters"
-import { getCacheTable } from "#/database/cache"
-import type { CacheInfo } from "#/types"
+import type {CacheInfo} from "#/types"
+import type {SourceID, SourceResponse} from "@shared/types"
+
+import {getters} from "#/getters"
+import {getCacheTable} from "#/database/cache"
 
 export default defineEventHandler(async (event): Promise<SourceResponse> => {
   try {
     const query = getQuery(event)
     const latest = query.latest !== undefined && query.latest !== "false"
     let id = query.id as SourceID
+      // eslint-disable-next-line @typescript-eslint/no-shadow
     const isValid = (id: SourceID) => !id || !sources[id] || !getters[id]
 
     if (isValid(id)) {

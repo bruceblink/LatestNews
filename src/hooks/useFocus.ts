@@ -1,5 +1,6 @@
-import type { SourceID } from "@shared/types"
-import { focusSourcesAtom } from "~/atoms"
+import type {SourceID} from "@shared/types"
+
+import {focusSourcesAtom} from "~/atoms"
 
 export function useFocus() {
   const [focusSources, setFocusSources] = useAtom(focusSourcesAtom)

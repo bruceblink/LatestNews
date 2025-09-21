@@ -1,5 +1,6 @@
-import type { MaybePromise } from "@shared/type.util"
-import { $fetch } from "ofetch"
+import type {MaybePromise} from "@shared/type.util"
+
+import {$fetch} from "ofetch"
 
 export function safeParseString(str: any) {
   try {

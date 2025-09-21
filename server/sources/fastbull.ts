@@ -1,5 +1,6 @@
+import type {NewsItem} from "@shared/types"
+
 import * as cheerio from "cheerio"
-import type { NewsItem } from "@shared/types"
 
 const express = defineSource(async () => {
   const baseURL = "https://www.fastbull.com"

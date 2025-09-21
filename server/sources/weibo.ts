@@ -133,8 +133,7 @@ export default defineSource(async () => {
   })
   return res.data.cards[0].card_group
     .filter((k, i) => i !== 0 && k.desc && !k.actionlog?.ext.includes("ads_word"))
-    .map((k) => {
-      return {
+      .map((k) => ({
         id: k.desc!,
         title: k.desc!,
         extra: {
@@ -145,6 +144,5 @@ export default defineSource(async () => {
         },
         url: `https://s.weibo.com/weibo?q=${encodeURIComponent(`#${k.desc}#`)}`,
         mobileUrl: k.scheme,
-      }
-    })
+      }))
 })

@@ -1,4 +1,5 @@
-import type { NewsItem } from "@shared/types"
+import type {NewsItem} from "@shared/types"
+
 import * as cheerio from "cheerio"
 
 const hot = defineSource(async () => {

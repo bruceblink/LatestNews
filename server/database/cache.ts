@@ -1,7 +1,9 @@
+import type {Database} from "db0"
+import type {NewsItem} from "@shared/types"
+
 import process from "node:process"
-import type { NewsItem } from "@shared/types"
-import type { Database } from "db0"
-import type { CacheInfo, CacheRow } from "../types"
+
+import type {CacheRow, CacheInfo} from "../types"
 
 export class Cache {
   private db
@@ -17,19 +19,19 @@ export class Cache {
         data TEXT
       );
     `).run()
-    logger.success(`init cache table`)
+      logger.success("init cache table")
   }
 
   async set(key: string, value: NewsItem[]) {
     const now = Date.now()
     await this.db.prepare(
-      `INSERT OR REPLACE INTO cache (id, data, updated) VALUES (?, ?, ?)`,
+        "INSERT OR REPLACE INTO cache (id, data, updated) VALUES (?, ?, ?)",
     ).run(key, JSON.stringify(value), now)
     logger.success(`set ${key} cache`)
   }
 
   async get(key: string): Promise<CacheInfo | undefined > {
-    const row = (await this.db.prepare(`SELECT id, data, updated FROM cache WHERE id = ?`).get(key)) as CacheRow | undefined
+      const row = (await this.db.prepare("SELECT id, data, updated FROM cache WHERE id = ?").get(key)) as CacheRow | undefined
     if (row) {
       logger.success(`get ${key} cache`)
       return {
@@ -55,7 +57,7 @@ export class Cache {
      * }
      */
     if (rows?.length) {
-      logger.success(`get entire (...) cache`)
+        logger.success("get entire (...) cache")
       return rows.map(row => ({
         id: row.id,
         updated: row.updated,
@@ -67,17 +69,19 @@ export class Cache {
   }
 
   async delete(key: string) {
-    return await this.db.prepare(`DELETE FROM cache WHERE id = ?`).run(key)
+      return await this.db.prepare("DELETE FROM cache WHERE id = ?").run(key)
   }
 }
 
 export async function getCacheTable() {
   try {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
     const db = useDatabase()
     // logger.info("db: ", db.getInstance())
     if (process.env.ENABLE_CACHE === "false") return
     const cacheTable = new Cache(db)
     if (process.env.INIT_TABLE !== "false") await cacheTable.init()
+      // eslint-disable-next-line consistent-return
     return cacheTable
   } catch (e) {
     logger.error("failed to init database ", e)

@@ -1,5 +1,6 @@
-import { load } from "cheerio"
-import { genHeaders } from "./utils"
+import {load} from "cheerio"
+
+import {genHeaders} from "./utils"
 
 interface Res {
   data: {

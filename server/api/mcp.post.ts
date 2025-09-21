@@ -1,5 +1,5 @@
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
-import { getServer } from "#/mcp/server"
+import {getServer} from "#/mcp/server"
+import {StreamableHTTPServerTransport} from "@modelcontextprotocol/sdk/server/streamableHttp.js"
 
 export default defineEventHandler(async (event) => {
   const req = event.node.req

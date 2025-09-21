@@ -1,5 +1,6 @@
-import type { NewsItem } from "@shared/types"
-import { load } from "cheerio"
+import type {NewsItem} from "@shared/types"
+
+import {load} from "cheerio"
 
 const quick = defineSource(async () => {
   const baseURL = "https://www.36kr.com"

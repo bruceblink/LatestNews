@@ -1,4 +1,4 @@
-import { useBeforeUnload, useMount } from "react-use"
+import {useMount, useBeforeUnload} from "react-use"
 
 const KEY = "unload-time"
 export function isPageReload() {

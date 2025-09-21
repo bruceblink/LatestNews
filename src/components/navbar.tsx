@@ -1,6 +1,6 @@
-import { fixedColumnIds, metadata } from "@shared/metadata"
-import { Link } from "@tanstack/react-router"
-import { currentColumnIDAtom } from "~/atoms"
+import {Link} from "@tanstack/react-router"
+import {currentColumnIDAtom} from "~/atoms"
+import {metadata, fixedColumnIds} from "@shared/metadata"
 
 export function NavBar() {
   const currentId = useAtomValue(currentColumnIDAtom)

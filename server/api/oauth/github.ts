@@ -1,6 +1,6 @@
+import {SignJWT} from "jose"
 import process from "node:process"
-import { SignJWT } from "jose"
-import { UserTable } from "#/database/user"
+import {UserTable} from "#/database/user"
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase()
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     token_type: string
     scope: string
   } = await myFetch(
-    `https://github.com/login/oauth/access_token`,
+      "https://github.com/login/oauth/access_token",
     {
       method: "POST",
       body: {
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     avatar_url: string
     email: string
     notification_email: string
-  } = await myFetch(`https://api.github.com/user`, {
+  } = await myFetch("https://api.github.com/user", {
     headers: {
       "Accept": "application/vnd.github+json",
       "Authorization": `token ${response.access_token}`,

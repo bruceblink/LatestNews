@@ -1,10 +1,12 @@
+import type {Plugin} from "rollup"
+import type {FilterPattern} from "@rollup/pluginutils"
+
 import path from "node:path"
-import { writeFile } from "node:fs/promises"
-import type { Plugin } from "rollup"
 import glob from "fast-glob"
-import type { FilterPattern } from "@rollup/pluginutils"
-import { createFilter, normalizePath } from "@rollup/pluginutils"
-import { projectDir } from "../shared/dir"
+import {writeFile} from "node:fs/promises"
+import {createFilter, normalizePath} from "@rollup/pluginutils"
+
+import {projectDir} from "../shared/dir"
 
 const ID_PREFIX = "glob:"
 const root = path.join(projectDir, "server")
@@ -21,11 +23,13 @@ export function RollopGlob(): Plugin {
       if (!id.startsWith(ID_PREFIX)) return
       if (!src || !filter(src)) return
 
+        // eslint-disable-next-line consistent-return
       return `${id}:${encodeURIComponent(src)}`
     },
     async load(id) {
       if (!id.startsWith(ID_PREFIX)) return
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [_, pattern, encodePath] = id.split(":")
       const currentPath = decodeURIComponent(encodePath)
 
@@ -48,6 +52,7 @@ export function RollopGlob(): Plugin {
 
       await writeTypeDeclaration(map, path.join(root, "glob"))
 
+        // eslint-disable-next-line consistent-return
       return `${contents}\n`
     },
   }
@@ -58,7 +63,7 @@ async function writeTypeDeclaration(map: GlobMap, filename: string) {
     return normalizePath(path.relative(path.dirname(filename), filepath))
   }
 
-  let declares = `/* eslint-disable */\n\n`
+    let declares = "/* eslint-disable */\n\n"
 
   const sortedEntries = Object.entries(map).sort(([a], [b]) =>
     a.localeCompare(b),
@@ -72,7 +77,7 @@ async function writeTypeDeclaration(map: GlobMap, filename: string) {
       const fileName = path.basename(r, path.extname(r))
       declares += `  export const ${fileName}: typeof import('${relative}')\n`
     }
-    declares += `}\n`
+      declares += "}\n"
   }
   await writeFile(`${filename}.d.ts`, declares, "utf-8")
 }

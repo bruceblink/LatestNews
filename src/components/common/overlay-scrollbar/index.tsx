@@ -1,10 +1,14 @@
-import type { HTMLProps, PropsWithChildren } from "react"
-import { defu } from "defu"
-import { useMount } from "react-use"
-import { useOverlayScrollbars } from "./useOverlayScrollbars"
-import type { UseOverlayScrollbarsParams } from "./useOverlayScrollbars"
-import { goToTopAtom } from "~/atoms"
 import "./style.css"
+
+import type {HTMLProps, PropsWithChildren} from "react"
+
+import {defu} from "defu"
+import {useMount} from "react-use"
+import {goToTopAtom} from "~/atoms"
+
+import {useOverlayScrollbars} from "./useOverlayScrollbars"
+
+import type {UseOverlayScrollbarsParams} from "./useOverlayScrollbars"
 
 type Props = HTMLProps<HTMLDivElement> & UseOverlayScrollbarsParams
 const defaultScrollbarParams: UseOverlayScrollbarsParams = {
@@ -91,6 +95,7 @@ export function GlobalOverlayScrollbar({ children, className, ...props }: PropsW
     defer: true,
   })
 
+    // eslint-disable-next-line consistent-return
   useMount(() => {
     initialize({
       target: ref.current!,

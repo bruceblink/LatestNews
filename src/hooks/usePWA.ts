@@ -1,6 +1,7 @@
-import { useRegisterSW } from "virtual:pwa-register/react"
-import { useMount } from "react-use"
-import { useToast } from "./useToast"
+import {useMount} from "react-use"
+import {useRegisterSW} from "virtual:pwa-register/react"
+
+import {useToast} from "./useToast"
 
 export function usePWA() {
   const toaster = useToast()

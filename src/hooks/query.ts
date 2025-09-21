@@ -1,5 +1,6 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import type { SourceID, SourceResponse } from "@shared/types"
+import type {SourceID, SourceResponse} from "@shared/types"
+
+import {useQuery, useQueryClient} from "@tanstack/react-query"
 
 export function useUpdateQuery() {
   const queryClient = useQueryClient()

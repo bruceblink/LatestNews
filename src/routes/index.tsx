@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { focusSourcesAtom } from "~/atoms"
-import { Column } from "~/components/column"
+import {focusSourcesAtom} from "~/atoms"
+import {Column} from "~/components/column"
+import {createFileRoute} from "@tanstack/react-router"
 
 export const Route = createFileRoute("/")({
   component: IndexComponent,

@@ -1,7 +1,8 @@
-import { Buffer } from "node:buffer"
-import * as cheerio from "cheerio"
+import type {NewsItem} from "@shared/types"
+
 import iconv from "iconv-lite"
-import type { NewsItem } from "@shared/types"
+import * as cheerio from "cheerio"
+import {Buffer} from "node:buffer"
 
 export default defineSource(async () => {
   const response: ArrayBuffer = await myFetch("https://www.zaochenbao.com/realtime/", {

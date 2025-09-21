@@ -1,10 +1,10 @@
 import fs from "node:fs"
+import {join} from "node:path"
+import {consola} from "consola"
+import {Buffer} from "node:buffer"
+import {fileURLToPath} from "node:url"
 
-import { fileURLToPath } from "node:url"
-import { join } from "node:path"
-import { Buffer } from "node:buffer"
-import { consola } from "consola"
-import { originSources } from "../shared/pre-sources"
+import {originSources} from "../shared/pre-sources"
 
 const projectDir = fileURLToPath(new URL("..", import.meta.url))
 const iconsDir = join(projectDir, "public", "icons")
@@ -41,4 +41,4 @@ async function main() {
   )
 }
 
-main()
+void main()
