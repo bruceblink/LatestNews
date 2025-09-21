@@ -1,0 +1,78 @@
+[data-radix-focus-guard] {
+    background-color: black;
+}
+
+[cmdk-item] {
+    --at-apply: p-1 mb-1 rounded-md;
+}
+
+[cmdk-item]:hover {
+    --at-apply: bg-neutral-400/10;
+}
+
+[cmdk-item][data-selected=true] {
+    --at-apply: bg-neutral-400/20;
+}
+
+[cmdk-input]{
+    --at-apply: w-full p-3 outline-none bg-transparent placeholder:color-neutral-500/60 border-color-neutral/10 border-b;
+}
+
+[cmdk-list] {
+    --at-apply: px-3 flex flex-col gap-2 items-stretch max-h-[400px] h-[calc(100vh-100px)];
+}
+
+[cmdk-group-heading] {
+    --at-apply: text-sm font-bold op-70 ml-1 my-2;
+}
+
+[cmdk-dialog] {
+    --at-apply: bg-base sprinkle-primary bg-op-97 backdrop-blur-5 shadow pb-4 rounded-2xl shadow-2xl relative outline-none;
+    position: fixed;
+    width: 80vw ;
+    max-width: 675px;
+    z-index: 999;
+    left: 50%;
+    top: 50%;
+    /* transform: translateX(-50%) translateY(-50%); */
+    transform: translate(round(-50%, 1px), round(-50%, 1px));
+}
+
+[cmdk-dialog] {
+    transition: opacity;
+    transform-origin: center center;
+    animation: dialogIn 0.3s forwards
+}
+
+[cmdk-dialog][data-state=closed]{
+    animation: dialogOut 0.2s forwards
+}
+
+@keyframes dialogIn{
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+
+@keyframes dialogOut {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+[cmdk-empty] {
+    --at-apply: flex justify-center items-center text-sm whitespace-pre-wrap op-70;
+}
+
+[cmdk-overlay] {
+    --at-apply: fixed inset-0 bg-black bg-op-50;
+}

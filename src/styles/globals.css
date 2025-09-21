@@ -1,0 +1,62 @@
+@import url(@unocss/reset/tailwind.css);
+@import url(overlayscrollbars/overlayscrollbars.css);
+
+html,
+body,
+#app {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+@font-face {
+  font-family: 'Baloo 2';
+  src: url("/Baloo2-Bold.subset.ttf");
+}
+
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  --at-apply: color-base bg-base sprinkle-primary text-base;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  pointer-events: all !important;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+}
+
+/* https://github.com/KingSora/OverlayScrollbars/blob/master/packages/overlayscrollbars/src/styles/themes.scss */
+.dark .os-theme-dark {
+  --os-handle-bg: rgba(255, 255, 255, 0.44);
+  --os-handle-bg-hover: rgba(255, 255, 255, 0.55);
+  --os-handle-bg-active: rgba(255, 255, 255, 0.66);
+}
+
+
+*, a, button {
+  cursor: default;
+  user-select: none;
+}
+
+#dropdown-menu li {
+    @apply flex items-center rounded-md p-1 gap-1;
+}
+
+#dropdown-menu li:hover {
+    @apply bg-neutral-400/10;
+}
+
+
+.grabbing * {
+  cursor: grabbing;
+}

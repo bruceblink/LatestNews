@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vercel
+.output
+.vinxi
+.cache
+.data
+.wrangler
+.env
+.env.*
+dev-dist
+*.tsbuildinfo
