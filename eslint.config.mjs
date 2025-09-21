@@ -1,6 +1,6 @@
 import globals from "globals";
-import importX from "eslint-plugin-import-x";
 import reactPlugin from "eslint-plugin-react";
+import importPlugin from "eslint-plugin-import";
 import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
@@ -110,11 +110,11 @@ export default [
             "react-hooks": reactHooksPlugin,
             "unused-imports": unusedImportsPlugin,
             perfectionist: perfectionistPlugin,
-            import: importX,
+            import: importPlugin,
             react: reactPlugin,
         },
         settings: {
-            "import-x/resolver": {
+            "import/resolver": {
                 typescript: { project: "./tsconfig.json" },
                 node: true,
             },
@@ -124,8 +124,7 @@ export default [
             ...commonRules,
             ...unusedImportsRules,
             ...sortImportsRules,
-            "import/no-unresolved": "error",   // 对应 eslint-plugin-import
-            "import-x/no-unresolved": "error", // 对应 eslint-plugin-import-x
+            "import/no-unresolved": "error",
         },
     },
 
@@ -141,11 +140,11 @@ export default [
             "react-hooks": reactHooksPlugin,
             "unused-imports": unusedImportsPlugin,
             perfectionist: perfectionistPlugin,
-            import: importX,
+            import: importPlugin,
             react: reactPlugin,
         },
         settings: {
-            "import-x/resolver": {
+            "import/resolver": {
                 typescript: { project: "./tsconfig.json" },
                 node: true,
             },
