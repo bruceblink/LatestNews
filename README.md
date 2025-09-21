@@ -4,8 +4,8 @@
 
 > [!NOTE]
 > 当前版本为 DEMO，仅支持中文。正式版将提供更好的定制化功能和英文内容支持。
-> 当前项目是基于[newsnow](https://github.com/ourongxing/newsnow),不得不承认原项目是一个优秀的项目。
-但是也有许多小问题，我会修复它们，由于我的个人风格和审美和原作者的差异比较大，我想基于个人想法开发出一个新的项目，并加入一些其他的功能和技术。
+> 当前项目是基于[newsnow](https://github.com/ourongxing/newsnow),不得不承认原项目是一个优秀的项目，
+> 但是也有许多小问题，我会修复它们。由于我的个人风格和审美和原作者的差异比较大，我想基于个人想法开发出一个新的项目，并加入一些其他的功能和技术。
 
 ## 功能特性
 - 优雅的阅读界面设计，实时获取最新热点新闻
@@ -104,10 +104,3 @@ pnpm dev
 ## License
 
 [MIT](LICENSE)
-
-## 赞赏
-如果本项目对你有所帮助，可以给小猫买点零食。如果需要定制或者其他帮助，请通过下列方式联系备注。
-
-![](./screenshots/reward.gif)
-
-<a href="https://hellogithub.com/repository/c2978695e74a423189e9ca2543ab3b36" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=c2978695e74a423189e9ca2543ab3b36&claim_uid=SMJiFwlsKCkWf89&theme=small" alt="Featured｜HelloGitHub" /></a>
