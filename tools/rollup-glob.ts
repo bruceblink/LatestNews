@@ -58,21 +58,21 @@ async function writeTypeDeclaration(map: GlobMap, filename: string) {
     return normalizePath(path.relative(path.dirname(filename), filepath))
   }
 
-  let declare = `/* eslint-disable */\n\n`
+  let declares = `/* eslint-disable */\n\n`
 
   const sortedEntries = Object.entries(map).sort(([a], [b]) =>
     a.localeCompare(b),
   )
 
   for (const [_idx, [id, files]] of sortedEntries.entries()) {
-    declare += `declare module '${ID_PREFIX}${id}' {\n`
+    declares += `declare module '${ID_PREFIX}${id}' {\n`
     for (const file of files) {
       const relative = `./${relatePath(file)}`.replace(/\.tsx?$/, "")
       const r = file.replace("/index", "")
       const fileName = path.basename(r, path.extname(r))
-      declare += `  export const ${fileName}: typeof import('${relative}')\n`
+      declares += `  export const ${fileName}: typeof import('${relative}')\n`
     }
-    declare += `}\n`
+    declares += `}\n`
   }
-  await writeFile(`${filename}.d.ts`, declare, "utf-8")
+  await writeFile(`${filename}.d.ts`, declares, "utf-8")
 }
