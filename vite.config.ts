@@ -1,13 +1,14 @@
-import { join } from "node:path"
-import { defineConfig } from "vite"
-import react from "@vitejs/plugin-react-swc"
-import { TanStackRouterVite } from "@tanstack/router-plugin/vite"
-import unocss from "unocss/vite"
-import unimport from "unimport/unplugin"
 import dotenv from "dotenv"
-import nitro from "./nitro.config"
-import { projectDir } from "./shared/dir"
+import {join} from "node:path"
+import unocss from "unocss/vite"
+import {defineConfig} from "vite"
+import unimport from "unimport/unplugin"
+import react from "@vitejs/plugin-react-swc"
+import {TanStackRouterVite} from "@tanstack/router-plugin/vite"
+
 import pwa from "./pwa.config"
+import nitro from "./nitro.config"
+import {projectDir} from "./shared/dir"
 
 dotenv.config({
   path: join(projectDir, ".env.server"),
