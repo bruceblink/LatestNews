@@ -34,6 +34,7 @@ const commonRules = {
     "react/jsx-curly-brace-presence": [2, { props: "never", children: "never" }],
     quotes: [2, "double", { avoidEscape: true }],
     "jsx-quotes": [2, "prefer-double"],
+    "semi": ["error", "always"],   //  "error"：没有分号时报错 "always"：要求每条语句后必须有分号
 };
 
 // unused-imports
