@@ -1,37 +1,37 @@
-import type {Plugin} from "rollup"
-import type {FilterPattern} from "@rollup/pluginutils"
+import type {Plugin} from "rollup";
+import type {FilterPattern} from "@rollup/pluginutils";
 
-import path from "node:path"
-import glob from "fast-glob"
-import {writeFile} from "node:fs/promises"
-import {createFilter, normalizePath} from "@rollup/pluginutils"
+import path from "node:path";
+import glob from "fast-glob";
+import {writeFile} from "node:fs/promises";
+import {createFilter, normalizePath} from "@rollup/pluginutils";
 
-import {projectDir} from "../shared/dir"
+import {projectDir} from "../shared/dir";
 
-const ID_PREFIX = "glob:"
-const root = path.join(projectDir, "server")
+const ID_PREFIX = "glob:";
+const root = path.join(projectDir, "server");
 type GlobMap = Record<string /* name:pattern */, string[]>
 
 export function RollopGlob(): Plugin {
-  const map: GlobMap = {}
-  const include: FilterPattern = []
-  const exclude: FilterPattern = []
-  const filter = createFilter(include, exclude)
+    const map: GlobMap = {};
+    const include: FilterPattern = [];
+    const exclude: FilterPattern = [];
+    const filter = createFilter(include, exclude);
   return {
     name: "rollup-glob",
     resolveId(id, src) {
-      if (!id.startsWith(ID_PREFIX)) return
-      if (!src || !filter(src)) return
+        if (!id.startsWith(ID_PREFIX)) return;
+        if (!src || !filter(src)) return;
 
         // eslint-disable-next-line consistent-return
-      return `${id}:${encodeURIComponent(src)}`
+        return `${id}:${encodeURIComponent(src)}`;
     },
     async load(id) {
-      if (!id.startsWith(ID_PREFIX)) return
+        if (!id.startsWith(ID_PREFIX)) return;
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [_, pattern, encodePath] = id.split(":")
-      const currentPath = decodeURIComponent(encodePath)
+        const [_, pattern, encodePath] = id.split(":");
+        const currentPath = decodeURIComponent(encodePath);
 
       const files = (
         await glob(pattern, {
@@ -41,43 +41,43 @@ export function RollopGlob(): Plugin {
       )
         .map(file => normalizePath(file))
         .filter(file => file !== normalizePath(currentPath))
-        .sort()
-      map[pattern] = files
+          .sort();
+        map[pattern] = files;
 
       const contents = files.map((file) => {
-        const r = file.replace("/index", "")
-        const name = path.basename(r, path.extname(r))
-        return `export * as ${name} from '${file}'\n`
-      }).join("\n")
+          const r = file.replace("/index", "");
+          const name = path.basename(r, path.extname(r));
+          return `export * as ${name} from '${file}'\n`;
+      }).join("\n");
 
-      await writeTypeDeclaration(map, path.join(root, "glob"))
+        await writeTypeDeclaration(map, path.join(root, "glob"));
 
         // eslint-disable-next-line consistent-return
-      return `${contents}\n`
+        return `${contents}\n`;
     },
-  }
+  };
 }
 
 async function writeTypeDeclaration(map: GlobMap, filename: string) {
   function relatePath(filepath: string) {
-    return normalizePath(path.relative(path.dirname(filename), filepath))
+      return normalizePath(path.relative(path.dirname(filename), filepath));
   }
 
-    let declares = "/* eslint-disable */\n\n"
+    let declares = "/* eslint-disable */\n\n";
 
   const sortedEntries = Object.entries(map).sort(([a], [b]) =>
     a.localeCompare(b),
-  )
+  );
 
   for (const [_idx, [id, files]] of sortedEntries.entries()) {
-    declares += `declare module '${ID_PREFIX}${id}' {\n`
+      declares += `declare module '${ID_PREFIX}${id}' {\n`;
     for (const file of files) {
-      const relative = `./${relatePath(file)}`.replace(/\.tsx?$/, "")
-      const r = file.replace("/index", "")
-      const fileName = path.basename(r, path.extname(r))
-      declares += `  export const ${fileName}: typeof import('${relative}')\n`
+        const relative = `./${relatePath(file)}`.replace(/\.tsx?$/, "");
+        const r = file.replace("/index", "");
+        const fileName = path.basename(r, path.extname(r));
+        declares += `  export const ${fileName}: typeof import('${relative}')\n`;
     }
-      declares += "}\n"
+      declares += "}\n";
   }
-  await writeFile(`${filename}.d.ts`, declares, "utf-8")
+    await writeFile(`${filename}.d.ts`, declares, "utf-8");
 }

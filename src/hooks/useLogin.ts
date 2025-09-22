@@ -1,41 +1,41 @@
 const userAtom = atomWithStorage<{
   name?: string
   avatar?: string
-}>("user", {})
+}>("user", {});
 
-const jwtAtom = atomWithStorage("jwt", "")
+const jwtAtom = atomWithStorage("jwt", "");
 
 const enableLoginAtom = atomWithStorage<{
   enable: boolean
   url?: string
 }>("login", {
   enable: true,
-})
+});
 
 enableLoginAtom.onMount = (set) => {
   myFetch("/enable-login").then((r) => {
-    set(r)
+      set(r);
   }).catch((e) => {
     if (e.statusCode === 506) {
-      set({ enable: false })
-      localStorage.removeItem("jwt")
+        set({enable: false});
+        localStorage.removeItem("jwt");
     }
-  })
-}
+  });
+};
 
 export function useLogin() {
-  const userInfo = useAtomValue(userAtom)
-  const jwt = useAtomValue(jwtAtom)
-  const enableLogin = useAtomValue(enableLoginAtom)
+    const userInfo = useAtomValue(userAtom);
+    const jwt = useAtomValue(jwtAtom);
+    const enableLogin = useAtomValue(enableLoginAtom);
 
   const login = useCallback(() => {
-    window.location.href = enableLogin.url || "/api/login"
-  }, [enableLogin])
+      window.location.href = enableLogin.url || "/api/login";
+  }, [enableLogin]);
 
   const logout = useCallback(() => {
-    window.localStorage.clear()
-    window.location.reload()
-  }, [])
+      window.localStorage.clear();
+      window.location.reload();
+  }, []);
 
   return {
     loggedIn: !!jwt,
@@ -43,5 +43,5 @@ export function useLogin() {
     enableLogin: !!enableLogin.enable,
     logout,
     login,
-  }
+  };
 }

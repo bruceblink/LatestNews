@@ -1,7 +1,9 @@
-import process from "node:process"
-import { Interval } from "./consts"
-import { typeSafeObjectFromEntries } from "./type.util"
-import type { OriginSource, Source, SourceID } from "./types"
+import process from "node:process";
+
+import {Interval} from "./consts";
+import {typeSafeObjectFromEntries} from "./type.util";
+
+import type {Source, SourceID, OriginSource} from "./types";
 
 const Time = {
   Test: 1,
@@ -10,7 +12,7 @@ const Time = {
   Default: Interval, // 10min
   Common: 30 * 60 * 1000,
   Slow: 60 * 60 * 1000,
-}
+};
 
 export const originSources = {
   "v2ex": {
@@ -413,10 +415,10 @@ export const originSources = {
       },
     },
   },
-} as const satisfies Record<string, OriginSource>
+} as const satisfies Record<string, OriginSource>;
 
 export function genSources() {
-  const _: [SourceID, Source][] = []
+  const _: [SourceID, Source][] = [];
 
   Object.entries(originSources).forEach(([id, source]: [any, OriginSource]) => {
     const parent = {
@@ -428,7 +430,7 @@ export function genSources() {
       home: source.home,
       color: source.color ?? "primary",
       interval: source.interval ?? Time.Default,
-    }
+    };
     if (source.sub && Object.keys(source.sub).length) {
       Object.entries(source.sub).forEach(([subId, subSource], i) => {
         if (i === 0) {
@@ -439,13 +441,13 @@ export function genSources() {
               ...parent,
               ...subSource,
             },
-          ] as [any, Source])
+          ] as [any, Source]);
         }
         _.push([`${id}-${subId}`, { ...parent, ...subSource }] as [
           any,
           Source,
-        ])
-      })
+        ]);
+      });
     } else {
       _.push([
         id,
@@ -453,19 +455,19 @@ export function genSources() {
           title: source.title,
           ...parent,
         },
-      ])
+      ]);
     }
-  })
+  });
 
   return typeSafeObjectFromEntries(
     _.filter(([_, v]) => {
       if (v.disable === "cf" && process.env.CF_PAGES) {
-        return false
+        return false;
       } else if (v.disable === true) {
-        return false
+        return false;
       } else {
-        return true
+        return true;
       }
     }),
-  )
+  );
 }

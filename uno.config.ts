@@ -1,7 +1,7 @@
-import {hex2rgba} from "@unocss/rule-utils"
-import {presetIcons, presetWind3, defineConfig, transformerDirectives, transformerVariantGroup} from "unocss"
+import {hex2rgba} from "@unocss/rule-utils";
+import {presetIcons, presetWind3, defineConfig, transformerDirectives, transformerVariantGroup} from "unocss";
 
-import {sources} from "./shared/sources"
+import {sources} from "./shared/sources";
 
 export default defineConfig({
   mergeSelectors: false,
@@ -15,14 +15,14 @@ export default defineConfig({
   rules: [
     [/^sprinkle-(.+)$/, ([_, d], { theme }) => {
       // @ts-expect-error >_<
-      const hex: any = theme.colors?.[d]?.[400]
+        const hex: any = theme.colors?.[d]?.[400];
       if (hex) {
         return {
           "background-image": `radial-gradient(ellipse 80% 80% at 50% -30%,
          rgba(${hex2rgba(hex)?.join(", ")}, 0.3), rgba(255, 255, 255, 0));`,
-        }
+        };
       }
-        return undefined
+        return undefined;
     }],
     [
       "font-brand",
@@ -45,7 +45,7 @@ export default defineConfig({
   ],
   extendTheme: (theme) => {
     // @ts-expect-error >_<
-    theme.colors.primary = theme.colors.red
-    return theme
+      theme.colors.primary = theme.colors.red;
+      return theme;
   },
-})
+});

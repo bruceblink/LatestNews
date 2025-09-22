@@ -1,8 +1,8 @@
-import type { ToastItem } from "~/atoms/types"
+import type {ToastItem} from "~/atoms/types";
 
-export const toastAtom = atom<ToastItem[]>([])
+export const toastAtom = atom<ToastItem[]>([]);
 export function useToast() {
-  const setToastItems = useSetAtom(toastAtom)
+  const setToastItems = useSetAtom(toastAtom);
   return useCallback((msg: string, props?: Omit<ToastItem, "id" | "msg">) => {
     setToastItems(prev => [
       {
@@ -11,6 +11,6 @@ export function useToast() {
         ...props,
       },
       ...prev,
-    ])
-  }, [setToastItems])
+    ]);
+  }, [setToastItems]);
 }

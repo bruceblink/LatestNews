@@ -1,4 +1,4 @@
-import { getSearchParams } from "./utils"
+import {getSearchParams} from "./utils";
 
 interface Item {
   id: number
@@ -28,10 +28,10 @@ interface Hot {
 }
 
 const depth = defineSource(async () => {
-  const apiUrl = `https://www.cls.cn/v3/depth/home/assembled/1000`
+  const apiUrl = "https://www.cls.cn/v3/depth/home/assembled/1000";
   const res: Depthes = await myFetch(apiUrl, {
     query: Object.fromEntries(await getSearchParams()),
-  })
+  });
   return res.data.depth_list.sort((m, n) => n.ctime - m.ctime).map((k) => {
     return {
       id: k.id,
@@ -39,30 +39,30 @@ const depth = defineSource(async () => {
       mobileUrl: k.shareurl,
       pubDate: k.ctime * 1000,
       url: `https://www.cls.cn/detail/${k.id}`,
-    }
-  })
-})
+    };
+  });
+});
 
 const hot = defineSource(async () => {
-  const apiUrl = `https://www.cls.cn/v2/article/hot/list`
+  const apiUrl = "https://www.cls.cn/v2/article/hot/list";
   const res: Hot = await myFetch(apiUrl, {
     query: Object.fromEntries(await getSearchParams()),
-  })
+  });
   return res.data.map((k) => {
     return {
       id: k.id,
       title: k.title || k.brief,
       mobileUrl: k.shareurl,
       url: `https://www.cls.cn/detail/${k.id}`,
-    }
-  })
-})
+    };
+  });
+});
 
 const telegraph = defineSource(async () => {
-  const apiUrl = `https://www.cls.cn/nodeapi/updateTelegraphList`
+  const apiUrl = "https://www.cls.cn/nodeapi/updateTelegraphList";
   const res: TelegraphRes = await myFetch(apiUrl, {
     query: Object.fromEntries(await getSearchParams()),
-  })
+  });
   return res.data.roll_data.filter(k => !k.is_ad).map((k) => {
     return {
       id: k.id,
@@ -70,13 +70,13 @@ const telegraph = defineSource(async () => {
       mobileUrl: k.shareurl,
       pubDate: k.ctime * 1000,
       url: `https://www.cls.cn/detail/${k.id}`,
-    }
-  })
-})
+    };
+  });
+});
 
 export default defineSource({
   "cls": telegraph,
   "cls-telegraph": telegraph,
   "cls-depth": depth,
   "cls-hot": hot,
-})
+});

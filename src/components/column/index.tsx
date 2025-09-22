@@ -1,16 +1,18 @@
-import type { FixedColumnID } from "@shared/types"
-import { useTitle } from "react-use"
-import { NavBar } from "../navbar"
-import { Dnd } from "./dnd"
-import { currentColumnIDAtom } from "~/atoms"
+import type {FixedColumnID} from "@shared/types";
+
+import {useTitle} from "react-use";
+import {currentColumnIDAtom} from "~/atoms";
+
+import {Dnd} from "./dnd";
+import {NavBar} from "../navbar";
 
 export function Column({ id }: { id: FixedColumnID }) {
-  const [currentColumnID, setCurrentColumnID] = useAtom(currentColumnIDAtom)
+    const [currentColumnID, setCurrentColumnID] = useAtom(currentColumnIDAtom);
   useEffect(() => {
-    setCurrentColumnID(id)
-  }, [id, setCurrentColumnID])
+      setCurrentColumnID(id);
+  }, [id, setCurrentColumnID]);
 
-  useTitle(`NewsNow | ${metadata[id].name}`)
+    useTitle(`NewsNow | ${metadata[id].name}`);
 
   return (
     <>
@@ -19,5 +21,5 @@ export function Column({ id }: { id: FixedColumnID }) {
       </div>
       {id === currentColumnID && <Dnd />}
     </>
-  )
+  );
 }

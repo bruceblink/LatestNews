@@ -1,6 +1,7 @@
-import type { colors } from "unocss/preset-mini"
-import type { columns, fixedColumnIds } from "./metadata"
-import type { originSources } from "./pre-sources"
+import type {colors} from "unocss/preset-mini";
+
+import type {originSources} from "./pre-sources";
+import type {columns, fixedColumnIds} from "./metadata";
 
 export type Color = "primary" | Exclude<keyof typeof colors, "current" | "inherit" | "transparent" | "black" | "white">
 

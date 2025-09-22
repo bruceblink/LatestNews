@@ -1,29 +1,29 @@
-import type {CacheInfo} from "#/types"
-import type {SourceID, SourceResponse} from "@shared/types"
+import type {CacheInfo} from "#/types";
+import type {SourceID, SourceResponse} from "@shared/types";
 
-import {getters} from "#/getters"
-import {getCacheTable} from "#/database/cache"
+import {getters} from "#/getters";
+import {getCacheTable} from "#/database/cache";
 
 export default defineEventHandler(async (event): Promise<SourceResponse> => {
   try {
-    const query = getQuery(event)
-    const latest = query.latest !== undefined && query.latest !== "false"
-    let id = query.id as SourceID
+      const query = getQuery(event);
+      const latest = query.latest !== undefined && query.latest !== "false";
+      let id = query.id as SourceID;
       // eslint-disable-next-line @typescript-eslint/no-shadow
-    const isValid = (id: SourceID) => !id || !sources[id] || !getters[id]
+      const isValid = (id: SourceID) => !id || !sources[id] || !getters[id];
 
     if (isValid(id)) {
-      const redirectID = sources?.[id]?.redirect
-      if (redirectID) id = redirectID
-      if (isValid(id)) throw new Error("Invalid source id")
+        const redirectID = sources?.[id]?.redirect;
+        if (redirectID) id = redirectID;
+        if (isValid(id)) throw new Error("Invalid source id");
     }
 
-    const cacheTable = await getCacheTable()
+      const cacheTable = await getCacheTable();
     // Date.now() in Cloudflare Worker will not update throughout the entire runtime.
-    const now = Date.now()
-    let cache: CacheInfo | undefined
+      const now = Date.now();
+      let cache: CacheInfo | undefined;
     if (cacheTable) {
-      cache = await cacheTable.get(id)
+        cache = await cacheTable.get(id);
       if (cache) {
       // if (cache) {
         // interval 刷新间隔，对于缓存失效也要执行的。本质上表示本来内容更新就很慢，这个间隔内可能内容压根不会更新。
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event): Promise<SourceResponse> => {
             id,
             updatedTime: now,
             items: cache.items,
-          }
+          };
         }
 
         // 而 TTL 缓存失效时间，在时间范围内，就算内容更新了也要用这个缓存。
@@ -51,25 +51,25 @@ export default defineEventHandler(async (event): Promise<SourceResponse> => {
               id,
               updatedTime: cache.updated,
               items: cache.items,
-            }
+            };
           }
         }
       }
     }
 
     try {
-      const newData = (await getters[id]()).slice(0, 30)
+        const newData = (await getters[id]()).slice(0, 30);
       if (cacheTable && newData.length) {
-        if (event.context.waitUntil) event.context.waitUntil(cacheTable.set(id, newData))
-        else await cacheTable.set(id, newData)
+          if (event.context.waitUntil) event.context.waitUntil(cacheTable.set(id, newData));
+          else await cacheTable.set(id, newData);
       }
-      logger.success(`fetch ${id} latest`)
+        logger.success(`fetch ${id} latest`);
       return {
         status: "success",
         id,
         updatedTime: now,
         items: newData,
-      }
+      };
     } catch (e) {
       if (cache!) {
         return {
@@ -77,16 +77,16 @@ export default defineEventHandler(async (event): Promise<SourceResponse> => {
           id,
           updatedTime: cache.updated,
           items: cache.items,
-        }
+        };
       } else {
-        throw e
+          throw e;
       }
     }
   } catch (e: any) {
-    logger.error(e)
+      logger.error(e);
     throw createError({
       statusCode: 500,
       message: e instanceof Error ? e.message : "Internal Server Error",
-    })
+    });
   }
-})
+});

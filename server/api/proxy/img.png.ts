@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
-  const { url: img, type = "encodeURIComponent" } = getQuery(event)
+    const {url: img, type = "encodeURIComponent"} = getQuery(event);
   if (img) {
-    const url = type === "encodeURIComponent" ? decodeURIComponent(img as string) : decodeBase64URL(img as string)
+      const url = type === "encodeURIComponent" ? decodeURIComponent(img as string) : decodeBase64URL(img as string);
     return sendProxy(event, url, {
       headers: {
         "Access-Control-Allow-Origin": "*",
@@ -9,6 +9,6 @@ export default defineEventHandler(async (event) => {
         "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
         "Access-Control-Allow-Headers": "*",
       },
-    })
+    });
   }
-})
+});

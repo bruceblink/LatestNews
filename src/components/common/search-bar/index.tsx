@@ -1,14 +1,14 @@
-import "./cmdk.css"
+import "./cmdk.css";
 
-import type {SourceID} from "@shared/types"
+import type {SourceID} from "@shared/types";
 
-import {Command} from "cmdk"
-import {useMount} from "react-use"
-import pinyin from "@shared/pinyin.json"
-import {useRef, useMemo, useState} from "react"
-import {CardWrapper} from "~/components/column/card"
+import {Command} from "cmdk";
+import {useMount} from "react-use";
+import pinyin from "@shared/pinyin.json";
+import {useRef, useMemo, useState} from "react";
+import {CardWrapper} from "~/components/column/card";
 
-import {OverlayScrollbar} from "../overlay-scrollbar"
+import {OverlayScrollbar} from "../overlay-scrollbar";
 
 interface SourceItemProps {
   id: SourceID
@@ -20,26 +20,26 @@ interface SourceItemProps {
 
 function groupByColumn(items: SourceItemProps[]) {
   return items.reduce((acc, item) => {
-    const k = acc.find(i => i.column === item.column)
-    if (k) k.sources = [...k.sources, item]
-    else acc.push({ column: item.column, sources: [item] })
-    return acc
+      const k = acc.find(i => i.column === item.column);
+      if (k) k.sources = [...k.sources, item];
+      else acc.push({column: item.column, sources: [item]});
+      return acc;
   }, [] as {
     column: string
     sources: SourceItemProps[]
   }[]).sort((m, n) => {
-    if (m.column === "科技") return -1
-    if (n.column === "科技") return 1
+      if (m.column === "科技") return -1;
+      if (n.column === "科技") return 1;
 
-    if (m.column === "未分类") return 1
-    if (n.column === "未分类") return -1
+      if (m.column === "未分类") return 1;
+      if (n.column === "未分类") return -1;
 
-    return m.column < n.column ? -1 : 1
-  })
+      return m.column < n.column ? -1 : 1;
+  });
 }
 
 export function SearchBar() {
-  const { opened, toggle } = useSearchBar()
+    const {opened, toggle} = useSearchBar();
   const sourceItems = useMemo(
     () =>
       groupByColumn(typeSafeObjectEntries(sources)
@@ -52,24 +52,24 @@ export function SearchBar() {
           pinyin: pinyin?.[k as keyof typeof pinyin] ?? "",
         })))
     , [],
-  )
-  const inputRef = useRef<HTMLInputElement | null>(null)
+  );
+    const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const [value, setValue] = useState<SourceID>("github-trending-today")
+    const [value, setValue] = useState<SourceID>("github-trending-today");
 
   useMount(() => {
-    inputRef?.current?.focus()
+      inputRef?.current?.focus();
     const keydown = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        toggle()
+          e.preventDefault();
+          toggle();
       }
-    }
-    document.addEventListener("keydown", keydown)
+    };
+      document.addEventListener("keydown", keydown);
     return () => {
-      document.removeEventListener("keydown", keydown)
-    }
-  })
+        document.removeEventListener("keydown", keydown);
+    };
+  });
 
   return (
     <Command.Dialog
@@ -78,7 +78,7 @@ export function SearchBar() {
       value={value}
       onValueChange={(v) => {
         if (v in sources) {
-          setValue(v as SourceID)
+            setValue(v as SourceID);
         }
       }}
     >
@@ -108,13 +108,13 @@ export function SearchBar() {
         </div>
       </div>
     </Command.Dialog>
-  )
+  );
 }
 
 function SourceItem({ item }: {
   item: SourceItemProps
 }) {
-  const { isFocused, toggleFocus } = useFocusWith(item.id)
+    const {isFocused, toggleFocus} = useFocusWith(item.id);
   return (
     <Command.Item
       keywords={[item.name, item.title ?? "", item.pinyin]}
@@ -134,5 +134,5 @@ function SourceItem({ item }: {
       </span>
         <span className={$(isFocused ? "i-ph-star-fill" : "i-ph-star-duotone", "bg-primary op-40")}/>
     </Command.Item>
-  )
+  );
 }

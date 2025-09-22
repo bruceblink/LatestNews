@@ -1,34 +1,37 @@
-import type { PropsWithChildren } from "react"
-import type { SourceID } from "@shared/types"
-import type { BaseEventPayload, ElementDragType } from "@atlaskit/pragmatic-drag-and-drop/dist/types/internal-types"
-import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
-import { reorderWithEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge"
-import { createPortal } from "react-dom"
-import { useThrottleFn } from "ahooks"
-import { useAutoAnimate } from "@formkit/auto-animate/react"
-import { motion } from "framer-motion"
-import { useWindowSize } from "react-use"
-import { isMobile } from "react-device-detect"
-import { DndContext } from "../common/dnd"
-import { useSortable } from "../common/dnd/useSortable"
-import { OverlayScrollbar } from "../common/overlay-scrollbar"
-import type { ItemsProps } from "./card"
-import { CardWrapper } from "./card"
-import { currentSourcesAtom } from "~/atoms"
+import type {SourceID} from "@shared/types";
+import type {PropsWithChildren} from "react";
+import type {ElementDragType, BaseEventPayload} from "@atlaskit/pragmatic-drag-and-drop/dist/types/internal-types";
 
-const AnimationDuration = 200
-const WIDTH = 350
+import {useThrottleFn} from "ahooks";
+import {motion} from "framer-motion";
+import {createPortal} from "react-dom";
+import {useWindowSize} from "react-use";
+import {currentSourcesAtom} from "~/atoms";
+import {isMobile} from "react-device-detect";
+import {useAutoAnimate} from "@formkit/auto-animate/react";
+import {extractClosestEdge} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import {reorderWithEdge} from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge";
+
+import {CardWrapper} from "./card";
+import {DndContext} from "../common/dnd";
+import {useSortable} from "../common/dnd/useSortable";
+import {OverlayScrollbar} from "../common/overlay-scrollbar";
+
+import type {ItemsProps} from "./card";
+
+const AnimationDuration = 200;
+const WIDTH = 350;
 export function Dnd() {
-  const [items, setItems] = useAtom(currentSourcesAtom)
-  const [parent] = useAutoAnimate({ duration: AnimationDuration })
-  useEntireQuery(items)
-  const { width } = useWindowSize()
+    const [items, setItems] = useAtom(currentSourcesAtom);
+    const [parent] = useAutoAnimate({duration: AnimationDuration});
+    useEntireQuery(items);
+    const {width} = useWindowSize();
   const minWidth = useMemo(() => {
     // double padding = 32
-    return Math.min(width - 32, WIDTH)
-  }, [width])
+      return Math.min(width - 32, WIDTH);
+  }, [width]);
 
-  if (!items.length) return null
+    if (!items.length) return null;
 
   return (
     <DndWrapper items={items} setItems={setItems} isSingleColumn={isMobile}>
@@ -91,7 +94,7 @@ export function Dnd() {
         </div>
       )}
     </DndWrapper>
-  )
+  );
 }
 
 function DndWrapper({ items, setItems, isSingleColumn, children }: PropsWithChildren<{
@@ -100,33 +103,33 @@ function DndWrapper({ items, setItems, isSingleColumn, children }: PropsWithChil
   isSingleColumn: boolean
 }>) {
   const onDropTargetChange = useCallback(({ location, source }: BaseEventPayload<ElementDragType>) => {
-    const traget = location.current.dropTargets[0]
-    if (!traget?.data || !source?.data) return
-    const closestEdgeOfTarget = extractClosestEdge(traget.data)
-    const fromIndex = items.indexOf(source.data.id as SourceID)
-    const toIndex = items.indexOf(traget.data.id as SourceID)
-    if (fromIndex === toIndex || fromIndex === -1 || toIndex === -1) return
+      const traget = location.current.dropTargets[0];
+      if (!traget?.data || !source?.data) return;
+      const closestEdgeOfTarget = extractClosestEdge(traget.data);
+      const fromIndex = items.indexOf(source.data.id as SourceID);
+      const toIndex = items.indexOf(traget.data.id as SourceID);
+      if (fromIndex === toIndex || fromIndex === -1 || toIndex === -1) return;
     const update = reorderWithEdge({
       list: items,
       startIndex: fromIndex,
       indexOfTarget: toIndex,
       closestEdgeOfTarget,
       axis: isSingleColumn ? "horizontal" : "vertical",
-    })
-    setItems(update)
-  }, [items, setItems, isSingleColumn])
+    });
+      setItems(update);
+  }, [items, setItems, isSingleColumn]);
   // 避免动画干扰
   const { run } = useThrottleFn(onDropTargetChange, {
     leading: true,
     trailing: true,
     wait: AnimationDuration,
-  })
-  const { el } = useAtomValue(goToTopAtom)
+  });
+    const {el} = useAtomValue(goToTopAtom);
   return (
     <DndContext onDropTargetChange={run} autoscroll={el ? { element: el } : undefined}>
       {children}
     </DndContext>
-  )
+  );
 }
 
 function CardOverlay({ id }: { id: SourceID }) {
@@ -163,7 +166,7 @@ function CardOverlay({ id }: { id: SourceID }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function SortableCardWrapper({ id }: ItemsProps) {
@@ -172,13 +175,13 @@ function SortableCardWrapper({ id }: ItemsProps) {
     setNodeRef,
     setHandleRef,
     OverlayContainer,
-  } = useSortable({ id })
+  } = useSortable({id});
 
   useEffect(() => {
     if (OverlayContainer) {
-      OverlayContainer!.className += $(`bg-base`, !isiOS() && "rounded-2xl")
+        OverlayContainer!.className += $("bg-base", !isiOS() && "rounded-2xl");
     }
-  }, [OverlayContainer])
+  }, [OverlayContainer]);
 
   return (
     <>
@@ -190,5 +193,5 @@ function SortableCardWrapper({ id }: ItemsProps) {
       />
       {OverlayContainer && createPortal(<CardOverlay id={id} />, OverlayContainer)}
     </>
-  )
+  );
 }

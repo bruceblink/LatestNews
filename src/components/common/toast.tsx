@@ -1,19 +1,19 @@
-import type {ToastItem} from "~/atoms/types"
+import type {ToastItem} from "~/atoms/types";
 
-import {Timer} from "~/utils"
-import {useMount, useWindowSize} from "react-use"
-import {useRef, useMemo, useCallback} from "react"
-import {useAutoAnimate} from "@formkit/auto-animate/react"
+import {Timer} from "~/utils";
+import {useMount, useWindowSize} from "react-use";
+import {useRef, useMemo, useCallback} from "react";
+import {useAutoAnimate} from "@formkit/auto-animate/react";
 
-const WIDTH = 320
+const WIDTH = 320;
 export function Toast() {
-  const { width } = useWindowSize()
+    const {width} = useWindowSize();
   const center = useMemo(() => {
-    const t = (width - WIDTH) / 2
-    return t > width * 0.9 ? width * 0.9 : t
-  }, [width])
-  const toastItems = useAtomValue(toastAtom)
-  const [parent] = useAutoAnimate({ duration: 200 })
+      const t = (width - WIDTH) / 2;
+      return t > width * 0.9 ? width * 0.9 : t;
+  }, [width]);
+    const toastItems = useAtomValue(toastAtom);
+    const [parent] = useAutoAnimate({duration: 200});
   return (
     <ol
       ref={parent}
@@ -27,7 +27,7 @@ export function Toast() {
         toastItems.map(k => <Item key={k.id} info={k} />)
       }
     </ol>
-  )
+  );
 }
 
 const colors = {
@@ -35,35 +35,35 @@ const colors = {
   error: "red",
   warning: "orange",
   info: "blue",
-}
+};
 
 function Item({ info }: { info: ToastItem }) {
-  const color = colors[info.type ?? "info"]
-  const setToastItems = useSetAtom(toastAtom)
+    const color = colors[info.type ?? "info"];
+    const setToastItems = useSetAtom(toastAtom);
   const hidden = useCallback((dismiss = true) => {
-    setToastItems(prev => prev.filter(k => k.id !== info.id))
+      setToastItems(prev => prev.filter(k => k.id !== info.id));
     if (dismiss) {
-      info.onDismiss?.()
+        info.onDismiss?.();
     }
-  }, [info, setToastItems])
+  }, [info, setToastItems]);
     // @ts-ignore
-    const timer = useRef<Timer>()
+    const timer = useRef<Timer>();
 
   useMount(() => {
     timer.current = new Timer(() => {
-      hidden()
-    }, info.duration ?? 5000)
-    return () => timer.current?.clear()
-  })
+        hidden();
+    }, info.duration ?? 5000);
+      return () => timer.current?.clear();
+  });
 
-  const [hoverd, setHoverd] = useState(false)
+    const [hoverd, setHoverd] = useState(false);
   useEffect(() => {
     if (hoverd) {
-      timer.current?.pause()
+        timer.current?.pause();
     } else {
-      timer.current?.resume()
+        timer.current?.resume();
     }
-  }, [hoverd])
+  }, [hoverd]);
 
   return (
     <li
@@ -99,5 +99,5 @@ function Item({ info }: { info: ToastItem }) {
         </div>
       </div>
     </li>
-  )
+  );
 }

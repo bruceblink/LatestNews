@@ -1,4 +1,4 @@
-import type { NewsItem, SourceID } from "@shared/types"
+import type {NewsItem, SourceID} from "@shared/types";
 
 export interface RSSInfo {
   title: string

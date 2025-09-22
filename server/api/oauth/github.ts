@@ -1,12 +1,12 @@
-import {SignJWT} from "jose"
-import process from "node:process"
-import {UserTable} from "#/database/user"
+import {SignJWT} from "jose";
+import process from "node:process";
+import {UserTable} from "#/database/user";
 
 export default defineEventHandler(async (event) => {
-  const db = useDatabase()
-  const userTable = db ? new UserTable(db) : undefined
-  if (!userTable) throw new Error("db is not defined")
-  if (process.env.INIT_TABLE !== "false") await userTable.init()
+    const db = useDatabase();
+    const userTable = db ? new UserTable(db) : undefined;
+    if (!userTable) throw new Error("db is not defined");
+    if (process.env.INIT_TABLE !== "false") await userTable.init();
 
   const response: {
     access_token: string
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
         accept: "application/json",
       },
     },
-  )
+  );
 
   const userInfo: {
     id: number
@@ -40,10 +40,10 @@ export default defineEventHandler(async (event) => {
       // 必须有 user-agent，在 cloudflare worker 会报错
       "User-Agent": "NewsNow App",
     },
-  })
+  });
 
-  const userID = String(userInfo.id)
-  await userTable.addUser(userID, userInfo.notification_email || userInfo.email, "github")
+    const userID = String(userInfo.id);
+    await userTable.addUser(userID, userInfo.notification_email || userInfo.email, "github");
 
   const jwtToken = await new SignJWT({
     id: userID,
@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
   })
     .setExpirationTime("60d")
     .setProtectedHeader({ alg: "HS256" })
-    .sign(new TextEncoder().encode(process.env.JWT_SECRET!))
+      .sign(new TextEncoder().encode(process.env.JWT_SECRET!));
 
   // nitro 有 bug，在 cloudflare 里没法 set cookie
   // seconds
@@ -67,6 +67,6 @@ export default defineEventHandler(async (event) => {
       avatar: userInfo.avatar_url,
       name: userInfo.name,
     }),
-  })
-  return sendRedirect(event, `/?${params.toString()}`)
-})
+  });
+    return sendRedirect(event, `/?${params.toString()}`);
+});

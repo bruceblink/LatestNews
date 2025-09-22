@@ -1,10 +1,10 @@
-import {createContext} from "react"
-import {combine} from "@atlaskit/pragmatic-drag-and-drop/combine"
-import {draggable, dropTargetForElements} from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
-import {preserveOffsetOnSource} from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source"
-import {setCustomNativeDragPreview} from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview"
+import {createContext} from "react";
+import {combine} from "@atlaskit/pragmatic-drag-and-drop/combine";
+import {draggable, dropTargetForElements} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import {preserveOffsetOnSource} from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
+import {setCustomNativeDragPreview} from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 
-export const InstanceIdContext = createContext<string | null>(null)
+export const InstanceIdContext = createContext<string | null>(null);
 
 interface SortableProps {
   id: string
@@ -16,22 +16,22 @@ interface DraggableState {
 }
 
 export function useSortable(props: SortableProps) {
-  const instanceId = useContext(InstanceIdContext)
+    const instanceId = useContext(InstanceIdContext);
   const [draggableState, setDraggableState] = useState<DraggableState>({
     type: "idle",
-  })
+  });
   useEffect(() => {
     if (draggableState.type === "idle") {
-      document.querySelector("html")?.classList.remove("grabbing")
+        document.querySelector("html")?.classList.remove("grabbing");
     } else if (draggableState.type === "dragging") {
       // https://github.com/SortableJS/Vue.Draggable/issues/815#issuecomment-1552904628
       setTimeout(() => {
-        document.querySelector("html")?.classList.add("grabbing")
-      }, 50)
+          document.querySelector("html")?.classList.add("grabbing");
+      }, 50);
     }
-  }, [draggableState])
-  const [handleRef, setHandleRef] = useState<HTMLElement | null>(null)
-  const [nodeRef, setNodeRef] = useState<HTMLElement | null>(null)
+  }, [draggableState]);
+    const [handleRef, setHandleRef] = useState<HTMLElement | null>(null);
+    const [nodeRef, setNodeRef] = useState<HTMLElement | null>(null);
 
     // eslint-disable-next-line consistent-return
   useEffect(() => {
@@ -48,14 +48,14 @@ export function useSortable(props: SortableProps) {
                             input: location.current.input,
                         }),
                         render({container}) {
-                            container.style.width = `${nodeRef.clientWidth}px`
-                            setDraggableState({type: "dragging", container})
+                            container.style.width = `${nodeRef.clientWidth}px`;
+                            setDraggableState({type: "dragging", container});
                         },
                         nativeSetDragImage,
-                    })
+                    });
                 },
                 onDrop: () => {
-                    setDraggableState({type: "idle"})
+                    setDraggableState({type: "idle"});
                 },
             }),
             dropTargetForElements({
@@ -64,13 +64,13 @@ export function useSortable(props: SortableProps) {
                 getIsSticky: () => true,
                 canDrop: ({source}) => source.data.instanceId === instanceId,
             }),
-      )
+        );
     }
-  }, [props.id, instanceId, handleRef, nodeRef])
+  }, [props.id, instanceId, handleRef, nodeRef]);
   return {
     setHandleRef,
     setNodeRef,
     isDragging: draggableState.type === "dragging",
     OverlayContainer: draggableState.container,
-  }
+  };
 }

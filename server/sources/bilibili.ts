@@ -89,8 +89,8 @@ interface HotVideoRes {
 }
 
 const hotSearch = defineSource(async () => {
-  const url = "https://s.search.bilibili.com/main/hotword?limit=30"
-  const res: WapRes = await myFetch(url)
+    const url = "https://s.search.bilibili.com/main/hotword?limit=30";
+    const res: WapRes = await myFetch(url);
 
   return res.list.map(k => ({
     id: k.keyword,
@@ -99,12 +99,12 @@ const hotSearch = defineSource(async () => {
     extra: {
       icon: k.icon && proxyPicture(k.icon),
     },
-  }))
-})
+  }));
+});
 
 const hotVideo = defineSource(async () => {
-  const url = "https://api.bilibili.com/x/web-interface/popular"
-  const res: HotVideoRes = await myFetch(url)
+    const url = "https://api.bilibili.com/x/web-interface/popular";
+    const res: HotVideoRes = await myFetch(url);
 
   return res.data.list.map(video => ({
     id: video.bvid,
@@ -116,12 +116,12 @@ const hotVideo = defineSource(async () => {
       hover: video.desc,
       icon: proxyPicture(video.pic),
     },
-  }))
-})
+  }));
+});
 
 const ranking = defineSource(async () => {
-  const url = "https://api.bilibili.com/x/web-interface/ranking/v2"
-  const res: HotVideoRes = await myFetch(url)
+    const url = "https://api.bilibili.com/x/web-interface/ranking/v2";
+    const res: HotVideoRes = await myFetch(url);
 
   return res.data.list.map(video => ({
     id: video.bvid,
@@ -133,14 +133,14 @@ const ranking = defineSource(async () => {
       hover: video.desc,
       icon: proxyPicture(video.pic),
     },
-  }))
-})
+  }));
+});
 
 function formatNumber(num: number): string {
   if (num >= 10000) {
-    return `${Math.floor(num / 10000)}w+`
+      return `${Math.floor(num / 10000)}w+`;
   }
-  return num.toString()
+    return num.toString();
 }
 
 export default defineSource({
@@ -148,4 +148,4 @@ export default defineSource({
   "bilibili-hot-search": hotSearch,
   "bilibili-hot-video": hotVideo,
   "bilibili-ranking": ranking,
-})
+});

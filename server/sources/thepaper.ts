@@ -9,8 +9,8 @@ interface Res {
 }
 
 export default defineSource(async () => {
-  const url = "https://cache.thepaper.cn/contentapi/wwwIndex/rightSidebar"
-  const res: Res = await myFetch(url)
+    const url = "https://cache.thepaper.cn/contentapi/wwwIndex/rightSidebar";
+    const res: Res = await myFetch(url);
   return res.data.hotNews
     .map((k) => {
       return {
@@ -18,6 +18,6 @@ export default defineSource(async () => {
         title: k.name,
         url: `https://www.thepaper.cn/newsDetail_forward_${k.contId}`,
         mobileUrl: `https://m.thepaper.cn/newsDetail_forward_${k.contId}`,
-      }
-    })
-})
+      };
+    });
+});

@@ -1,10 +1,12 @@
-import type { NewsItem, SourceID, SourceResponse } from "@shared/types"
-import { useQuery } from "@tanstack/react-query"
-import { AnimatePresence, motion, useInView } from "framer-motion"
-import { useWindowSize } from "react-use"
-import { forwardRef, useImperativeHandle } from "react"
-import { OverlayScrollbar } from "../common/overlay-scrollbar"
-import { safeParseString } from "~/utils"
+import type {NewsItem, SourceID, SourceResponse} from "@shared/types";
+
+import {useWindowSize} from "react-use";
+import {safeParseString} from "~/utils";
+import {useQuery} from "@tanstack/react-query";
+import {forwardRef, useImperativeHandle} from "react";
+import {motion, useInView, AnimatePresence} from "framer-motion";
+
+import {OverlayScrollbar} from "../common/overlay-scrollbar";
 
 export interface ItemsProps extends React.HTMLAttributes<HTMLDivElement> {
   id: SourceID
@@ -21,13 +23,13 @@ interface NewsCardProps {
 }
 
 export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(({ id, isDragging, setHandleRef, style, ...props }, dndRef) => {
-  const ref = useRef<HTMLDivElement>(null)
+    const ref = useRef<HTMLDivElement>(null);
 
   const inView = useInView(ref, {
     once: true,
-  })
+  });
 
-  useImperativeHandle(dndRef, () => ref.current! as HTMLDivElement)
+    useImperativeHandle(dndRef, () => ref.current! as HTMLDivElement);
 
   return (
     <div
@@ -47,52 +49,52 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(({ id, isDragging
     >
       {inView && <NewsCard id={id} setHandleRef={setHandleRef} />}
     </div>
-  )
-})
+  );
+});
 
 function NewsCard({ id, setHandleRef }: NewsCardProps) {
-  const { refresh } = useRefetch()
+    const {refresh} = useRefetch();
   const { data, isFetching, isError } = useQuery({
     queryKey: ["source", id],
     queryFn: async ({ queryKey }) => {
-      const id = queryKey[1] as SourceID
-      let url = `/s?id=${id}`
-      const headers: Record<string, any> = {}
+        const id = queryKey[1] as SourceID;
+        let url = `/s?id=${id}`;
+        const headers: Record<string, any> = {};
       if (refetchSources.has(id)) {
-        url = `/s?id=${id}&latest`
-        const jwt = safeParseString(localStorage.getItem("jwt"))
-        if (jwt) headers.Authorization = `Bearer ${jwt}`
-        refetchSources.delete(id)
+          url = `/s?id=${id}&latest`;
+          const jwt = safeParseString(localStorage.getItem("jwt"));
+          if (jwt) headers.Authorization = `Bearer ${jwt}`;
+          refetchSources.delete(id);
       } else if (cacheSources.has(id)) {
         // wait animation
-        await delay(200)
-        return cacheSources.get(id)
+          await delay(200);
+          return cacheSources.get(id);
       }
 
       const response: SourceResponse = await myFetch(url, {
         headers,
-      })
+      });
 
       function diff() {
         try {
           if (response.items && sources[id].type === "hottest" && cacheSources.has(id)) {
             response.items.forEach((item, i) => {
-              const o = cacheSources.get(id)!.items.findIndex(k => k.id === item.id)
+                const o = cacheSources.get(id)!.items.findIndex(k => k.id === item.id);
               item.extra = {
                 ...item?.extra,
                 diff: o === -1 ? undefined : o - i,
-              }
-            })
+              };
+            });
           }
         } catch (e) {
-          console.error(e)
+            console.error(e);
         }
       }
 
-      diff()
+        diff();
 
-      cacheSources.set(id, response)
-      return response
+        cacheSources.set(id, response);
+        return response;
     },
     placeholderData: prev => prev,
     staleTime: Infinity,
@@ -100,9 +102,9 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
     retry: false,
-  })
+  });
 
-  const { isFocused, toggleFocus } = useFocusWith(id)
+    const {isFocused, toggleFocus} = useFocusWith(id);
 
   return (
     <>
@@ -154,7 +156,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
       <OverlayScrollbar
         className={$([
           "h-full p-2 overflow-y-auto rounded-2xl bg-base bg-op-70!",
-          isFetching && `animate-pulse`,
+            isFetching && "animate-pulse",
           `sprinkle-${sources[id].color}`,
         ])}
         options={{
@@ -167,25 +169,25 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
         </div>
       </OverlayScrollbar>
     </>
-  )
+  );
 }
 
 function UpdatedTime({ isError, updatedTime }: { updatedTime: any, isError: boolean }) {
-  const relativeTime = useRelativeTime(updatedTime ?? "")
-  if (relativeTime) return `${relativeTime}更新`
-  if (isError) return "获取失败"
-  return "加载中..."
+    const relativeTime = useRelativeTime(updatedTime ?? "");
+    if (relativeTime) return `${relativeTime}更新`;
+    if (isError) return "获取失败";
+    return "加载中...";
 }
 
 function DiffNumber({ diff }: { diff: number }) {
-  const [shown, setShown] = useState(true)
+    const [shown, setShown] = useState(true);
   useEffect(() => {
-    setShown(true)
+      setShown(true);
     const timer = setTimeout(() => {
-      setShown(false)
-    }, 5000)
-    return () => clearTimeout(timer)
-  }, [setShown, diff])
+        setShown(false);
+    }, 5000);
+      return () => clearTimeout(timer);
+  }, [setShown, diff]);
 
   return (
     <AnimatePresence>
@@ -200,14 +202,17 @@ function DiffNumber({ diff }: { diff: number }) {
         </motion.span>
       )}
     </AnimatePresence>
-  )
+  );
 }
 function ExtraInfo({ item }: { item: NewsItem }) {
   if (item?.extra?.info) {
-    return <>{item.extra.info}</>
+      return <>{item.extra.info}</>;
   }
   if (item?.extra?.icon) {
-    const { url, scale } = typeof item.extra.icon === "string" ? { url: item.extra.icon, scale: undefined } : item.extra.icon
+      const {url, scale} = typeof item.extra.icon === "string" ? {
+          url: item.extra.icon,
+          scale: undefined
+      } : item.extra.icon;
     return (
       <img
         src={url}
@@ -217,16 +222,16 @@ function ExtraInfo({ item }: { item: NewsItem }) {
         className="h-4 inline mt--1"
         onError={e => e.currentTarget.style.display = "none"}
       />
-    )
+    );
   }
 }
 
 function NewsUpdatedTime({ date }: { date: string | number }) {
-  const relativeTime = useRelativeTime(date)
-  return <>{relativeTime}</>
+    const relativeTime = useRelativeTime(date);
+    return <>{relativeTime}</>;
 }
 function NewsListHot({ items }: { items: NewsItem[] }) {
-  const { width } = useWindowSize()
+    const {width} = useWindowSize();
   return (
     <ol className="flex flex-col gap-2">
       {items?.map((item, i) => (
@@ -255,11 +260,11 @@ function NewsListHot({ items }: { items: NewsItem[] }) {
         </a>
       ))}
     </ol>
-  )
+  );
 }
 
 function NewsListTimeLine({ items }: { items: NewsItem[] }) {
-  const { width } = useWindowSize()
+    const {width} = useWindowSize();
   return (
     <ol className="border-s border-neutral-400/50 flex flex-col ml-1">
       {items?.map(item => (
@@ -288,5 +293,5 @@ function NewsListTimeLine({ items }: { items: NewsItem[] }) {
         </li>
       ))}
     </ol>
-  )
+  );
 }

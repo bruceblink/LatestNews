@@ -13,8 +13,8 @@ interface Res {
 }
 
 export default defineSource(async () => {
-  const url = "https://www.toutiao.com/hot-event/hot-board/?origin=toutiao_pc"
-  const res: Res = await myFetch(url)
+  const url = "https://www.toutiao.com/hot-event/hot-board/?origin=toutiao_pc";
+  const res: Res = await myFetch(url);
   return res.data
     .map((k) => {
       return {
@@ -24,6 +24,6 @@ export default defineSource(async () => {
         extra: {
           icon: k.LabelUri?.url && proxyPicture(k.LabelUri.url, "encodeBase64URL"),
         },
-      }
-    })
-})
+      };
+    });
+});

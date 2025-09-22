@@ -20,20 +20,20 @@ interface Jin10Item {
 }
 
 export default defineSource(async () => {
-  const timestamp = Date.now()
-  const url = `https://www.jin10.com/flash_newest.js?t=${timestamp}`
+  const timestamp = Date.now();
+  const url = `https://www.jin10.com/flash_newest.js?t=${timestamp}`;
 
-  const rawData: string = await myFetch(url)
+  const rawData: string = await myFetch(url);
 
   const jsonStr = (rawData as string)
     .replace(/^var\s+newest\s*=\s*/, "") // 移除开头的变量声明
     .replace(/;*$/, "") // 移除末尾可能存在的分号
-    .trim() // 移除首尾空白字符
-  const data: Jin10Item[] = JSON.parse(jsonStr)
+      .trim(); // 移除首尾空白字符
+  const data: Jin10Item[] = JSON.parse(jsonStr);
 
   return data.filter(k => (k.data.title || k.data.content) && !k.channel?.includes(5)).map((k) => {
-    const text = (k.data.title || k.data.content)!.replace(/<\/?b>/g, "")
-    const [,title, desc] = text.match(/^【([^】]*)】(.*)$/) ?? []
+    const text = (k.data.title || k.data.content)!.replace(/<\/?b>/g, "");
+    const [, title, desc] = text.match(/^【([^】]*)】(.*)$/) ?? [];
     return {
       id: k.id,
       title: title ?? text,
@@ -43,6 +43,6 @@ export default defineSource(async () => {
         hover: desc,
         info: !!k.important && "✰",
       },
-    }
-  })
-})
+    };
+  });
+});

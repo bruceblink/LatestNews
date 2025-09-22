@@ -1,10 +1,10 @@
-import {Link} from "@tanstack/react-router"
-import {currentColumnIDAtom} from "~/atoms"
-import {metadata, fixedColumnIds} from "@shared/metadata"
+import {Link} from "@tanstack/react-router";
+import {currentColumnIDAtom} from "~/atoms";
+import {metadata, fixedColumnIds} from "@shared/metadata";
 
 export function NavBar() {
-  const currentId = useAtomValue(currentColumnIDAtom)
-  const { toggle } = useSearchBar()
+    const currentId = useAtomValue(currentColumnIDAtom);
+    const {toggle} = useSearchBar();
   return (
     <span className={$([
       "flex p-3 rounded-2xl bg-primary/1 text-sm",
@@ -35,5 +35,5 @@ export function NavBar() {
         </Link>
       ))}
     </span>
-  )
+  );
 }

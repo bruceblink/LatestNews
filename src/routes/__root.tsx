@@ -1,36 +1,36 @@
-import "~/styles/globals.css"
-import "virtual:uno.css"
+import "~/styles/globals.css";
+import "virtual:uno.css";
 
-import type {QueryClient} from "@tanstack/react-query"
+import type {QueryClient} from "@tanstack/react-query";
 
-import {Header} from "~/components/header"
-import {Footer} from "~/components/footer"
-import {isMobile} from "react-device-detect"
-import {Toast} from "~/components/common/toast"
-import {SearchBar} from "~/components/common/search-bar"
-import {TanStackRouterDevtools} from "@tanstack/router-devtools"
-import {ReactQueryDevtools} from "@tanstack/react-query-devtools"
-import {Outlet, createRootRouteWithContext} from "@tanstack/react-router"
-import {GlobalOverlayScrollbar} from "~/components/common/overlay-scrollbar"
+import {Header} from "~/components/header";
+import {Footer} from "~/components/footer";
+import {isMobile} from "react-device-detect";
+import {Toast} from "~/components/common/toast";
+import {SearchBar} from "~/components/common/search-bar";
+import {TanStackRouterDevtools} from "@tanstack/router-devtools";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
+import {Outlet, createRootRouteWithContext} from "@tanstack/react-router";
+import {GlobalOverlayScrollbar} from "~/components/common/overlay-scrollbar";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
-})
+});
 
 function NotFoundComponent() {
-  const nav = Route.useNavigate()
+    const nav = Route.useNavigate();
   nav({
     to: "/",
-  })
+  });
 }
 
 function RootComponent() {
-  useOnReload()
-  useSync()
-  usePWA()
+    useOnReload();
+    useSync();
+    usePWA();
   return (
     <>
       <GlobalOverlayScrollbar
@@ -75,5 +75,5 @@ function RootComponent() {
         </>
       )}
     </>
-  )
+  );
 }

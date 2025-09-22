@@ -1,8 +1,9 @@
-import process from "node:process"
-import { join } from "node:path"
-import viteNitro from "vite-plugin-with-nitro"
-import { RollopGlob } from "./tools/rollup-glob"
-import { projectDir } from "./shared/dir"
+import {join} from "node:path";
+import process from "node:process";
+import viteNitro from "vite-plugin-with-nitro";
+
+import {projectDir} from "./shared/dir";
+import {RollopGlob} from "./tools/rollup-glob";
 
 const nitroOption: Parameters<typeof viteNitro>[0] = {
   experimental: {
@@ -30,24 +31,24 @@ const nitroOption: Parameters<typeof viteNitro>[0] = {
     "@shared": join(projectDir, "shared"),
     "#": join(projectDir, "server"),
   },
-}
+};
 
 if (process.env.VERCEL) {
-  nitroOption.preset = "vercel-edge"
+  nitroOption.preset = "vercel-edge";
   // You can use other online database, do it yourself. For more info: https://db0.unjs.io/connectors
-  nitroOption.database = undefined
+  nitroOption.database = undefined;
   // nitroOption.vercel = {
   //   config: {
   //     cache: []
   //   },
   // }
 } else if (process.env.CF_PAGES) {
-  nitroOption.preset = "cloudflare-pages"
+  nitroOption.preset = "cloudflare-pages";
   nitroOption.unenv = {
     alias: {
       "safer-buffer": "node:buffer",
     },
-  }
+  };
   nitroOption.database = {
     default: {
       connector: "cloudflare-d1",
@@ -55,16 +56,16 @@ if (process.env.VERCEL) {
         bindingName: "NEWSNOW_DB",
       },
     },
-  }
+  };
 } else if (process.env.BUN) {
-  nitroOption.preset = "bun"
+  nitroOption.preset = "bun";
   nitroOption.database = {
     default: {
       connector: "bun-sqlite",
     },
-  }
+  };
 }
 
 export default function () {
-  return viteNitro(nitroOption)
+  return viteNitro(nitroOption);
 }

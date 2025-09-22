@@ -12,9 +12,9 @@ interface Res {
 }
 
 export default defineSource(async () => {
-  const rawData: string = await myFetch(`https://top.baidu.com/board?tab=realtime`)
-  const jsonStr = (rawData as string).match(/<!--s-data:(.*?)-->/s)
-  const data: Res = JSON.parse(jsonStr![1])
+    const rawData: string = await myFetch("https://top.baidu.com/board?tab=realtime");
+    const jsonStr = (rawData as string).match(/<!--s-data:(.*?)-->/s);
+    const data: Res = JSON.parse(jsonStr![1]);
 
   return data.data.cards[0].content.filter(k => !k.isTop).map((k) => {
     return {
@@ -24,6 +24,6 @@ export default defineSource(async () => {
       extra: {
         hover: k.desc,
       },
-    }
-  })
-})
+    };
+  });
+});

@@ -1,4 +1,4 @@
-import { $fetch } from "ofetch"
+import {$fetch} from "ofetch";
 
 export const myFetch = $fetch.create({
   headers: {
@@ -6,4 +6,4 @@ export const myFetch = $fetch.create({
   },
   timeout: 10000,
   retry: 3,
-})
+});

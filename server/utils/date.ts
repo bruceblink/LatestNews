@@ -1,24 +1,24 @@
-import dayjs from "dayjs/esm"
-import utcPlugin from "dayjs/esm/plugin/utc"
-import timezonePlugin from "dayjs/esm/plugin/timezone"
-import customParseFormat from "dayjs/esm/plugin/customParseFormat"
-import duration from "dayjs/esm/plugin/duration"
-import isSameOrBefore from "dayjs/esm/plugin/isSameOrBefore"
-import weekday from "dayjs/esm/plugin/weekday"
+import dayjs from "dayjs/esm";
+import utcPlugin from "dayjs/esm/plugin/utc";
+import weekday from "dayjs/esm/plugin/weekday";
+import duration from "dayjs/esm/plugin/duration";
+import timezonePlugin from "dayjs/esm/plugin/timezone";
+import isSameOrBefore from "dayjs/esm/plugin/isSameOrBefore";
+import customParseFormat from "dayjs/esm/plugin/customParseFormat";
 
-dayjs.extend(utcPlugin)
-dayjs.extend(timezonePlugin)
-dayjs.extend(customParseFormat)
-dayjs.extend(duration)
-dayjs.extend(isSameOrBefore)
-dayjs.extend(weekday)
+dayjs.extend(utcPlugin);
+dayjs.extend(timezonePlugin);
+dayjs.extend(customParseFormat);
+dayjs.extend(duration);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(weekday);
 
 /**
  * 传入任意时区的时间（不携带时区），转换为 UTC 时间
  */
 export function tranformToUTC(date: string, format?: string, timezone: string = "Asia/Shanghai"): number {
-  if (!format) return dayjs.tz(date, timezone).valueOf()
-  return dayjs.tz(date, format, timezone).valueOf()
+  if (!format) return dayjs.tz(date, timezone).valueOf();
+  return dayjs.tz(date, format, timezone).valueOf();
 }
 
 // cloudflare 里 dayjs() 结果为 0，不能放在 top
@@ -72,7 +72,7 @@ function words() {
       startAt: dayjs().add(2, "days"),
       regExp: /^(?:[后後][天日]|(?:the)?d(?:ay)?a(?:fter)?t(?:omrrow)?)(.*)/,
     },
-  ]
+  ];
 }
 
 const patterns = [
@@ -104,9 +104,9 @@ const patterns = [
     unit: "seconds",
     regExp: /(\d+)(?:秒[鐘钟]?|s(?:ec(?:ond)?)?s?)/,
   },
-]
+];
 
-const patternSize = Object.keys(patterns).length
+const patternSize = Object.keys(patterns).length;
 
 /**
  * 预处理日期字符串
@@ -117,7 +117,7 @@ function toDate(date: string) {
     .toLowerCase()
     .replace(/(^an?\s)|(\san?\s)/g, "1") // 替换 `a` 和 `an` 为 `1`
     .replace(/几|幾/g, "3") // 如 `几秒钟前` 视作 `3秒钟前`
-    .replace(/[\s,]/g, "")
+      .replace(/[\s,]/g, "");
 } // 移除所有空格
 
 /**
@@ -126,73 +126,73 @@ function toDate(date: string) {
  * @param {Array.<string>} matches 所有匹配结果
  */
 function toDurations(matches: string[]) {
-  const durations: Record<string, string> = {}
+  const durations: Record<string, string> = {};
 
-  let p = 0
+  let p = 0;
   for (const m of matches) {
     for (; p <= patternSize; p++) {
-      const match = patterns[p].regExp.exec(m)
+      const match = patterns[p].regExp.exec(m);
       if (match) {
-        durations[patterns[p].unit] = match[1]
-        break
+        durations[patterns[p].unit] = match[1];
+        break;
       }
     }
   }
-  return durations
+  return durations;
 }
 
-export const parseDate = (date: string | number, ...options: any) => dayjs(date, ...options).toDate()
+export const parseDate = (date: string | number, ...options: any) => dayjs(date, ...options).toDate();
 
 export function parseRelativeDate(date: string, timezone: string = "UTC") {
-  if (date === "刚刚") return new Date()
+  if (date === "刚刚") return new Date();
   // 预处理日期字符串 date
 
-  const theDate = toDate(date)
+  const theDate = toDate(date);
 
   // 将 `\d+年\d+月...\d+秒前` 分割成 `['\d+年', ..., '\d+秒前']`
 
-  const matches = theDate.match(/\D*\d+(?![:\-/]|(a|p)m)\D+/g)
-  const offset = dayjs.duration({ hours: (dayjs().tz(timezone).utcOffset() - dayjs().utcOffset()) / 60 })
+  const matches = theDate.match(/\D*\d+(?![:\-/]|(a|p)m)\D+/g);
+  const offset = dayjs.duration({hours: (dayjs().tz(timezone).utcOffset() - dayjs().utcOffset()) / 60});
 
   if (matches) {
     // 获得最后的时间单元，如 `\d+秒前`
 
-    const lastMatch = matches.pop()
+    const lastMatch = matches.pop();
 
     if (lastMatch) {
       // 若最后的时间单元含有 `前`、`以前`、`之前` 等标识字段，减去相应的时间长度
       // 如 `1分10秒前`
 
-      const beforeMatches = /(.*)(?:前|ago)$/.exec(lastMatch)
+      const beforeMatches = /(.*)(?:前|ago)$/.exec(lastMatch);
       if (beforeMatches) {
-        matches.push(beforeMatches[1])
+        matches.push(beforeMatches[1]);
         // duration 这个插件有 bug，他会重新实现 subtract 这个方法，并且不会处理 weeks。用 ms 就可以调用默认的方法
-        return dayjs().subtract(dayjs.duration(toDurations(matches))).toDate()
+        return dayjs().subtract(dayjs.duration(toDurations(matches))).toDate();
       }
 
       // 若最后的时间单元含有 `后`、`以后`、`之后` 等标识字段，加上相应的时间长度
       // 如 `1分10秒后`
 
-      const afterMatches = /(?:^in(.*)|(.*)[后後])$/.exec(lastMatch)
+      const afterMatches = /(?:^in(.*)|(.*)[后後])$/.exec(lastMatch);
       if (afterMatches) {
-        matches.push(afterMatches[1] ?? afterMatches[2])
+        matches.push(afterMatches[1] ?? afterMatches[2]);
         return dayjs()
           .add(dayjs.duration(toDurations(matches)))
-          .toDate()
+            .toDate();
       }
 
       // 以下处理日期字符串 date 含有特殊词的情形
       // 如 `今天1点10分`
 
-      matches.push(lastMatch)
+      matches.push(lastMatch);
     }
-    const firstMatch = matches.shift()
+    const firstMatch = matches.shift();
 
     if (firstMatch) {
       for (const w of words()) {
-        const wordMatches = w.regExp.exec(firstMatch)
+        const wordMatches = w.regExp.exec(firstMatch);
         if (wordMatches) {
-          matches.unshift(wordMatches[1])
+          matches.unshift(wordMatches[1]);
 
           // 取特殊词对应日零时为起点，加上相应的时间长度
 
@@ -203,7 +203,7 @@ export function parseRelativeDate(date: string, timezone: string = "UTC") {
             .set("millisecond", 0)
             .add(dayjs.duration(toDurations(matches)))
             .add(offset), timezone)
-            .toDate()
+              .toDate();
         }
       }
     }
@@ -212,14 +212,14 @@ export function parseRelativeDate(date: string, timezone: string = "UTC") {
     // 如今天为 `2022-03-22`，则 `今天 20:00` => `2022-03-22 20:00`
 
     for (const w of words()) {
-      const wordMatches = w.regExp.exec(theDate)
+      const wordMatches = w.regExp.exec(theDate);
       if (wordMatches) {
         // The default parser of dayjs() can parse '8:00 pm' but not '8:00pm'
         // so we need to insert a space in between
-        return dayjs.tz(`${w.startAt.add(offset).format("YYYY-MM-DD")} ${/a|pm$/.test(wordMatches[1]) ? wordMatches[1].replace(/a|pm/, " $&") : wordMatches[1]}`, timezone).toDate()
+        return dayjs.tz(`${w.startAt.add(offset).format("YYYY-MM-DD")} ${/a|pm$/.test(wordMatches[1]) ? wordMatches[1].replace(/a|pm/, " $&") : wordMatches[1]}`, timezone).toDate();
       }
     }
   }
 
-  return date
+  return date;
 }

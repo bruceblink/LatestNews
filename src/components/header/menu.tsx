@@ -1,4 +1,4 @@
-import {motion} from "framer-motion"
+import {motion} from "framer-motion";
 import {ProjectUrl} from "@shared/consts";
 
 // function ThemeToggle() {
@@ -14,8 +14,8 @@ import {ProjectUrl} from "@shared/consts";
 // }
 
 export function Menu() {
-  const { loggedIn, login, logout, userInfo, enableLogin } = useLogin()
-  const [shown, show] = useState(false)
+    const {loggedIn, login, logout, userInfo, enableLogin} = useLogin();
+    const [shown, show] = useState(false);
   return (
     <span className="relative" onMouseEnter={() => show(true)} onMouseLeave={() => show(false)}>
       <span className="flex items-center scale-90">
@@ -93,5 +93,5 @@ export function Menu() {
         </div>
       )}
     </span>
-  )
+  );
 }

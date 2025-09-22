@@ -1,11 +1,11 @@
-import type {SourceID} from "@shared/types"
+import type {SourceID} from "@shared/types";
 
-import {useUpdateQuery} from "./query"
+import {useUpdateQuery} from "./query";
 
 export function useRefetch() {
-  const { enableLogin, loggedIn, login } = useLogin()
-  const toaster = useToast()
-  const updateQuery = useUpdateQuery()
+    const {enableLogin, loggedIn, login} = useLogin();
+    const toaster = useToast();
+    const updateQuery = useUpdateQuery();
   /**
    * force refresh
    */
@@ -17,16 +17,16 @@ export function useRefetch() {
           label: "登录",
           onClick: login,
         },
-      })
+      });
     } else {
-      refetchSources.clear()
-      sources.forEach(id => refetchSources.add(id))
-      updateQuery(...sources)
+        refetchSources.clear();
+        sources.forEach(id => refetchSources.add(id));
+        updateQuery(...sources);
     }
-  }, [loggedIn, toaster, login, enableLogin, updateQuery])
+  }, [loggedIn, toaster, login, enableLogin, updateQuery]);
 
   return {
     refresh,
     refetchSources,
-  }
+  };
 }

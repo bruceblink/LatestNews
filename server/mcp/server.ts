@@ -1,10 +1,10 @@
-import type {CallToolResult} from "@modelcontextprotocol/sdk/types.js"
+import type {CallToolResult} from "@modelcontextprotocol/sdk/types.js";
 
-import {z} from "zod"
-import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js"
+import {z} from "zod";
+import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import {description} from "./desc.js"
-import packageJSON from "../../package.json"
+import {description} from "./desc.js";
+import packageJSON from "../../package.json";
 
 export function getServer() {
   const server = new McpServer(
@@ -13,7 +13,7 @@ export function getServer() {
       version: packageJSON.version,
     },
     { capabilities: { logging: {} } },
-  )
+  );
 
   server.tool(
     "get_hotest_latest_news",
@@ -23,22 +23,22 @@ export function getServer() {
       count: z.any().default(10).describe("count of news to return."),
     },
     async ({ id, count }): Promise<CallToolResult> => {
-      let n = Number(count)
+        let n = Number(count);
       if (Number.isNaN(n) || n < 1) {
-        n = 10
+          n = 10;
       }
 
-      const res: SourceResponse = await $fetch(`/api/s?id=${id}`)
+        const res: SourceResponse = await $fetch(`/api/s?id=${id}`);
       return {
           content: res.items.slice(0, count).map((item) => ({
             text: `[${item.title}](${item.url})`,
             type: "text",
           })),
-      }
+      };
     },
-  )
+  );
 
-  server.server.onerror = console.error.bind(console)
+    server.server.onerror = console.error.bind(console);
 
-  return server
+    return server;
 }

@@ -1,22 +1,22 @@
-import {XMLParser} from "fast-xml-parser"
+import {XMLParser} from "fast-xml-parser";
 
-import type {RSSInfo} from "../types"
+import type {RSSInfo} from "../types";
 
 export async function rss2json(url: string): Promise<RSSInfo | undefined> {
-  if (!/^https?:\/\/[^\s$.?#].\S*/i.test(url)) return
+    if (!/^https?:\/\/[^\s$.?#].\S*/i.test(url)) return;
 
-  const data = await myFetch(url)
+    const data = await myFetch(url);
 
   const xml = new XMLParser({
     attributeNamePrefix: "",
     textNodeName: "$text",
     ignoreAttributes: false,
-  })
+  });
 
-  const result = xml.parse(data as string)
+    const result = xml.parse(data as string);
 
-  let channel = result.rss && result.rss.channel ? result.rss.channel : result.feed
-  if (Array.isArray(channel)) channel = channel[0]
+    let channel = result.rss && result.rss.channel ? result.rss.channel : result.feed;
+    if (Array.isArray(channel)) channel = channel[0];
 
   const rss = {
     title: channel.title ?? "",
@@ -26,14 +26,14 @@ export async function rss2json(url: string): Promise<RSSInfo | undefined> {
     category: channel.category || [],
     updatedTime: channel.lastBuildDate ?? channel.updated,
     items: [],
-  }
+  };
 
-  let items = channel.item || channel.entry || []
-  if (items && !Array.isArray(items)) items = [items]
+    let items = channel.item || channel.entry || [];
+    if (items && !Array.isArray(items)) items = [items];
 
   for (let i = 0; i < items.length; i++) {
-    const val = items[i]
-    const media = {}
+      const val = items[i];
+      const media = {};
 
     const obj = {
       id: val.guid && val.guid.$text ? val.guid.$text : val.id,
@@ -49,34 +49,34 @@ export async function rss2json(url: string): Promise<RSSInfo | undefined> {
 
     ["content:encoded", "podcast:transcript", "itunes:summary", "itunes:author", "itunes:explicit", "itunes:duration", "itunes:season", "itunes:episode", "itunes:episodeType", "itunes:image"].forEach((s) => {
       // @ts-expect-error TODO
-      if (val[s]) obj[s.replace(":", "_")] = val[s]
-    })
+        if (val[s]) obj[s.replace(":", "_")] = val[s];
+    });
 
     if (val["media:thumbnail"]) {
-      Object.assign(media, { thumbnail: val["media:thumbnail"] })
-      obj.enclosures.push(val["media:thumbnail"])
+        Object.assign(media, {thumbnail: val["media:thumbnail"]});
+        obj.enclosures.push(val["media:thumbnail"]);
     }
 
     if (val["media:content"]) {
-      Object.assign(media, { thumbnail: val["media:content"] })
-      obj.enclosures.push(val["media:content"])
+        Object.assign(media, {thumbnail: val["media:content"]});
+        obj.enclosures.push(val["media:content"]);
     }
 
     if (val["media:group"]) {
-      if (val["media:group"]["media:title"]) obj.title = val["media:group"]["media:title"]
+        if (val["media:group"]["media:title"]) obj.title = val["media:group"]["media:title"];
 
-      if (val["media:group"]["media:description"]) obj.description = val["media:group"]["media:description"]
+        if (val["media:group"]["media:description"]) obj.description = val["media:group"]["media:description"];
 
-      if (val["media:group"]["media:thumbnail"]) obj.enclosures.push(val["media:group"]["media:thumbnail"].url)
+        if (val["media:group"]["media:thumbnail"]) obj.enclosures.push(val["media:group"]["media:thumbnail"].url);
 
-      if (val["media:group"]["media:content"]) obj.enclosures.push(val["media:group"]["media:content"])
+        if (val["media:group"]["media:content"]) obj.enclosures.push(val["media:group"]["media:content"]);
     }
 
-    Object.assign(obj, { media })
+      Object.assign(obj, {media});
 
     // @ts-expect-error TODO
-    rss.items.push(obj)
+      rss.items.push(obj);
   }
 
-  return rss
+    return rss;
 }

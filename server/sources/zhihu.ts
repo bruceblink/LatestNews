@@ -36,8 +36,8 @@ interface Res {
 
 export default defineSource({
   zhihu: async () => {
-    const url = "https://www.zhihu.com/api/v3/feed/topstory/hot-list-web?limit=20&desktop=true"
-    const res: Res = await myFetch(url)
+      const url = "https://www.zhihu.com/api/v3/feed/topstory/hot-list-web?limit=20&desktop=true";
+      const res: Res = await myFetch(url);
     return res.data
         .map((k) => ({
           id: k.target.link.url.match(/(\d+)$/)?.[1] ?? k.target.link.url,
@@ -47,6 +47,6 @@ export default defineSource({
             hover: k.target.excerpt_area.text,
           },
           url: k.target.link.url,
-        }))
+        }));
   },
-})
+});

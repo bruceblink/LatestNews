@@ -13,12 +13,12 @@ interface Res {
 }
 
 export default defineSource(async () => {
-  const url = "https://tieba.baidu.com/hottopic/browse/topicList"
-  const res: Res = await myFetch(url)
+    const url = "https://tieba.baidu.com/hottopic/browse/topicList";
+    const res: Res = await myFetch(url);
   return res.data.bang_topic.topic_list
       .map((k) => ({
         id: k.topic_id,
         title: k.topic_name,
         url: k.topic_url,
-      }))
-})
+      }));
+});
