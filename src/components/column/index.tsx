@@ -1,18 +1,18 @@
-import type {FixedColumnID} from "@shared/types";
+import type { FixedColumnID } from "@shared/types";
 
-import {useTitle} from "react-use";
-import {currentColumnIDAtom} from "~/atoms";
+import { useTitle } from "react-use";
+import { currentColumnIDAtom } from "~/atoms";
 
-import {Dnd} from "./dnd";
-import {NavBar} from "../navbar";
+import { Dnd } from "./dnd";
+import { NavBar } from "../navbar";
 
 export function Column({ id }: { id: FixedColumnID }) {
-    const [currentColumnID, setCurrentColumnID] = useAtom(currentColumnIDAtom);
+  const [currentColumnID, setCurrentColumnID] = useAtom(currentColumnIDAtom);
   useEffect(() => {
-      setCurrentColumnID(id);
+    setCurrentColumnID(id);
   }, [id, setCurrentColumnID]);
 
-    useTitle(`NewsNow | ${metadata[id].name}`);
+  useTitle(`${import.meta.env.VITE_APP_TITLE} | ${metadata[id].name}`);
 
   return (
     <>
