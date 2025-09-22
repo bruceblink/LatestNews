@@ -4,6 +4,7 @@ import importPlugin from "eslint-plugin-import";
 import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
+import eslintPluginPrettier from "eslint-plugin-prettier";
 import perfectionistPlugin from "eslint-plugin-perfectionist";
 import unusedImportsPlugin from "eslint-plugin-unused-imports";
 
@@ -101,6 +102,10 @@ const sortImportsRules = {
 
 // 导出 ESLint Flat Config
 export default [
+    // 忽略
+    {
+        ignores: ["node_modules/*", "dist/*", "src/generated/*", "imports.app.d.ts"],
+    },
     // JS/React 文件规则
     {
         files: ["**/*.{js,jsx,mjs,cjs}"],
@@ -143,6 +148,7 @@ export default [
             perfectionist: perfectionistPlugin,
             import: importPlugin,
             react: reactPlugin,
+            prettier: eslintPluginPrettier,
         },
         settings: {
             "import/resolver": {
@@ -155,6 +161,7 @@ export default [
             ...commonRules,
             ...unusedImportsRules,
             ...sortImportsRules,
+            "prettier/prettier": "error", // 将 Prettier 问题显示为 ESLint 错误
             // TS 专用规则
             "@typescript-eslint/no-shadow": 2,
             "@typescript-eslint/no-explicit-any": 0,
