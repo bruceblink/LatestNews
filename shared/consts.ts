@@ -14,6 +14,6 @@ export const APP_NAME = packageJSON.name;
 export const PROJECT_URL = packageJSON.projectUrl;
 // 应用部署地址
 export const HOME_PAGE = packageJSON.homepage;
-
+// 应用版本
 export const Version = packageJSON.version;
 export const Author = packageJSON.author;
