@@ -1,3 +1,5 @@
+# The Latest News
+
 ![](/public/og-image.png)
 
 ***优雅地阅读实时热门新闻***
@@ -24,7 +26,7 @@
         "newsnow-mcp-server"
       ],
       "env": {
-        "BASE_URL": "https://newsnow.busiyi.world"
+        "BASE_URL": "https://news.likanug.top"
       }
     }
   }
