@@ -1,6 +1,7 @@
-import { defineConfig, presetIcons, presetWind3, transformerDirectives, transformerVariantGroup } from "unocss"
-import { hex2rgba } from "@unocss/rule-utils"
-import { sources } from "./shared/sources"
+import {hex2rgba} from "@unocss/rule-utils"
+import {presetIcons, presetWind3, defineConfig, transformerDirectives, transformerVariantGroup} from "unocss"
+
+import {sources} from "./shared/sources"
 
 export default defineConfig({
   mergeSelectors: false,
@@ -21,6 +22,7 @@ export default defineConfig({
          rgba(${hex2rgba(hex)?.join(", ")}, 0.3), rgba(255, 255, 255, 0));`,
         }
       }
+        return undefined
     }],
     [
       "font-brand",
