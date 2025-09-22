@@ -1,12 +1,12 @@
 interface Res {
   data: {
     result: {
-      id: string
-      title: string
-      type: number
-      uuid: string
-    }[]
-  }
+        id: string;
+        title: string;
+        type: number;
+        uuid: string;
+    }[];
+  };
 }
 
 export default defineSource(async () => {
@@ -39,4 +39,3 @@ export default defineSource(async () => {
         })
         .filter(Boolean) as NewsItem[]; // 断言为 NewsItem[]
 });
-

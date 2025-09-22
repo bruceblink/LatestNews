@@ -7,12 +7,12 @@ import {setCustomNativeDragPreview} from "@atlaskit/pragmatic-drag-and-drop/elem
 export const InstanceIdContext = createContext<string | null>(null);
 
 interface SortableProps {
-  id: string
+    id: string;
 }
 
 interface DraggableState {
-  type: "idle" | "dragging"
-  container?: HTMLElement
+    type: "idle" | "dragging";
+    container?: HTMLElement;
 }
 
 export function useSortable(props: SortableProps) {
@@ -63,7 +63,7 @@ export function useSortable(props: SortableProps) {
                 getData: () => ({id: props.id}),
                 getIsSticky: () => true,
                 canDrop: ({source}) => source.data.instanceId === instanceId,
-            }),
+            })
         );
     }
   }, [props.id, instanceId, handleRef, nodeRef]);

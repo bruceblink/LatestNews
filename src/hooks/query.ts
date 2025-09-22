@@ -8,14 +8,17 @@ export function useUpdateQuery() {
   /**
    * update query
    */
-  return useCallback(async (...sources: SourceID[]) => {
-    await queryClient.refetchQueries({
-      predicate: (query) => {
+    return useCallback(
+        async (...sources: SourceID[]) => {
+            await queryClient.refetchQueries({
+                predicate: (query) => {
           const [type, id] = query.queryKey as ["source" | "entire", SourceID];
           return type === "source" && sources.includes(id);
-      },
-    });
-  }, [queryClient]);
+                },
+            });
+        },
+        [queryClient]
+    );
 }
 
 export function useEntireQuery(items: SourceID[]) {

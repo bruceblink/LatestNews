@@ -8,9 +8,11 @@ import {genSources} from "../shared/pre-sources";
 
 const sources = genSources();
 try {
-  const pinyinMap = Object.fromEntries(Object.entries(sources)
-    .filter(([, v]) => !v.redirect)
-      .map(([k, v]) => [k, pinyin(v.title ? `${v.name}-${v.title}` : v.name).join("")]));
+    const pinyinMap = Object.fromEntries(
+        Object.entries(sources)
+            .filter(([, v]) => !v.redirect)
+            .map(([k, v]) => [k, pinyin(v.title ? `${v.name}-${v.title}` : v.name).join("")])
+    );
 
     writeFileSync(join(projectDir, "./shared/pinyin.json"), JSON.stringify(pinyinMap, undefined, 2));
     consola.info("Generated pinyin.json");
@@ -19,7 +21,10 @@ try {
 }
 
 try {
-    writeFileSync(join(projectDir, "./shared/sources.json"), JSON.stringify(Object.fromEntries(Object.entries(sources)), undefined, 2));
+    writeFileSync(
+        join(projectDir, "./shared/sources.json"),
+        JSON.stringify(Object.fromEntries(Object.entries(sources)), undefined, 2)
+    );
     consola.info("Generated sources.json");
 } catch {
     consola.error("Failed to generate sources.json");

@@ -6,7 +6,10 @@ import {useToast} from "./useToast";
 
 export function usePWA() {
     const toaster = useToast();
-    const {updateServiceWorker, needRefresh: [needRefresh]} = useRegisterSW();
+    const {
+        updateServiceWorker,
+        needRefresh: [needRefresh],
+    } = useRegisterSW();
 
   useMount(async () => {
     const update = () => {

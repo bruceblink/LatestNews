@@ -1,74 +1,76 @@
-import type {NewsItem, SourceID, SourceResponse} from "@shared/types";
+import type { NewsItem, SourceID, SourceResponse } from "@shared/types";
 
-import {useWindowSize} from "react-use";
-import {safeParseString} from "~/utils";
-import {useQuery} from "@tanstack/react-query";
-import {forwardRef, useImperativeHandle} from "react";
-import {motion, useInView, AnimatePresence} from "framer-motion";
+import { useWindowSize } from "react-use";
+import { safeParseString } from "~/utils";
+import { useQuery } from "@tanstack/react-query";
+import { forwardRef, useImperativeHandle } from "react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 
-import {OverlayScrollbar} from "../common/overlay-scrollbar";
+import { OverlayScrollbar } from "../common/overlay-scrollbar";
 
 export interface ItemsProps extends React.HTMLAttributes<HTMLDivElement> {
-  id: SourceID
+  id: SourceID;
   /**
    * 是否显示透明度，拖动时原卡片的样式
    */
-  isDragging?: boolean
-  setHandleRef?: (ref: HTMLElement | null) => void
+  isDragging?: boolean;
+  setHandleRef?: (ref: HTMLElement | null) => void;
 }
 
 interface NewsCardProps {
-  id: SourceID
-  setHandleRef?: (ref: HTMLElement | null) => void
+  id: SourceID;
+  setHandleRef?: (ref: HTMLElement | null) => void;
 }
 
-export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(({ id, isDragging, setHandleRef, style, ...props }, dndRef) => {
+export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
+  ({ id, isDragging, setHandleRef, style, ...props }, dndRef) => {
     const ref = useRef<HTMLDivElement>(null);
 
-  const inView = useInView(ref, {
-    once: true,
-  });
+    const inView = useInView(ref, {
+      once: true,
+    });
 
     useImperativeHandle(dndRef, () => ref.current! as HTMLDivElement);
 
-  return (
-    <div
-      ref={ref}
-      className={$(
-        "flex flex-col h-500px rounded-2xl p-4 cursor-default",
-        // "backdrop-blur-5",
-        "transition-opacity-300",
-        isDragging && "op-50",
-        `bg-${sources[id].color}-500 dark:bg-${sources[id].color} bg-op-40!`,
-      )}
-      style={{
-        transformOrigin: "50% 50%",
-        ...style,
-      }}
-      {...props}
-    >
-      {inView && <NewsCard id={id} setHandleRef={setHandleRef} />}
-    </div>
-  );
-});
+    return (
+      <div
+        ref={ref}
+        className={$(
+          "flex flex-col h-500px rounded-2xl p-4 cursor-default",
+          // "backdrop-blur-5",
+          "transition-opacity-300",
+          isDragging && "op-50",
+          `bg-${sources[id].color}-500 dark:bg-${sources[id].color} bg-op-40!`
+        )}
+        style={{
+          transformOrigin: "50% 50%",
+          ...style,
+        }}
+        {...props}
+      >
+        {inView && <NewsCard id={id} setHandleRef={setHandleRef} />}
+      </div>
+    );
+  }
+);
 
 function NewsCard({ id, setHandleRef }: NewsCardProps) {
-    const {refresh} = useRefetch();
+  const { refresh } = useRefetch();
   const { data, isFetching, isError } = useQuery({
     queryKey: ["source", id],
     queryFn: async ({ queryKey }) => {
-        const id = queryKey[1] as SourceID;
-        let url = `/s?id=${id}`;
-        const headers: Record<string, any> = {};
+      const id = queryKey[1] as SourceID;
+      let url = `/s?id=${id}`;
+      const headers: Record<string, any> = {};
       if (refetchSources.has(id)) {
-          url = `/s?id=${id}&latest`;
-          const jwt = safeParseString(localStorage.getItem("jwt"));
-          if (jwt) headers.Authorization = `Bearer ${jwt}`;
-          refetchSources.delete(id);
+        url = `/s?id=${id}&latest`;
+        const jwt = safeParseString(localStorage.getItem("jwt"));
+        if (jwt) headers.Authorization = `Bearer ${jwt}`;
+        refetchSources.delete(id);
       } else if (cacheSources.has(id)) {
         // wait animation
-          await delay(200);
-          return cacheSources.get(id);
+        await delay(200);
+        return cacheSources.get(id);
       }
 
       const response: SourceResponse = await myFetch(url, {
@@ -79,7 +81,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
         try {
           if (response.items && sources[id].type === "hottest" && cacheSources.has(id)) {
             response.items.forEach((item, i) => {
-                const o = cacheSources.get(id)!.items.findIndex(k => k.id === item.id);
+              const o = cacheSources.get(id)!.items.findIndex((k) => k.id === item.id);
               item.extra = {
                 ...item?.extra,
                 diff: o === -1 ? undefined : o - i,
@@ -87,16 +89,16 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
             });
           }
         } catch (e) {
-            console.error(e);
+          console.error(e);
         }
       }
 
-        diff();
+      diff();
 
-        cacheSources.set(id, response);
-        return response;
+      cacheSources.set(id, response);
+      return response;
     },
-    placeholderData: prev => prev,
+    placeholderData: (prev) => prev,
     staleTime: Infinity,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -104,7 +106,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
     retry: false,
   });
 
-    const {isFocused, toggleFocus} = useFocusWith(id);
+  const { isFocused, toggleFocus } = useFocusWith(id);
 
   return (
     <>
@@ -121,21 +123,27 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
           />
           <span className="flex flex-col">
             <span className="flex items-center gap-2">
-              <span
-                className="text-xl font-bold"
-                title={sources[id].desc}
-              >
+              <span className="text-xl font-bold" title={sources[id].desc}>
                 {sources[id].name}
               </span>
-              {sources[id]?.title && <span className={$("text-sm", `color-${sources[id].color} bg-base op-80 bg-op-50! px-1 rounded`)}>{sources[id].title}</span>}
+              {sources[id]?.title && (
+                <span className={$("text-sm", `color-${sources[id].color} bg-base op-80 bg-op-50! px-1 rounded`)}>
+                  {sources[id].title}
+                </span>
+              )}
             </span>
-            <span className="text-xs op-70"><UpdatedTime isError={isError} updatedTime={data?.updatedTime} /></span>
+            <span className="text-xs op-70">
+              <UpdatedTime isError={isError} updatedTime={data?.updatedTime} />
+            </span>
           </span>
         </div>
         <div className={$("flex gap-2 text-lg", `color-${sources[id].color}`)}>
           <button
             type="button"
-            className={$("btn i-ph:arrow-counter-clockwise-duotone", isFetching && "animate-spin i-ph:circle-dashed-duotone")}
+            className={$(
+              "btn i-ph:arrow-counter-clockwise-duotone",
+              isFetching && "animate-spin i-ph:circle-dashed-duotone"
+            )}
             onClick={() => refresh(id)}
           />
           <button
@@ -145,10 +153,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
           />
           {/* firefox cannot drag a button */}
           {setHandleRef && (
-            <div
-              ref={setHandleRef}
-              className={$("btn", "i-ph:dots-six-vertical-duotone", "cursor-grab")}
-            />
+            <div ref={setHandleRef} className={$("btn", "i-ph:dots-six-vertical-duotone", "cursor-grab")} />
           )}
         </div>
       </div>
@@ -156,7 +161,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
       <OverlayScrollbar
         className={$([
           "h-full p-2 overflow-y-auto rounded-2xl bg-base bg-op-70!",
-            isFetching && "animate-pulse",
+          isFetching && "animate-pulse",
           `sprinkle-${sources[id].color}`,
         ])}
         options={{
@@ -165,33 +170,38 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
         defer
       >
         <div className={$("transition-opacity-500", isFetching && "op-20")}>
-          {!!data?.items?.length && (sources[id].type === "hottest" ? <NewsListHot items={data.items} /> : <NewsListTimeLine items={data.items} />)}
+          {!!data?.items?.length &&
+            (sources[id].type === "hottest" ? (
+              <NewsListHot items={data.items} />
+            ) : (
+              <NewsListTimeLine items={data.items} />
+            ))}
         </div>
       </OverlayScrollbar>
     </>
   );
 }
 
-function UpdatedTime({ isError, updatedTime }: { updatedTime: any, isError: boolean }) {
-    const relativeTime = useRelativeTime(updatedTime ?? "");
-    if (relativeTime) return `${relativeTime}更新`;
-    if (isError) return "获取失败";
-    return "加载中...";
+function UpdatedTime({ isError, updatedTime }: { updatedTime: any; isError: boolean }) {
+  const relativeTime = useRelativeTime(updatedTime ?? "");
+  if (relativeTime) return `${relativeTime}更新`;
+  if (isError) return "获取失败";
+  return "加载中...";
 }
 
 function DiffNumber({ diff }: { diff: number }) {
-    const [shown, setShown] = useState(true);
+  const [shown, setShown] = useState(true);
   useEffect(() => {
-      setShown(true);
+    setShown(true);
     const timer = setTimeout(() => {
-        setShown(false);
+      setShown(false);
     }, 5000);
-      return () => clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [setShown, diff]);
 
   return (
     <AnimatePresence>
-      { shown && (
+      {shown && (
         <motion.span
           initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 0.5, y: -7 }}
@@ -206,13 +216,16 @@ function DiffNumber({ diff }: { diff: number }) {
 }
 function ExtraInfo({ item }: { item: NewsItem }) {
   if (item?.extra?.info) {
-      return <>{item.extra.info}</>;
+    return <>{item.extra.info}</>;
   }
   if (item?.extra?.icon) {
-      const {url, scale} = typeof item.extra.icon === "string" ? {
-          url: item.extra.icon,
-          scale: undefined
-      } : item.extra.icon;
+    const { url, scale } =
+      typeof item.extra.icon === "string"
+        ? {
+            url: item.extra.icon,
+            scale: undefined,
+          }
+        : item.extra.icon;
     return (
       <img
         src={url}
@@ -220,18 +233,18 @@ function ExtraInfo({ item }: { item: NewsItem }) {
           transform: `scale(${scale ?? 1})`,
         }}
         className="h-4 inline mt--1"
-        onError={e => e.currentTarget.style.display = "none"}
+        onError={(e) => (e.currentTarget.style.display = "none")}
       />
     );
   }
 }
 
 function NewsUpdatedTime({ date }: { date: string | number }) {
-    const relativeTime = useRelativeTime(date);
-    return <>{relativeTime}</>;
+  const relativeTime = useRelativeTime(date);
+  return <>{relativeTime}</>;
 }
 function NewsListHot({ items }: { items: NewsItem[] }) {
-    const {width} = useWindowSize();
+  const { width } = useWindowSize();
   return (
     <ol className="flex flex-col gap-2">
       {items?.map((item, i) => (
@@ -242,7 +255,7 @@ function NewsListHot({ items }: { items: NewsItem[] }) {
           title={item.extra?.hover}
           className={$(
             "flex gap-2 items-center items-stretch relative cursor-pointer [&_*]:cursor-pointer transition-all",
-            "hover:bg-neutral-400/10 rounded-md pr-1 visited:(text-neutral-400)",
+            "hover:bg-neutral-400/10 rounded-md pr-1 visited:(text-neutral-400)"
           )}
         >
           <span className={$("bg-neutral-400/10 min-w-6 flex justify-center items-center rounded-md text-sm")}>
@@ -250,9 +263,7 @@ function NewsListHot({ items }: { items: NewsItem[] }) {
           </span>
           {!!item.extra?.diff && <DiffNumber diff={item.extra.diff} />}
           <span className="self-start line-height-none">
-            <span className="mr-2 text-base">
-              {item.title}
-            </span>
+            <span className="mr-2 text-base">{item.title}</span>
             <span className="text-xs text-neutral-400/80 truncate align-middle">
               <ExtraInfo item={item} />
             </span>
@@ -264,10 +275,10 @@ function NewsListHot({ items }: { items: NewsItem[] }) {
 }
 
 function NewsListTimeLine({ items }: { items: NewsItem[] }) {
-    const {width} = useWindowSize();
+  const { width } = useWindowSize();
   return (
     <ol className="border-s border-neutral-400/50 flex flex-col ml-1">
-      {items?.map(item => (
+      {items?.map((item) => (
         <li key={`${item.id}-${item.pubDate || item?.extra?.date || ""}`} className="flex flex-col">
           <span className="flex items-center gap-1 text-neutral-400/50 ml--1px">
             <span className="">-</span>
@@ -281,7 +292,7 @@ function NewsListTimeLine({ items }: { items: NewsItem[] }) {
           <a
             className={$(
               "ml-2 px-1 hover:bg-neutral-400/10 rounded-md visited:(text-neutral-400/80)",
-              "cursor-pointer [&_*]:cursor-pointer transition-all",
+              "cursor-pointer [&_*]:cursor-pointer transition-all"
             )}
             href={width < 768 ? item.mobileUrl || item.url : item.url}
             title={item.extra?.hover}

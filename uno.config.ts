@@ -1,7 +1,7 @@
-import {hex2rgba} from "@unocss/rule-utils";
-import {presetIcons, presetWind3, defineConfig, transformerDirectives, transformerVariantGroup} from "unocss";
+import { hex2rgba } from "@unocss/rule-utils";
+import { presetIcons, presetWind3, defineConfig, transformerDirectives, transformerVariantGroup } from "unocss";
 
-import {sources} from "./shared/sources";
+import { sources } from "./shared/sources";
 
 export default defineConfig({
   mergeSelectors: false,
@@ -13,17 +13,20 @@ export default defineConfig({
     }),
   ],
   rules: [
-    [/^sprinkle-(.+)$/, ([_, d], { theme }) => {
-      // @ts-expect-error >_<
+    [
+      /^sprinkle-(.+)$/,
+      ([_, d], { theme }) => {
+        // @ts-expect-error >_<
         const hex: any = theme.colors?.[d]?.[400];
-      if (hex) {
-        return {
-          "background-image": `radial-gradient(ellipse 80% 80% at 50% -30%,
+        if (hex) {
+          return {
+            "background-image": `radial-gradient(ellipse 80% 80% at 50% -30%,
          rgba(${hex2rgba(hex)?.join(", ")}, 0.3), rgba(255, 255, 255, 0));`,
-        };
-      }
+          };
+        }
         return undefined;
-    }],
+      },
+    ],
     [
       "font-brand",
       {
@@ -35,17 +38,22 @@ export default defineConfig({
   shortcuts: {
     "color-base": "color-neutral-800 dark:color-neutral-300",
     "bg-base": "bg-zinc-200 dark:bg-dark-600",
-    "btn": "op50 hover:op85 cursor-pointer transition-all",
+    btn: "op50 hover:op85 cursor-pointer transition-all",
   },
   safelist: [
-    ...["orange", ...new Set(Object.values(sources).map(k => k.color))].map(k =>
-      `bg-${k} color-${k} border-${k} sprinkle-${k} shadow-${k}
+    ...["orange", ...new Set(Object.values(sources).map((k) => k.color))]
+      .map((k) =>
+        `bg-${k} color-${k} border-${k} sprinkle-${k} shadow-${k}
        bg-${k}-500 color-${k}-500
-       dark:bg-${k} dark:color-${k}`.trim().split(/\s+/)).flat(),
+       dark:bg-${k} dark:color-${k}`
+          .trim()
+          .split(/\s+/)
+      )
+      .flat(),
   ],
   extendTheme: (theme) => {
     // @ts-expect-error >_<
-      theme.colors.primary = theme.colors.red;
-      return theme;
+    theme.colors.primary = theme.colors.red;
+    return theme;
   },
 });

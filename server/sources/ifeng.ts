@@ -8,9 +8,9 @@ export default defineSource(async () => {
   if (match) {
       const realData = JSON.parse(match[1]);
     const rawNews = realData.hotNews1 as {
-      url: string
-      title: string
-      newsTime: string
+        url: string;
+        title: string;
+        newsTime: string;
     }[];
     rawNews.forEach((hotNews) => {
       news.push({

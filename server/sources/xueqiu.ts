@@ -1,16 +1,14 @@
 interface StockRes {
   data: {
-    items:
-    {
-      code: string
-      name: string
-      percent: number
-      exchange: string
+    items: {
+      code: string;
+      name: string;
+      percent: number;
+      exchange: string;
       // 1
-      ad: number
-    }[]
-
-  }
+      ad: number;
+    }[];
+  };
 }
 
 const hotstock = defineSource(async () => {
@@ -21,17 +19,19 @@ const hotstock = defineSource(async () => {
       cookie: cookie.join("; "),
     },
   });
-  return res.data.items.filter(k => !k.ad).map(k => ({
-    id: k.code,
-    url: `https://xueqiu.com/s/${k.code}`,
-    title: k.name,
-    extra: {
-      info: `${k.percent}% ${k.exchange}`,
-    },
-  }));
+  return res.data.items
+    .filter((k) => !k.ad)
+    .map((k) => ({
+      id: k.code,
+      url: `https://xueqiu.com/s/${k.code}`,
+      title: k.name,
+      extra: {
+        info: `${k.percent}% ${k.exchange}`,
+      },
+    }));
 });
 
 export default defineSource({
-  "xueqiu": hotstock,
+  xueqiu: hotstock,
   "xueqiu-hotstock": hotstock,
 });

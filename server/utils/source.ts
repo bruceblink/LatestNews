@@ -1,21 +1,22 @@
-import type {AllSourceID} from "@shared/types";
-import type {RSSHubOption, SourceGetter, SourceOption, RSSHubInfo as RSSHubResponse} from "#/types";
+import type { AllSourceID } from "@shared/types";
+import type { RSSHubOption, SourceGetter, SourceOption, RSSHubInfo as RSSHubResponse } from "#/types";
 
 import defu from "defu";
 import process from "node:process";
 
-type R = Partial<Record<AllSourceID, SourceGetter>>
-export function defineSource(source: SourceGetter): SourceGetter
-export function defineSource(source: R): R
+type R = Partial<Record<AllSourceID, SourceGetter>>;
+
+export function defineSource(source: SourceGetter): SourceGetter;
+export function defineSource(source: R): R;
 export function defineSource(source: SourceGetter | R): SourceGetter | R {
-    return source;
+  return source;
 }
 
 export function defineRSSSource(url: string, option?: SourceOption): SourceGetter {
   return async () => {
-      const data = await rss2json(url);
-      if (!data?.items.length) throw new Error("Cannot fetch rss data");
-    return data.items.map(item => ({
+    const data = await rss2json(url);
+    if (!data?.items.length) throw new Error("Cannot fetch rss data");
+    return data.items.map((item) => ({
       title: item.title,
       url: item.link,
       id: item.link,
@@ -24,21 +25,25 @@ export function defineRSSSource(url: string, option?: SourceOption): SourceGette
   };
 }
 
-export function defineRSSHubSource(route: string, RSSHubOptions?: RSSHubOption, sourceOption?: SourceOption): SourceGetter {
+export function defineRSSHubSource(
+  route: string,
+  RSSHubOptions?: RSSHubOption,
+  sourceOption?: SourceOption
+): SourceGetter {
   return async () => {
     // "https://rsshub.pseudoyu.com"
-      const RSSHubBase = "https://rsshub.rssforever.com";
-      const url = new URL(route, RSSHubBase);
-      url.searchParams.set("format", "json");
+    const RSSHubBase = "https://rsshub.rssforever.com";
+    const url = new URL(route, RSSHubBase);
+    url.searchParams.set("format", "json");
     RSSHubOptions = defu<RSSHubOption, RSSHubOption[]>(RSSHubOptions, {
       sorted: true,
     });
 
     Object.entries(RSSHubOptions).forEach(([key, value]) => {
-        url.searchParams.set(key, value.toString());
+      url.searchParams.set(key, value.toString());
     });
-      const data: RSSHubResponse = await myFetch(url);
-    return data.items.map(item => ({
+    const data: RSSHubResponse = await myFetch(url);
+    return data.items.map((item) => ({
       title: item.title,
       url: item.url,
       id: item.id ?? item.url,
@@ -50,8 +55,8 @@ export function defineRSSHubSource(route: string, RSSHubOptions?: RSSHubOption, 
 export function proxySource(proxyUrl: string, source: SourceGetter) {
   return process.env.CF_PAGES
     ? defineSource(async () => {
-          const data = await myFetch(proxyUrl);
-          return data.items;
+        const data = await myFetch(proxyUrl);
+        return data.items;
       })
-      : source;
+    : source;
 }

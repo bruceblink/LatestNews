@@ -9,21 +9,24 @@ export function useRefetch() {
   /**
    * force refresh
    */
-  const refresh = useCallback((...sources: SourceID[]) => {
-    if (enableLogin && !loggedIn) {
-      toaster("登录后可以强制拉取最新数据", {
-        type: "warning",
-        action: {
-          label: "登录",
-          onClick: login,
-        },
-      });
-    } else {
+  const refresh = useCallback(
+      (...sources: SourceID[]) => {
+          if (enableLogin && !loggedIn) {
+              toaster("登录后可以强制拉取最新数据", {
+                  type: "warning",
+                  action: {
+                      label: "登录",
+                      onClick: login,
+                  },
+              });
+          } else {
         refetchSources.clear();
-        sources.forEach(id => refetchSources.add(id));
+              sources.forEach((id) => refetchSources.add(id));
         updateQuery(...sources);
-    }
-  }, [loggedIn, toaster, login, enableLogin, updateQuery]);
+          }
+      },
+      [loggedIn, toaster, login, enableLogin, updateQuery]
+  );
 
   return {
     refresh,

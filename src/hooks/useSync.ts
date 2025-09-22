@@ -1,10 +1,10 @@
-import type {PrimitiveMetadata} from "@shared/types";
+import type { PrimitiveMetadata } from "@shared/types";
 
-import {safeParseString} from "~/utils";
-import {useMount, useDebounce} from "react-use";
+import { safeParseString } from "~/utils";
+import { useMount, useDebounce } from "react-use";
 
-import {useLogin} from "./useLogin";
-import {useToast} from "./useToast";
+import { useLogin } from "./useLogin";
+import { useToast } from "./useToast";
 
 async function uploadMetadata(metadata: PrimitiveMetadata) {
   const jwt = safeParseString(localStorage.getItem("jwt"));
@@ -24,11 +24,11 @@ async function uploadMetadata(metadata: PrimitiveMetadata) {
 async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
   const jwt = safeParseString(localStorage.getItem("jwt"));
   if (!jwt) return;
-  const { data, updatedTime } = await myFetch("/me/sync", {
+  const { data, updatedTime } = (await myFetch("/me/sync", {
     headers: {
       Authorization: `Bearer ${jwt}`,
     },
-  }) as PrimitiveMetadata;
+  })) as PrimitiveMetadata;
   // 不用同步 action 字段
   if (data) {
     return {
@@ -41,31 +41,35 @@ async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
 
 export function useSync() {
   const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
-  const {logout, login} = useLogin();
+  const { logout, login } = useLogin();
   const toaster = useToast();
 
-  useDebounce(async () => {
-    const fn = async () => {
-      try {
-        await uploadMetadata(primitiveMetadata);
-      } catch (e: any) {
-        if (e.statusCode !== 506) {
-          toaster("身份校验失败，无法同步，请重新登录", {
-            type: "error",
-            action: {
-              label: "登录",
-              onClick: login,
-            },
-          });
-          logout();
+  useDebounce(
+    async () => {
+      const fn = async () => {
+        try {
+          await uploadMetadata(primitiveMetadata);
+        } catch (e: any) {
+          if (e.statusCode !== 506) {
+            toaster("身份校验失败，无法同步，请重新登录", {
+              type: "error",
+              action: {
+                label: "登录",
+                onClick: login,
+              },
+            });
+            logout();
+          }
         }
-      }
-    };
+      };
 
-    if (primitiveMetadata.action === "manual") {
-      fn();
-    }
-  }, 10000, [primitiveMetadata]);
+      if (primitiveMetadata.action === "manual") {
+        fn();
+      }
+    },
+    10000,
+    [primitiveMetadata]
+  );
   useMount(() => {
     const fn = async () => {
       try {

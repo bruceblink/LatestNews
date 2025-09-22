@@ -12,7 +12,7 @@ export function getServer() {
       name: "NewsNow",
       version: packageJSON.version,
     },
-    { capabilities: { logging: {} } },
+      {capabilities: {logging: {}}}
   );
 
   server.tool(
@@ -31,11 +31,11 @@ export function getServer() {
         const res: SourceResponse = await $fetch(`/api/s?id=${id}`);
       return {
           content: res.items.slice(0, count).map((item) => ({
-            text: `[${item.title}](${item.url})`,
-            type: "text",
+              text: `[${item.title}](${item.url})`,
+              type: "text",
           })),
       };
-    },
+    }
   );
 
     server.server.onerror = console.error.bind(console);

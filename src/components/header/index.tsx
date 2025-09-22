@@ -1,15 +1,15 @@
-import type {SourceID} from "@shared/types";
+import type { SourceID } from "@shared/types";
 
-import {ProjectUrl} from "@shared/consts";
-import {Link} from "@tanstack/react-router";
-import {useIsFetching} from "@tanstack/react-query";
-import {goToTopAtom, currentSourcesAtom} from "~/atoms";
+import { ProjectUrl } from "@shared/consts";
+import { Link } from "@tanstack/react-router";
+import { useIsFetching } from "@tanstack/react-query";
+import { goToTopAtom, currentSourcesAtom } from "~/atoms";
 
-import {Menu} from "./menu";
-import {NavBar} from "../navbar";
+import { Menu } from "./menu";
+import { NavBar } from "../navbar";
 
 function GoTop() {
-    const {ok, fn: goToTop} = useAtomValue(goToTopAtom);
+  const { ok, fn: goToTop } = useAtomValue(goToTopAtom);
   return (
     <button
       type="button"
@@ -22,20 +22,24 @@ function GoTop() {
 
 function Github() {
   return (
-      <button type="button" title="Github" className="i-ph:github-logo-duotone btn"
-              onClick={() => window.open(ProjectUrl)}/>
+    <button
+      type="button"
+      title="Github"
+      className="i-ph:github-logo-duotone btn"
+      onClick={() => window.open(ProjectUrl)}
+    />
   );
 }
 
 function Refresh() {
-    const currentSources = useAtomValue(currentSourcesAtom);
-    const {refresh} = useRefetch();
-    const refreshAll = useCallback(() => refresh(...currentSources), [refresh, currentSources]);
+  const currentSources = useAtomValue(currentSourcesAtom);
+  const { refresh } = useRefetch();
+  const refreshAll = useCallback(() => refresh(...currentSources), [refresh, currentSources]);
 
   const isFetching = useIsFetching({
     predicate: (query) => {
-        const [type, id] = query.queryKey as ["source" | "entire", SourceID];
-        return (type === "source" && currentSources.includes(id)) || type === "entire";
+      const [type, id] = query.queryKey as ["source" | "entire", SourceID];
+      return (type === "source" && currentSources.includes(id)) || type === "entire";
     },
   });
 

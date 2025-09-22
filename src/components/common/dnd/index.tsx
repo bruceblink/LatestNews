@@ -9,11 +9,12 @@ import {autoScrollForElements} from "@atlaskit/pragmatic-drag-and-drop-auto-scro
 import {InstanceIdContext} from "./useSortable";
 
 interface ContextProps extends Partial<AllEvents<ElementDragType>> {
-  autoscroll?: ElementAutoScrollArgs<ElementDragType>
+    autoscroll?: ElementAutoScrollArgs<ElementDragType>;
 }
 export function DndContext({ children, autoscroll, ...callback }: PropsWithChildren<ContextProps>) {
     const [instanceId] = useState<string>(randomUUID());
-    useEffect(() => (
+    useEffect(
+        () =>
       combine(
         monitorForElements({
           canMonitor({ source }) {
@@ -21,12 +22,10 @@ export function DndContext({ children, autoscroll, ...callback }: PropsWithChild
           },
           ...callback,
         }),
-        autoscroll ? autoScrollForElements(autoscroll) : () => { },
-      )
-    ), [callback, instanceId, autoscroll]);
-  return (
-    <InstanceIdContext.Provider value={instanceId}>
-      {children}
-    </InstanceIdContext.Provider>
+          autoscroll ? autoScrollForElements(autoscroll) : () => {
+          }
+      ),
+        [callback, instanceId, autoscroll]
   );
+    return <InstanceIdContext.Provider value={instanceId}>{children}</InstanceIdContext.Provider>;
 }

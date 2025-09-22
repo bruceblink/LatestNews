@@ -1,8 +1,8 @@
-import {join} from "node:path";
+import { join } from "node:path";
 import unimport from "unimport/unplugin";
-import {defineConfig} from "vitest/config";
+import { defineConfig } from "vitest/config";
 
-import {projectDir} from "./shared/dir";
+import { projectDir } from "./shared/dir";
 
 export default defineConfig({
   test: {
@@ -23,7 +23,7 @@ export default defineConfig({
       presets: [
         {
           package: "h3",
-          ignore: [/^[A-Z]/, r => r === "use"],
+          ignore: [/^[A-Z]/, (r) => r === "use"],
         },
       ],
       dirs: ["server/utils", "shared"],

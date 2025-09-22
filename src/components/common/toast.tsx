@@ -1,19 +1,19 @@
-import type {ToastItem} from "~/atoms/types";
+import type { ToastItem } from "~/atoms/types";
 
-import {Timer} from "~/utils";
-import {useMount, useWindowSize} from "react-use";
-import {useRef, useMemo, useCallback} from "react";
-import {useAutoAnimate} from "@formkit/auto-animate/react";
+import { Timer } from "~/utils";
+import { useMount, useWindowSize } from "react-use";
+import { useRef, useMemo, useCallback } from "react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 const WIDTH = 320;
 export function Toast() {
-    const {width} = useWindowSize();
+  const { width } = useWindowSize();
   const center = useMemo(() => {
-      const t = (width - WIDTH) / 2;
-      return t > width * 0.9 ? width * 0.9 : t;
+    const t = (width - WIDTH) / 2;
+    return t > width * 0.9 ? width * 0.9 : t;
   }, [width]);
-    const toastItems = useAtomValue(toastAtom);
-    const [parent] = useAutoAnimate({duration: 200});
+  const toastItems = useAtomValue(toastAtom);
+  const [parent] = useAutoAnimate({ duration: 200 });
   return (
     <ol
       ref={parent}
@@ -23,9 +23,9 @@ export function Toast() {
       }}
       className="absolute top-4 z-99 flex flex-col gap-2"
     >
-      {
-        toastItems.map(k => <Item key={k.id} info={k} />)
-      }
+      {toastItems.map((k) => (
+        <Item key={k.id} info={k} />
+      ))}
     </ol>
   );
 }
@@ -38,55 +38,59 @@ const colors = {
 };
 
 function Item({ info }: { info: ToastItem }) {
-    const color = colors[info.type ?? "info"];
-    const setToastItems = useSetAtom(toastAtom);
-  const hidden = useCallback((dismiss = true) => {
-      setToastItems(prev => prev.filter(k => k.id !== info.id));
-    if (dismiss) {
+  const color = colors[info.type ?? "info"];
+  const setToastItems = useSetAtom(toastAtom);
+  const hidden = useCallback(
+    (dismiss = true) => {
+      setToastItems((prev) => prev.filter((k) => k.id !== info.id));
+      if (dismiss) {
         info.onDismiss?.();
-    }
-  }, [info, setToastItems]);
-    // @ts-ignore
-    const timer = useRef<Timer>();
+      }
+    },
+    [info, setToastItems]
+  );
+  // @ts-ignore
+  const timer = useRef<Timer>();
 
   useMount(() => {
     timer.current = new Timer(() => {
-        hidden();
+      hidden();
     }, info.duration ?? 5000);
-      return () => timer.current?.clear();
+    return () => timer.current?.clear();
   });
 
-    const [hoverd, setHoverd] = useState(false);
+  const [hoverd, setHoverd] = useState(false);
   useEffect(() => {
     if (hoverd) {
-        timer.current?.pause();
+      timer.current?.pause();
     } else {
-        timer.current?.resume();
+      timer.current?.resume();
     }
   }, [hoverd]);
 
   return (
     <li
-      className={$(
-        "bg-base rounded-lg shadow-xl relative",
-      )}
+      className={$("bg-base rounded-lg shadow-xl relative")}
       onMouseEnter={() => setHoverd(true)}
       onMouseLeave={() => setHoverd(false)}
     >
-      <div className={$(
-        `bg-${color}-500 dark:bg-${color} bg-op-40! p2 backdrop-blur-5 rounded-lg w-full`,
-        "flex items-center gap-2",
-      )}
+      <div
+        className={$(
+          `bg-${color}-500 dark:bg-${color} bg-op-40! p2 backdrop-blur-5 rounded-lg w-full`,
+          "flex items-center gap-2"
+        )}
       >
-        {
-          hoverd
-            ? <button type="button" className={`i-ph:x-circle color-${color}-500 i-ph:info`} onClick={() => hidden(false)} />
-            : <span className={`i-ph:info color-${color}-500 `} />
-        }
+        {hoverd ? (
+          <button
+            type="button"
+            className={`i-ph:x-circle color-${color}-500 i-ph:info`}
+            onClick={() => hidden(false)}
+          />
+        ) : (
+          <span className={`i-ph:info color-${color}-500 `} />
+        )}
         <div className="flex justify-between w-full">
-          <span className="op-90 dark:op-100">
-            {info.msg}
-          </span>
+          <span className="op-90 dark:op-100">{info.msg}</span>
           {info.action && (
             <button
               type="button"

@@ -1,8 +1,8 @@
-import type {NewsItem} from "@shared/types";
+import type { NewsItem } from "@shared/types";
 
 import iconv from "iconv-lite";
 import * as cheerio from "cheerio";
-import {Buffer} from "node:buffer";
+import { Buffer } from "node:buffer";
 
 export default defineSource(async () => {
   const response: ArrayBuffer = await myFetch("https://www.zaochenbao.com/realtime/", {
@@ -27,5 +27,5 @@ export default defineSource(async () => {
       });
     }
   });
-  return news.sort((m, n) => n.pubDate! > m.pubDate! ? 1 : -1);
+  return news.sort((m, n) => (n.pubDate! > m.pubDate! ? 1 : -1));
 });

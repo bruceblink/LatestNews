@@ -1,10 +1,10 @@
 interface Res {
   data: {
     content: {
-      title: string
-      content_id: string
-    }
-  }[]
+        title: string;
+        content_id: string;
+    };
+  }[];
 }
 
 export default defineSource(async () => {

@@ -14,7 +14,7 @@ export default defineSource(async () => {
       const title = $a.text();
       const date = $(el).find("i").text();
     if (url && title && date) {
-        const isAd = url?.includes("lapin") || ["神券", "优惠", "补贴", "京东"].find(k => title.includes(k));
+        const isAd = url?.includes("lapin") || ["神券", "优惠", "补贴", "京东"].find((k) => title.includes(k));
       if (!isAd) {
         news.push({
           url,
@@ -25,5 +25,5 @@ export default defineSource(async () => {
       }
     }
   });
-    return news.sort((m, n) => n.pubDate! > m.pubDate! ? 1 : -1);
+    return news.sort((m, n) => (n.pubDate! > m.pubDate! ? 1 : -1));
 });

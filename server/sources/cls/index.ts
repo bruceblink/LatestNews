@@ -1,30 +1,30 @@
 import {getSearchParams} from "./utils";
 
 interface Item {
-  id: number
-  title?: string
-  brief: string
-  shareurl: string
+    id: number;
+    title?: string;
+    brief: string;
+    shareurl: string;
   // need *1000
-  ctime: number
+    ctime: number;
   // 1
-  is_ad: number
+    is_ad: number;
 }
 interface TelegraphRes {
   data: {
-    roll_data: Item[]
-  }
+      roll_data: Item[];
+  };
 }
 
 interface Depthes {
   data: {
-    top_article: Item[]
-    depth_list: Item[]
-  }
+      top_article: Item[];
+      depth_list: Item[];
+  };
 }
 
 interface Hot {
-  data: Item[]
+    data: Item[];
 }
 
 const depth = defineSource(async () => {
@@ -32,15 +32,17 @@ const depth = defineSource(async () => {
   const res: Depthes = await myFetch(apiUrl, {
     query: Object.fromEntries(await getSearchParams()),
   });
-  return res.data.depth_list.sort((m, n) => n.ctime - m.ctime).map((k) => {
-    return {
-      id: k.id,
-      title: k.title || k.brief,
-      mobileUrl: k.shareurl,
-      pubDate: k.ctime * 1000,
-      url: `https://www.cls.cn/detail/${k.id}`,
-    };
-  });
+    return res.data.depth_list
+        .sort((m, n) => n.ctime - m.ctime)
+        .map((k) => {
+            return {
+                id: k.id,
+                title: k.title || k.brief,
+                mobileUrl: k.shareurl,
+                pubDate: k.ctime * 1000,
+                url: `https://www.cls.cn/detail/${k.id}`,
+            };
+        });
 });
 
 const hot = defineSource(async () => {
@@ -63,19 +65,21 @@ const telegraph = defineSource(async () => {
   const res: TelegraphRes = await myFetch(apiUrl, {
     query: Object.fromEntries(await getSearchParams()),
   });
-  return res.data.roll_data.filter(k => !k.is_ad).map((k) => {
-    return {
-      id: k.id,
-      title: k.title || k.brief,
-      mobileUrl: k.shareurl,
-      pubDate: k.ctime * 1000,
-      url: `https://www.cls.cn/detail/${k.id}`,
-    };
-  });
+    return res.data.roll_data
+        .filter((k) => !k.is_ad)
+        .map((k) => {
+            return {
+                id: k.id,
+                title: k.title || k.brief,
+                mobileUrl: k.shareurl,
+                pubDate: k.ctime * 1000,
+                url: `https://www.cls.cn/detail/${k.id}`,
+            };
+        });
 });
 
 export default defineSource({
-  "cls": telegraph,
+    cls: telegraph,
   "cls-telegraph": telegraph,
   "cls-depth": depth,
   "cls-hot": hot,

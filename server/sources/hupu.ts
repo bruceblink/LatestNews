@@ -1,8 +1,8 @@
 interface HotItem {
-  id: string
-  title: string
-  url: string
-  mobileUrl: string
+    id: string;
+    title: string;
+    url: string;
+    mobileUrl: string;
 }
 
 export default defineSource(async () => {
@@ -10,7 +10,8 @@ export default defineSource(async () => {
     const html = await myFetch("https://bbs.hupu.com/topic-daily-hot");
 
   // 正则表达式匹配新的热榜项结构
-    const regex = /<li class="bbs-sl-web-post-body">[\s\S]*?<a href="(\/[^"]+?\.html)"[^>]*?class="p-title"[^>]*>([^<]+)<\/a>/g;
+    const regex =
+        /<li class="bbs-sl-web-post-body">[\s\S]*?<a href="(\/[^"]+?\.html)"[^>]*?class="p-title"[^>]*>([^<]+)<\/a>/g;
 
     const result: HotItem[] = [];
     let match;

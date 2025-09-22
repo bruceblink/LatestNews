@@ -20,12 +20,12 @@ if (!rootElement.innerHTML) {
   root.render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 }
 
 declare module "@tanstack/react-router" {
   interface Register {
-    router: typeof router
+      router: typeof router;
   }
 }

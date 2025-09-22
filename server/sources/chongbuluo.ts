@@ -27,7 +27,7 @@ const hot = defineSource(async () => {
 const latest = defineRSSSource("https://www.chongbuluo.com/forum.php?mod=rss&view=newthread");
 
 export default defineSource({
-  "chongbuluo": hot,
+    chongbuluo: hot,
   "chongbuluo-hot": hot,
   "chongbuluo-latest": latest,
 });

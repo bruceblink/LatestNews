@@ -47,9 +47,20 @@ export async function rss2json(url: string): Promise<RSSInfo | undefined> {
       enclosures: val.enclosure ? (Array.isArray(val.enclosure) ? val.enclosure : [val.enclosure]) : [],
     };
 
-    ["content:encoded", "podcast:transcript", "itunes:summary", "itunes:author", "itunes:explicit", "itunes:duration", "itunes:season", "itunes:episode", "itunes:episodeType", "itunes:image"].forEach((s) => {
+      [
+          "content:encoded",
+          "podcast:transcript",
+          "itunes:summary",
+          "itunes:author",
+          "itunes:explicit",
+          "itunes:duration",
+          "itunes:season",
+          "itunes:episode",
+          "itunes:episodeType",
+          "itunes:image",
+      ].forEach((s) => {
       // @ts-expect-error TODO
-        if (val[s]) obj[s.replace(":", "_")] = val[s];
+          if (val[s]) obj[s.replace(":", "_")] = val[s];
     });
 
     if (val["media:thumbnail"]) {

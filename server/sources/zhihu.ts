@@ -1,52 +1,51 @@
 interface Res {
   data: {
-    type: "hot_list_feed"
-    style_type: "1"
+    type: "hot_list_feed";
+    style_type: "1";
     feed_specific: {
-      answer_count: 411
-    }
+      answer_count: 411;
+    };
     target: {
       title_area: {
-        text: string
-      }
+        text: string;
+      };
       excerpt_area: {
-        text: string
-      }
+        text: string;
+      };
       image_area: {
-        url: string
-      }
+        url: string;
+      };
       metrics_area: {
-        text: string
-        font_color: string
-        background: string
-        weight: string
-      }
+        text: string;
+        font_color: string;
+        background: string;
+        weight: string;
+      };
       label_area: {
-        type: "trend"
-        trend: number
-        night_color: string
-        normal_color: string
-      }
+        type: "trend";
+        trend: number;
+        night_color: string;
+        normal_color: string;
+      };
       link: {
-        url: string
-      }
-    }
-  }[]
+        url: string;
+      };
+    };
+  }[];
 }
 
 export default defineSource({
   zhihu: async () => {
-      const url = "https://www.zhihu.com/api/v3/feed/topstory/hot-list-web?limit=20&desktop=true";
-      const res: Res = await myFetch(url);
-    return res.data
-        .map((k) => ({
-          id: k.target.link.url.match(/(\d+)$/)?.[1] ?? k.target.link.url,
-          title: k.target.title_area.text,
-          extra: {
-            info: k.target.metrics_area.text,
-            hover: k.target.excerpt_area.text,
-          },
-          url: k.target.link.url,
-        }));
+    const url = "https://www.zhihu.com/api/v3/feed/topstory/hot-list-web?limit=20&desktop=true";
+    const res: Res = await myFetch(url);
+    return res.data.map((k) => ({
+      id: k.target.link.url.match(/(\d+)$/)?.[1] ?? k.target.link.url,
+      title: k.target.title_area.text,
+      extra: {
+        info: k.target.metrics_area.text,
+        hover: k.target.excerpt_area.text,
+      },
+      url: k.target.link.url,
+    }));
   },
 });

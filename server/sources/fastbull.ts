@@ -49,10 +49,8 @@ const news = defineSource(async () => {
     return news;
 });
 
-export default defineSource(
-  {
-    "fastbull": express,
+export default defineSource({
+    fastbull: express,
     "fastbull-express": express,
     "fastbull-news": news,
-  },
-);
+});

@@ -9,34 +9,31 @@ export default defineEventHandler(async (event) => {
     if (process.env.INIT_TABLE !== "false") await userTable.init();
 
   const response: {
-    access_token: string
-    token_type: string
-    scope: string
-  } = await myFetch(
-      "https://github.com/login/oauth/access_token",
-    {
+      access_token: string;
+      token_type: string;
+      scope: string;
+  } = await myFetch("https://github.com/login/oauth/access_token", {
       method: "POST",
       body: {
-        client_id: process.env.G_CLIENT_ID,
-        client_secret: process.env.G_CLIENT_SECRET,
-        code: getQuery(event).code,
+          client_id: process.env.G_CLIENT_ID,
+          client_secret: process.env.G_CLIENT_SECRET,
+          code: getQuery(event).code,
       },
       headers: {
-        accept: "application/json",
+          accept: "application/json",
       },
-    },
-  );
+  });
 
   const userInfo: {
-    id: number
-    name: string
-    avatar_url: string
-    email: string
-    notification_email: string
+      id: number;
+      name: string;
+      avatar_url: string;
+      email: string;
+      notification_email: string;
   } = await myFetch("https://api.github.com/user", {
     headers: {
-      "Accept": "application/vnd.github+json",
-      "Authorization": `token ${response.access_token}`,
+        Accept: "application/vnd.github+json",
+        Authorization: `token ${response.access_token}`,
       // 必须有 user-agent，在 cloudflare worker 会报错
       "User-Agent": "NewsNow App",
     },

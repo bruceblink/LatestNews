@@ -8,7 +8,9 @@ export class UserTable {
   }
 
   async init() {
-    await this.db.prepare(`
+      await this.db
+          .prepare(
+              `
       CREATE TABLE IF NOT EXISTS user (
         id TEXT PRIMARY KEY,
         email TEXT,
@@ -17,10 +19,16 @@ export class UserTable {
         created INTEGER,
         updated INTEGER
       );
-    `).run();
-    await this.db.prepare(`
+              `
+          )
+          .run();
+      await this.db
+          .prepare(
+              `
       CREATE INDEX IF NOT EXISTS idx_user_id ON user(id);
-    `).run();
+              `
+          )
+          .run();
       logger.success("init user table");
   }
 
@@ -28,7 +36,8 @@ export class UserTable {
       const u = await this.getUser(id);
       const now = Date.now();
     if (!u) {
-        await this.db.prepare("INSERT INTO user (id, email, data, type, created, updated) VALUES (?, ?, ?, ?, ?, ?)")
+        await this.db
+            .prepare("INSERT INTO user (id, email, data, type, created, updated) VALUES (?, ?, ?, ?, ?, ?)")
             .run(id, email, "", type, now, now);
         logger.success(`add user ${id}`);
     } else if (u.email !== email && u.type !== type) {
@@ -40,13 +49,15 @@ export class UserTable {
   }
 
   async getUser(id: string) {
-      return (await this.db.prepare("SELECT id, email, data, created, updated FROM user WHERE id = ?").get(id)) as UserInfo;
+      return (await this.db
+          .prepare("SELECT id, email, data, created, updated FROM user WHERE id = ?")
+          .get(id)) as UserInfo;
   }
 
   async setData(key: string, value: string, updatedTime = Date.now()) {
-    const state = await this.db.prepare(
-        "UPDATE user SET data = ?, updated = ? WHERE id = ?",
-    ).run(value, updatedTime, key);
+      const state = await this.db
+          .prepare("UPDATE user SET data = ?, updated = ? WHERE id = ?")
+          .run(value, updatedTime, key);
       if (!state.success) throw new Error(`set user ${key} data failed`);
       logger.success(`set ${key} data`);
   }
@@ -56,8 +67,8 @@ export class UserTable {
       if (!row) throw new Error(`user ${id} not found`);
       logger.success(`get ${id} data`);
     return row as {
-      data: string
-      updated: number
+        data: string;
+        updated: number;
     };
   }
 

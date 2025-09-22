@@ -1,8 +1,8 @@
 interface Res {
   data: {
-    id: number
-    title: string
-  }[]
+      id: number;
+      title: string;
+  }[];
 }
 
 export default defineSource(async () => {
