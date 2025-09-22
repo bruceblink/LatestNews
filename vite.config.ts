@@ -7,8 +7,8 @@ import react from "@vitejs/plugin-react-swc";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 
 import pwa from "./pwa.config";
-import nitro from "./nitro.config";
 import { projectDir } from "./shared/dir";
+import initVoteNitro from "./nitro.config";
 
 dotenv.config({
   path: join(projectDir, ".env.server"),
@@ -44,6 +44,6 @@ export default defineConfig({
     unocss(),
     react(),
     pwa(),
-    nitro(),
+    initVoteNitro(),
   ],
 });

@@ -1,16 +1,16 @@
-import {join} from "node:path";
+import { join } from "node:path";
 import process from "node:process";
 import viteNitro from "vite-plugin-with-nitro";
 
-import {projectDir} from "./shared/dir";
-import {RollopGlob} from "./tools/rollup-glob";
+import { projectDir } from "./shared/dir";
+import { RollopGlob } from "./tools/rollup-glob";
 
 const nitroOption: Parameters<typeof viteNitro>[0] = {
   experimental: {
     database: true,
   },
   rollupConfig: {
-    plugins: [RollopGlob()],
+    plugins: [RollopGlob()] as any,
   },
   sourceMap: false,
   database: {
@@ -66,6 +66,6 @@ if (process.env.VERCEL) {
   };
 }
 
-export default function () {
+export default function initVoteNitro() {
   return viteNitro(nitroOption);
 }
