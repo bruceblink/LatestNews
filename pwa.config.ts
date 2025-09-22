@@ -3,12 +3,14 @@ import type { VitePWAOptions } from "vite-plugin-pwa";
 import process from "node:process";
 import { VitePWA } from "vite-plugin-pwa";
 
+const APP_TITLE = process.env.VITE_APP_TITLE || "LatestNews";
+
 const pwaOption: Partial<VitePWAOptions> = {
   includeAssets: ["icon.svg", "apple-touch-icon.png"],
   filename: "swx.js",
   manifest: {
-    name: "NewsNow",
-    short_name: "NewsNow",
+    name: `${APP_TITLE}`,
+    short_name: `${APP_TITLE}`,
     description: "Elegant reading of real-time and hottest news",
     theme_color: "#F14D42",
     icons: [

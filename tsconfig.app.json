@@ -10,5 +10,10 @@
       "@shared/*": ["shared/*"]
     }
   },
-  "include": ["src", "shared", "imports.app.d.ts"]
+  "include": [
+    "src",
+    "shared",
+    "imports.app.d.ts",
+    "*.ts"
+  ]
 }
