@@ -83,10 +83,11 @@ docker compose up
 
 ## 开发
 > [!Note]
-> 需要 Node.js >= 20
+> 需要 Node.js >= 22
 
+启动应用
 ```bash
-corepack enable
+npm install -g pnpm
 pnpm i
 pnpm dev
 ```
