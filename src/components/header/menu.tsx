@@ -1,5 +1,5 @@
-import {motion} from "framer-motion";
-import {ProjectUrl} from "@shared/consts";
+import { motion } from "framer-motion";
+import { PROJECT_URL } from "@shared/consts"; // function ThemeToggle() {
 
 // function ThemeToggle() {
 //   const { isDark, toggleDark } = useDark()
@@ -14,21 +14,21 @@ import {ProjectUrl} from "@shared/consts";
 // }
 
 export function Menu() {
-    const {loggedIn, login, logout, userInfo, enableLogin} = useLogin();
-    const [shown, show] = useState(false);
+  const { loggedIn, login, logout, userInfo, enableLogin } = useLogin();
+  const [shown, show] = useState(false);
   return (
     <span className="relative" onMouseEnter={() => show(true)} onMouseLeave={() => show(false)}>
       <span className="flex items-center scale-90">
         {enableLogin && loggedIn && userInfo.avatar ? (
-            <button
-                type="button"
-                className="h-6 w-6 rounded-full bg-cover"
-                style={{
-                    backgroundImage: `url(${userInfo.avatar}&s=24)`,
-                }}
-            />
+          <button
+            type="button"
+            className="h-6 w-6 rounded-full bg-cover"
+            style={{
+              backgroundImage: `url(${userInfo.avatar}&s=24)`,
+            }}
+          />
         ) : (
-            <button type="button" className="btn i-si:more-muted-horiz-circle-duotone"/>
+          <button type="button" className="btn i-si:more-muted-horiz-circle-duotone" />
         )}
       </span>
       {shown && (
@@ -44,34 +44,34 @@ export function Menu() {
             }}
           >
             <ol className="bg-base bg-op-70! backdrop-blur-md p-2 rounded-lg color-base text-base">
-                {enableLogin &&
-                    (loggedIn ? (
-                        <li onClick={logout}>
-                            <span className="i-ph:sign-out-duotone inline-block"/>
-                            <span>退出登录</span>
-                        </li>
-                    ) : (
-                        <li onClick={login}>
-                            <span className="i-ph:sign-in-duotone inline-block"/>
-                            <span>Github 账号登录</span>
-                        </li>
-                    ))}
+              {enableLogin &&
+                (loggedIn ? (
+                  <li onClick={logout}>
+                    <span className="i-ph:sign-out-duotone inline-block" />
+                    <span>退出登录</span>
+                  </li>
+                ) : (
+                  <li onClick={login}>
+                    <span className="i-ph:sign-in-duotone inline-block" />
+                    <span>Github 账号登录</span>
+                  </li>
+                ))}
               {/* <ThemeToggle /> */}
-                <li
-                    onClick={() => window.open(ProjectUrl)}
-                    className="cursor-pointer [&_*]:cursor-pointer transition-all"
-                >
+              <li
+                onClick={() => window.open(PROJECT_URL)}
+                className="cursor-pointer [&_*]:cursor-pointer transition-all"
+              >
                 <span className="i-ph:github-logo-duotone inline-block" />
                 <span>Star on Github </span>
               </li>
               <li className="flex gap-2 items-center">
-                  <a href={`${ProjectUrl}`}>
+                <a href={`${PROJECT_URL}`}>
                   <img
                     alt="GitHub stars badge"
                     src="https://img.shields.io/github/stars/bruceblink/newsnow?logo=github&style=flat&labelColor=%235e3c40&color=%23614447"
                   />
                 </a>
-                  <a href={`${ProjectUrl}/fork`}>
+                <a href={`${PROJECT_URL}/fork`}>
                   <img
                     alt="GitHub forks badge"
                     src="https://img.shields.io/github/forks/bruceblink/newsnow?logo=github&style=flat&labelColor=%235e3c40&color=%23614447"

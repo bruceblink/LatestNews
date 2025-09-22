@@ -1,10 +1,10 @@
 import dayjs from "dayjs/esm";
-import { APP_NAME, ProjectUrl } from "@shared/consts";
+import { APP_NAME, PROJECT_URL } from "@shared/consts";
 
 export function Footer() {
   return (
     <>
-      <a href={`${ProjectUrl}/blob/main/LICENSE`} target="_blank">
+      <a href={`${PROJECT_URL}/blob/main/LICENSE`} target="_blank">
         MIT LICENSE
       </a>
       <span>
