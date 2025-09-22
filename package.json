@@ -46,6 +46,7 @@
     "dayjs": "1.11.13",
     "db0": "^0.3.1",
     "defu": "^6.1.4",
+    "dotenv-flow": "^4.1.0",
     "fast-xml-parser": "^5.0.8",
     "framer-motion": "^12.4.7",
     "h3": "^1.15.1",
