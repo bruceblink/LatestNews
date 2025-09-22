@@ -1,7 +1,8 @@
-import { join } from "node:path"
-import { defineConfig } from "vitest/config"
+import {join} from "node:path"
 import unimport from "unimport/unplugin"
-import { projectDir } from "./shared/dir"
+import {defineConfig} from "vitest/config"
+
+import {projectDir} from "./shared/dir"
 
 export default defineConfig({
   test: {
