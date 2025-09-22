@@ -1,7 +1,7 @@
-import type {VitePWAOptions} from "vite-plugin-pwa";
+import type { VitePWAOptions } from "vite-plugin-pwa";
 
 import process from "node:process";
-import {VitePWA} from "vite-plugin-pwa";
+import { VitePWA } from "vite-plugin-pwa";
 
 const pwaOption: Partial<VitePWAOptions> = {
   includeAssets: ["icon.svg", "apple-touch-icon.png"],
@@ -47,5 +47,5 @@ const pwaOption: Partial<VitePWAOptions> = {
 };
 
 export default function pwa() {
-    return VitePWA(pwaOption);
+  return VitePWA(pwaOption);
 }
