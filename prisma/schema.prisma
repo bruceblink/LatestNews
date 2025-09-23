@@ -10,3 +10,37 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model user_info {
+  id           BigInt   @id @default(autoincrement())
+  email        String?  @unique @db.VarChar(255)
+  username     String?  @unique @db.VarChar(100)
+  password     String?
+  display_name String?  @db.VarChar(255)
+  avatar_url   String?
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  user_identities user_identities[]
+}
+
+model user_identities {
+  id               BigInt    @id @default(autoincrement())
+  user_id          BigInt
+  provider         String    @db.VarChar(50)
+  provider_uid     String    @db.VarChar(255)
+  access_token     String?
+  token_expires_at DateTime? @db.Timestamptz(6)
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime  @default(now()) @db.Timestamptz(6)
+  user_info        user_info @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([provider, provider_uid])
+}
+
+model cache {
+  id         BigInt   @id @default(autoincrement())
+  data       String
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+}
