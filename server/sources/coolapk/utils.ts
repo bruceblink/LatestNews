@@ -17,16 +17,16 @@ async function get_app_token() {
 }
 
 export async function genHeaders() {
-  return {
-    "X-Requested-With": "XMLHttpRequest",
-    "X-App-Id": "com.coolapk.market",
-    "X-App-Token": await get_app_token(),
-    "X-Sdk-Int": "29",
-    "X-Sdk-Locale": "zh-CN",
-    "X-App-Version": "11.0",
-    "X-Api-Version": "11",
-    "X-App-Code": "2101202",
-      "User-Agent":
-          "Dalvik/2.1.0 (Linux; U; Android 10; Redmi K30 5G MIUI/V12.0.3.0.QGICMXM) (#Build; Redmi; Redmi K30 5G; QKQ1.191222.002 test-keys; 10) +CoolMarket/11.0-2101202",
-  };
+    return {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-App-Id": "com.coolapk.market",
+        "X-App-Token": await get_app_token(),
+        "X-Sdk-Int": "29",
+        "X-Sdk-Locale": "zh-CN",
+        "X-App-Version": "11.0",
+        "X-Api-Version": "11",
+        "X-App-Code": "2101202",
+        "User-Agent":
+            "Dalvik/2.1.0 (Linux; U; Android 10; Redmi K30 5G MIUI/V12.0.3.0.QGICMXM) (#Build; Redmi; Redmi K30 5G; QKQ1.191222.002 test-keys; 10) +CoolMarket/11.0-2101202",
+    };
 }

@@ -1,4 +1,4 @@
-import {useMount} from "react-use";
+import { useMount } from "react-use";
 
 /**
  * changed every minute
@@ -6,23 +6,23 @@ import {useMount} from "react-use";
 const timerAtom = atom(0);
 
 timerAtom.onMount = (set) => {
-  const timer = setInterval(() => {
-      set(Date.now());
-  }, 60 * 1000);
+    const timer = setInterval(() => {
+        set(Date.now());
+    }, 60 * 1000);
     return () => clearInterval(timer);
 };
 
 function useVisibility() {
     const [visible, setVisible] = useState(true);
-  useMount(() => {
-    const handleVisibilityChange = () => {
-        setVisible(document.visibilityState === "visible");
-    };
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  });
+    useMount(() => {
+        const handleVisibilityChange = () => {
+            setVisible(document.visibilityState === "visible");
+        };
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    });
     return visible;
 }
 
@@ -31,14 +31,14 @@ export function useRelativeTime(timestamp: string | number) {
     const timer = useAtomValue(timerAtom);
     const visible = useVisibility();
 
-  useEffect(() => {
-    if (visible) {
-        const t = relativeTime(timestamp);
-      if (t) {
-          setTime(t);
-      }
-    }
-  }, [timestamp, timer, visible]);
+    useEffect(() => {
+        if (visible) {
+            const t = relativeTime(timestamp);
+            if (t) {
+                setTime(t);
+            }
+        }
+    }, [timestamp, timer, visible]);
 
     return time;
 }

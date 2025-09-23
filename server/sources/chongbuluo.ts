@@ -1,4 +1,4 @@
-import type {NewsItem} from "@shared/types";
+import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
 
@@ -8,18 +8,18 @@ const hot = defineSource(async () => {
     const $ = cheerio.load(html);
     const news: NewsItem[] = [];
 
-  $(".bmw table tr").each((_, elem) => {
-      const xst = $(elem).find(".common .xst").text();
-      const url = $(elem).find(".common a").attr("href");
-    news.push({
-      id: baseUrl + url,
-      url: baseUrl + url,
-      title: xst,
-      extra: {
-        hover: xst,
-      },
+    $(".bmw table tr").each((_, elem) => {
+        const xst = $(elem).find(".common .xst").text();
+        const url = $(elem).find(".common a").attr("href");
+        news.push({
+            id: baseUrl + url,
+            url: baseUrl + url,
+            title: xst,
+            extra: {
+                hover: xst,
+            },
+        });
     });
-  });
 
     return news;
 });
@@ -28,6 +28,6 @@ const latest = defineRSSSource("https://www.chongbuluo.com/forum.php?mod=rss&vie
 
 export default defineSource({
     chongbuluo: hot,
-  "chongbuluo-hot": hot,
-  "chongbuluo-latest": latest,
+    "chongbuluo-hot": hot,
+    "chongbuluo-latest": latest,
 });

@@ -7,19 +7,19 @@ import { Dnd } from "./dnd";
 import { NavBar } from "../navbar";
 
 export function Column({ id }: { id: FixedColumnID }) {
-  const [currentColumnID, setCurrentColumnID] = useAtom(currentColumnIDAtom);
-  useEffect(() => {
-    setCurrentColumnID(id);
-  }, [id, setCurrentColumnID]);
+    const [currentColumnID, setCurrentColumnID] = useAtom(currentColumnIDAtom);
+    useEffect(() => {
+        setCurrentColumnID(id);
+    }, [id, setCurrentColumnID]);
 
-  useTitle(`${import.meta.env.VITE_APP_TITLE} | ${metadata[id].name}`);
+    useTitle(`${import.meta.env.VITE_APP_TITLE} | ${metadata[id].name}`);
 
-  return (
-    <>
-      <div className="flex justify-center md:hidden mb-6">
-        <NavBar />
-      </div>
-      {id === currentColumnID && <Dnd />}
-    </>
-  );
+    return (
+        <>
+            <div className="flex justify-center md:hidden mb-6">
+                <NavBar />
+            </div>
+            {id === currentColumnID && <Dnd />}
+        </>
+    );
 }

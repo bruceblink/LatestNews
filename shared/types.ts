@@ -1,7 +1,7 @@
-import type {colors} from "unocss/preset-mini";
+import type { colors } from "unocss/preset-mini";
 
-import type {originSources} from "./pre-sources";
-import type {columns, fixedColumnIds} from "./metadata";
+import type { originSources } from "./pre-sources";
+import type { columns, fixedColumnIds } from "./metadata";
 
 export type Color = "primary" | Exclude<keyof typeof colors, "current" | "inherit" | "transparent" | "black" | "white">;
 
@@ -12,23 +12,25 @@ export type SourceID = {
     [Key in MainSourceID]: ConstSources[Key] extends { disable?: true }
         ? never
         : ConstSources[Key] extends { sub?: infer SubSource }
-            ?
-            | {
-            // @ts-expect-error >_<
-            [SubKey in keyof SubSource]: SubSource[SubKey] extends { disable?: true } ? never : `${Key}-${SubKey}`;
-        }[keyof SubSource]
-            | Key
-            : Key;
+          ?
+                | {
+                      // @ts-expect-error >_<
+                      [SubKey in keyof SubSource]: SubSource[SubKey] extends { disable?: true }
+                          ? never
+                          : `${Key}-${SubKey}`;
+                  }[keyof SubSource]
+                | Key
+          : Key;
 }[MainSourceID];
 
 export type AllSourceID = {
     [Key in MainSourceID]: ConstSources[Key] extends { sub?: infer SubSource }
         ?
-        | keyof {
-        // @ts-expect-error >_<
-        [SubKey in keyof SubSource as `${Key}-${SubKey}`]: never;
-    }
-        | Key
+              | keyof {
+                    // @ts-expect-error >_<
+                    [SubKey in keyof SubSource as `${Key}-${SubKey}`]: never;
+                }
+              | Key
         : Key;
 }[MainSourceID];
 
@@ -68,27 +70,27 @@ export interface OriginSource extends Partial<Omit<Source, "name" | "redirect">>
 
 export interface Source {
     name: string;
-  /**
-   * 刷新的间隔时间
-   */
-  interval: number;
+    /**
+     * 刷新的间隔时间
+     */
+    interval: number;
     color: Color;
 
-  /**
-   * Subtitle 小标题
-   */
-  title?: string;
+    /**
+     * Subtitle 小标题
+     */
+    title?: string;
     desc?: string;
-  /**
-   * Default normal timeline
-   */
-  type?: "hottest" | "realtime";
+    /**
+     * Default normal timeline
+     */
+    type?: "hottest" | "realtime";
     column?: HiddenColumnID;
     home?: string;
-  /**
-   * @default false
-   */
-  disable?: boolean | "cf";
+    /**
+     * @default false
+     */
+    disable?: boolean | "cf";
     redirect?: SourceID;
 }
 
@@ -103,19 +105,19 @@ export interface NewsItem {
     url: string;
     mobileUrl?: string;
     pubDate?: number | string;
-  extra?: {
-      hover?: string;
-      date?: number | string;
-      info?: false | string;
-      diff?: number;
-      icon?:
-          | false
-          | string
-          | {
-          url: string;
-          scale: number;
-      };
-  };
+    extra?: {
+        hover?: string;
+        date?: number | string;
+        info?: false | string;
+        diff?: number;
+        icon?:
+            | false
+            | string
+            | {
+                  url: string;
+                  scale: number;
+              };
+    };
 }
 
 export interface SourceResponse {

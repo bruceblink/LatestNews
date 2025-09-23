@@ -1,4 +1,4 @@
-import type {NewsItem} from "@shared/types";
+import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
 
@@ -8,25 +8,25 @@ export default defineSource(async () => {
     const $ = cheerio.load(html);
     const $main = $(".article-content");
     const news: NewsItem[] = [];
-  $main.each((_, el) => {
-      const a = $(el).find(".detail-right>a");
-    // https://www.kzaobao.com/shiju/20241002/170659.html
-      const url = a.attr("href");
-      const title = a.find("h2").text();
-      const info = $(el).find(".time > span:nth-child(1)").text();
-    // 第三个 p
-      const relatieveTime = $(el).find(".time > span:nth-child(3)").text();
-    if (url && title && relatieveTime) {
-      news.push({
-        url: baseURL + url,
-        title,
-        id: url,
-        extra: {
-          date: parseRelativeDate(relatieveTime, "Asia/Shanghai").valueOf(),
-          info,
-        },
-      });
-    }
-  });
+    $main.each((_, el) => {
+        const a = $(el).find(".detail-right>a");
+        // https://www.kzaobao.com/shiju/20241002/170659.html
+        const url = a.attr("href");
+        const title = a.find("h2").text();
+        const info = $(el).find(".time > span:nth-child(1)").text();
+        // 第三个 p
+        const relatieveTime = $(el).find(".time > span:nth-child(3)").text();
+        if (url && title && relatieveTime) {
+            news.push({
+                url: baseURL + url,
+                title,
+                id: url,
+                extra: {
+                    date: parseRelativeDate(relatieveTime, "Asia/Shanghai").valueOf(),
+                    info,
+                },
+            });
+        }
+    });
     return news;
 });

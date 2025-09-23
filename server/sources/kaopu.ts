@@ -1,7 +1,7 @@
 type Res = {
     description: string;
     link: string;
-  // Date
+    // Date
     pubDate: string;
     publisher: string;
     title: string;
@@ -17,13 +17,13 @@ export default defineSource(async () => {
         .flat()
         .filter((k) => ["财新", "公视"].every((h) => k.publisher !== h))
         .map((k) => ({
-      id: k.link,
-      title: k.title,
-      pubDate: k.pubDate,
-      extra: {
-        hover: k.description,
-        info: k.publisher,
-      },
-      url: k.link,
+            id: k.link,
+            title: k.title,
+            pubDate: k.pubDate,
+            extra: {
+                hover: k.description,
+                info: k.publisher,
+            },
+            url: k.link,
         }));
 });

@@ -1,12 +1,12 @@
 interface Res {
-  data: {
-    result: {
-        id: string;
-        title: string;
-        type: number;
-        uuid: string;
-    }[];
-  };
+    data: {
+        result: {
+            id: string;
+            title: string;
+            type: number;
+            uuid: string;
+        }[];
+    };
 }
 
 export default defineSource(async () => {

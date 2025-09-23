@@ -1,8 +1,8 @@
-import {createContext} from "react";
-import {combine} from "@atlaskit/pragmatic-drag-and-drop/combine";
-import {draggable, dropTargetForElements} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import {preserveOffsetOnSource} from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
-import {setCustomNativeDragPreview} from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
+import { createContext } from "react";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
+import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 
 export const InstanceIdContext = createContext<string | null>(null);
 
@@ -17,60 +17,60 @@ interface DraggableState {
 
 export function useSortable(props: SortableProps) {
     const instanceId = useContext(InstanceIdContext);
-  const [draggableState, setDraggableState] = useState<DraggableState>({
-    type: "idle",
-  });
-  useEffect(() => {
-    if (draggableState.type === "idle") {
-        document.querySelector("html")?.classList.remove("grabbing");
-    } else if (draggableState.type === "dragging") {
-      // https://github.com/SortableJS/Vue.Draggable/issues/815#issuecomment-1552904628
-      setTimeout(() => {
-          document.querySelector("html")?.classList.add("grabbing");
-      }, 50);
-    }
-  }, [draggableState]);
+    const [draggableState, setDraggableState] = useState<DraggableState>({
+        type: "idle",
+    });
+    useEffect(() => {
+        if (draggableState.type === "idle") {
+            document.querySelector("html")?.classList.remove("grabbing");
+        } else if (draggableState.type === "dragging") {
+            // https://github.com/SortableJS/Vue.Draggable/issues/815#issuecomment-1552904628
+            setTimeout(() => {
+                document.querySelector("html")?.classList.add("grabbing");
+            }, 50);
+        }
+    }, [draggableState]);
     const [handleRef, setHandleRef] = useState<HTMLElement | null>(null);
     const [nodeRef, setNodeRef] = useState<HTMLElement | null>(null);
 
     // eslint-disable-next-line consistent-return
-  useEffect(() => {
-    if (handleRef && nodeRef) {
-        return combine(
-            draggable({
-                element: nodeRef,
-                dragHandle: handleRef,
-                getInitialData: () => ({id: props.id, instanceId}),
-                onGenerateDragPreview({nativeSetDragImage, location}) {
-                    setCustomNativeDragPreview({
-                        getOffset: preserveOffsetOnSource({
-                            element: nodeRef,
-                            input: location.current.input,
-                        }),
-                        render({container}) {
-                            container.style.width = `${nodeRef.clientWidth}px`;
-                            setDraggableState({type: "dragging", container});
-                        },
-                        nativeSetDragImage,
-                    });
-                },
-                onDrop: () => {
-                    setDraggableState({type: "idle"});
-                },
-            }),
-            dropTargetForElements({
-                element: nodeRef,
-                getData: () => ({id: props.id}),
-                getIsSticky: () => true,
-                canDrop: ({source}) => source.data.instanceId === instanceId,
-            })
-        );
-    }
-  }, [props.id, instanceId, handleRef, nodeRef]);
-  return {
-    setHandleRef,
-    setNodeRef,
-    isDragging: draggableState.type === "dragging",
-    OverlayContainer: draggableState.container,
-  };
+    useEffect(() => {
+        if (handleRef && nodeRef) {
+            return combine(
+                draggable({
+                    element: nodeRef,
+                    dragHandle: handleRef,
+                    getInitialData: () => ({ id: props.id, instanceId }),
+                    onGenerateDragPreview({ nativeSetDragImage, location }) {
+                        setCustomNativeDragPreview({
+                            getOffset: preserveOffsetOnSource({
+                                element: nodeRef,
+                                input: location.current.input,
+                            }),
+                            render({ container }) {
+                                container.style.width = `${nodeRef.clientWidth}px`;
+                                setDraggableState({ type: "dragging", container });
+                            },
+                            nativeSetDragImage,
+                        });
+                    },
+                    onDrop: () => {
+                        setDraggableState({ type: "idle" });
+                    },
+                }),
+                dropTargetForElements({
+                    element: nodeRef,
+                    getData: () => ({ id: props.id }),
+                    getIsSticky: () => true,
+                    canDrop: ({ source }) => source.data.instanceId === instanceId,
+                })
+            );
+        }
+    }, [props.id, instanceId, handleRef, nodeRef]);
+    return {
+        setHandleRef,
+        setNodeRef,
+        isDragging: draggableState.type === "dragging",
+        OverlayContainer: draggableState.container,
+    };
 }

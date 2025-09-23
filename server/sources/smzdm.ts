@@ -1,4 +1,4 @@
-import type {NewsItem} from "@shared/types";
+import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
 
@@ -8,15 +8,15 @@ export default defineSource(async () => {
     const $ = cheerio.load(html);
     const $main = $("#feed-main-list .z-feed-title");
     const news: NewsItem[] = [];
-  $main.each((_, el) => {
-      const a = $(el).find("a");
-      const url = a.attr("href")!;
-      const title = a.text();
-    news.push({
-      url,
-      title,
-      id: url,
+    $main.each((_, el) => {
+        const a = $(el).find("a");
+        const url = a.attr("href")!;
+        const title = a.text();
+        news.push({
+            url,
+            title,
+            id: url,
+        });
     });
-  });
     return news;
 });

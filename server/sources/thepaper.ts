@@ -1,11 +1,11 @@
 interface Res {
-  data: {
-    hotNews: {
-        contId: string;
-        name: string;
-        pubTimeLong: string;
-    }[];
-  };
+    data: {
+        hotNews: {
+            contId: string;
+            name: string;
+            pubTimeLong: string;
+        }[];
+    };
 }
 
 export default defineSource(async () => {

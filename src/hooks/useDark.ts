@@ -1,5 +1,5 @@
-import {useMemo} from "react";
-import {useMedia, useUpdateEffect} from "react-use";
+import { useMemo } from "react";
+import { useMedia, useUpdateEffect } from "react-use";
 
 export declare type ColorScheme = "dark" | "light" | "auto";
 
@@ -13,17 +13,17 @@ export function useDark() {
         [colorScheme, prefersDarkMode]
     );
 
-  useUpdateEffect(() => {
-      document.documentElement.classList.toggle("dark", isDark);
-  }, [isDark]);
+    useUpdateEffect(() => {
+        document.documentElement.classList.toggle("dark", isDark);
+    }, [isDark]);
 
-  const setDark = (value: ColorScheme) => {
-      setColorScheme(value);
-  };
+    const setDark = (value: ColorScheme) => {
+        setColorScheme(value);
+    };
 
-  const toggleDark = () => {
-      setColorScheme(isDark ? "light" : "dark");
-  };
+    const toggleDark = () => {
+        setColorScheme(isDark ? "light" : "dark");
+    };
 
-    return {isDark, setDark, toggleDark};
+    return { isDark, setDark, toggleDark };
 }

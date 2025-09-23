@@ -1,14 +1,14 @@
 interface Res {
-  data: {
-    cards: {
-      content: {
-          isTop?: boolean;
-          word: string;
-          rawUrl: string;
-          desc?: string;
-      }[];
-    }[];
-  };
+    data: {
+        cards: {
+            content: {
+                isTop?: boolean;
+                word: string;
+                rawUrl: string;
+                desc?: string;
+            }[];
+        }[];
+    };
 }
 
 export default defineSource(async () => {

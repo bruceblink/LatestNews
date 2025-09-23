@@ -1,8 +1,8 @@
 interface Res {
-  data: {
-      id: number;
-      title: string;
-  }[];
+    data: {
+        id: number;
+        title: string;
+    }[];
 }
 
 export default defineSource(async () => {
@@ -10,12 +10,11 @@ export default defineSource(async () => {
     const limit = 30;
     const url = `https://sspai.com/api/v1/article/tag/page/get?limit=${limit}&offset=0&created_at=${timestamp}&tag=%E7%83%AD%E9%97%A8%E6%96%87%E7%AB%A0&released=false`;
     const res: Res = await myFetch(url);
-  return res.data.map((k) => {
-      const url = `https://sspai.com/post/${k.id}`;
-    return {
-      id: k.id,
-      title: k.title,
-      url,
-    };
-  });
+    return res.data.map((k) => {
+        return {
+            id: k.id,
+            title: k.title,
+            url: `https://sspai.com/post/${k.id}`,
+        };
+    });
 });

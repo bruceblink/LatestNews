@@ -1,4 +1,4 @@
-import {Buffer} from "node:buffer";
+import { Buffer } from "node:buffer";
 
 export function decodeBase64URL(str: string) {
     return new TextDecoder().decode(Buffer.from(decodeURIComponent(str), "base64"));

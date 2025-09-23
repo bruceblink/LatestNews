@@ -1,6 +1,6 @@
-import type {NewsItem} from "@shared/types";
+import type { NewsItem } from "@shared/types";
 
-import {load} from "cheerio";
+import { load } from "cheerio";
 
 const quick = defineSource(async () => {
     const baseURL = "https://www.36kr.com";
@@ -9,28 +9,28 @@ const quick = defineSource(async () => {
     const $ = load(response);
     const news: NewsItem[] = [];
     const $items = $(".newsflash-item");
-  $items.each((_, el) => {
-      const $el = $(el);
-      const $a = $el.find("a.item-title");
-      const url = $a.attr("href");
-      const title = $a.text();
-      const relativeDate = $el.find(".time").text();
-    if (url && title && relativeDate) {
-      news.push({
-        url: `${baseURL}${url}`,
-        title,
-        id: url,
-        extra: {
-          date: parseRelativeDate(relativeDate, "Asia/Shanghai").valueOf(),
-        },
-      });
-    }
-  });
+    $items.each((_, el) => {
+        const $el = $(el);
+        const $a = $el.find("a.item-title");
+        const href = $a.attr("href");
+        const title = $a.text();
+        const relativeDate = $el.find(".time").text();
+        if (href && title && relativeDate) {
+            news.push({
+                url: `${baseURL}${href}`,
+                title,
+                id: href,
+                extra: {
+                    date: parseRelativeDate(relativeDate, "Asia/Shanghai").valueOf(),
+                },
+            });
+        }
+    });
 
     return news;
 });
 
 export default defineSource({
-  "36kr": quick,
-  "36kr-quick": quick,
+    "36kr": quick,
+    "36kr-quick": quick,
 });

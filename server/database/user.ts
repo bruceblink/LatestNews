@@ -4,15 +4,15 @@ import type { UserInfo } from "#/types";
 import { logger } from "#/utils/logger.ts";
 
 export class UserTable {
-  private db;
-  constructor(db: Database) {
-    this.db = db;
-  }
+    private db;
+    constructor(db: Database) {
+        this.db = db;
+    }
 
-  async init() {
-    await this.db
-      .prepare(
-        `
+    async init() {
+        await this.db
+            .prepare(
+                `
       CREATE TABLE IF NOT EXISTS user (
         id TEXT PRIMARY KEY,
         email TEXT,
@@ -22,61 +22,61 @@ export class UserTable {
         updated INTEGER
       );
               `
-      )
-      .run();
-    await this.db
-      .prepare(
-        `
+            )
+            .run();
+        await this.db
+            .prepare(
+                `
       CREATE INDEX IF NOT EXISTS idx_user_id ON user(id);
               `
-      )
-      .run();
-    logger.success("init user table");
-  }
-
-  async addUser(id: string, email: string, type: "github") {
-    const u = await this.getUser(id);
-    const now = Date.now();
-    if (!u) {
-      await this.db
-        .prepare("INSERT INTO user (id, email, data, type, created, updated) VALUES (?, ?, ?, ?, ?, ?)")
-        .run(id, email, "", type, now, now);
-      logger.success(`add user ${id}`);
-    } else if (u.email !== email && u.type !== type) {
-      await this.db.prepare("UPDATE user SET email = ?, updated = ? WHERE id = ?").run(email, now, id);
-      logger.success(`update user ${id} email`);
-    } else {
-      logger.info(`user ${id} already exists`);
+            )
+            .run();
+        logger.success("init user table");
     }
-  }
 
-  async getUser(id: string) {
-    return (await this.db
-      .prepare("SELECT id, email, data, created, updated FROM user WHERE id = ?")
-      .get(id)) as UserInfo;
-  }
+    async addUser(id: string, email: string, type: "github") {
+        const u = await this.getUser(id);
+        const now = Date.now();
+        if (!u) {
+            await this.db
+                .prepare("INSERT INTO user (id, email, data, type, created, updated) VALUES (?, ?, ?, ?, ?, ?)")
+                .run(id, email, "", type, now, now);
+            logger.success(`add user ${id}`);
+        } else if (u.email !== email && u.type !== type) {
+            await this.db.prepare("UPDATE user SET email = ?, updated = ? WHERE id = ?").run(email, now, id);
+            logger.success(`update user ${id} email`);
+        } else {
+            logger.info(`user ${id} already exists`);
+        }
+    }
 
-  async setData(key: string, value: string, updatedTime = Date.now()) {
-    const state = await this.db
-      .prepare("UPDATE user SET data = ?, updated = ? WHERE id = ?")
-      .run(value, updatedTime, key);
-    if (!state.success) throw new Error(`set user ${key} data failed`);
-    logger.success(`set ${key} data`);
-  }
+    async getUser(id: string) {
+        return (await this.db
+            .prepare("SELECT id, email, data, created, updated FROM user WHERE id = ?")
+            .get(id)) as UserInfo;
+    }
 
-  async getData(id: string) {
-    const row: any = await this.db.prepare("SELECT data, updated FROM user WHERE id = ?").get(id);
-    if (!row) throw new Error(`user ${id} not found`);
-    logger.success(`get ${id} data`);
-    return row as {
-      data: string;
-      updated: number;
-    };
-  }
+    async setData(key: string, value: string, updatedTime = Date.now()) {
+        const state = await this.db
+            .prepare("UPDATE user SET data = ?, updated = ? WHERE id = ?")
+            .run(value, updatedTime, key);
+        if (!state.success) throw new Error(`set user ${key} data failed`);
+        logger.success(`set ${key} data`);
+    }
 
-  async deleteUser(key: string) {
-    const state = await this.db.prepare("DELETE FROM user WHERE id = ?").run(key);
-    if (!state.success) throw new Error(`delete user ${key} failed`);
-    logger.success(`delete user ${key}`);
-  }
+    async getData(id: string) {
+        const row: any = await this.db.prepare("SELECT data, updated FROM user WHERE id = ?").get(id);
+        if (!row) throw new Error(`user ${id} not found`);
+        logger.success(`get ${id} data`);
+        return row as {
+            data: string;
+            updated: number;
+        };
+    }
+
+    async deleteUser(key: string) {
+        const state = await this.db.prepare("DELETE FROM user WHERE id = ?").run(key);
+        if (!state.success) throw new Error(`delete user ${key} failed`);
+        logger.success(`delete user ${key}`);
+    }
 }

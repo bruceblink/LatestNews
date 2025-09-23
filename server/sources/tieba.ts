@@ -1,14 +1,14 @@
 interface Res {
-  data: {
-    bang_topic: {
-      topic_list: {
-          topic_id: string;
-          topic_name: string;
-          create_time: number;
-          topic_url: string;
-      }[];
+    data: {
+        bang_topic: {
+            topic_list: {
+                topic_id: string;
+                topic_name: string;
+                create_time: number;
+                topic_url: string;
+            }[];
+        };
     };
-  };
 }
 
 export default defineSource(async () => {

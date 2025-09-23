@@ -1,13 +1,13 @@
 interface Res {
-  list: {
-    data: {
-        id: string;
-        title: string;
-      // 北京时间
-        url: string;
-        publishTime: string;
-    };
-  }[];
+    list: {
+        data: {
+            id: string;
+            title: string;
+            // 北京时间
+            url: string;
+            publishTime: string;
+        };
+    }[];
 }
 
 export default defineSource(async () => {

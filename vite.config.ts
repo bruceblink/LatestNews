@@ -12,40 +12,40 @@ import initVoteNitro from "./nitro.config";
 
 // 自动按 .env、.env.local、.env.development 等文件顺序加载
 dotenvFlow.config({
-  path: join(__dirname),
+    path: join(__dirname),
 });
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      "@root": fileURLToPath(new URL("./", import.meta.url)),
-      "~": fileURLToPath(new URL("./src", import.meta.url)),
-      "@shared": fileURLToPath(new URL("./shared", import.meta.url)),
-    },
-  },
-  plugins: [
-    TanStackRouterVite({
-      // error with auto import and vite-plugin-pwa
-      // autoCodeSplitting: true,
-    }),
-    unimport.vite({
-      dirs: ["src/hooks", "shared", "src/utils", "src/atoms"],
-      presets: [
-        "react",
-        {
-          from: "jotai",
-          imports: ["atom", "useAtom", "useAtomValue", "useSetAtom"],
+    resolve: {
+        alias: {
+            "@root": fileURLToPath(new URL("./", import.meta.url)),
+            "~": fileURLToPath(new URL("./src", import.meta.url)),
+            "@shared": fileURLToPath(new URL("./shared", import.meta.url)),
         },
-      ],
-      imports: [
-        { from: "clsx", name: "clsx", as: "$" },
-        { from: "jotai/utils", name: "atomWithStorage" },
-      ],
-      dts: "imports.app.d.ts",
-    }),
-    unocss(),
-    react(),
-    pwa(),
-    initVoteNitro(),
-  ],
+    },
+    plugins: [
+        TanStackRouterVite({
+            // error with auto import and vite-plugin-pwa
+            // autoCodeSplitting: true,
+        }),
+        unimport.vite({
+            dirs: ["src/hooks", "shared", "src/utils", "src/atoms"],
+            presets: [
+                "react",
+                {
+                    from: "jotai",
+                    imports: ["atom", "useAtom", "useAtomValue", "useSetAtom"],
+                },
+            ],
+            imports: [
+                { from: "clsx", name: "clsx", as: "$" },
+                { from: "jotai/utils", name: "atomWithStorage" },
+            ],
+            dts: "imports.app.d.ts",
+        }),
+        unocss(),
+        react(),
+        pwa(),
+        initVoteNitro(),
+    ],
 });

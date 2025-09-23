@@ -1,17 +1,17 @@
 import _md5 from "md5";
-import {subtle as _} from "uncrypto";
+import { subtle as _ } from "uncrypto";
 
 type T = typeof crypto.subtle;
 const subtle: T = _;
 
 export async function md5(s: string) {
-  try {
-    // https://developers.cloudflare.com/workers/runtime-apis/web-crypto/
-    // cloudflare worker support md5
-      return await myCrypto(s, "MD5");
-  } catch {
-      return _md5(s);
-  }
+    try {
+        // https://developers.cloudflare.com/workers/runtime-apis/web-crypto/
+        // cloudflare worker support md5
+        return await myCrypto(s, "MD5");
+    } catch {
+        return _md5(s);
+    }
 }
 
 type Algorithm = "MD5" | "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512";
