@@ -9,6 +9,7 @@ const config = {
     // ------------------------
     semi: true, // 每条语句末尾加分号
     tabWidth: 4, // 缩进宽度
+    useTabs: false,
     endOfLine: "lf", // 使用 LF 作为换行符
     printWidth: 120, // 每行最大长度
     trailingComma: "es5", // 尾随逗号, 对象、数组、函数参数

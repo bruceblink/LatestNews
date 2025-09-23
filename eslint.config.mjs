@@ -12,30 +12,30 @@ import unusedImportsPlugin from "eslint-plugin-unused-imports";
 
 // 公共规则（JS/React）
 const commonRules = {
-    ...reactHooksPlugin.configs.recommended.rules,
-    "func-names": 1,
-    "no-bitwise": 2,
-    "no-unused-vars": 0,
-    "object-shorthand": 1,
-    "no-useless-rename": 1,
-    "default-case-last": 2,
-    "consistent-return": 2,
-    "no-constant-condition": 1,
-    "default-case": [2, { commentPattern: "^no default$" }],
-    "lines-around-directive": [2, { before: "always", after: "always" }],
-    "arrow-body-style": "off",
-    "react/jsx-key": 0,
-    "react/prop-types": 0,
-    "react/display-name": 0,
-    "react/no-children-prop": 0,
-    "react/jsx-boolean-value": 2,
-    "react/self-closing-comp": 2,
-    "react/react-in-jsx-scope": 0,
-    "react/jsx-no-useless-fragment": [1, { allowExpressions: true }],
-    "react/jsx-curly-brace-presence": [2, { props: "never", children: "never" }],
-    quotes: [2, "double", { avoidEscape: true }],
-    "jsx-quotes": [2, "prefer-double"],
-    "semi": ["error", "always"],   //  "error"：没有分号时报错 "always"：要求每条语句后必须有分号
+	...reactHooksPlugin.configs.recommended.rules,
+	"func-names": 1,
+	"no-bitwise": 2,
+	"no-unused-vars": 0,
+	"object-shorthand": 1,
+	"no-useless-rename": 1,
+	"default-case-last": 2,
+	"consistent-return": 2,
+	"no-constant-condition": 1,
+	"default-case": [2, { commentPattern: "^no default$" }],
+	"lines-around-directive": [2, { before: "always", after: "always" }],
+	"arrow-body-style": "off",
+	"react/jsx-key": 0,
+	"react/prop-types": 0,
+	"react/display-name": 0,
+	"react/no-children-prop": 0,
+	"react/jsx-boolean-value": 2,
+	"react/self-closing-comp": 2,
+	"react/react-in-jsx-scope": 0,
+	"react/jsx-no-useless-fragment": [1, { allowExpressions: true }],
+	"react/jsx-curly-brace-presence": [2, { props: "never", children: "never" }],
+	quotes: [2, "double", { avoidEscape: true }],
+	"jsx-quotes": [2, "prefer-double"],
+	semi: ["error", "always"], //  "error"：没有分号时报错 "always"：要求每条语句后必须有分号
 };
 
 // unused-imports
@@ -97,77 +97,82 @@ const sortImportsRules = {
     ],
 };
 
-
 // ----------------------------------------------------------------------
 
 // 导出 ESLint Flat Config
 export default [
-    // 忽略
-    {
-        ignores: ["node_modules/*", "dist/*", "src/generated/*", "imports.app.d.ts"],
-    },
-    // JS/React 文件规则
-    {
-        files: ["**/*.{js,jsx,mjs,cjs}"],
-        languageOptions: {
-            globals: { ...globals.browser, ...globals.node },
-        },
-        plugins: {
-            "react-hooks": reactHooksPlugin,
-            "unused-imports": unusedImportsPlugin,
-            perfectionist: perfectionistPlugin,
-            import: importPlugin,
-            react: reactPlugin,
-        },
-        settings: {
-            "import/resolver": {
-                typescript: { project: "./tsconfig.json" },
-                node: true,
-            },
-            react: { version: "detect" },
-        },
-        rules: {
-            ...commonRules,
-            ...unusedImportsRules,
-            ...sortImportsRules,
-            "import/no-unresolved": "error",
-        },
-    },
+	// 忽略
+	{
+		ignores: ["node_modules/*", "dist/*", "src/generated/*", "imports.app.d.ts"],
+	},
+	// JS/React 文件规则
+	{
+		files: ["**/*.{js,jsx,mjs,cjs}"],
+		languageOptions: {
+			globals: { ...globals.browser, ...globals.node },
+		},
+		plugins: {
+			"react-hooks": reactHooksPlugin,
+			"unused-imports": unusedImportsPlugin,
+			perfectionist: perfectionistPlugin,
+			import: importPlugin,
+			react: reactPlugin,
+		},
+		settings: {
+			"import/resolver": {
+				typescript: { project: "./tsconfig.json" },
+				node: true,
+			},
+			react: { version: "detect" },
+		},
+		rules: {
+			...commonRules,
+			...unusedImportsRules,
+			...sortImportsRules,
+			"import/no-unresolved": "error",
+		},
+	},
 
-    // TypeScript 文件规则
-    {
-        files: ["**/*.{ts,tsx}"],
-        languageOptions: {
-            parser: tsParser,
-            globals: { ...globals.browser, ...globals.node },
-        },
-        plugins: {
-            "@typescript-eslint": tsPlugin,
-            "react-hooks": reactHooksPlugin,
-            "unused-imports": unusedImportsPlugin,
-            perfectionist: perfectionistPlugin,
-            import: importPlugin,
-            react: reactPlugin,
-            prettier: eslintPluginPrettier,
-        },
-        settings: {
-            "import/resolver": {
-                typescript: { project: "./tsconfig.json" },
-                node: true,
-            },
-            react: { version: "detect" },
-        },
-        rules: {
-            ...commonRules,
-            ...unusedImportsRules,
-            ...sortImportsRules,
-            "prettier/prettier": "error", // 将 Prettier 问题显示为 ESLint 错误
-            // TS 专用规则
-            "@typescript-eslint/no-shadow": 2,
-            "@typescript-eslint/no-explicit-any": 0,
-            "@typescript-eslint/no-empty-object-type": 0,
-            "@typescript-eslint/consistent-type-imports": 1,
-            "@typescript-eslint/no-unused-vars": [1, { args: "none" }],
-        },
-    },
+	// TypeScript 文件规则
+	{
+		files: ["**/*.{ts,tsx}"],
+		languageOptions: {
+			parser: tsParser,
+			globals: { ...globals.browser, ...globals.node },
+		},
+		plugins: {
+			"@typescript-eslint": tsPlugin,
+			"react-hooks": reactHooksPlugin,
+			"unused-imports": unusedImportsPlugin,
+			perfectionist: perfectionistPlugin,
+			import: importPlugin,
+			react: reactPlugin,
+			prettier: eslintPluginPrettier,
+		},
+		settings: {
+			"import/resolver": {
+				typescript: { project: "./tsconfig.json" },
+				node: true,
+			},
+			react: { version: "detect" },
+		},
+		rules: {
+			...commonRules,
+			...unusedImportsRules,
+			...sortImportsRules,
+			"prettier/prettier": [
+				// 将 Prettier 问题显示为 ESLint 错误
+				"error",
+				{
+					tabWidth: 4,
+				},
+			],
+			// TS 专用规则
+			"@typescript-eslint/no-shadow": 2,
+			"@typescript-eslint/no-explicit-any": 0,
+			"@typescript-eslint/no-empty-object-type": 0,
+			"@typescript-eslint/consistent-type-imports": 1,
+			"@typescript-eslint/no-unused-vars": [1, { args: "none" }],
+		},
+	},
 ];
