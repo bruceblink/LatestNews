@@ -3,11 +3,11 @@ import unocss from "unocss/vite";
 import { defineConfig } from "vite";
 import dotenvFlow from "dotenv-flow";
 import unimport from "unimport/unplugin";
+import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react-swc";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 
 import pwa from "./pwa.config";
-import { projectDir } from "./shared/dir";
 import initVoteNitro from "./nitro.config";
 
 // 自动按 .env、.env.local、.env.development 等文件顺序加载
@@ -18,8 +18,9 @@ dotenvFlow.config({
 export default defineConfig({
   resolve: {
     alias: {
-      "~": join(projectDir, "src"),
-      "@shared": join(projectDir, "shared"),
+      "@root": fileURLToPath(new URL("./", import.meta.url)),
+      "~": fileURLToPath(new URL("./src", import.meta.url)),
+      "@shared": fileURLToPath(new URL("./shared", import.meta.url)),
     },
   },
   plugins: [

@@ -2,12 +2,6 @@
   "extends": ["./tsconfig.base.json"],
   "compilerOptions": {
     "lib": ["ES2020"],
-    "rootDir": ".",
-    "baseUrl": ".",
-    "paths": {
-      "#/*": ["server/*"],
-      "@shared/*": ["shared/*"]
-    }
   },
   "include": ["server", "*.config.*", "shared", "test", "scripts", "tools", "dist/.nitro/types"],
   "exclude": ["eslint.config.mjs"]
