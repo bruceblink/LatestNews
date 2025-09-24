@@ -12,9 +12,9 @@
   "projectUrl": "https://github.com/bruceblink/latestnews",
   "homepage": "https://news.likanug.top",
   "scripts": {
-    "dev": "npm run prisma:generate && vite dev",
+    "dev": "npm run prisma:generate &&  npm run prisma:migrate:dev && vite dev",
     "prisma:generate": "prisma generate --no-engine",
-    "prisma:migrate:dev": "prisma migrate dev --name init --create-only",
+    "prisma:migrate:dev": "prisma migrate dev",
     "build": "prisma generate --no-engine && prisma migrate deploy && vite build",
     "start": "npm run prisma:migrate:prod && node --env-file .env dist/output/server/index.mjs",
     "prisma:migrate:prod": "prisma migrate deploy",
