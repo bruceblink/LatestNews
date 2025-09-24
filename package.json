@@ -60,7 +60,6 @@
     "md5": "^2.3.0",
     "ofetch": "^1.4.1",
     "overlayscrollbars": "^2.11.1",
-    "pg": "^8.16.3",
     "pnpm": "^10.5.2",
     "react": "^19.0.0",
     "react-device-detect": "^2.2.3",
