@@ -15,11 +15,11 @@ export class Cache {
         await this.db
             .prepare(
                 `
-      CREATE TABLE IF NOT EXISTS cache (
-        id TEXT PRIMARY KEY,
-        updated INTEGER,
-        data TEXT
-      );
+                  CREATE TABLE IF NOT EXISTS cache (
+                    id TEXT PRIMARY KEY,
+                    updated INTEGER,
+                    data TEXT
+                  );
               `
             )
             .run();
@@ -90,7 +90,7 @@ export async function getCacheTable() {
     try {
         // eslint-disable-next-line react-hooks/rules-of-hooks
         const db = useDatabase();
-        // logger.info("db: ", db.getInstance())
+        logger.info("db: ", db.getInstance());
         if (process.env.ENABLE_CACHE === "false") return;
         const cacheTable = new Cache(db);
         if (process.env.INIT_TABLE !== "false") await cacheTable.init();

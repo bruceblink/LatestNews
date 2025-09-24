@@ -13,14 +13,14 @@ export class UserTable {
         await this.db
             .prepare(
                 `
-      CREATE TABLE IF NOT EXISTS user (
-        id TEXT PRIMARY KEY,
-        email TEXT,
-        data TEXT,
-        type TEXT,
-        created INTEGER,
-        updated INTEGER
-      );
+                  CREATE TABLE IF NOT EXISTS user (
+                    id TEXT PRIMARY KEY,
+                    email TEXT,
+                    data TEXT,
+                    type TEXT,
+                    created INTEGER,
+                    updated INTEGER
+                  );
               `
             )
             .run();
