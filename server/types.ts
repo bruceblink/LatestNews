@@ -44,9 +44,13 @@ export interface RSSHubItem {
 
 export interface UserInfo {
     id: string;
-    email: string;
-    type: "github";
-    data: string;
+    email?: string | null;
+    username?: string | null;
+    password?: string | null;
+    display_name?: string | null;
+    avatar_url?: string | null;
+    type?: string | null; // 原来固定 github，现在可动态
+    data?: any; // JSON 对象或字符串
     created: number;
     updated: number;
 }
@@ -64,3 +68,14 @@ export interface SourceOption {
 }
 
 export type SourceGetter = () => Promise<NewsItem[]>;
+
+export interface UserDTO {
+    provide_id?: string | null;
+    email?: string | null;
+    username: string;
+    password?: string | null;
+    display_name?: string | null;
+    avatar_url?: string | null;
+    type: string; //原来固定 github，现在可动态
+    data?: any; // JSON 对象或字符串
+}
