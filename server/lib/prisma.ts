@@ -1,26 +1,26 @@
-import { PrismaClient } from "@prisma/client";
+import pkg from "@prisma/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
-/**
- * 明确的交叉类型：
- *  - PrismaClient: 保证有 $on/$connect/$disconnect 等标准成员（避免 TS2742/TS2322 问题）
- *  - ReturnType<typeof withAccelerate>: 保留 accelerate 扩展可能添加的额外类型
- */
-type PrismaAccelerate = PrismaClient & ReturnType<typeof withAccelerate>;
+const { PrismaClient } = pkg;
 
-/** 构造并断言为我们明确的类型 */
+// 实例类型
+type PrismaBase = InstanceType<typeof PrismaClient>;
+
+// Prisma + Accelerate 类型
+export type PrismaAccelerate = PrismaBase & ReturnType<typeof withAccelerate>;
+
+// 单例工厂
 const prismaClientSingleton = (): PrismaAccelerate => {
-    // TS 在这里推导的类型会非常复杂且引用到 pnpm 内部路径，故先 as unknown 再断言为我们定义的稳定类型
-    return new PrismaClient().$extends(withAccelerate()) as unknown as PrismaAccelerate;
+    const client = new PrismaClient();
+    return client.$extends(withAccelerate()) as unknown as PrismaAccelerate;
 };
 
-type PrismaType = PrismaAccelerate;
+// 全局变量保持单例
+declare global {
+    var prismaGlobal: PrismaAccelerate | undefined;
+}
 
-declare const globalThis: {
-    prismaGlobal?: PrismaType;
-} & typeof global;
-
-const prisma: PrismaType = globalThis.prismaGlobal ?? prismaClientSingleton();
+export const prisma: PrismaAccelerate = globalThis.prismaGlobal ?? prismaClientSingleton();
 
 if (process.env.NODE_ENV !== "production") {
     globalThis.prismaGlobal = prisma;
