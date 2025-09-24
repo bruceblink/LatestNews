@@ -1,32 +1,33 @@
+import type { UserDTO } from "#/types.ts";
+
 import { SignJWT } from "jose";
 import process from "node:process";
-import { UserTable } from "#/database/user";
+import getUserTable from "#/database/user";
 import { sendRedirect, defineEventHandler } from "h3";
 import { Version, APP_NAME, PROJECT_URL } from "@shared/consts.ts";
 
 export default defineEventHandler(async (event) => {
-    const db = useDatabase();
-    const userTable = db ? new UserTable(db) : undefined;
+    const userTable = getUserTable();
     if (!userTable) throw new Error("db is not defined");
-    if (process.env.INIT_TABLE !== "false") await userTable.init();
-
     const response: {
         access_token: string;
         token_type: string;
         scope: string;
-    } = await myFetch("https://github.com/login/oauth/access_token", {
+    } = await $fetch("https://github.com/login/oauth/access_token", {
         method: "POST",
-        body: {
-            client_id: process.env.G_CLIENT_ID,
-            client_secret: process.env.G_CLIENT_SECRET,
-            code: getQuery(event).code,
-        },
+        body: new URLSearchParams({
+            client_id: process.env.G_CLIENT_ID!,
+            client_secret: process.env.G_CLIENT_SECRET!,
+            code: getQuery(event).code as string,
+        }).toString(),
         headers: {
-            accept: "application/json",
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
         },
     });
 
     const userInfo: {
+        login: string;
         id: number;
         name: string;
         avatar_url: string;
@@ -41,11 +42,20 @@ export default defineEventHandler(async (event) => {
         },
     });
 
-    const userID = String(userInfo.id);
-    await userTable.addUser(userID, userInfo.notification_email || userInfo.email, "github");
+    const userDTO: UserDTO = {
+        provide_id: String(userInfo.id),
+        email: userInfo.email || userInfo.notification_email,
+        username: userInfo.login,
+        display_name: userInfo.name,
+        avatar_url: userInfo.avatar_url,
+        type: "github",
+        data: userInfo,
+    };
+    // 将用户数据插入数据库
+    await userTable.addUser(userDTO);
 
     const jwtToken = await new SignJWT({
-        id: userID,
+        id: userInfo.id,
         type: "github",
     })
         .setExpirationTime("60d")
