@@ -30,9 +30,16 @@ const nitroOption: Parameters<typeof viteNitro>[0] = {
     alias: {
         "@shared": join(projectDir, "shared"),
         "#": join(projectDir, "server"),
-        "@prisma/client": join(projectDir, "./generated/prisma/client"),
+        // 默认使用 node_modules 下的 Prisma Client
+        "@prisma/client": join(projectDir, "node_modules/@prisma/client"),
     },
 };
+
+// 开发环境可以用生成的 client
+if (!process.env.VERCEL && !process.env.CF_PAGES) {
+    nitroOption.alias = nitroOption.alias || {};
+    nitroOption.alias["@prisma/client"] = join(projectDir, "./generated/prisma/client");
+}
 
 if (process.env.VERCEL) {
     nitroOption.preset = "vercel-edge";
