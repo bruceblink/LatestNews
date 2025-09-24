@@ -12,20 +12,17 @@
   "projectUrl": "https://github.com/bruceblink/latestnews",
   "homepage": "https://news.likanug.top",
   "scripts": {
-    "dev": "npm run presource && vite dev",
-    "build": "npm run presource && vite build",
-    "lint": "eslint . --fix",
+    "dev": "npm run presource && npm run generate && vite dev",
+    "build": "npm run presource && npm run generate && vite build",
+    "generate": "prisma generate --no-engine",
     "presource": "tsx ./scripts/favicon.ts && tsx ./scripts/source.ts",
     "start": "node --env-file .env.server dist/output/server/index.mjs",
     "preview": "cross-env CF_PAGES=1 npm run build && wrangler pages dev dist/output/public",
     "deploy": "cross-env CF_PAGES=1 npm run build && wrangler pages deploy dist/output/public",
+    "lint": "eslint . --fix",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.app.json",
-    "release": "bumpp",
-    "prepare": "simple-git-hooks",
-    "log": "wrangler pages deployment tail --project-name latestnews",
     "test": "vitest -c vitest.config.ts",
-    "queries": "ts-node ./server/database/queries.ts",
-    "caching": "ts-node ./server/database/caching.ts"
+    "prepare": "simple-git-hooks"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.5.0",
