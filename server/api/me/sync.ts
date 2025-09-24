@@ -1,24 +1,21 @@
-import process from "node:process";
-import { UserTable } from "#/database/user";
+import getUserTable from "#/database/user";
 
 export default defineEventHandler(async (event) => {
     try {
-        const { id } = event.context.user;
-        const db = useDatabase();
-        if (!db) throw new Error("Not found database");
-        const userTable = new UserTable(db);
-        if (process.env.INIT_TABLE !== "false") await userTable.init();
+        const { id, type } = event.context.user;
+        const userTable = getUserTable();
+
         if (event.method === "GET") {
-            const { data, updated } = await userTable.getData(id);
+            const { data, updated } = await userTable.getData(type, id);
             return {
-                data: data ? JSON.parse(data) : undefined,
+                data,
                 updatedTime: updated,
             };
         } else if (event.method === "POST") {
             const body = await readBody(event);
             verifyPrimitiveMetadata(body);
             const { updatedTime, data } = body;
-            await userTable.setData(id, JSON.stringify(data), updatedTime);
+            await userTable.setData(type, id, JSON.stringify(data));
             return {
                 success: true,
                 updatedTime,
