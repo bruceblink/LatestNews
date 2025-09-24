@@ -53,23 +53,22 @@
 4. 获取 Client ID 和 Client Secret
 
 ### 环境变量配置
-参考 `example.env.server` 文件，本地运行时重命名为 `.env.server` 并填写以下配置：
+
+参考 [`example.env.server`](example.env.server) 文件，本地运行时重命名为 `.env` 并填写以下配置：
 
 ```env
-# Github Clien ID
+VITE_APP_TITLE=LatestNews
 G_CLIENT_ID=
-# Github Clien Secret
 G_CLIENT_SECRET=
-# JWT Secret, 通常就用 Clien Secret
-JWT_SECRET=
-# 初始化数据库, 首次运行必须设置为 true，之后可以将其关闭
-INIT_TABLE=true
-# 是否启用缓存
+JWT_SECRET=  # 可以使用`openssl rand -base64 32` 生成
 ENABLE_CACHE=true
+DATABASE_URL=   # 数据库地址
 ```
 
 ### 数据库支持
-本项目主推 Cloudflare Pages 以及 Docker 部署， Vercel 需要你自行搞定数据库，其他支持的数据库可以查看 https://db0.unjs.io/connectors 。
+
+本项目主推 Cloudflare Pages 以及 Docker 部署， Vercel 需要你自行搞定数据库，由于使用[Prisma](https://www.prisma.io/orm)
+支持几乎所有主流数据库 。
 
 1. 在 Cloudflare Worker 控制面板创建 D1 数据库
 2. 在 `wrangler.toml` 中配置 `database_id` 和 `database_name`
