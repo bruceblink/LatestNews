@@ -1,4 +1,4 @@
-import type { UserInfo } from "#/types";
+import type { UserDTO, UserInfo } from "#/types";
 import type { Prisma } from "@root/generated/prisma";
 
 import prisma from "#/lib/prisma";
@@ -14,38 +14,31 @@ export class UserTable {
     }
 
     /** 新增或更新用户 */
-    async addUser(id: string, email: string, type: string = "github") {
-        const existing = await prisma.user_info.findUnique({
-            where: { id: BigInt(id) },
-        });
-
+    async addUser(user: UserDTO) {
         const now = new Date();
 
-        if (!existing) {
-            await prisma.user_info.create({
-                data: {
-                    id: BigInt(id),
-                    email,
-                    type,
-                    data: {}, // 默认空 JSON
-                    created_at: now,
-                    updated_at: now,
-                },
-            });
-            logger.success(`add user ${id}`);
-        } else if (existing.email !== email || existing.type !== type) {
-            await prisma.user_info.update({
-                where: { id: BigInt(id) },
-                data: {
-                    email,
-                    type,
-                    updated_at: now,
-                },
-            });
-            logger.success(`update user ${id} email/type`);
-        } else {
-            logger.info(`user ${id} already exists`);
+        if (!user.username || !user.type) {
+            throw new Error("username and type are required for upsert");
         }
+
+        const newUser = await prisma.user_info.upsert({
+            where: {
+                username: user.username, // 这里假设 username 唯一
+                type: user.type,
+            },
+            update: {
+                ...user,
+                updated_at: now,
+            },
+            create: {
+                ...user,
+                created_at: now,
+                updated_at: now,
+            },
+        });
+
+        logger.success(`upsert user ${newUser.id}`);
+        return newUser.id;
     }
 
     /** 根据 id 获取用户 */
@@ -71,30 +64,32 @@ export class UserTable {
     }
 
     /** 设置用户 data 字段 */
-    async setData(key: string, value: any) {
+    async setData(type: string, provide_id: string, value: any) {
         const user = await prisma.user_info.update({
-            where: { id: BigInt(key) },
+            where: { type_provide_id: { type, provide_id } },
             data: {
-                data: value as unknown as Prisma.InputJsonValue,
+                data: value as Prisma.InputJsonValue,
                 updated_at: new Date(),
             },
         });
-        logger.success(`set data for user ${key}`);
+        logger.success(`set data for user ${provide_id} on ${type}`);
         return user;
     }
 
     /** 获取用户 data 字段 */
-    async getData(id: string): Promise<{ data: any; updated: number }> {
+    async getData(type: string, provide_id: string | number) {
         const user = await prisma.user_info.findUnique({
-            where: { id: BigInt(id) },
+            where: {
+                type_provide_id: {
+                    type,
+                    provide_id: String(provide_id),
+                },
+            },
             select: { data: true, updated_at: true },
         });
-        if (!user) throw new Error(`user ${id} not found`);
+        if (!user) throw new Error(`user ${provide_id} not found`);
 
-        return {
-            data: user.data,
-            updated: Number(user.updated_at),
-        };
+        return { data: user.data, updated: Number(user.updated_at) };
     }
 
     /** 删除用户 */
