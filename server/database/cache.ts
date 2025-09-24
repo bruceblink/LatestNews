@@ -1,102 +1,54 @@
-import type { Database } from "db0";
 import type { NewsItem } from "@shared/types";
+import type { Prisma } from "@root/generated/prisma";
 
-import process from "node:process";
-
-import type { CacheRow, CacheInfo } from "../types";
+import prisma from "#/lib/prisma.ts";
 
 export class Cache {
-    private db;
-    constructor(db: Database) {
-        this.db = db;
-    }
+    constructor() {}
 
     async init() {
-        await this.db
-            .prepare(
-                `
-      CREATE TABLE IF NOT EXISTS cache (
-        id TEXT PRIMARY KEY,
-        updated INTEGER,
-        data TEXT
-      );
-              `
-            )
-            .run();
-        logger.success("init cache table");
+        logger.success("cache table is ready (via Prisma)");
     }
 
     async set(key: string, value: NewsItem[]) {
-        const now = Date.now();
-        await this.db
-            .prepare("INSERT OR REPLACE INTO cache (id, data, updated) VALUES (?, ?, ?)")
-            .run(key, JSON.stringify(value), now);
+        await prisma.cache.upsert({
+            where: { id: key },
+            update: { data: value as unknown as Prisma.InputJsonValue, updated_at: new Date() },
+            create: { id: key, data: value as unknown as Prisma.InputJsonValue, updated_at: new Date() },
+        });
         logger.success(`set ${key} cache`);
     }
 
-    async get(key: string): Promise<CacheInfo | undefined> {
-        const row = (await this.db.prepare("SELECT id, data, updated FROM cache WHERE id = ?").get(key)) as
-            | CacheRow
-            | undefined;
-        if (row) {
-            logger.success(`get ${key} cache`);
-            return {
-                id: row.id,
-                updated: row.updated,
-                items: JSON.parse(row.data),
-            };
-        }
-        return undefined;
+    async get(key: string) {
+        const row = await prisma.cache.findUnique({ where: { id: key } });
+        if (!row) return undefined;
+        logger.success(`get ${key} cache`);
+        return { id: row.id, updated: row.updated_at.getTime(), items: row.data as unknown as NewsItem[] };
     }
 
-    async getEntire(keys: string[]): Promise<CacheInfo[]> {
-        const keysStr = keys.map((k) => `id = '${k}'`).join(" or ");
-        const res = (await this.db
-            .prepare(
-                `SELECT id, data, updated
-                                         FROM cache
-               WHERE ${keysStr}`
-            )
-            .all()) as any;
-        const rows = (res.results ?? res) as CacheRow[];
-
-        /**
-         * https://developers.cloudflare.com/d1/build-with-d1/d1-client-api/#return-object
-         * cloudflare d1 .all() will return
-         * {
-         *   success: boolean
-         *   meta:
-         *   results:
-         * }
-         */
-        if (rows?.length) {
-            logger.success("get entire (...) cache");
-            return rows.map((row) => ({
-                id: row.id,
-                updated: row.updated,
-                items: JSON.parse(row.data) as NewsItem[],
-            }));
-        } else {
-            return [];
-        }
+    async getEntire(keys: string[]) {
+        const rows = await prisma.cache.findMany({ where: { id: { in: keys } } });
+        if (!rows.length) return [];
+        logger.success("get entire (...) cache");
+        return rows.map((row) => ({
+            id: row.id,
+            updated: row.updated_at.getTime(),
+            items: row.data as unknown as NewsItem[],
+        }));
     }
 
     async delete(key: string) {
-        return await this.db.prepare("DELETE FROM cache WHERE id = ?").run(key);
+        return prisma.cache.delete({ where: { id: key } });
     }
 }
 
-export async function getCacheTable() {
-    try {
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const db = useDatabase();
-        // logger.info("db: ", db.getInstance())
-        if (process.env.ENABLE_CACHE === "false") return;
-        const cacheTable = new Cache(db);
+let cacheTable: Cache | undefined;
+
+export async function getCacheTable(): Promise<Cache | undefined> {
+    if (process.env.ENABLE_CACHE === "false") return undefined;
+    if (!cacheTable) {
+        cacheTable = new Cache();
         if (process.env.INIT_TABLE !== "false") await cacheTable.init();
-        // eslint-disable-next-line consistent-return
-        return cacheTable;
-    } catch (e) {
-        logger.error("failed to init database ", e);
     }
+    return cacheTable;
 }
