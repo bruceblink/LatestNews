@@ -30,6 +30,7 @@ const nitroOption: Parameters<typeof viteNitro>[0] = {
     alias: {
         "@shared": join(projectDir, "shared"),
         "#": join(projectDir, "server"),
+        "@prisma/client": join(projectDir, "./generated/prisma/client"),
     },
 };
 

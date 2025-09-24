@@ -14,6 +14,7 @@ export default defineConfig({
         alias: {
             "@shared": join(projectDir, "shared"),
             "#": join(projectDir, "server"),
+            "@prisma/client": join(projectDir, "./generated/prisma/client"),
         },
     },
     plugins: [
