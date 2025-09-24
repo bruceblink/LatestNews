@@ -1,6 +1,7 @@
 import pkg from "@prisma/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
+// @ts-ignore
 const { PrismaClient } = pkg;
 
 // 实例类型

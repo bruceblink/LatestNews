@@ -35,22 +35,24 @@ const nitroOption: Parameters<typeof viteNitro>[0] = {
     },
 };
 
-// 开发环境可以用生成的 client
+// 确保 alias 存在
+if (!nitroOption.alias) nitroOption.alias = {};
+
+// 本地开发使用生成的 Prisma Client
 if (!process.env.VERCEL && !process.env.CF_PAGES) {
-    nitroOption.alias = nitroOption.alias || {};
     nitroOption.alias["@prisma/client"] = join(projectDir, "./generated/prisma/client");
+} else {
+    // Vercel / Cloudflare 构建用 node_modules 下的 Prisma Client
+    nitroOption.alias["@prisma/client"] = join(projectDir, "node_modules/@prisma/client");
 }
 
+// Vercel 特有配置
 if (process.env.VERCEL) {
     nitroOption.preset = "vercel-edge";
-    // You can use other online database, do it yourself. For more info: https://db0.unjs.io/connectors
     nitroOption.database = undefined;
-    // nitroOption.vercel = {
-    //   config: {
-    //     cache: []
-    //   },
-    // }
-} else if (process.env.CF_PAGES) {
+}
+// Cloudflare Pages 特有配置
+else if (process.env.CF_PAGES) {
     nitroOption.preset = "cloudflare-pages";
     nitroOption.unenv = {
         alias: {
@@ -65,7 +67,9 @@ if (process.env.VERCEL) {
             },
         },
     };
-} else if (process.env.BUN) {
+}
+// Bun 环境
+else if (process.env.BUN) {
     nitroOption.preset = "bun";
     nitroOption.database = {
         default: {
