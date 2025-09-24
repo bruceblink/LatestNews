@@ -31,9 +31,6 @@
       "#/*": [
         "server/*"
       ],
-      "@prisma/client": [
-        "./generated/prisma/client"
-      ]
     }
   }
 }
