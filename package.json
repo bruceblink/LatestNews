@@ -12,17 +12,16 @@
   "projectUrl": "https://github.com/bruceblink/latestnews",
   "homepage": "https://news.likanug.top",
   "scripts": {
-    "dev": "npm run presource && npm run generate && vite dev",
-    "build": "npm run presource && npm run generate && vite build",
-    "generate": "prisma generate --no-engine",
-    "presource": "tsx ./scripts/favicon.ts && tsx ./scripts/source.ts",
-    "start": "node --env-file .env.server dist/output/server/index.mjs",
-    "preview": "cross-env CF_PAGES=1 npm run build && wrangler pages dev dist/output/public",
-    "deploy": "cross-env CF_PAGES=1 npm run build && wrangler pages deploy dist/output/public",
+    "dev": "npm run prisma:generate && vite dev",
+    "prisma:generate": "prisma generate --no-engine",
+    "prisma:migrate:dev": "prisma migrate dev --name init --create-only",
+    "build": "prisma generate --no-engine && prisma migrate deploy && vite build",
+    "start": "npm run prisma:migrate:prod && node --env-file .env dist/output/server/index.mjs",
+    "prisma:migrate:prod": "prisma migrate deploy",
+
     "lint": "eslint . --fix",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.app.json",
-    "test": "vitest -c vitest.config.ts",
-    "prepare": "simple-git-hooks"
+    "test": "vitest -c vitest.config.ts"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.5.0",
