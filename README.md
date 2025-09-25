@@ -70,7 +70,10 @@ ENABLE_CACHE=true
 ```
 
 ### 数据库支持
-本项目主推 Cloudflare Pages 以及 Docker 部署， Vercel 需要你自行搞定数据库，其他支持的数据库可以查看 https://db0.unjs.io/connectors 。
+
+本项目主推 Cloudflare Pages 以及 Docker 部署， ~~~Vercel 需要你自行搞定数据库(
+尝试了很多种方式vercel上部署，数据库的问题无法解决，如果需要完整功能推荐使用Cloudflare Pages)~~
+，其他支持的数据库可以查看 https://db0.unjs.io/connectors 。
 
 1. 在 Cloudflare Worker 控制面板创建 D1 数据库
 2. 在 `wrangler.toml` 中配置 `database_id` 和 `database_name`
