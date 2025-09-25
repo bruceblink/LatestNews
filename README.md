@@ -42,7 +42,7 @@
 1. Fork 本仓库
 2. 导入至目标平台
 
-### Cloudflare Pages 配置
+### Cloudflare Pages 配置(必须按如下配置)
 - 构建命令：`pnpm run build`
 - 输出目录：`dist/output/public`
 
@@ -53,7 +53,8 @@
 4. 获取 Client ID 和 Client Secret
 
 ### 环境变量配置
-参考 `example.env.server` 文件，本地运行时重命名为 `.env.server` 并填写以下配置：
+
+参考 `example.env.server` 文件，本地运行时重命名为 `.env` 并填写以下配置：
 
 ```env
 # Github Clien ID
