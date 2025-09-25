@@ -42,6 +42,7 @@ export function defineRSSHubSource(
         Object.entries(RSSHubOptions).forEach(([key, value]) => {
             url.searchParams.set(key, value.toString());
         });
+        // @ts-ignore
         const data: RSSHubResponse = await myFetch(url);
         return data.items.map((item) => ({
             title: item.title,
@@ -56,6 +57,7 @@ export function proxySource(proxyUrl: string, source: SourceGetter) {
     return process.env.CF_PAGES
         ? defineSource(async () => {
               const data = await myFetch(proxyUrl);
+              // @ts-ignore
               return data.items;
           })
         : source;
