@@ -103,7 +103,18 @@ const sortImportsRules = {
 export default [
     // 忽略
     {
-        ignores: ["node_modules/*", "dist/*", "src/generated/*", "imports.app.d.ts", "generated/*", "server/glob.d.ts"],
+        ignores: [
+            "src/routeTree.gen.ts",
+            "imports.app.d.ts",
+            "public/",
+            ".vscode",
+            "**/*.json",
+            "node_modules/*",
+            "dist/*",
+            "imports.app.d.ts",
+            "generated/*",
+            "server/glob.d.ts",
+        ],
     },
     // JS/React 文件规则
     {
