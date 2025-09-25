@@ -39,8 +39,10 @@ export default defineSource(async () => {
     });
     return res.items.map((movie) => ({
         id: movie.id,
-        title: movie.title,
+        title: `《${movie.title}》${movie.card_subtitle}`,
         url: `https://movie.douban.com/subject/${movie.id}`,
-        extra: {},
+        extra: {
+            hover: movie.card_subtitle,
+        },
     }));
 });
