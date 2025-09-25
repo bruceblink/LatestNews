@@ -90,8 +90,12 @@ interface HotVideoRes {
 
 const hotSearch = defineSource(async () => {
     const url = "https://s.search.bilibili.com/main/hotword?limit=30";
-    const res: WapRes = await myFetch(url);
-
+    //const res: WapRes = await myFetch(url);
+    const res: WapRes = await myFetch(url, {
+        headers: {
+            Referer: "https://www.bilibili.com/",
+        },
+    });
     return res.list.map((k) => ({
         id: k.keyword,
         title: k.show_name,
@@ -104,7 +108,11 @@ const hotSearch = defineSource(async () => {
 
 const hotVideo = defineSource(async () => {
     const url = "https://api.bilibili.com/x/web-interface/popular";
-    const res: HotVideoRes = await myFetch(url);
+    const res: HotVideoRes = await myFetch(url, {
+        headers: {
+            Referer: "https://www.bilibili.com/",
+        },
+    });
 
     return res.data.list.map((video) => ({
         id: video.bvid,
@@ -121,7 +129,11 @@ const hotVideo = defineSource(async () => {
 
 const ranking = defineSource(async () => {
     const url = "https://api.bilibili.com/x/web-interface/ranking/v2";
-    const res: HotVideoRes = await myFetch(url);
+    const res: HotVideoRes = await myFetch(url, {
+        headers: {
+            Referer: "https://www.bilibili.com/",
+        },
+    });
 
     return res.data.list.map((video) => ({
         id: video.bvid,
