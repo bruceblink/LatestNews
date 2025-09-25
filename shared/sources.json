@@ -167,6 +167,15 @@
     "color": "red",
     "interval": 600000
   },
+  "douban": {
+    "title": "热门电影",
+    "name": "豆瓣",
+    "type": "hottest",
+    "column": "china",
+    "home": "https://www.douban.com/",
+    "color": "green",
+    "interval": 600000
+  },
   "thepaper": {
     "title": "热榜",
     "name": "澎湃新闻",

@@ -144,6 +144,14 @@ export const originSources = {
         type: "realtime",
         home: "https://www.ithome.com",
     },
+    douban: {
+        name: "豆瓣",
+        column: "china",
+        title: "热门电影",
+        color: "green",
+        type: "hottest",
+        home: "https://www.douban.com/",
+    },
     thepaper: {
         name: "澎湃新闻",
         interval: Time.Common,
