@@ -1,6 +1,6 @@
 services:
   newsnow:
-    image: ghcr.io/ourongxing/newsnow:latest
+    image: ghcr.io/bruceblink/latestnews:latest
     container_name: newsnow
     ports:
       - '4444:4444'
@@ -10,11 +10,13 @@ services:
       - HOST=0.0.0.0
       - PORT=4444
       - NODE_ENV=production
+      - VITE_APP_TITLE=LatestNews
       - G_CLIENT_ID=
       - G_CLIENT_SECRET=
       - JWT_SECRET=
       - INIT_TABLE=true
       - ENABLE_CACHE=true
+      - DATABASE_URL=
 
 volumes:
   newsnow_data:

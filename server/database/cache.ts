@@ -30,6 +30,7 @@ export class Cache {
         const rows = await prisma.cache.findMany({ where: { id: { in: keys } } });
         if (!rows.length) return [];
         logger.success("get entire (...) cache");
+        // @ts-ignore
         return rows.map((row) => ({
             id: row.id,
             updated: row.updated_at.getTime(),
