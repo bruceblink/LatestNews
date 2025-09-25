@@ -1,11 +1,12 @@
 services:
-  newsnow:
+  latestnews:
     build: .
     ports:
       - '4444:4444'
     volumes:
       - newsnow_data:/usr/app/.data
     environment:
+      - VITE_APP_TITLE=LatestNews
       - G_CLIENT_ID=
       - G_CLIENT_SECRET=
       - JWT_SECRET=
