@@ -9,8 +9,8 @@ export default defineEventHandler(async (event): Promise<SourceResponse> => {
         const query = getQuery(event);
         const latest = query.latest !== undefined && query.latest !== "false";
         let id = query.id as SourceID;
-        // eslint-disable-next-line @typescript-eslint/no-shadow
-        const isValid = (id: SourceID) => !id || !sources[id] || !getters[id];
+
+        const isValid = (_id: SourceID) => !_id || !sources[_id] || !getters[_id];
 
         if (isValid(id)) {
             const redirectID = sources?.[id]?.redirect;
