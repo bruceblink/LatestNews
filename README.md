@@ -67,7 +67,8 @@ DATABASE_URL=   # 数据库地址
 
 ### 数据库支持
 
-本项目主推 Cloudflare Pages 以及 Docker 部署， Vercel 需要你自行搞定数据库，由于使用[Prisma](https://www.prisma.io/orm)
+本项目主推 Cloudflare Pages 以及 Docker 部署， ~~Vercel 需要你自行搞定数据库~~
+，由于使用[Prisma](https://www.prisma.io/orm)
 支持几乎所有主流数据库 。
 
 1. 在 Cloudflare Worker 控制面板创建 D1 数据库
