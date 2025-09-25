@@ -7,3 +7,4 @@ public/*
 
 jsconfig.json
 imports.app.d.ts
+server/glob.d.ts
