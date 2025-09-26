@@ -1,11 +1,13 @@
 import process from "node:process";
+import { logger } from "#/utils/logger";
 import { UserTable } from "#/database/user";
-import { readBody, defineEventHandler } from "h3";
 import { verifyPrimitiveMetadata } from "@shared/verify.ts";
+import { readBody, createError, defineEventHandler } from "h3";
 
 export default defineEventHandler(async (event) => {
     try {
         const { id } = event.context.user;
+        // @ts-ignore
         const db = useDatabase();
         if (!db) throw new Error("Not found database");
         const userTable = new UserTable(db);

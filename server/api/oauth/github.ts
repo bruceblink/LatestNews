@@ -1,10 +1,12 @@
 import { SignJWT } from "jose";
 import process from "node:process";
+import { myFetch } from "#/utils/fetch";
 import { UserTable } from "#/database/user";
-import { sendRedirect, defineEventHandler } from "h3";
+import { getQuery, sendRedirect, defineEventHandler } from "h3";
 import { Version, APP_NAME, PROJECT_URL } from "@shared/consts.ts";
 
 export default defineEventHandler(async (event) => {
+    // @ts-ignore
     const db = useDatabase();
     const userTable = db ? new UserTable(db) : undefined;
     if (!userTable) throw new Error("db is not defined");

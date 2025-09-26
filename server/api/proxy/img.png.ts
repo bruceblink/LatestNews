@@ -1,3 +1,6 @@
+import { decodeBase64URL } from "#/utils/base64";
+import { getQuery, sendProxy, defineEventHandler } from "h3";
+
 export default defineEventHandler(async (event) => {
     const { url: img, type = "encodeURIComponent" } = getQuery(event);
     if (img) {
