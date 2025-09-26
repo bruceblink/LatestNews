@@ -9,7 +9,7 @@ import { useLogin } from "./useLogin";
 import { useToast } from "./useToast";
 
 async function uploadMetadata(metadata: PrimitiveMetadata) {
-    const jwt = safeParseString(localStorage.getItem("jwt"));
+    const jwt = safeParseString(localStorage.getItem("access_token"));
     if (!jwt) return;
     await myFetch("/me/sync", {
         method: "POST",
@@ -24,7 +24,7 @@ async function uploadMetadata(metadata: PrimitiveMetadata) {
 }
 
 async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
-    const jwt = safeParseString(localStorage.getItem("jwt"));
+    const jwt = safeParseString(localStorage.getItem("access_token"));
     if (!jwt) return undefined;
     const { data, updatedTime } = (await myFetch("/me/sync", {
         headers: {

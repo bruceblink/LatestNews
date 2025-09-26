@@ -71,7 +71,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
             const headers: Record<string, any> = {};
             if (refetchSources.has(sid)) {
                 url = `/s?id=${sid}&latest`;
-                const jwt = safeParseString(localStorage.getItem("jwt"));
+                const jwt = safeParseString(localStorage.getItem("access_token"));
                 if (jwt) headers.Authorization = `Bearer ${jwt}`;
                 refetchSources.delete(sid);
             } else if (cacheSources.has(sid)) {
