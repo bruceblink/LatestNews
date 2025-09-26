@@ -8,7 +8,7 @@ const userAtom = atomWithStorage<{
     avatar?: string;
 }>("user", {});
 
-const jwtAtom = atomWithStorage("jwt", "");
+const jwtAtom = atomWithStorage("access_token", "");
 
 const enableLoginAtom = atomWithStorage<{
     enable: boolean;
@@ -25,7 +25,7 @@ enableLoginAtom.onMount = (set) => {
         .catch((e) => {
             if (e.statusCode === 506) {
                 set({ enable: false });
-                localStorage.removeItem("jwt");
+                localStorage.removeItem("access_token");
             }
         });
 };
@@ -36,7 +36,7 @@ export function useLogin() {
     const enableLogin = useAtomValue(enableLoginAtom);
 
     const login = useCallback(() => {
-        window.location.href = enableLogin.url || "/api/login";
+        window.location.href = `${import.meta.env.VITE_API_URL}/auth/github/login?redirect_uri=${encodeURIComponent(`${window.location.origin}/auth/callback`)}`;
     }, [enableLogin]);
 
     const logout = useCallback(() => {
