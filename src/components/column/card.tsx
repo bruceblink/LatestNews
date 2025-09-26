@@ -1,10 +1,17 @@
 import type { NewsItem, SourceID, SourceResponse } from "@shared/types";
 
+import clsx from "clsx";
+import { delay } from "@shared/utils.ts";
 import { useWindowSize } from "react-use";
-import { safeParseString } from "~/utils";
 import { useQuery } from "@tanstack/react-query";
-import { forwardRef, useImperativeHandle } from "react";
+import dataSources from "@shared/data-sources.ts";
+import { useRefetch } from "~/hooks/useRefetch.ts";
+import { useFocusWith } from "~/hooks/useFocus.ts";
+import { myFetch, safeParseString } from "~/utils";
+import { useRelativeTime } from "~/hooks/useRelativeTime.ts";
+import { cacheSources, refetchSources } from "~/utils/data.ts";
 import { motion, useInView, AnimatePresence } from "framer-motion";
+import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 
 import { OverlayScrollbar } from "../common/overlay-scrollbar";
 
@@ -35,12 +42,12 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
         return (
             <div
                 ref={ref}
-                className={$(
+                className={clsx(
                     "flex flex-col h-500px rounded-2xl p-4 cursor-default",
                     // "backdrop-blur-5",
                     "transition-opacity-300",
                     isDragging && "op-50",
-                    `bg-${sources[id].color}-500 dark:bg-${sources[id].color} bg-op-40!`
+                    `bg-${dataSources[id].color}-500 dark:bg-${dataSources[id].color} bg-op-40!`
                 )}
                 style={{
                     transformOrigin: "50% 50%",
@@ -79,7 +86,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
 
             function diff() {
                 try {
-                    if (response.items && sources[sid].type === "hottest" && cacheSources.has(sid)) {
+                    if (response.items && dataSources[sid].type === "hottest" && cacheSources.has(sid)) {
                         response.items.forEach((item, i) => {
                             const o = cacheSources.get(sid)!.items.findIndex((k) => k.id === item.id);
                             item.extra = {
@@ -110,30 +117,30 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
 
     return (
         <>
-            <div className={$("flex justify-between mx-2 mt-0 mb-2 items-center")}>
+            <div className={clsx("flex justify-between mx-2 mt-0 mb-2 items-center")}>
                 <div className="flex gap-2 items-center">
                     <a
-                        className={$("w-8 h-8 rounded-full bg-cover")}
+                        className={clsx("w-8 h-8 rounded-full bg-cover")}
                         target="_blank"
-                        href={sources[id].home}
-                        title={sources[id].desc}
+                        href={dataSources[id].home}
+                        title={dataSources[id].desc}
                         style={{
                             backgroundImage: `url(/icons/${id.split("-")[0]}.png)`,
                         }}
                     />
                     <span className="flex flex-col">
                         <span className="flex items-center gap-2">
-                            <span className="text-xl font-bold" title={sources[id].desc}>
-                                {sources[id].name}
+                            <span className="text-xl font-bold" title={dataSources[id].desc}>
+                                {dataSources[id].name}
                             </span>
-                            {sources[id]?.title && (
+                            {dataSources[id]?.title && (
                                 <span
-                                    className={$(
+                                    className={clsx(
                                         "text-sm",
-                                        `color-${sources[id].color} bg-base op-80 bg-op-50\\! px-1 rounded`
+                                        `color-${dataSources[id].color} bg-base op-80 bg-op-50\\! px-1 rounded`
                                     )}
                                 >
-                                    {sources[id].title}
+                                    {dataSources[id].title}
                                 </span>
                             )}
                         </span>
@@ -142,10 +149,10 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
                         </span>
                     </span>
                 </div>
-                <div className={$("flex gap-2 text-lg", `color-${sources[id].color}`)}>
+                <div className={clsx("flex gap-2 text-lg", `color-${dataSources[id].color}`)}>
                     <button
                         type="button"
-                        className={$(
+                        className={clsx(
                             "btn i-ph:arrow-counter-clockwise-duotone",
                             isFetching && "animate-spin i-ph:spinner-duotone"
                         )}
@@ -153,30 +160,33 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
                     />
                     <button
                         type="button"
-                        className={$("btn", isFocused ? "i-ph:star-fill" : "i-ph:star-duotone")}
+                        className={clsx("btn", isFocused ? "i-ph:star-fill" : "i-ph:star-duotone")}
                         onClick={toggleFocus}
                     />
                     {/* firefox cannot drag a button */}
                     {setHandleRef && (
-                        <div ref={setHandleRef} className={$("btn", "i-ph:dots-six-vertical-duotone", "cursor-grab")} />
+                        <div
+                            ref={setHandleRef}
+                            className={clsx("btn", "i-ph:dots-six-vertical-duotone", "cursor-grab")}
+                        />
                     )}
                 </div>
             </div>
 
             <OverlayScrollbar
-                className={$([
+                className={clsx([
                     "h-full p-2 overflow-y-auto rounded-2xl bg-base bg-op-70!",
                     isFetching && "animate-pulse",
-                    `sprinkle-${sources[id].color}`,
+                    `sprinkle-${dataSources[id].color}`,
                 ])}
                 options={{
                     overflow: { x: "hidden" },
                 }}
                 defer
             >
-                <div className={$("transition-opacity-500", isFetching && "op-20")}>
+                <div className={clsx("transition-opacity-500", isFetching && "op-20")}>
                     {!!data?.items?.length &&
-                        (sources[id].type === "hottest" ? (
+                        (dataSources[id].type === "hottest" ? (
                             <NewsListHot items={data.items} />
                         ) : (
                             <NewsListTimeLine items={data.items} />
@@ -211,7 +221,7 @@ function DiffNumber({ diff }: { diff: number }) {
                     initial={{ opacity: 0, y: -15 }}
                     animate={{ opacity: 0.5, y: -7 }}
                     exit={{ opacity: 0, y: -15 }}
-                    className={$("absolute left-0 text-xs", diff < 0 ? "text-green" : "text-red")}
+                    className={clsx("absolute left-0 text-xs", diff < 0 ? "text-green" : "text-red")}
                 >
                     {diff > 0 ? `+${diff}` : diff}
                 </motion.span>
@@ -239,6 +249,7 @@ function ExtraInfo({ item }: { item: NewsItem }) {
                 }}
                 className="h-4 inline mt--1"
                 onError={(e) => (e.currentTarget.style.display = "none")}
+                alt={url}
             />
         );
     }
@@ -258,13 +269,15 @@ function NewsListHot({ items }: { items: NewsItem[] }) {
                     target="_blank"
                     key={item.id}
                     title={item.extra?.hover}
-                    className={$(
+                    className={clsx(
                         "flex gap-2 items-center items-stretch relative cursor-pointer [&_*]:cursor-pointer transition-all",
                         "hover:bg-neutral-400/10 rounded-md pr-1 visited:(text-neutral-400)"
                     )}
                 >
                     <span
-                        className={$("bg-neutral-400/10 min-w-6 flex justify-center items-center rounded-md text-sm")}
+                        className={clsx(
+                            "bg-neutral-400/10 min-w-6 flex justify-center items-center rounded-md text-sm"
+                        )}
                     >
                         {i + 1}
                     </span>
@@ -299,7 +312,7 @@ function NewsListTimeLine({ items }: { items: NewsItem[] }) {
                         </span>
                     </span>
                     <a
-                        className={$(
+                        className={clsx(
                             "ml-2 px-1 hover:bg-neutral-400/10 rounded-md visited:(text-neutral-400/80)",
                             "cursor-pointer [&_*]:cursor-pointer transition-all"
                         )}

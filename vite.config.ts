@@ -2,7 +2,6 @@ import { join } from "node:path";
 import unocss from "unocss/vite";
 import { defineConfig } from "vite";
 import dotenvFlow from "dotenv-flow";
-import unimport from "unimport/unplugin";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react-swc";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
@@ -27,21 +26,6 @@ export default defineConfig({
         TanStackRouterVite({
             // error with auto import and vite-plugin-pwa
             // autoCodeSplitting: true,
-        }),
-        unimport.vite({
-            dirs: ["src/hooks", "shared", "src/utils", "src/atoms"],
-            presets: [
-                "react",
-                {
-                    from: "jotai",
-                    imports: ["atom", "useAtom", "useAtomValue", "useSetAtom"],
-                },
-            ],
-            imports: [
-                { from: "clsx", name: "clsx", as: "$" },
-                { from: "jotai/utils", name: "atomWithStorage" },
-            ],
-            dts: "imports.app.d.ts",
         }),
         unocss(),
         react(),

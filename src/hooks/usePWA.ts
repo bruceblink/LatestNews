@@ -1,5 +1,7 @@
+import { myFetch } from "~/utils";
 import { useMount } from "react-use";
-import { PROJECT_URL } from "@shared/consts";
+import { delay } from "@shared/utils.ts";
+import { Version, PROJECT_URL } from "@shared/consts";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
 import { useToast } from "./useToast";

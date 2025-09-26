@@ -1,7 +1,11 @@
 import type { SourceID } from "@shared/types";
 
-import { PROJECT_URL } from "@shared/consts";
+import clsx from "clsx";
+import { useCallback } from "react";
+import { useAtomValue } from "jotai";
 import { Link } from "@tanstack/react-router";
+import { useRefetch } from "~/hooks/useRefetch.ts";
+import { Version, PROJECT_URL } from "@shared/consts";
 import { useIsFetching } from "@tanstack/react-query";
 import { goToTopAtom, currentSourcesAtom } from "~/atoms";
 
@@ -14,7 +18,7 @@ function GoTop() {
         <button
             type="button"
             title="Go To Top"
-            className={$("i-ph:arrow-fat-up-duotone", ok ? "op-50 btn" : "op-0")}
+            className={clsx("i-ph:arrow-fat-up-duotone", ok ? "op-50 btn" : "op-0")}
             onClick={goToTop}
         />
     );
@@ -47,7 +51,7 @@ function Refresh() {
         <button
             type="button"
             title="Refresh"
-            className={$(
+            className={clsx(
                 "i-ph:arrow-counter-clockwise-duotone btn",
                 isFetching && "animate-spin i-ph:circle-dashed-duotone"
             )}

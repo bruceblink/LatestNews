@@ -1,6 +1,12 @@
 import type { PrimitiveAtom } from "jotai";
 import type { SourceID, FixedColumnID, PrimitiveMetadata } from "@shared/types";
 
+import { atom } from "jotai";
+import dataSources from "@shared/data-sources.ts";
+import { verifyPrimitiveMetadata } from "@shared/verify.ts";
+import { metadata, fixedColumnIds } from "@shared/metadata.ts";
+import { typeSafeObjectEntries, typeSafeObjectFromEntries } from "@shared/type.util.ts";
+
 import type { Update } from "./types";
 
 function createPrimitiveMetadataAtom(
@@ -23,7 +29,8 @@ function createPrimitiveMetadataAtom(
         return initialValue;
     };
     const baseAtom = atom(getInitialValue());
-    const derivedAtom = atom(
+
+    return atom(
         (get) => get(baseAtom),
         (get, set, update: Update<PrimitiveMetadata>) => {
             const nextValue = update instanceof Function ? update(get(baseAtom)) : update;
@@ -33,7 +40,6 @@ function createPrimitiveMetadataAtom(
             }
         }
     );
-    return derivedAtom;
 }
 
 const initialMetadata = typeSafeObjectFromEntries(
@@ -50,10 +56,10 @@ export function preprocessMetadata(target: PrimitiveMetadata) {
                     .filter(([id]) => initialMetadata[id])
                     .map(([id, s]) => {
                         if (id === "focus")
-                            return [id, s.filter((k) => sources[k]).map((k) => sources[k].redirect ?? k)];
+                            return [id, s.filter((k) => dataSources[k]).map((k) => dataSources[k].redirect ?? k)];
                         const oldS = s
                             .filter((k) => initialMetadata[id].includes(k))
-                            .map((k) => sources[k].redirect ?? k);
+                            .map((k) => dataSources[k].redirect ?? k);
                         const newS = initialMetadata[id].filter((k) => !oldS.includes(k));
                         return [id, [...oldS, ...newS]];
                     })

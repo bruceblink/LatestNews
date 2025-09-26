@@ -1,7 +1,10 @@
 import type { FixedColumnID } from "@shared/types";
 
+import { useAtom } from "jotai";
+import { useEffect } from "react";
 import { useTitle } from "react-use";
 import { currentColumnIDAtom } from "~/atoms";
+import { metadata } from "@shared/metadata.ts";
 
 import { Dnd } from "./dnd";
 import { NavBar } from "../navbar";

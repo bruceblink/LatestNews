@@ -3,10 +3,14 @@ import "virtual:uno.css";
 
 import type { QueryClient } from "@tanstack/react-query";
 
+import clsx from "clsx";
+import { usePWA } from "~/hooks/usePWA.ts";
+import { useSync } from "~/hooks/useSync.ts";
 import { Header } from "~/components/header";
 import { Footer } from "~/components/footer";
 import { isMobile } from "react-device-detect";
 import { Toast } from "~/components/common/toast";
+import { useOnReload } from "~/hooks/useOnReload.ts";
 import { SearchBar } from "~/components/common/search-bar";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -34,10 +38,10 @@ function RootComponent() {
     return (
         <>
             <GlobalOverlayScrollbar
-                className={$([!isMobile && "px-4", "h-full overflow-x-auto", "md:(px-10)", "lg:(px-24)"])}
+                className={clsx([!isMobile && "px-4", "h-full overflow-x-auto", "md:(px-10)", "lg:(px-24)"])}
             >
                 <header
-                    className={$(["grid items-center py-4 px-5", "lg:(py-6)", "sticky top-0 z-10 backdrop-blur-md"])}
+                    className={clsx(["grid items-center py-4 px-5", "lg:(py-6)", "sticky top-0 z-10 backdrop-blur-md"])}
                     style={{
                         gridTemplateColumns: "50px auto 50px",
                     }}
@@ -45,7 +49,7 @@ function RootComponent() {
                     <Header />
                 </header>
                 <main
-                    className={$([
+                    className={clsx([
                         "mt-2",
                         "min-h-[calc(100vh-180px)]",
                         "md:(min-h-[calc(100vh-175px)])",

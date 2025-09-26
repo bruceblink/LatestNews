@@ -2,11 +2,17 @@ import "./cmdk.css";
 
 import type { SourceID } from "@shared/types";
 
+import clsx from "clsx";
 import { Command } from "cmdk";
 import { useMount } from "react-use";
 import pinyin from "@shared/pinyin.json";
+import { columns } from "@shared/metadata";
+import { useFocusWith } from "~/hooks/useFocus";
+import { useSearchBar } from "~/hooks/useSearch";
 import { useRef, useMemo, useState } from "react";
+import dataSources from "@shared/data-sources.ts";
 import { CardWrapper } from "~/components/column/card";
+import { typeSafeObjectEntries } from "@shared/type.util";
 
 import { OverlayScrollbar } from "../overlay-scrollbar";
 
@@ -48,7 +54,7 @@ export function SearchBar() {
     const sourceItems = useMemo(
         () =>
             groupByColumn(
-                typeSafeObjectEntries(sources)
+                typeSafeObjectEntries(dataSources)
                     .filter(([_, source]) => !source.redirect)
                     .map(([k, source]) => ({
                         id: k,
@@ -84,7 +90,7 @@ export function SearchBar() {
             onOpenChange={toggle}
             value={value}
             onValueChange={(v) => {
-                if (v in sources) {
+                if (v in dataSources) {
                     setValue(v as SourceID);
                 }
             }}
@@ -122,7 +128,7 @@ function SourceItem({ item }: { item: SourceItemProps }) {
         >
             <span className="flex gap-2 items-center">
                 <span
-                    className={$("w-4 h-4 rounded-md bg-cover")}
+                    className={clsx("w-4 h-4 rounded-md bg-cover")}
                     style={{
                         backgroundImage: `url(/icons/${item.id.split("-")[0]}.png)`,
                     }}
@@ -130,7 +136,7 @@ function SourceItem({ item }: { item: SourceItemProps }) {
                 <span>{item.name}</span>
                 <span className="text-xs text-neutral-400/80 self-end mb-3px">{item.title}</span>
             </span>
-            <span className={$(isFocused ? "i-ph-star-fill" : "i-ph-star-duotone", "bg-primary op-40")} />
+            <span className={clsx(isFocused ? "i-ph-star-fill" : "i-ph-star-duotone", "bg-primary op-40")} />
         </Command.Item>
     );
 }

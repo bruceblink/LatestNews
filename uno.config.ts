@@ -1,7 +1,7 @@
 import { hex2rgba } from "@unocss/rule-utils";
 import { presetIcons, presetWind3, defineConfig, transformerDirectives, transformerVariantGroup } from "unocss";
 
-import { sources } from "./shared/sources";
+import { dataSources } from "./shared/data-sources";
 
 export default defineConfig({
     mergeSelectors: false,
@@ -41,7 +41,7 @@ export default defineConfig({
         btn: "op50 hover:op85 cursor-pointer transition-all",
     },
     safelist: [
-        ...["orange", ...new Set(Object.values(sources).map((k) => k.color))]
+        ...["orange", ...new Set(Object.values(dataSources).map((k) => k.color))]
             .map((k) =>
                 `bg-${k} color-${k} border-${k} sprinkle-${k} shadow-${k}
        bg-${k}-500 color-${k}-500

@@ -1,5 +1,7 @@
 import process from "node:process";
 import { UserTable } from "#/database/user";
+import { readBody, defineEventHandler } from "h3";
+import { verifyPrimitiveMetadata } from "@shared/verify.ts";
 
 export default defineEventHandler(async (event) => {
     try {

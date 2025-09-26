@@ -2,12 +2,18 @@ import type { SourceID } from "@shared/types";
 import type { PropsWithChildren } from "react";
 import type { ElementDragType, BaseEventPayload } from "@atlaskit/pragmatic-drag-and-drop/dist/types/internal-types";
 
+import clsx from "clsx";
+import { isiOS } from "~/utils";
 import { useThrottleFn } from "ahooks";
 import { motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { useWindowSize } from "react-use";
-import { currentSourcesAtom } from "~/atoms";
+import { useAtom, useAtomValue } from "jotai";
 import { isMobile } from "react-device-detect";
+import { useEntireQuery } from "~/hooks/query.ts";
+import dataSources from "@shared/data-sources.ts";
+import { useMemo, useEffect, useCallback } from "react";
+import { goToTopAtom, currentSourcesAtom } from "~/atoms";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { reorderWithEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge";
@@ -63,29 +69,34 @@ export function Dnd() {
                         },
                     }}
                 >
-                    {items.map((id, index) => (
-                        <motion.li
-                            key={id}
-                            className={$(isMobile && "flex-shrink-0", isMobile && index === items.length - 1 && "mr-2")}
-                            style={isMobile ? { width: `${width - 16 > WIDTH ? WIDTH : width - 16}px` } : undefined}
-                            transition={{
-                                type: "tween",
-                                duration: AnimationDuration / 1000,
-                            }}
-                            variants={{
-                                hidden: {
-                                    y: 20,
-                                    opacity: 0,
-                                },
-                                visible: {
-                                    y: 0,
-                                    opacity: 1,
-                                },
-                            }}
-                        >
-                            <SortableCardWrapper id={id} />
-                        </motion.li>
-                    ))}
+                    {items
+                        .filter((id): id is SourceID => id != null)
+                        .map((id, index) => (
+                            <motion.li
+                                key={id}
+                                className={clsx(
+                                    isMobile && "flex-shrink-0",
+                                    isMobile && index === items.length - 1 && "mr-2"
+                                )}
+                                style={isMobile ? { width: `${width - 16 > WIDTH ? WIDTH : width - 16}px` } : undefined}
+                                transition={{
+                                    type: "tween",
+                                    duration: AnimationDuration / 1000,
+                                }}
+                                variants={{
+                                    hidden: {
+                                        y: 20,
+                                        opacity: 0,
+                                    },
+                                    visible: {
+                                        y: 0,
+                                        opacity: 1,
+                                    },
+                                }}
+                            >
+                                <SortableCardWrapper id={id} />
+                            </motion.li>
+                        ))}
                 </motion.ol>
             </OverlayScrollbar>
             {isMobile && (
@@ -143,39 +154,39 @@ function DndWrapper({
 function CardOverlay({ id }: { id: SourceID }) {
     return (
         <div
-            className={$(
+            className={clsx(
                 "flex flex-col p-4 backdrop-blur-5",
-                `bg-${sources[id].color}-500 dark:bg-${sources[id].color} bg-op-40!`,
+                `bg-${dataSources[id].color}-500 dark:bg-${dataSources[id].color} bg-op-40!`,
                 !isiOS() && "rounded-2xl"
             )}
         >
-            <div className={$("flex justify-between mx-2 items-center")}>
+            <div className={clsx("flex justify-between mx-2 items-center")}>
                 <div className="flex gap-2 items-center">
                     <div
-                        className={$("w-8 h-8 rounded-full bg-cover")}
+                        className={clsx("w-8 h-8 rounded-full bg-cover")}
                         style={{
                             backgroundImage: `url(/icons/${id.split("-")[0]}.png)`,
                         }}
                     />
                     <span className="flex flex-col">
                         <span className="flex items-center gap-2">
-                            <span className="text-xl font-bold">{sources[id].name}</span>
-                            {sources[id]?.title && (
+                            <span className="text-xl font-bold">{dataSources[id].name}</span>
+                            {dataSources[id]?.title && (
                                 <span
-                                    className={$(
+                                    className={clsx(
                                         "text-sm",
-                                        `color-${sources[id].color} bg-base op-80 bg-op-50! px-1 rounded`
+                                        `color-${dataSources[id].color} bg-base op-80 bg-op-50! px-1 rounded`
                                     )}
                                 >
-                                    {sources[id].title}
+                                    {dataSources[id].title}
                                 </span>
                             )}
                         </span>
                         <span className="text-xs op-70">拖拽中</span>
                     </span>
                 </div>
-                <div className={$("flex gap-2 text-lg", `color-${sources[id].color}`)}>
-                    <button type="button" className={$("i-ph:dots-six-vertical-duotone", "cursor-grabbing")} />
+                <div className={clsx("flex gap-2 text-lg", `color-${dataSources[id].color}`)}>
+                    <button type="button" className={clsx("i-ph:dots-six-vertical-duotone", "cursor-grabbing")} />
                 </div>
             </div>
         </div>
@@ -187,7 +198,7 @@ function SortableCardWrapper({ id }: ItemsProps) {
 
     useEffect(() => {
         if (OverlayContainer) {
-            OverlayContainer!.className += $("bg-base", !isiOS() && "rounded-2xl");
+            OverlayContainer!.className += clsx("bg-base", !isiOS() && "rounded-2xl");
         }
     }, [OverlayContainer]);
 

@@ -2,6 +2,8 @@ import type { PropsWithChildren } from "react";
 import type { AllEvents, ElementDragType } from "@atlaskit/pragmatic-drag-and-drop/dist/types/internal-types";
 import type { ElementAutoScrollArgs } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/dist/types/internal-types";
 
+import { useState, useEffect } from "react";
+import { randomUUID } from "@shared/utils.ts";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";

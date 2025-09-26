@@ -1,5 +1,5 @@
 import dayjs from "dayjs/esm";
-import { APP_NAME, PROJECT_URL } from "@shared/consts";
+import { Author, APP_NAME, PROJECT_URL } from "@shared/consts";
 
 export function Footer() {
     return (

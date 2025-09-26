@@ -1,4 +1,5 @@
 import { Column } from "~/components/column";
+import { fixedColumnIds } from "@shared/metadata.ts";
 import { redirect, createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/c/$column")({

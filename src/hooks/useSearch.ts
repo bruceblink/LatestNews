@@ -1,3 +1,6 @@
+import { useCallback } from "react";
+import { atom, useAtom } from "jotai";
+
 const searchBarAtom = atom(false);
 
 export function useSearchBar() {

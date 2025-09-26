@@ -1,5 +1,8 @@
 import type { SourceID, SourceResponse } from "@shared/types";
 
+import { myFetch } from "~/utils";
+import { useCallback } from "react";
+import { cacheSources } from "~/utils/data.ts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useUpdateQuery() {
@@ -45,7 +48,7 @@ export function useEntireQuery(items: SourceID[]) {
                     }
                 });
                 // update now
-                update(...s);
+                await update(...s);
 
                 return res;
             }

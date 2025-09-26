@@ -1,4 +1,4 @@
-import { sources } from "./sources";
+import { dataSources } from "./data-sources.ts";
 import { typeSafeObjectEntries, typeSafeObjectFromEntries } from "./type.util";
 
 import type { ColumnID, Metadata, SourceID, HiddenColumnID } from "./types";
@@ -35,7 +35,7 @@ export const metadata: Metadata = typeSafeObjectFromEntries(
                     columnId,
                     {
                         name: columnInfo.zh,
-                        sources: typeSafeObjectEntries(sources)
+                        sources: typeSafeObjectEntries(dataSources)
                             .filter(([, source]) => source.type === "hottest" && !source.redirect)
                             .map(([sourceId]) => sourceId),
                     },
@@ -46,7 +46,7 @@ export const metadata: Metadata = typeSafeObjectFromEntries(
                     columnId,
                     {
                         name: columnInfo.zh,
-                        sources: typeSafeObjectEntries(sources)
+                        sources: typeSafeObjectEntries(dataSources)
                             .filter(([, source]) => source.type === "realtime" && !source.redirect)
                             .map(([sourceId]) => sourceId),
                     },
@@ -57,7 +57,7 @@ export const metadata: Metadata = typeSafeObjectFromEntries(
                     columnId,
                     {
                         name: columnInfo.zh,
-                        sources: typeSafeObjectEntries(sources)
+                        sources: typeSafeObjectEntries(dataSources)
                             .filter(([, source]) => source.column === columnId && !source.redirect)
                             .map(([sourceId]) => sourceId),
                     },

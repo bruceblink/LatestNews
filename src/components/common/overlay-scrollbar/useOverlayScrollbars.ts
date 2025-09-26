@@ -1,8 +1,8 @@
 import type { EventListeners, PartialOptions, InitializationTarget } from "overlayscrollbars";
 import type { ElementType, ComponentRef, ForwardedRef, ComponentPropsWithoutRef } from "react";
 
-import { useRef, useMemo, useEffect } from "react";
 import { OverlayScrollbars } from "overlayscrollbars";
+import { useRef, useMemo, useState, useEffect } from "react";
 
 type OverlayScrollbarsComponentBaseProps<T extends ElementType = "div"> = ComponentPropsWithoutRef<T> & {
     /** Tag of the root element. */

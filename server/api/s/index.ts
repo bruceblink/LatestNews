@@ -1,11 +1,13 @@
 import type { SourceID, SourceResponse } from "@shared/types";
 
 import { getters } from "#/getters";
+import { TTL } from "@shared/consts";
+import { logger } from "#/utils/logger.ts";
+import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
+import { getQuery, createError, defineEventHandler } from "h3";
 
-const TTL = 10 * 60 * 1000; // 10分钟缓存 TTL
-
-const isValidSource = (id?: SourceID) => !!id && !!sources[id] && !!getters[id];
+const isValidSource = (id?: SourceID) => !!id && !!dataSources[id] && !!getters[id];
 
 export default defineEventHandler(async (event): Promise<SourceResponse> => {
     try {
@@ -15,7 +17,7 @@ export default defineEventHandler(async (event): Promise<SourceResponse> => {
 
         // 检查 source id 是否有效
         if (!isValidSource(id)) {
-            const redirectID = sources?.[id]?.redirect;
+            const redirectID = dataSources?.[id]?.redirect;
             if (redirectID) id = redirectID;
             if (!isValidSource(id)) throw new Error("Invalid source id");
         }
@@ -43,7 +45,7 @@ async function getCacheOrFetch(id: SourceID, latest: boolean, event: any): Promi
         cache = await cacheTable.get(id);
     }
 
-    const sourceInterval = sources[id].interval ?? TTL;
+    const sourceInterval = dataSources[id].interval ?? TTL;
 
     // 1. interval 内直接返回缓存（视为最新）
     if (cache && now - cache.updated < sourceInterval) {

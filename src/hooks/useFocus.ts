@@ -1,6 +1,8 @@
 import type { SourceID } from "@shared/types";
 
+import { useAtom } from "jotai";
 import { focusSourcesAtom } from "~/atoms";
+import { useMemo, useCallback } from "react";
 
 export function useFocus() {
     const [focusSources, setFocusSources] = useAtom(focusSourcesAtom);

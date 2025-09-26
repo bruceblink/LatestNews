@@ -1,5 +1,8 @@
 import type { SourceID, FixedColumnID } from "@shared/types";
 
+import { atom } from "jotai";
+import { primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom.ts";
+
 import type { Update } from "./types";
 
 export const focusSourcesAtom = atom(

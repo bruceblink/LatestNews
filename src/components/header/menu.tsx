@@ -1,5 +1,8 @@
+import clsx from "clsx"; // function ThemeToggle() {
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { PROJECT_URL } from "@shared/consts"; // function ThemeToggle() {
+import { PROJECT_URL } from "@shared/consts";
+import { useLogin } from "~/hooks/useLogin.ts";
 
 // function ThemeToggle() {
 //   const { isDark, toggleDark } = useDark()
@@ -35,7 +38,7 @@ export function Menu() {
                 <div className="absolute right-0 z-99 bg-transparent pt-4 top-4">
                     <motion.div
                         id="dropdown-menu"
-                        className={$(["w-200px", "bg-primary backdrop-blur-5 bg-op-70! rounded-lg shadow-xl"])}
+                        className={clsx(["w-200px", "bg-primary backdrop-blur-5 bg-op-70! rounded-lg shadow-xl"])}
                         initial={{
                             scale: 0.9,
                         }}

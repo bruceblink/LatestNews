@@ -1,9 +1,12 @@
 import type { ToastItem } from "~/atoms/types";
 
+import clsx from "clsx";
 import { Timer } from "~/utils";
+import { toastAtom } from "~/hooks/useToast";
+import { useSetAtom, useAtomValue } from "jotai";
 import { useMount, useWindowSize } from "react-use";
-import { useRef, useMemo, useCallback } from "react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useRef, useMemo, useState, useEffect, useCallback } from "react";
 
 const WIDTH = 320;
 export function Toast() {
@@ -70,12 +73,12 @@ function Item({ info }: { info: ToastItem }) {
 
     return (
         <li
-            className={$("bg-base rounded-lg shadow-xl relative")}
+            className={clsx("bg-base rounded-lg shadow-xl relative")}
             onMouseEnter={() => setHoverd(true)}
             onMouseLeave={() => setHoverd(false)}
         >
             <div
-                className={$(
+                className={clsx(
                     `bg-${color}-500 dark:bg-${color} bg-op-40! p2 backdrop-blur-5 rounded-lg w-full`,
                     "flex items-center gap-2"
                 )}

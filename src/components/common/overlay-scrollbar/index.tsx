@@ -2,9 +2,12 @@ import "./style.css";
 
 import type { HTMLProps, PropsWithChildren } from "react";
 
+import clsx from "clsx";
 import { defu } from "defu";
+import { useSetAtom } from "jotai";
 import { useMount } from "react-use";
 import { goToTopAtom } from "~/atoms";
+import { useRef, useMemo, useEffect, useCallback } from "react";
 
 import { useOverlayScrollbars } from "./useOverlayScrollbars";
 
@@ -68,7 +71,7 @@ export function OverlayScrollbar({
     }, [instance]);
 
     return (
-        <div ref={ref} {...props} className={$("overflow-auto scrollbar-hidden", className)}>
+        <div ref={ref} {...props} className={clsx("overflow-auto scrollbar-hidden", className)}>
             {/* 只能有一个 element */}
             <div>{children}</div>
         </div>
@@ -142,7 +145,7 @@ export function GlobalOverlayScrollbar({
     }, [instance]);
 
     return (
-        <div ref={ref} {...props} className={$("overflow-auto scrollbar-hidden", className)}>
+        <div ref={ref} {...props} className={clsx("overflow-auto scrollbar-hidden", className)}>
             <div>{children}</div>
         </div>
     );
