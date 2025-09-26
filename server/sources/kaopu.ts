@@ -9,8 +9,8 @@ type Res = {
 export default defineSource(async () => {
     const res = await Promise.all(
         [
-            "https://kaopucdn.azureedge.net/jsondata/news_list_beta_hans_0.json",
-            "https://kaopucdn.azureedge.net/jsondata/news_list_beta_hans_1.json",
+            "https://kaopustorage.blob.core.windows.net/jsondata/news_list_beta_hans_0.json",
+            "https://kaopustorage.blob.core.windows.net/jsondata/news_list_beta_hans_1.json",
         ].map((url) => myFetch(url) as Promise<Res>)
     );
     return res
