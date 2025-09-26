@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { useLocation } from "react-use";
+import { useSetAtom } from "jotai";
+import { jwtAtom } from "~/hooks/useLogin";
 import { useToast } from "~/hooks/useToast.ts";
 import { useNavigate, createFileRoute } from "@tanstack/react-router";
 
@@ -9,24 +10,23 @@ export const Route = createFileRoute("/auth/callback")({
 
 function CallbackPage() {
     const toaster = useToast();
-    const location = useLocation();
     const navigate = useNavigate();
+    const setJwt = useSetAtom(jwtAtom);
 
     useEffect(() => {
-        const params = new URLSearchParams(location.search);
+        const params = new URLSearchParams(window.location.search);
         const token = params.get("token");
 
         if (token) {
-            // 存储 access_token
+            // ✅ 只存 jwt，解码交给 useLogin 统一做
+            setJwt(token);
             localStorage.setItem("access_token", token);
-
-            // 去首页，替换历史记录，避免 token 残留在地址栏
+            // 跳转首页的关注，替换历史记录
             navigate({ to: "/", replace: true });
+        } else {
+            toaster("登录失败：缺少 token", { type: "error" });
         }
-    }, [location, navigate]);
+    }, [setJwt, navigate, toaster]);
 
-    toaster("登录成功", {
-        type: "success",
-    });
     return null;
 }
