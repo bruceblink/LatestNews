@@ -60,4 +60,4 @@ const source = defineSource(async () => {
     return news;
 });
 
-export default proxySource("https://newsnow-omega-one.vercel.app/api/s?id=ghxi&latest=", source);
+export default proxySource(`${HOME_PAGE}/api/s?id=ghxi&latest=`, source);
