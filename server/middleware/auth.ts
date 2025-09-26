@@ -1,5 +1,7 @@
 import { jwtVerify } from "jose";
 import process from "node:process";
+import { logger } from "#/utils/logger";
+import { getHeader, createError, getRequestURL, defineEventHandler } from "h3";
 
 export default defineEventHandler(async (event) => {
     const url = getRequestURL(event);
