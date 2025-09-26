@@ -29,4 +29,4 @@ const source = defineSource(async () => {
     return news;
 });
 
-export default proxySource(`${HOME_PAGE}/s?id=sputniknewscn&latest=`, source);
+export default proxySource(`${HOME_PAGE}/api/s?id=sputniknewscn&latest=`, source);
