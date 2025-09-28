@@ -3,6 +3,8 @@ import type { NewsItem } from "@shared/types";
 
 import process from "node:process";
 
+import { logger } from "../utils/logger";
+
 import type { CacheRow, CacheInfo } from "../types";
 
 export class Cache {
@@ -29,7 +31,13 @@ export class Cache {
     async set(key: string, value: NewsItem[]) {
         const now = Date.now();
         await this.db
-            .prepare("INSERT OR REPLACE INTO cache (id, data, updated) VALUES (?, ?, ?)")
+            .prepare(
+                `INSERT INTO cache (id, data, updated) 
+                        VALUES (?, ?, ?) 
+                        ON CONFLICT (id) DO UPDATE SET 
+                            data = EXCLUDED.data,
+                            updated = EXCLUDED.updated;`
+            )
             .run(key, JSON.stringify(value), now);
         logger.success(`set ${key} cache`);
     }
@@ -88,6 +96,7 @@ export class Cache {
 
 export async function getCacheTable() {
     try {
+        // @ts-ignore
         // eslint-disable-next-line react-hooks/rules-of-hooks
         const db = useDatabase();
         if (process.env.ENABLE_CACHE === "false") return;
