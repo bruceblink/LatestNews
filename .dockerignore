@@ -10,3 +10,8 @@ dist/
 .env.*
 dev-dist
 *.tsbuildinfo
+/screenshots
+/test
+*.md
+/.vscode
+/.github
