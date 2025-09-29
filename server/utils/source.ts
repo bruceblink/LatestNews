@@ -4,6 +4,9 @@ import type { RSSHubOption, SourceGetter, SourceOption, RSSHubInfo as RSSHubResp
 import defu from "defu";
 import process from "node:process";
 
+import { myFetch } from "./fetch";
+import { rss2json } from "./rss2json";
+
 type R = Partial<Record<AllSourceID, SourceGetter>>;
 
 export function defineSource(source: SourceGetter): SourceGetter;

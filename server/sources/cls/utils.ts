@@ -1,3 +1,5 @@
+import { md5, myCrypto } from "#/utils/crypto";
+
 // https://github.com/DIYgod/RSSHub/blob/master/lib/routes/cls/utils.ts
 const params = {
     appName: "CailianpressWeb",
