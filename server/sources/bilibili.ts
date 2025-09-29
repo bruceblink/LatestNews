@@ -1,3 +1,7 @@
+import { myFetch } from "#/utils/fetch";
+import { proxyPicture } from "#/utils/proxy";
+import { defineSource } from "#/utils/source";
+
 interface WapRes {
     code: number;
     exp_str: string;

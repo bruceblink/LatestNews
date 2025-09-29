@@ -1,3 +1,6 @@
+import { myFetch } from "#/utils/fetch";
+import { defineSource } from "#/utils/source";
+
 interface Res {
     version: string;
     title: string;
@@ -38,5 +41,4 @@ const share = defineSource(async () => {
 
 export default defineSource({
     v2ex: share,
-    "v2ex-share": share,
 });
