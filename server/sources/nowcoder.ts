@@ -1,3 +1,8 @@
+import type { NewsItem } from "@root/shared/types";
+
+import { myFetch } from "../utils/fetch";
+import { defineSource } from "../utils/source";
+
 interface Res {
     data: {
         result: {

@@ -2,6 +2,10 @@ import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
 
+import { myFetch } from "../utils/fetch";
+import { defineSource } from "../utils/source";
+import { parseRelativeDate } from "../utils/date";
+
 export default defineSource(async () => {
     const baseURL = "https://www.solidot.org";
     const html: any = await myFetch(baseURL);

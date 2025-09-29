@@ -1,5 +1,7 @@
 import { XMLParser } from "fast-xml-parser";
 
+import { myFetch } from "./fetch";
+
 import type { RSSInfo } from "../types";
 
 export async function rss2json(url: string): Promise<RSSInfo | undefined> {

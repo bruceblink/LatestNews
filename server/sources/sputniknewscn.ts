@@ -1,8 +1,10 @@
 import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
-import { proxySource } from "#/utils/source";
 import { HOME_PAGE } from "@shared/consts.ts";
+import { proxySource, defineSource } from "#/utils/source";
+
+import { myFetch } from "../utils/fetch";
 
 const source = defineSource(async () => {
     const response: any = await myFetch("https://sputniknews.cn/services/widget/lenta/");

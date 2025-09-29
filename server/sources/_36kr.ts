@@ -1,6 +1,9 @@
 import type { NewsItem } from "@shared/types";
 
 import { load } from "cheerio";
+import { myFetch } from "#/utils/fetch";
+import { defineSource } from "#/utils/source";
+import { parseRelativeDate } from "#/utils/date";
 
 const quick = defineSource(async () => {
     const baseURL = "https://www.36kr.com";

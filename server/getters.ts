@@ -1,6 +1,7 @@
 import type { SourceID } from "@shared/types";
 
 import * as x from "glob:./sources/{*.ts,**/index.ts}";
+import { typeSafeObjectEntries } from "@shared/type.util";
 
 import type { SourceGetter } from "./types";
 

@@ -1,3 +1,6 @@
+import { myFetch } from "../utils/fetch";
+import { defineSource } from "../utils/source";
+
 interface HotItem {
     id: string;
     title: string;
@@ -7,7 +10,7 @@ interface HotItem {
 
 export default defineSource(async () => {
     // 获取虎扑新热榜页面的HTML内容
-    const html = await myFetch("https://bbs.hupu.com/topic-daily-hot");
+    const html = await myFetch<string>("https://bbs.hupu.com/topic-daily-hot");
 
     // 正则表达式匹配新的热榜项结构
     const regex =

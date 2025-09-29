@@ -2,6 +2,9 @@ import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
 
+import { myFetch } from "../utils/fetch";
+import { defineSource } from "../utils/source";
+
 export default defineSource(async () => {
     const baseURL = "https://www.producthunt.com";
     const html: any = await myFetch(baseURL);

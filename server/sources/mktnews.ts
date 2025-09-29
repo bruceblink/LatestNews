@@ -1,3 +1,6 @@
+import { myFetch } from "../utils/fetch";
+import { defineSource } from "../utils/source";
+
 interface Report {
     id: string;
     type: number;

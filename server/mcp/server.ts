@@ -1,3 +1,4 @@
+import type { SourceResponse } from "@shared/types.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 import { z } from "zod";

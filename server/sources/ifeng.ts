@@ -1,5 +1,8 @@
 import type { NewsItem } from "@shared/types";
 
+import { myFetch } from "../utils/fetch";
+import { defineSource } from "../utils/source";
+
 export default defineSource(async () => {
     const html: string = await myFetch("https://www.ifeng.com/");
     const regex = /var\s+allData\s*=\s*(\{[\s\S]*?});/;

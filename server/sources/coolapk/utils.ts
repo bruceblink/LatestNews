@@ -1,3 +1,6 @@
+import md5 from "md5";
+import { encodeBase64 } from "#/utils/base64";
+
 // https://github.com/DIYgod/RSSHub/blob/master/lib/routes/coolapk/utils.ts
 function getRandomDEVICE_ID() {
     const r = [10, 6, 6, 6, 14];
@@ -9,11 +12,11 @@ async function get_app_token() {
     const DEVICE_ID = getRandomDEVICE_ID();
     const now = Math.round(Date.now() / 1000);
     const hex_now = `0x${now.toString(16)}`;
-    const md5_now = await md5(now.toString());
+    const md5_now = md5(now.toString());
     const s = `token://com.coolapk.market/c67ef5943784d09750dcfbb31020f0ab?${md5_now}$${DEVICE_ID}&com.coolapk.market`;
-    const md5_s = await md5(encodeBase64(s));
-    const token = md5_s + DEVICE_ID + hex_now;
-    return token;
+    const md5_s = md5(encodeBase64(s));
+
+    return md5_s + DEVICE_ID + hex_now;
 }
 
 export async function genHeaders() {

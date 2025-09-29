@@ -2,6 +2,9 @@ import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
 
+import { myFetch } from "../utils/fetch";
+import { defineSource } from "../utils/source";
+
 const trending = defineSource(async () => {
     const baseURL = "https://github.com";
     const html: any = await myFetch("https://github.com/trending?spoken_language_code=");

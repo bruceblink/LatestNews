@@ -2,6 +2,9 @@ import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
 
+import { myFetch } from "../utils/fetch";
+import { defineSource } from "../utils/source";
+
 const express = defineSource(async () => {
     const baseURL = "https://www.fastbull.com";
     const html: any = await myFetch(`${baseURL}/cn/express-news`);

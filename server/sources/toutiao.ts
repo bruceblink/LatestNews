@@ -1,3 +1,7 @@
+import { myFetch } from "../utils/fetch";
+import { proxyPicture } from "../utils/proxy";
+import { defineSource } from "../utils/source";
+
 interface Res {
     data: {
         ClusterIdStr: string;

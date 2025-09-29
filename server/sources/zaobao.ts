@@ -4,6 +4,10 @@ import iconv from "iconv-lite";
 import * as cheerio from "cheerio";
 import { Buffer } from "node:buffer";
 
+import { myFetch } from "../utils/fetch";
+import { defineSource } from "../utils/source";
+import { parseRelativeDate } from "../utils/date";
+
 export default defineSource(async () => {
     const response: ArrayBuffer = await myFetch("https://www.zaochenbao.com/realtime/", {
         responseType: "arrayBuffer",

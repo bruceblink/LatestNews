@@ -1,7 +1,10 @@
 import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
-import { proxySource } from "#/utils/source";
+import { HOME_PAGE } from "@shared/consts";
+import { proxySource, defineSource } from "#/utils/source";
+
+import { myFetch } from "../utils/fetch";
 
 // eslint-disable-next-line func-names
 const relativeTimeToDate = function (timeStr: string) {
