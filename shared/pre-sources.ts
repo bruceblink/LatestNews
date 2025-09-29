@@ -3,7 +3,7 @@ import process from "node:process";
 import { Interval } from "./consts";
 import { typeSafeObjectFromEntries } from "./type.util";
 
-import type { Source, SourceID, OriginSource } from "./types";
+import type { Source, OriginSource } from "./types";
 
 const Time = {
     Test: 1,
@@ -426,49 +426,76 @@ export const originSources = {
 } as const satisfies Record<string, OriginSource>;
 
 export function genSources() {
-    const _: [SourceID, Source][] = [];
-
-    Object.entries(originSources).forEach(([id, source]: [any, OriginSource]) => {
-        const parent = {
+    // 创建基础配置的辅助函数
+    function createBaseConfig(source: OriginSource): Source {
+        return {
             name: source.name,
-            type: source.type,
-            disable: source.disable,
-            desc: source.desc,
-            column: source.column,
-            home: source.home,
-            color: source.color ?? "primary",
             interval: source.interval ?? Time.Default,
-        };
-        if (source.sub && Object.keys(source.sub).length) {
-            Object.entries(source.sub).forEach(([subId, subSource], i) => {
-                if (i === 0) {
-                    _.push([
-                        id,
-                        {
-                            redirect: `${id}-${subId}`,
-                            ...parent,
-                            ...subSource,
-                        },
-                    ] as [any, Source]);
-                }
-                _.push([`${id}-${subId}`, { ...parent, ...subSource }] as [any, Source]);
-            });
-        } else {
-            _.push([
-                id,
+            color: source.color ?? "primary",
+            ...(source.type && { type: source.type }),
+            ...(source.desc && { desc: source.desc }),
+            ...(source.column && { column: source.column }),
+            ...(source.home && { home: source.home }),
+            ...(source.disable && { disable: source.disable }),
+            ...(source.title && { title: source.title }),
+        } as Source;
+    }
+
+    // 处理子源的辅助函数
+    function processSubSources(
+        id: string,
+        baseConfig: Source,
+        subSources: NonNullable<OriginSource["sub"]>
+    ): Array<[string, Source]> {
+        const entries: Array<[string, Source]> = [];
+
+        Object.entries(subSources).forEach(([subId, subSource], index) => {
+            // 第一个子源作为父级重定向目标
+            if (index === 0) {
+                entries.push([
+                    id,
+                    {
+                        ...baseConfig,
+                        ...subSource,
+                        redirect: `${id}-${subId}`,
+                    } as Source,
+                ]);
+            }
+
+            // 添加子源配置
+            entries.push([
+                `${id}-${subId}`,
                 {
-                    title: source.title,
-                    ...parent,
-                },
+                    ...baseConfig,
+                    ...subSource,
+                } as Source,
             ]);
+        });
+
+        return entries;
+    }
+
+    // 检查源是否已禁用
+    function isSourceEnabled(source: Source): boolean {
+        if (source.disable === "cf" && process.env.CF_PAGES) {
+            return false;
         }
+        return source.disable !== true;
+    }
+
+    // 主处理逻辑
+    const sources: Array<[string, Source]> = Object.entries(originSources).flatMap(([id, source]) => {
+        const baseConfig = createBaseConfig(source);
+
+        // 处理有子源的情况
+        if ("sub" in source && source.sub) {
+            return processSubSources(id, baseConfig, source.sub);
+        }
+
+        // 处理无子源的情况
+        return [[id, baseConfig]];
     });
 
-    return typeSafeObjectFromEntries(
-        _.filter(([_k, v]) => {
-            if (v.disable === "cf" && process.env.CF_PAGES) {
-                return false;
-            } else return v.disable !== true;
-        })
-    );
+    // 过滤并返回最终结果
+    return typeSafeObjectFromEntries(sources.filter(([, source]) => isSourceEnabled(source))) as Record<string, Source>;
 }
