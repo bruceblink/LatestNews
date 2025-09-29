@@ -1,485 +1,485 @@
 {
   "v2ex": {
-    "redirect": "v2ex-share",
     "name": "V2EX",
-    "column": "tech",
-    "home": "https://v2ex.com/",
-    "color": "slate",
     "interval": 600000,
-    "title": "最新分享"
+    "color": "slate",
+    "home": "https://v2ex.com/",
+    "title": "最新分享",
+    "column": "tech",
+    "redirect": "v2ex-share"
   },
   "v2ex-share": {
     "name": "V2EX",
-    "column": "tech",
-    "home": "https://v2ex.com/",
-    "color": "slate",
     "interval": 600000,
-    "title": "最新分享"
+    "color": "slate",
+    "home": "https://v2ex.com/",
+    "title": "最新分享",
+    "column": "tech"
   },
   "zhihu": {
     "name": "知乎",
+    "interval": 600000,
+    "color": "blue",
     "type": "hottest",
     "column": "china",
-    "home": "https://www.zhihu.com",
-    "color": "blue",
-    "interval": 600000
+    "home": "https://www.zhihu.com"
   },
   "weibo": {
-    "title": "实时热搜",
     "name": "微博",
+    "interval": 120000,
+    "color": "red",
     "type": "hottest",
     "column": "china",
     "home": "https://weibo.com",
-    "color": "red",
-    "interval": 120000
+    "title": "实时热搜"
   },
   "zaobao": {
     "name": "联合早报",
+    "interval": 1800000,
+    "color": "red",
     "type": "realtime",
     "desc": "来自第三方网站: 早晨报",
     "column": "world",
-    "home": "https://www.zaobao.com",
-    "color": "red",
-    "interval": 1800000
+    "home": "https://www.zaobao.com"
   },
   "coolapk": {
-    "title": "今日最热",
     "name": "酷安",
+    "interval": 600000,
+    "color": "green",
     "type": "hottest",
     "column": "tech",
     "home": "https://coolapk.com",
-    "color": "green",
-    "interval": 600000
+    "title": "今日最热"
   },
   "mktnews": {
-    "redirect": "mktnews-flash",
     "name": "MKTNews",
+    "interval": 120000,
+    "color": "indigo",
     "column": "finance",
     "home": "https://mktnews.net",
-    "color": "indigo",
-    "interval": 120000,
-    "title": "快讯"
+    "title": "快讯",
+    "redirect": "mktnews-flash"
   },
   "mktnews-flash": {
     "name": "MKTNews",
+    "interval": 120000,
+    "color": "indigo",
     "column": "finance",
     "home": "https://mktnews.net",
-    "color": "indigo",
-    "interval": 120000,
     "title": "快讯"
   },
   "wallstreetcn": {
-    "redirect": "wallstreetcn-quick",
     "name": "华尔街见闻",
-    "type": "realtime",
+    "interval": 300000,
+    "color": "blue",
     "column": "finance",
     "home": "https://wallstreetcn.com/",
-    "color": "blue",
-    "interval": 300000,
-    "title": "快讯"
+    "type": "realtime",
+    "title": "快讯",
+    "redirect": "wallstreetcn-quick"
   },
   "wallstreetcn-quick": {
     "name": "华尔街见闻",
-    "type": "realtime",
+    "interval": 300000,
+    "color": "blue",
     "column": "finance",
     "home": "https://wallstreetcn.com/",
-    "color": "blue",
-    "interval": 300000,
+    "type": "realtime",
     "title": "快讯"
   },
   "wallstreetcn-news": {
     "name": "华尔街见闻",
+    "interval": 1800000,
+    "color": "blue",
     "column": "finance",
     "home": "https://wallstreetcn.com/",
-    "color": "blue",
-    "interval": 1800000,
     "title": "最新"
   },
   "wallstreetcn-hot": {
     "name": "华尔街见闻",
-    "type": "hottest",
+    "interval": 1800000,
+    "color": "blue",
     "column": "finance",
     "home": "https://wallstreetcn.com/",
-    "color": "blue",
-    "interval": 1800000,
-    "title": "最热"
+    "title": "最热",
+    "type": "hottest"
   },
   "36kr": {
-    "redirect": "36kr-quick",
     "name": "36氪",
+    "interval": 600000,
+    "color": "blue",
     "type": "realtime",
-    "disable": "cf",
     "column": "tech",
     "home": "https://36kr.com",
-    "color": "blue",
-    "interval": 600000,
-    "title": "快讯"
+    "disable": "cf",
+    "title": "快讯",
+    "redirect": "36kr-quick"
   },
   "36kr-quick": {
     "name": "36氪",
+    "interval": 600000,
+    "color": "blue",
     "type": "realtime",
-    "disable": "cf",
     "column": "tech",
     "home": "https://36kr.com",
-    "color": "blue",
-    "interval": 600000,
+    "disable": "cf",
     "title": "快讯"
   },
   "douyin": {
     "name": "抖音",
+    "interval": 600000,
+    "color": "gray",
     "type": "hottest",
     "column": "china",
-    "home": "https://www.douyin.com",
-    "color": "gray",
-    "interval": 600000
+    "home": "https://www.douyin.com"
   },
   "hupu": {
-    "title": "主干道热帖",
     "name": "虎扑",
+    "interval": 600000,
+    "color": "red",
     "type": "hottest",
     "column": "china",
     "home": "https://hupu.com",
-    "color": "red",
-    "interval": 600000
+    "title": "主干道热帖"
   },
   "tieba": {
-    "title": "热议",
     "name": "百度贴吧",
+    "interval": 600000,
+    "color": "blue",
     "type": "hottest",
     "column": "china",
     "home": "https://tieba.baidu.com",
-    "color": "blue",
-    "interval": 600000
+    "title": "热议"
   },
   "toutiao": {
     "name": "今日头条",
+    "interval": 600000,
+    "color": "red",
     "type": "hottest",
     "column": "china",
-    "home": "https://www.toutiao.com",
-    "color": "red",
-    "interval": 600000
+    "home": "https://www.toutiao.com"
   },
   "ithome": {
     "name": "IT之家",
+    "interval": 600000,
+    "color": "red",
     "type": "realtime",
     "column": "tech",
-    "home": "https://www.ithome.com",
-    "color": "red",
-    "interval": 600000
+    "home": "https://www.ithome.com"
   },
   "douban": {
-    "title": "热门电影",
     "name": "豆瓣",
+    "interval": 600000,
+    "color": "green",
     "type": "hottest",
     "column": "china",
     "home": "https://www.douban.com/",
-    "color": "green",
-    "interval": 600000
+    "title": "热门电影"
   },
   "thepaper": {
-    "title": "热榜",
     "name": "澎湃新闻",
+    "interval": 1800000,
+    "color": "gray",
     "type": "hottest",
     "column": "china",
     "home": "https://www.thepaper.cn",
-    "color": "gray",
-    "interval": 1800000
+    "title": "热榜"
   },
   "sputniknewscn": {
     "name": "卫星通讯社",
-    "column": "world",
-    "home": "https://sputniknews.cn",
+    "interval": 600000,
     "color": "orange",
-    "interval": 600000
+    "column": "world",
+    "home": "https://sputniknews.cn"
   },
   "cankaoxiaoxi": {
     "name": "参考消息",
-    "column": "world",
-    "home": "https://china.cankaoxiaoxi.com",
+    "interval": 1800000,
     "color": "red",
-    "interval": 1800000
+    "column": "world",
+    "home": "https://china.cankaoxiaoxi.com"
   },
   "pcbeta": {
-    "redirect": "pcbeta-windows11",
     "name": "远景论坛",
-    "type": "realtime",
+    "interval": 300000,
+    "color": "blue",
     "column": "tech",
     "home": "https://bbs.pcbeta.com",
-    "color": "blue",
-    "interval": 300000,
-    "title": "Win11"
+    "title": "Win11",
+    "type": "realtime",
+    "redirect": "pcbeta-windows11"
   },
   "pcbeta-windows11": {
     "name": "远景论坛",
-    "type": "realtime",
+    "interval": 300000,
+    "color": "blue",
     "column": "tech",
     "home": "https://bbs.pcbeta.com",
-    "color": "blue",
-    "interval": 300000,
-    "title": "Win11"
+    "title": "Win11",
+    "type": "realtime"
   },
   "cls": {
-    "redirect": "cls-telegraph",
     "name": "财联社",
-    "type": "realtime",
+    "interval": 300000,
+    "color": "red",
     "column": "finance",
     "home": "https://www.cls.cn",
-    "color": "red",
-    "interval": 300000,
-    "title": "电报"
+    "title": "电报",
+    "type": "realtime",
+    "redirect": "cls-telegraph"
   },
   "cls-telegraph": {
     "name": "财联社",
-    "type": "realtime",
+    "interval": 300000,
+    "color": "red",
     "column": "finance",
     "home": "https://www.cls.cn",
-    "color": "red",
-    "interval": 300000,
-    "title": "电报"
+    "title": "电报",
+    "type": "realtime"
   },
   "cls-depth": {
     "name": "财联社",
+    "interval": 600000,
+    "color": "red",
     "column": "finance",
     "home": "https://www.cls.cn",
-    "color": "red",
-    "interval": 600000,
     "title": "深度"
   },
   "cls-hot": {
     "name": "财联社",
-    "type": "hottest",
+    "interval": 600000,
+    "color": "red",
     "column": "finance",
     "home": "https://www.cls.cn",
-    "color": "red",
-    "interval": 600000,
-    "title": "热门"
+    "title": "热门",
+    "type": "hottest"
   },
   "xueqiu": {
-    "redirect": "xueqiu-hotstock",
     "name": "雪球",
-    "type": "hottest",
+    "interval": 120000,
+    "color": "blue",
     "column": "finance",
     "home": "https://xueqiu.com",
-    "color": "blue",
-    "interval": 120000,
-    "title": "热门股票"
+    "title": "热门股票",
+    "type": "hottest",
+    "redirect": "xueqiu-hotstock"
   },
   "xueqiu-hotstock": {
     "name": "雪球",
-    "type": "hottest",
+    "interval": 120000,
+    "color": "blue",
     "column": "finance",
     "home": "https://xueqiu.com",
-    "color": "blue",
-    "interval": 120000,
-    "title": "热门股票"
+    "title": "热门股票",
+    "type": "hottest"
   },
   "gelonghui": {
-    "title": "事件",
     "name": "格隆汇",
+    "interval": 120000,
+    "color": "blue",
     "type": "realtime",
     "column": "finance",
     "home": "https://www.gelonghui.com",
-    "color": "blue",
-    "interval": 120000
+    "title": "事件"
   },
   "fastbull": {
-    "redirect": "fastbull-express",
     "name": "法布财经",
-    "type": "realtime",
+    "interval": 120000,
+    "color": "emerald",
     "column": "finance",
     "home": "https://www.fastbull.cn",
-    "color": "emerald",
-    "interval": 120000,
-    "title": "快讯"
+    "title": "快讯",
+    "type": "realtime",
+    "redirect": "fastbull-express"
   },
   "fastbull-express": {
     "name": "法布财经",
-    "type": "realtime",
+    "interval": 120000,
+    "color": "emerald",
     "column": "finance",
     "home": "https://www.fastbull.cn",
-    "color": "emerald",
-    "interval": 120000,
-    "title": "快讯"
+    "title": "快讯",
+    "type": "realtime"
   },
   "fastbull-news": {
     "name": "法布财经",
+    "interval": 1800000,
+    "color": "emerald",
     "column": "finance",
     "home": "https://www.fastbull.cn",
-    "color": "emerald",
-    "interval": 1800000,
     "title": "头条"
   },
   "solidot": {
     "name": "Solidot",
-    "column": "tech",
-    "home": "https://solidot.org",
+    "interval": 3600000,
     "color": "teal",
-    "interval": 3600000
+    "column": "tech",
+    "home": "https://solidot.org"
   },
   "hackernews": {
     "name": "Hacker News",
+    "interval": 600000,
+    "color": "orange",
     "type": "hottest",
     "column": "tech",
-    "home": "https://news.ycombinator.com/",
-    "color": "orange",
-    "interval": 600000
+    "home": "https://news.ycombinator.com/"
   },
   "producthunt": {
     "name": "Product Hunt",
+    "interval": 600000,
+    "color": "red",
     "type": "hottest",
     "column": "tech",
-    "home": "https://www.producthunt.com/",
-    "color": "red",
-    "interval": 600000
+    "home": "https://www.producthunt.com/"
   },
   "github": {
-    "redirect": "github-trending-today",
     "name": "Github",
-    "type": "hottest",
+    "interval": 600000,
+    "color": "gray",
     "column": "tech",
     "home": "https://github.com/",
-    "color": "gray",
-    "interval": 600000,
-    "title": "Today"
+    "title": "Today",
+    "type": "hottest",
+    "redirect": "github-trending-today"
   },
   "github-trending-today": {
     "name": "Github",
-    "type": "hottest",
+    "interval": 600000,
+    "color": "gray",
     "column": "tech",
     "home": "https://github.com/",
-    "color": "gray",
-    "interval": 600000,
-    "title": "Today"
+    "title": "Today",
+    "type": "hottest"
   },
   "bilibili": {
-    "redirect": "bilibili-hot-search",
     "name": "哔哩哔哩",
-    "type": "hottest",
-    "column": "china",
-    "home": "https://www.bilibili.com",
-    "color": "blue",
     "interval": 600000,
-    "title": "热搜"
+    "color": "blue",
+    "home": "https://www.bilibili.com",
+    "title": "热搜",
+    "column": "china",
+    "type": "hottest",
+    "redirect": "bilibili-hot-search"
   },
   "bilibili-hot-search": {
     "name": "哔哩哔哩",
-    "type": "hottest",
-    "column": "china",
-    "home": "https://www.bilibili.com",
-    "color": "blue",
     "interval": 600000,
-    "title": "热搜"
+    "color": "blue",
+    "home": "https://www.bilibili.com",
+    "title": "热搜",
+    "column": "china",
+    "type": "hottest"
   },
   "bilibili-hot-video": {
     "name": "哔哩哔哩",
-    "type": "hottest",
+    "interval": 600000,
+    "color": "blue",
+    "home": "https://www.bilibili.com",
+    "title": "热门视频",
     "disable": "cf",
     "column": "china",
-    "home": "https://www.bilibili.com",
-    "color": "blue",
-    "interval": 600000,
-    "title": "热门视频"
+    "type": "hottest"
   },
   "bilibili-ranking": {
     "name": "哔哩哔哩",
-    "type": "hottest",
-    "disable": "cf",
-    "column": "china",
-    "home": "https://www.bilibili.com",
-    "color": "blue",
     "interval": 1800000,
-    "title": "排行榜"
+    "color": "blue",
+    "home": "https://www.bilibili.com",
+    "title": "排行榜",
+    "column": "china",
+    "disable": "cf",
+    "type": "hottest"
   },
   "kuaishou": {
     "name": "快手",
+    "interval": 600000,
+    "color": "orange",
     "type": "hottest",
-    "disable": "cf",
     "column": "china",
     "home": "https://www.kuaishou.com",
-    "color": "orange",
-    "interval": 600000
+    "disable": "cf"
   },
   "kaopu": {
     "name": "靠谱新闻",
+    "interval": 1800000,
+    "color": "gray",
     "desc": "不一定靠谱，多看多思考",
     "column": "world",
-    "home": "https://kaopu.news/",
-    "color": "gray",
-    "interval": 1800000
+    "home": "https://kaopu.news/"
   },
   "jin10": {
     "name": "金十数据",
+    "interval": 600000,
+    "color": "blue",
     "type": "realtime",
     "column": "finance",
-    "home": "https://www.jin10.com",
-    "color": "blue",
-    "interval": 600000
+    "home": "https://www.jin10.com"
   },
   "baidu": {
     "name": "百度热搜",
+    "interval": 600000,
+    "color": "blue",
     "type": "hottest",
     "column": "china",
-    "home": "https://www.baidu.com",
-    "color": "blue",
-    "interval": 600000
+    "home": "https://www.baidu.com"
   },
   "nowcoder": {
     "name": "牛客",
+    "interval": 600000,
+    "color": "blue",
     "type": "hottest",
     "column": "china",
-    "home": "https://www.nowcoder.com",
-    "color": "blue",
-    "interval": 600000
+    "home": "https://www.nowcoder.com"
   },
   "sspai": {
     "name": "少数派",
+    "interval": 600000,
+    "color": "red",
     "type": "hottest",
     "column": "tech",
-    "home": "https://sspai.com",
-    "color": "red",
-    "interval": 600000
+    "home": "https://sspai.com"
   },
   "juejin": {
     "name": "稀土掘金",
+    "interval": 600000,
+    "color": "blue",
     "type": "hottest",
     "column": "tech",
-    "home": "https://juejin.cn",
-    "color": "blue",
-    "interval": 600000
+    "home": "https://juejin.cn"
   },
   "ifeng": {
-    "title": "热点资讯",
     "name": "凤凰网",
+    "interval": 600000,
+    "color": "red",
     "type": "hottest",
     "column": "china",
     "home": "https://www.ifeng.com",
-    "color": "red",
-    "interval": 600000
+    "title": "热点资讯"
   },
   "chongbuluo": {
-    "redirect": "chongbuluo-latest",
     "name": "虫部落",
+    "interval": 1800000,
+    "color": "green",
     "column": "china",
     "home": "https://www.chongbuluo.com/forum.php?mod=guide&view=newthread",
-    "color": "green",
-    "interval": 1800000,
-    "title": "最新"
+    "title": "最新",
+    "redirect": "chongbuluo-latest"
   },
   "chongbuluo-latest": {
     "name": "虫部落",
+    "interval": 1800000,
+    "color": "green",
     "column": "china",
     "home": "https://www.chongbuluo.com/forum.php?mod=guide&view=newthread",
-    "color": "green",
-    "interval": 1800000,
     "title": "最新"
   },
   "chongbuluo-hot": {
     "name": "虫部落",
-    "type": "hottest",
+    "interval": 1800000,
+    "color": "green",
     "column": "china",
     "home": "https://www.chongbuluo.com/forum.php?mod=guide&view=hot",
-    "color": "green",
-    "interval": 1800000,
-    "title": "最热"
+    "title": "最热",
+    "type": "hottest"
   }
 }
