@@ -1,6 +1,8 @@
 import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
+import { myFetch } from "#/utils/fetch";
+import { defineSource, defineRSSSource } from "#/utils/source";
 
 const hot = defineSource(async () => {
     const baseUrl = "https://www.chongbuluo.com/";
@@ -27,7 +29,6 @@ const hot = defineSource(async () => {
 const latest = defineRSSSource("https://www.chongbuluo.com/forum.php?mod=rss&view=newthread");
 
 export default defineSource({
-    chongbuluo: hot,
     "chongbuluo-hot": hot,
     "chongbuluo-latest": latest,
 });
