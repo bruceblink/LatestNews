@@ -81,7 +81,7 @@ export function useLoginManager() {
         setUser({ name: payload.name, avatar: payload.avatar });
 
         // 自动刷新 token
-        const refreshWindow = 60 * 1000; // 提前1分钟刷新
+        const refreshWindow = 10 * 60 * 1000; // 每10分钟刷新一次
         let refreshing = false;
 
         const timer = setInterval(async () => {
