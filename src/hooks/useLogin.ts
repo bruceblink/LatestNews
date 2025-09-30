@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
+import { useMemo, useEffect } from "react";
 import { myFetch, apiFetch } from "~/utils";
 import { atomWithStorage } from "jotai/utils";
 import { useSetAtom, useAtomValue, getDefaultStore } from "jotai";
@@ -21,6 +21,8 @@ enableLoginAtom.onMount = (set) => {
         .catch((e) => {
             if (e.statusCode === 506) {
                 set({ enable: false });
+                const store = getDefaultStore();
+                store.set(jwtAtom, null);
                 localStorage.removeItem("access_token");
             }
         });
@@ -129,15 +131,15 @@ export function useLoginState() {
     const enableLogin = useAtomValue(enableLoginAtom);
     const userInfo = useAtomValue(userAtom);
 
-    let loggedIn = false;
-    if (jwt) {
+    const loggedIn = useMemo(() => {
+        if (!jwt) return false;
         try {
             const payload = jwtDecode<{ exp?: number }>(jwt);
-            loggedIn = !!payload?.exp && Date.now() < payload.exp * 1000;
+            return !!payload?.exp && Date.now() < payload.exp * 1000;
         } catch {
-            loggedIn = false;
+            return false;
         }
-    }
+    }, [jwt]);
 
     return { enableLogin, loggedIn, userInfo };
 }
