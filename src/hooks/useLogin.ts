@@ -80,37 +80,44 @@ export function useLoginManager() {
 
         setUser({ name: payload.name, avatar: payload.avatar });
 
-        // 自动刷新 token
-        const refreshWindow = 10 * 60 * 1000; // 每10分钟刷新一次
+        // 自动刷新 token：到期前 1 分钟
+        const refreshWindow = 60 * 1000; // 1 分钟
         let refreshing = false;
+        let timer: ReturnType<typeof setTimeout>;
 
-        const timer = setInterval(async () => {
-            const timeLeft = payload!.exp! * 1000 - Date.now();
+        const scheduleRefresh = () => {
+            const timeLeft = payload!.exp! * 1000 - Date.now() - refreshWindow;
             if (timeLeft <= 0) {
-                logout();
-            } else if (timeLeft <= refreshWindow && !refreshing) {
-                refreshing = true;
-                try {
-                    const res = await apiFetch("/auth/refresh", { method: "POST", credentials: "include" });
-                    if (res.status === "ok") {
-                        setJwt(res.data.access_token);
-                        setUser({
-                            name: res.data.user.name,
-                            avatar: res.data.user.avatar_url,
-                        });
-                    } else {
-                        logout();
-                    }
-                } catch {
-                    logout();
-                } finally {
-                    refreshing = false;
-                }
+                refreshToken();
+            } else {
+                timer = setTimeout(refreshToken, timeLeft);
             }
-        }, 60 * 1000);
+        };
+
+        const refreshToken = async () => {
+            if (refreshing) return;
+            refreshing = true;
+            try {
+                const res = await apiFetch("/auth/refresh", { method: "POST", credentials: "include" });
+                if (res.status === "ok") {
+                    setJwt(res.data.access_token);
+                    setUser({ name: res.data.user.name, avatar: res.data.user.avatar_url });
+                    payload = jwtDecode(res.data.access_token); // 更新 payload
+                    scheduleRefresh(); // 重新计算下一次刷新
+                } else {
+                    logout();
+                }
+            } catch {
+                logout();
+            } finally {
+                refreshing = false;
+            }
+        };
+
+        scheduleRefresh();
 
         // eslint-disable-next-line consistent-return
-        return () => clearInterval(timer);
+        return () => clearTimeout(timer);
     }, [jwt, setJwt, setUser]);
 }
 
