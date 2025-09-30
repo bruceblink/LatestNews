@@ -2,7 +2,7 @@ import type { PrimitiveMetadata } from "@shared/types";
 
 import { useAtom } from "jotai";
 import { useMount, useDebounce } from "react-use";
-import { myFetch, safeParseString } from "~/utils";
+import { apiFetch, safeParseString } from "~/utils";
 import { preprocessMetadata, primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom.ts";
 
 import { useToast } from "./useToast";
@@ -11,7 +11,7 @@ import { login, logout } from "./useLogin";
 async function uploadMetadata(metadata: PrimitiveMetadata) {
     const jwt = safeParseString(localStorage.getItem("access_token"));
     if (!jwt) return;
-    await myFetch("/me/sync", {
+    await apiFetch("/me/sync", {
         method: "POST",
         headers: {
             Authorization: `Bearer ${jwt}`,
@@ -26,7 +26,7 @@ async function uploadMetadata(metadata: PrimitiveMetadata) {
 async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
     const jwt = safeParseString(localStorage.getItem("access_token"));
     if (!jwt) return undefined;
-    const { data, updatedTime } = (await myFetch("/me/sync", {
+    const { data, updatedTime } = (await apiFetch("/me/sync", {
         headers: {
             Authorization: `Bearer ${jwt}`,
         },
