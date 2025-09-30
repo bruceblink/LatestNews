@@ -44,6 +44,12 @@ export const myFetch = $fetch.create({
     baseURL: "/api",
 });
 
+export const apiFetch = $fetch.create({
+    timeout: 15000,
+    retry: 0,
+    baseURL: `${import.meta.env.VITE_API_URL}`,
+});
+
 export function isiOS() {
     return (
         ["iPad Simulator", "iPhone Simulator", "iPod Simulator", "iPad", "iPhone", "iPod"].includes(
