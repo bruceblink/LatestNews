@@ -1,5 +1,5 @@
-import { myFetch } from "~/utils";
 import { jwtDecode } from "jwt-decode";
+import { myFetch, apiFetch } from "~/utils";
 import { atomWithStorage } from "jotai/utils";
 import { atom, useSetAtom, useAtomValue } from "jotai";
 import { useMemo, useEffect, useCallback } from "react";
@@ -70,14 +70,59 @@ export function useLogin() {
     // 心跳检查 token 是否过期
     useEffect(() => {
         if (!payload?.exp) return;
-        const timer = setInterval(() => {
-            if (Date.now() >= payload.exp! * 1000) {
+
+        const refreshWindow = 60 * 1000; // 剩余 1 分钟刷新
+        let timer: NodeJS.Timeout;
+
+        const scheduleCheck = () => {
+            const now = Date.now();
+            const expireTime = payload.exp! * 1000;
+            const timeLeft = expireTime - now;
+
+            if (timeLeft <= 0) {
                 logout();
+                return;
             }
-        }, 60 * 1000);
+
+            if (timeLeft <= refreshWindow) {
+                apiFetch("/auth/refresh", {
+                    method: "POST",
+                    credentials: "include", // ✅ 自动发送 refresh token cookie
+                })
+                    .then(
+                        (res: {
+                            status: string;
+                            data: {
+                                access_token: string;
+                                access_token_exp: number;
+                                user: { name: string; avatar_url: string };
+                            };
+                        }) => {
+                            if (res.status === "ok" && res.data.access_token) {
+                                setJwt(res.data.access_token);
+                                setUser({
+                                    name: res.data.user.name,
+                                    avatar: res.data.user.avatar_url,
+                                });
+                            } else {
+                                logout();
+                            }
+                        }
+                    )
+                    .catch(() => {
+                        logout();
+                    });
+            }
+            // 至少剩余30秒会刷新
+            const nextCheck = Math.max(30 * 1000, timeLeft / 2);
+            timer = setTimeout(scheduleCheck, nextCheck);
+        };
+
+        scheduleCheck();
+
         // eslint-disable-next-line consistent-return
-        return () => clearInterval(timer);
-    }, [payload?.exp, logout]);
+        return () => clearTimeout(timer);
+    }, [payload?.exp, logout, setJwt, setUser]);
 
     // 登录跳转
     const login = useCallback(() => {
