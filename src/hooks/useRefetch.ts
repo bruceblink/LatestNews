@@ -1,15 +1,15 @@
 import type { SourceID } from "@shared/types";
 
 import { useCallback } from "react";
-import { useLogin } from "~/hooks/useLogin.ts";
 import { useToast } from "~/hooks/useToast.ts";
 import { refetchSources } from "~/utils/data.ts";
 
 import { useUpdateQuery } from "./query";
+import { login, useLoginState } from "./useLogin";
 
 export function useRefetch() {
-    const { enableLogin, loggedIn, login } = useLogin();
     const toaster = useToast();
+    const { enableLogin, loggedIn } = useLoginState();
     const updateQuery = useUpdateQuery();
     /**
      * force refresh
@@ -30,7 +30,7 @@ export function useRefetch() {
                 updateQuery(...sources);
             }
         },
-        [loggedIn, toaster, login, enableLogin, updateQuery]
+        [loggedIn, toaster, enableLogin, updateQuery]
     );
 
     return {

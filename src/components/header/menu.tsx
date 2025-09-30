@@ -2,7 +2,7 @@ import clsx from "clsx"; // function ThemeToggle() {
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { PROJECT_URL } from "@shared/consts";
-import { useLogin } from "~/hooks/useLogin.ts";
+import { login, logout, useLoginState } from "~/hooks/useLogin";
 
 // function ThemeToggle() {
 //   const { isDark, toggleDark } = useDark()
@@ -17,7 +17,7 @@ import { useLogin } from "~/hooks/useLogin.ts";
 // }
 
 export function Menu() {
-    const { loggedIn, login, logout, userInfo, enableLogin } = useLogin();
+    const { loggedIn, userInfo, enableLogin } = useLoginState();
     const [shown, show] = useState(false);
     return (
         <span className="relative" onMouseEnter={() => show(true)} onMouseLeave={() => show(false)}>

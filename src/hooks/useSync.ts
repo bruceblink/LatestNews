@@ -5,8 +5,8 @@ import { useMount, useDebounce } from "react-use";
 import { myFetch, safeParseString } from "~/utils";
 import { preprocessMetadata, primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom.ts";
 
-import { useLogin } from "./useLogin";
 import { useToast } from "./useToast";
+import { login, logout } from "./useLogin";
 
 async function uploadMetadata(metadata: PrimitiveMetadata) {
     const jwt = safeParseString(localStorage.getItem("access_token"));
@@ -44,7 +44,6 @@ async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
 
 export function useSync() {
     const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
-    const { logout, login } = useLogin();
     const toaster = useToast();
 
     useDebounce(

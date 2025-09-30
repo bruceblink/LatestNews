@@ -1,14 +1,17 @@
+import { useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import { myFetch, apiFetch } from "~/utils";
 import { atomWithStorage } from "jotai/utils";
-import { atom, useSetAtom, useAtomValue } from "jotai";
-import { useMemo, useEffect, useCallback } from "react";
+import { useSetAtom, useAtomValue, getDefaultStore } from "jotai";
 
 // -----------------------------
-// Atoms
+// 全局状态
 // -----------------------------
+export const jwtAtom = atomWithStorage<string | null>(
+    "access_token",
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null
+);
 export const userAtom = atomWithStorage<{ name?: string; avatar?: string }>("user", {});
-export const jwtAtom = atom<string | null>(typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
 export const enableLoginAtom = atomWithStorage<{ enable: boolean; url?: string }>("login", { enable: true });
 
 // 初始化登录开关
@@ -24,118 +27,110 @@ enableLoginAtom.onMount = (set) => {
 };
 
 // -----------------------------
-// Hook
+// 登录/登出函数（全局独立）
 // -----------------------------
-export function useLogin() {
+export const login = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/github/login?redirect_uri=${encodeURIComponent(
+        `${window.location.origin}/auth/callback`
+    )}`;
+};
+
+export const logout = () => {
+    // 更新 atom
+    const store = getDefaultStore();
+    store.set(jwtAtom, null);
+    store.set(userAtom, {});
+    // 清除本地存储
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+};
+
+// -----------------------------
+// Hook：全局状态初始化 + 自动刷新 token
+// -----------------------------
+export function useLoginManager() {
     const jwt = useAtomValue(jwtAtom);
     const setJwt = useSetAtom(jwtAtom);
     const setUser = useSetAtom(userAtom);
-    const enableLogin = useAtomValue(enableLoginAtom);
 
-    // 登出
-    const logout = useCallback(() => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("user");
-        setJwt(null); // ✅ 清空 jwtAtom
-        setUser({}); // ✅ 清空 userAtom
-    }, [setJwt, setUser]);
-
-    // 解码 JWT
-    const payload = useMemo(() => {
-        if (!jwt) return null;
-        try {
-            return jwtDecode<{ name?: string; avatar?: string; exp?: number }>(jwt);
-        } catch {
-            return null;
-        }
-    }, [jwt]);
-
-    // 初始化 user 状态
+    // 初始化用户信息
     useEffect(() => {
+        if (!jwt) {
+            setUser({});
+            return;
+        }
+
+        let payload: { name?: string; avatar?: string; exp?: number } | null = null;
+        try {
+            payload = jwtDecode(jwt);
+        } catch {
+            payload = null;
+        }
+
         if (!payload || !payload.exp) {
             setUser({});
+            setJwt(null);
             return;
         }
 
         if (Date.now() >= payload.exp * 1000) {
             logout();
-        } else {
-            setUser({ name: payload.name, avatar: payload.avatar });
+            return;
         }
-    }, [payload, logout, setUser]);
 
-    // 判断是否登录
-    const loggedIn = useMemo(() => !!payload?.exp && Date.now() < payload.exp * 1000, [payload]);
+        setUser({ name: payload.name, avatar: payload.avatar });
 
-    // 心跳检查 token 是否过期
-    useEffect(() => {
-        if (!payload?.exp) return;
+        // 自动刷新 token
+        const refreshWindow = 60 * 1000; // 提前1分钟刷新
+        let refreshing = false;
 
-        const refreshWindow = 60 * 1000; // 剩余 1 分钟刷新
-        let timer: NodeJS.Timeout;
-
-        const scheduleCheck = () => {
-            const now = Date.now();
-            const expireTime = payload.exp! * 1000;
-            const timeLeft = expireTime - now;
-
+        const timer = setInterval(async () => {
+            const timeLeft = payload!.exp! * 1000 - Date.now();
             if (timeLeft <= 0) {
                 logout();
-                return;
-            }
-
-            if (timeLeft <= refreshWindow) {
-                apiFetch("/auth/refresh", {
-                    method: "POST",
-                    credentials: "include", // ✅ 自动发送 refresh token cookie
-                })
-                    .then(
-                        (res: {
-                            status: string;
-                            data: {
-                                access_token: string;
-                                access_token_exp: number;
-                                user: { name: string; avatar_url: string };
-                            };
-                        }) => {
-                            if (res.status === "ok" && res.data.access_token) {
-                                setJwt(res.data.access_token);
-                                setUser({
-                                    name: res.data.user.name,
-                                    avatar: res.data.user.avatar_url,
-                                });
-                            } else {
-                                logout();
-                            }
-                        }
-                    )
-                    .catch(() => {
+            } else if (timeLeft <= refreshWindow && !refreshing) {
+                refreshing = true;
+                try {
+                    const res = await apiFetch("/auth/refresh", { method: "POST", credentials: "include" });
+                    if (res.status === "ok") {
+                        setJwt(res.data.access_token);
+                        setUser({
+                            name: res.data.user.name,
+                            avatar: res.data.user.avatar_url,
+                        });
+                    } else {
                         logout();
-                    });
+                    }
+                } catch {
+                    logout();
+                } finally {
+                    refreshing = false;
+                }
             }
-            // 至少剩余30秒会刷新
-            const nextCheck = Math.max(30 * 1000, timeLeft / 2);
-            timer = setTimeout(scheduleCheck, nextCheck);
-        };
-
-        scheduleCheck();
+        }, 60 * 1000);
 
         // eslint-disable-next-line consistent-return
-        return () => clearTimeout(timer);
-    }, [payload?.exp, logout, setJwt, setUser]);
+        return () => clearInterval(timer);
+    }, [jwt, setJwt, setUser]);
+}
 
-    // 登录跳转
-    const login = useCallback(() => {
-        window.location.href = `${import.meta.env.VITE_API_URL}/auth/github/login?redirect_uri=${encodeURIComponent(
-            `${window.location.origin}/auth/callback`
-        )}`;
-    }, []);
+// -----------------------------
+// Hook 获取登录状态（任意组件可用）
+// -----------------------------
+export function useLoginState() {
+    const jwt = useAtomValue(jwtAtom);
+    const enableLogin = useAtomValue(enableLoginAtom);
+    const userInfo = useAtomValue(userAtom);
 
-    return {
-        loggedIn,
-        userInfo: useAtomValue(userAtom),
-        enableLogin: enableLogin.enable,
-        login,
-        logout,
-    };
+    let loggedIn = false;
+    if (jwt) {
+        try {
+            const payload = jwtDecode<{ exp?: number }>(jwt);
+            loggedIn = !!payload?.exp && Date.now() < payload.exp * 1000;
+        } catch {
+            loggedIn = false;
+        }
+    }
+
+    return { enableLogin, loggedIn, userInfo };
 }
