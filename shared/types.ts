@@ -32,7 +32,7 @@ export type SourceID = {
 }[MainSourceID];
 
 export interface PrimitiveMetadata {
-    status: string;
+    updatedTime: number;
     data: Record<FixedColumnID, SourceID[]>;
     action: "init" | "manual" | "sync";
 }

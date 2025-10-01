@@ -26,7 +26,7 @@ async function uploadMetadata(metadata: PrimitiveMetadata) {
 async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
     const jwt = safeParseString(localStorage.getItem("access_token"));
     if (!jwt) return undefined;
-    const { data, status } = await apiFetch<PrimitiveMetadata>("/api/sync/me", {
+    const { data, updatedTime } = await apiFetch<PrimitiveMetadata>("/api/sync/me", {
         headers: {
             Authorization: `Bearer ${jwt}`,
         },
@@ -35,11 +35,11 @@ async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
         },
     });
     // 不用同步 action 字段
-    if (data && status === "ok") {
+    if (data) {
         return {
-            status,
-            data,
             action: "sync",
+            data,
+            updatedTime,
         };
     }
     return undefined;
