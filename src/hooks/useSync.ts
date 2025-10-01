@@ -6,9 +6,9 @@ import { apiFetch, safeParseString } from "~/utils";
 import { preprocessMetadata, primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom.ts";
 
 import { useToast } from "./useToast";
-import { login, logout } from "./useLogin";
+import { login, logout, useLoginState } from "./useLogin";
 
-async function uploadMetadata(metadata: PrimitiveMetadata) {
+export async function uploadMetadata(metadata: PrimitiveMetadata) {
     const jwt = safeParseString(localStorage.getItem("access_token"));
     if (!jwt) return;
     await apiFetch("/api/sync/me", {
@@ -23,7 +23,7 @@ async function uploadMetadata(metadata: PrimitiveMetadata) {
     });
 }
 
-async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
+export async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
     const jwt = safeParseString(localStorage.getItem("access_token"));
     if (!jwt) return undefined;
     const { data, updatedTime } = await apiFetch<PrimitiveMetadata>("/api/sync/me", {
@@ -48,12 +48,16 @@ async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
 export function useSync() {
     const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
     const toaster = useToast();
+    const { loggedIn } = useLoginState();
 
     useDebounce(
         async () => {
             const fn = async () => {
                 try {
-                    await uploadMetadata(primitiveMetadata);
+                    // 如果登录
+                    if (loggedIn) {
+                        await uploadMetadata(primitiveMetadata);
+                    }
                 } catch (e: any) {
                     if (e.statusCode !== 506) {
                         toaster("身份校验失败，无法同步，请重新登录", {
@@ -78,9 +82,12 @@ export function useSync() {
     useMount(() => {
         const fn = async () => {
             try {
-                const metadata = await downloadMetadata();
-                if (metadata) {
-                    setPrimitiveMetadata(preprocessMetadata(metadata));
+                // 如果登录
+                if (loggedIn) {
+                    const metadata = await downloadMetadata();
+                    if (metadata) {
+                        setPrimitiveMetadata(preprocessMetadata(metadata));
+                    }
                 }
             } catch (e: any) {
                 if (e.statusCode !== 506) {
