@@ -11,14 +11,14 @@ import { login, logout } from "./useLogin";
 async function uploadMetadata(metadata: PrimitiveMetadata) {
     const jwt = safeParseString(localStorage.getItem("access_token"));
     if (!jwt) return;
-    await apiFetch("/me/sync", {
+    await apiFetch("/api/sync/me", {
         method: "POST",
         headers: {
             Authorization: `Bearer ${jwt}`,
         },
         body: {
             data: metadata.data,
-            updatedTime: metadata.updatedTime,
+            setting_type: "news",
         },
     });
 }
@@ -26,17 +26,20 @@ async function uploadMetadata(metadata: PrimitiveMetadata) {
 async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
     const jwt = safeParseString(localStorage.getItem("access_token"));
     if (!jwt) return undefined;
-    const { data, updatedTime } = (await apiFetch("/me/sync", {
+    const { data, status } = await apiFetch<PrimitiveMetadata>("/api/sync/me", {
         headers: {
             Authorization: `Bearer ${jwt}`,
         },
-    })) as PrimitiveMetadata;
+        query: {
+            setting_type: "news",
+        },
+    });
     // 不用同步 action 字段
-    if (data) {
+    if (data && status === "ok") {
         return {
-            action: "sync",
+            status,
             data,
-            updatedTime,
+            action: "sync",
         };
     }
     return undefined;
