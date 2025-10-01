@@ -44,6 +44,7 @@ export const logout = () => {
     store.set(userAtom, {});
     // 清除本地存储
     localStorage.removeItem("access_token");
+    localStorage.removeItem("metadata");
     localStorage.removeItem("user");
 };
 
