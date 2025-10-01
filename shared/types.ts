@@ -44,11 +44,21 @@ export interface Source {
     name: string;
     interval: number;
     color: Color;
+
+    /**
+     * Subtitle 小标题
+     */
     title?: string;
     desc?: string;
+    /**
+     * Default normal timeline
+     */
     type?: "hottest" | "realtime";
     column?: ColumnID; // 改为 ColumnID，不直接用 HiddenColumnID，打破循环
     home?: string;
+    /**
+     * @default false
+     */
     disable?: boolean | "cf";
     redirect?: SourceID;
 }
@@ -59,6 +69,34 @@ export interface Source {
 export interface Column {
     name: string;
     sources: SourceID[];
+}
+
+export interface NewsItem {
+    id: string | number; // unique
+    title: string;
+    url: string;
+    mobileUrl?: string;
+    pubDate?: number | string;
+    extra?: {
+        hover?: string;
+        date?: number | string;
+        info?: false | string;
+        diff?: number;
+        icon?:
+            | false
+            | string
+            | {
+                  url: string;
+                  scale: number;
+              };
+    };
+}
+
+export interface SourceResponse {
+    status: "success" | "cache";
+    id: SourceID;
+    updatedTime: number | string;
+    items: NewsItem[];
 }
 
 export type Metadata = Record<ColumnID, Column>;
