@@ -1,67 +1,81 @@
 import { dataSources } from "./data-sources.ts";
-import { typeSafeObjectEntries, typeSafeObjectFromEntries } from "./type.util";
+import { typeSafeObjectKeys, typeSafeObjectEntries, typeSafeObjectFromEntries } from "./type.util";
 
-import type { ColumnID, Metadata, SourceID, HiddenColumnID } from "./types";
+import type { SourceID, Metadata } from "./types";
 
-export const columns = {
-    china: { zh: "国内" },
-    world: { zh: "国际" },
-    tech: { zh: "科技" },
-    finance: { zh: "财经" },
-    focus: { zh: "关注" },
-    realtime: { zh: "实时" },
-    hottest: { zh: "最热" },
-} as const;
+// ---------------------------
+// 核心列配置
+// ---------------------------
+export interface ColumnConfigItem {
+    name: string;
+    sourceRule?: (id: SourceID, s: (typeof dataSources)[SourceID]) => boolean;
+}
 
-export const fixedColumnIds = ["focus", "hottest", "realtime"] as const satisfies Partial<ColumnID>[];
-export const hiddenColumns = Object.keys(columns).filter(
-    (id) => !fixedColumnIds.includes(id as any)
-) as HiddenColumnID[];
+export const columnConfig: Record<string, ColumnConfigItem> = {
+    china: {
+        name: "国内",
+        sourceRule: (_, s) => s.column === "china" && !s.redirect,
+    },
+    world: {
+        name: "国际",
+        sourceRule: (_, s) => s.column === "world" && !s.redirect,
+    },
+    tech: {
+        name: "科技",
+        sourceRule: (_, s) => s.column === "tech" && !s.redirect,
+    },
+    finance: {
+        name: "财经",
+        sourceRule: (_, s) => s.column === "finance" && !s.redirect,
+    },
+    focus: { name: "关注" },
+    realtime: {
+        name: "实时",
+        sourceRule: (_, s) => s.type === "realtime" && !s.redirect,
+    },
+    hottest: {
+        name: "最热",
+        sourceRule: (_, s) => s.type === "hottest" && !s.redirect,
+    },
+};
 
+// ---------------------------
+// 类型推导
+// ---------------------------
+export type ColumnID = keyof typeof columnConfig;
+
+// ---------------------------
+// 固定列 / 隐藏列
+// ---------------------------
+export const fixedColumnIds = ["focus", "hottest", "realtime"] as const;
+export type FixedColumnId = (typeof fixedColumnIds)[number];
+
+const fixedSet = new Set<FixedColumnId>(fixedColumnIds);
+
+export const hiddenColumns = typeSafeObjectKeys(columnConfig).filter(
+    (id): id is Exclude<ColumnID, FixedColumnId> => !fixedSet.has(id as FixedColumnId)
+);
+
+// ---------------------------
+// 生成 metadata
+// ---------------------------
 export const metadata: Metadata = typeSafeObjectFromEntries(
-    typeSafeObjectEntries(columns).map(([columnId, columnInfo]) => {
-        switch (columnId) {
-            case "focus":
-                return [
-                    columnId,
-                    {
-                        name: columnInfo.zh,
-                        sources: [] as SourceID[],
-                    },
-                ];
+    typeSafeObjectEntries(columnConfig).map(([columnId, cfg]) => [
+        columnId,
+        {
+            name: cfg.name,
+            sources: cfg.sourceRule
+                ? typeSafeObjectEntries(dataSources)
+                      .filter(([id, s]) => cfg.sourceRule!(id as SourceID, s))
+                      .map(([id]) => id as SourceID)
+                : [],
+        },
+    ])
+);
 
-            case "hottest":
-                return [
-                    columnId,
-                    {
-                        name: columnInfo.zh,
-                        sources: typeSafeObjectEntries(dataSources)
-                            .filter(([, source]) => source.type === "hottest" && !source.redirect)
-                            .map(([sourceId]) => sourceId),
-                    },
-                ];
-
-            case "realtime":
-                return [
-                    columnId,
-                    {
-                        name: columnInfo.zh,
-                        sources: typeSafeObjectEntries(dataSources)
-                            .filter(([, source]) => source.type === "realtime" && !source.redirect)
-                            .map(([sourceId]) => sourceId),
-                    },
-                ];
-
-            default:
-                return [
-                    columnId,
-                    {
-                        name: columnInfo.zh,
-                        sources: typeSafeObjectEntries(dataSources)
-                            .filter(([, source]) => source.column === columnId && !source.redirect)
-                            .map(([sourceId]) => sourceId),
-                    },
-                ];
-        }
-    })
+// ---------------------------
+// 兼容旧代码 columns.zh
+// ---------------------------
+export const columns = typeSafeObjectFromEntries(
+    typeSafeObjectEntries(columnConfig).map(([id, cfg]) => [id, { zh: cfg.name }])
 );
