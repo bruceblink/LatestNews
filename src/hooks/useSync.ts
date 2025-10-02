@@ -1,107 +1,98 @@
 import type { PrimitiveMetadata } from "@shared/types";
 
 import { useAtom } from "jotai";
-import { useMount, useDebounce } from "react-use";
+import { useEffect } from "react";
+import { useDebounce } from "react-use";
 import { apiFetch, safeParseString } from "~/utils";
 import { preprocessMetadata, primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom.ts";
 
 import { useToast } from "./useToast";
 import { login, logout, useLoginState } from "./useLogin";
 
-export async function uploadMetadata(metadata: PrimitiveMetadata) {
-    const jwt = safeParseString(localStorage.getItem("access_token"));
+/** 获取本地 JWT */
+function getJwt(): string | undefined {
+    return safeParseString(localStorage.getItem("access_token"));
+}
+
+/** 上传 metadata 到服务器 */
+async function uploadMetadataToServer(metadata: PrimitiveMetadata): Promise<void> {
+    const jwt = getJwt();
     if (!jwt) return;
+
     await apiFetch("/api/sync/me", {
         method: "POST",
-        headers: {
-            Authorization: `Bearer ${jwt}`,
-        },
-        body: {
-            data: metadata.data,
-            setting_type: "news",
-        },
+        headers: { Authorization: `Bearer ${jwt}` },
+        body: { data: metadata.data, setting_type: "news" },
     });
 }
 
-export async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
-    const jwt = safeParseString(localStorage.getItem("access_token"));
+/** 下载 metadata 从服务器 */
+async function downloadMetadataFromServer(): Promise<PrimitiveMetadata | undefined> {
+    const jwt = getJwt();
     if (!jwt) return undefined;
-    const { data, updatedTime } = await apiFetch<PrimitiveMetadata>("/api/sync/me", {
-        headers: {
-            Authorization: `Bearer ${jwt}`,
-        },
-        query: {
-            setting_type: "news",
-        },
+
+    const res = await apiFetch<{ data: PrimitiveMetadata["data"]; updatedTime: number }>("/api/sync/me", {
+        headers: { Authorization: `Bearer ${jwt}` },
+        query: { setting_type: "news" },
     });
-    // 不用同步 action 字段
-    if (data) {
-        return {
-            action: "sync",
-            data,
-            updatedTime,
-        };
+
+    if (res?.data) {
+        return { data: res.data, updatedTime: res.updatedTime, action: "sync" };
     }
     return undefined;
 }
 
+/** 统一的身份错误处理 */
+function handleAuthError(toaster: ReturnType<typeof useToast>, error: any) {
+    if (error?.statusCode !== 506) {
+        toaster("身份校验失败，无法同步，请重新登录", {
+            type: "error",
+            action: { label: "登录", onClick: login },
+        });
+        logout();
+    }
+}
+
+/**
+ * Hook: 自动同步 primitiveMetadataAtom
+ * - 登录后自动拉取服务器数据初始化
+ * - primitiveMetadata.action === 'manual' 时自动上传（防抖）
+ * - 监听登录状态变化，自动下载 metadata
+ */
 export function useSync() {
     const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
     const toaster = useToast();
     const { loggedIn } = useLoginState();
 
-    useDebounce(
-        async () => {
-            const fn = async () => {
-                try {
-                    // 如果登录
-                    if (loggedIn) {
-                        await uploadMetadata(primitiveMetadata);
-                    }
-                } catch (e: any) {
-                    if (e.statusCode !== 506) {
-                        toaster("身份校验失败，无法同步，请重新登录", {
-                            type: "error",
-                            action: {
-                                label: "登录",
-                                onClick: login,
-                            },
-                        });
-                        logout();
-                    }
-                }
-            };
-
+    /** 上传到服务器（防抖调用） */
+    const tryUpload = async () => {
+        if (!loggedIn) return;
+        try {
             if (primitiveMetadata.action === "manual") {
-                await fn();
+                await uploadMetadataToServer(primitiveMetadata);
             }
-        },
-        10000,
-        [primitiveMetadata]
-    );
-    useMount(() => {
-        const fn = async () => {
+        } catch (err: any) {
+            handleAuthError(toaster, err);
+        }
+    };
+
+    // 防抖上传：metadata.action === manual 时才上传
+    useDebounce(tryUpload, 10000, [primitiveMetadata, loggedIn]);
+
+    // 登录状态变化时自动下载
+    useEffect(() => {
+        /** 下载并更新 atom */
+        const tryDownload = async () => {
+            if (!loggedIn) return;
+
             try {
-                // 如果登录
-                if (loggedIn) {
-                    const metadata = await downloadMetadata();
-                    if (metadata) {
-                        setPrimitiveMetadata(preprocessMetadata(metadata));
-                    }
-                }
-            } catch (e: any) {
-                if (e.statusCode !== 506) {
-                    toaster("身份校验失败，无法同步，请重新登录", {
-                        type: "error",
-                        action: {
-                            label: "登录",
-                            onClick: login,
-                        },
-                    });
-                    logout();
-                }
+                const metadata = await downloadMetadataFromServer();
+                if (metadata) setPrimitiveMetadata(preprocessMetadata(metadata));
+            } catch (err: any) {
+                handleAuthError(toaster, err);
             }
         };
-        void fn();
-    });
+
+        tryDownload();
+    }, [loggedIn, setPrimitiveMetadata, toaster]);
 }
