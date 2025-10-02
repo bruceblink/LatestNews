@@ -46,6 +46,8 @@ export const logout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("metadata");
     localStorage.removeItem("user");
+    // 刷新页面
+    window.location.href = "/";
 };
 
 // -----------------------------
