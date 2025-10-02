@@ -7,8 +7,6 @@ services:
       - newsnow_data:/usr/app/.data
     environment:
       - VITE_APP_TITLE=LatestNews
-      - G_CLIENT_ID=
-      - G_CLIENT_SECRET=
       - JWT_SECRET=
       - INIT_TABLE=true
       - ENABLE_CACHE=true

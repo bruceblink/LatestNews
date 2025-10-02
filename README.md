@@ -57,10 +57,6 @@
 参考 `example.env.server` 文件，本地运行时重命名为 `.env` 并填写以下配置：
 
 ```env
-# Github Clien ID
-G_CLIENT_ID=
-# Github Clien Secret
-G_CLIENT_SECRET=
 # JWT Secret, 通常就用 Clien Secret
 JWT_SECRET=
 # 初始化数据库, 首次运行必须设置为 true，之后可以将其关闭
