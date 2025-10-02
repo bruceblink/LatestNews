@@ -10,12 +10,10 @@ import { useToast } from "./useToast";
 import { login, logout, useLoginState } from "./useLogin";
 
 /** 获取本地 JWT */
-function getJwt(): string | undefined {
-    return safeParseString(localStorage.getItem("access_token"));
-}
+const getJwt = (): string | undefined => safeParseString(localStorage.getItem("access_token"));
 
 /** 上传 metadata 到服务器 */
-async function uploadMetadataToServer(metadata: PrimitiveMetadata): Promise<void> {
+const uploadMetadataToServer = async (metadata: PrimitiveMetadata): Promise<void> => {
     const jwt = getJwt();
     if (!jwt) return;
 
@@ -24,10 +22,10 @@ async function uploadMetadataToServer(metadata: PrimitiveMetadata): Promise<void
         headers: { Authorization: `Bearer ${jwt}` },
         body: { data: metadata.data, setting_type: "news" },
     });
-}
+};
 
 /** 下载 metadata 从服务器 */
-async function downloadMetadataFromServer(): Promise<PrimitiveMetadata | undefined> {
+const downloadMetadataFromServer = async (): Promise<PrimitiveMetadata | undefined> => {
     const jwt = getJwt();
     if (!jwt) return undefined;
 
@@ -36,14 +34,12 @@ async function downloadMetadataFromServer(): Promise<PrimitiveMetadata | undefin
         query: { setting_type: "news" },
     });
 
-    if (res?.data) {
-        return { data: res.data, updatedTime: res.updatedTime, action: "sync" };
-    }
+    if (res?.data) return { data: res.data, updatedTime: res.updatedTime, action: "sync" };
     return undefined;
-}
+};
 
-/** 统一的身份错误处理 */
-function handleAuthError(toaster: ReturnType<typeof useToast>, error: any) {
+/** 统一身份验证错误处理 */
+const handleAuthError = (toaster: ReturnType<typeof useToast>, error: any) => {
     if (error?.statusCode !== 506) {
         toaster("身份校验失败，无法同步，请重新登录", {
             type: "error",
@@ -51,41 +47,43 @@ function handleAuthError(toaster: ReturnType<typeof useToast>, error: any) {
         });
         logout();
     }
-}
+};
 
 /**
  * Hook: 自动同步 primitiveMetadataAtom
- * - 登录后自动拉取服务器数据初始化
- * - primitiveMetadata.action === 'manual' 时自动上传（防抖）
- * - 监听登录状态变化，自动下载 metadata
  */
 export function useSync() {
     const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
     const toaster = useToast();
     const { loggedIn } = useLoginState();
 
-    /** 上传到服务器（防抖调用） */
+    /** 上传：primitiveMetadata.action === 'manual' */
     const tryUpload = async () => {
         if (!loggedIn) return;
+        if (primitiveMetadata.action !== "manual") return;
+
         try {
-            if (primitiveMetadata.action === "manual") {
-                await uploadMetadataToServer(primitiveMetadata);
-            }
+            await uploadMetadataToServer(primitiveMetadata);
         } catch (err: any) {
             handleAuthError(toaster, err);
         }
     };
 
-    // 防抖上传：metadata.action === manual 时才上传
+    // 防抖上传
     useDebounce(tryUpload, 10000, [primitiveMetadata, loggedIn]);
 
-    // 登录状态变化时自动下载
+    /** 登录后立即同步：上传本地修改 + 下载服务器最新 */
     useEffect(() => {
-        /** 下载并更新 atom */
-        const tryDownload = async () => {
-            if (!loggedIn) return;
+        if (!loggedIn) return;
 
+        const syncOnce = async () => {
             try {
+                // 先上传本地修改（manual 状态）
+                if (primitiveMetadata.action === "manual") {
+                    await uploadMetadataToServer(primitiveMetadata);
+                }
+
+                // 再下载服务器最新数据并更新 atom
                 const metadata = await downloadMetadataFromServer();
                 if (metadata) setPrimitiveMetadata(preprocessMetadata(metadata));
             } catch (err: any) {
@@ -93,6 +91,6 @@ export function useSync() {
             }
         };
 
-        tryDownload();
-    }, [loggedIn, setPrimitiveMetadata, toaster]);
+        syncOnce();
+    }, [loggedIn, primitiveMetadata, setPrimitiveMetadata, toaster]);
 }
