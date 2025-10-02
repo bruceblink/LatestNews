@@ -49,6 +49,26 @@ const handleAuthError = (toaster: ReturnType<typeof useToast>, error: any) => {
     }
 };
 
+/** 合并服务器 metadata 与本地 metadata，保留本地未上传修改 */
+const mergeMetadata = (local: PrimitiveMetadata, server: PrimitiveMetadata): PrimitiveMetadata => {
+    const mergedData: PrimitiveMetadata["data"] = { ...local.data };
+
+    for (const columnId of Object.keys(server.data)) {
+        const localSources = local.data[columnId as keyof typeof local.data] ?? [];
+        const serverSources = server.data[columnId as keyof typeof server.data] ?? [];
+
+        // 保留本地 source，合并服务器新增
+        mergedData[columnId as keyof typeof mergedData] = Array.from(new Set([...localSources, ...serverSources]));
+    }
+
+    return {
+        ...local,
+        data: mergedData,
+        action: "sync",
+        updatedTime: Math.max(local.updatedTime, server.updatedTime),
+    };
+};
+
 /**
  * Hook: 自动同步 primitiveMetadataAtom
  */
@@ -72,7 +92,7 @@ export function useSync() {
     // 防抖上传
     useDebounce(tryUpload, 10000, [primitiveMetadata, loggedIn]);
 
-    /** 登录后立即同步：上传本地修改 + 下载服务器最新 */
+    /** 登录后立即同步：上传本地修改 + 下载服务器最新并合并 */
     useEffect(() => {
         if (!loggedIn) return;
 
@@ -83,9 +103,12 @@ export function useSync() {
                     await uploadMetadataToServer(primitiveMetadata);
                 }
 
-                // 再下载服务器最新数据并更新 atom
-                const metadata = await downloadMetadataFromServer();
-                if (metadata) setPrimitiveMetadata(preprocessMetadata(metadata));
+                // 下载服务器 metadata
+                const serverMetadata = await downloadMetadataFromServer();
+                if (serverMetadata) {
+                    const merged = mergeMetadata(primitiveMetadata, serverMetadata);
+                    setPrimitiveMetadata(preprocessMetadata(merged));
+                }
             } catch (err: any) {
                 handleAuthError(toaster, err);
             }
