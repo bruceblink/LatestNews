@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useSetAtom } from "jotai";
-import { jwtAtom } from "~/hooks/useLogin";
+import { useSync } from "~/hooks/useSync";
 import { useToast } from "~/hooks/useToast.ts";
+import { login, logout, jwtAtom } from "~/hooks/useLogin";
 import { useNavigate, createFileRoute } from "@tanstack/react-router";
+import { preprocessMetadata, primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom";
 
 export const Route = createFileRoute("/auth/callback")({
     component: CallbackPage,
@@ -12,6 +14,8 @@ function CallbackPage() {
     const toaster = useToast();
     const navigate = useNavigate();
     const setJwt = useSetAtom(jwtAtom);
+    const setPrimitiveMetadata = useSetAtom(primitiveMetadataAtom);
+    const { downloadMetadata } = useSync(); // 复用 hook 提供的函数
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -22,17 +26,25 @@ function CallbackPage() {
             return;
         }
 
-        // 1️⃣ 保存 JWT 到 atom
-        setJwt(token);
+        (async () => {
+            try {
+                setJwt(token);
+                localStorage.setItem("access_token", token);
 
-        // 2️⃣ 保存到 localStorage，供页面刷新后读取
-        localStorage.setItem("access_token", token);
+                const metadata = await downloadMetadata();
+                if (metadata) setPrimitiveMetadata(preprocessMetadata(metadata));
 
-        // 3️⃣ useSync 会自动拉取服务器 metadata 并合并到 primitiveMetadataAtom
-        //这一步其实已经由 useSync hook 完成
-        // 4️⃣ 登录完成后导航回首页（关注页）
-        navigate({ to: "/", replace: true });
-    }, [setJwt, navigate, toaster]);
+                await navigate({ to: "/", replace: true });
+            } catch (err: any) {
+                console.error("同步 metadata 失败:", err);
+                toaster("身份校验失败，无法同步，请重新登录", {
+                    type: "error",
+                    action: { label: "登录", onClick: login },
+                });
+                logout();
+            }
+        })();
+    }, [setJwt, setPrimitiveMetadata, navigate, toaster, downloadMetadata]);
 
     return null;
 }
