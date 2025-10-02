@@ -17,15 +17,21 @@ function CallbackPage() {
         const params = new URLSearchParams(window.location.search);
         const token = params.get("token");
 
-        if (token) {
-            // ✅ 只存 jwt，解码交给 useLogin 统一做
-            setJwt(token);
-            localStorage.setItem("access_token", token);
-            // 跳转首页的关注，替换历史记录
-            navigate({ to: "/", replace: true });
-        } else {
+        if (!token) {
             toaster("登录失败：缺少 token", { type: "error" });
+            return;
         }
+
+        // 1️⃣ 保存 JWT 到 atom
+        setJwt(token);
+
+        // 2️⃣ 保存到 localStorage，供页面刷新后读取
+        localStorage.setItem("access_token", token);
+
+        // 3️⃣ useSync 会自动拉取服务器 metadata 并合并到 primitiveMetadataAtom
+        //这一步其实已经由 useSync hook 完成
+        // 4️⃣ 登录完成后导航回首页（关注页）
+        navigate({ to: "/", replace: true });
     }, [setJwt, navigate, toaster]);
 
     return null;
