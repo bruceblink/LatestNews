@@ -7,7 +7,7 @@ import { verifyPrimitiveMetadata } from "@shared/verify.ts";
 import { metadata, fixedColumnIds } from "@shared/metadata.ts";
 import { typeSafeObjectEntries, typeSafeObjectFromEntries } from "@shared/type.util.ts";
 
-import type { Update } from ".";
+import type { Update } from "./types";
 
 // ========== 工具函数 ==========
 
