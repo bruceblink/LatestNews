@@ -1,13 +1,13 @@
 import type { NewsItem, SourceID, SourceResponse } from "@shared/types";
 
 import clsx from "clsx";
+import { myFetch } from "~/utils";
 import { delay } from "@shared/utils.ts";
 import { useWindowSize } from "react-use";
 import { useQuery } from "@tanstack/react-query";
 import dataSources from "@shared/data-sources.ts";
 import { useRefetch } from "~/hooks/useRefetch.ts";
 import { useFocusWith } from "~/hooks/useFocus.ts";
-import { myFetch, safeParseString } from "~/utils";
 import { useRelativeTime } from "~/hooks/useRelativeTime.ts";
 import { cacheSources, refetchSources } from "~/utils/data.ts";
 import { motion, useInView, AnimatePresence } from "framer-motion";
@@ -71,7 +71,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
             const headers: Record<string, any> = {};
             if (refetchSources.has(sid)) {
                 url = `/s?id=${sid}&latest`;
-                const jwt = safeParseString(localStorage.getItem("access_token"));
+                const jwt = localStorage.getItem("access_token");
                 if (jwt) headers.Authorization = `Bearer ${jwt}`;
                 refetchSources.delete(sid);
             } else if (cacheSources.has(sid)) {

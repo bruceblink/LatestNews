@@ -1,16 +1,19 @@
 import type { PrimitiveMetadata } from "@shared/types";
 
 import { useAtom } from "jotai";
+import { apiFetch } from "~/utils";
 import { useDebounce } from "react-use";
 import { useEffect, useCallback } from "react";
-import { apiFetch, safeParseString } from "~/utils";
 import { preprocessMetadata, primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom.ts";
 
 import { useToast } from "./useToast";
 import { login, logout, useLoginState } from "./useLogin";
 
-/** 获取本地 JWT */
-const getJwt = (): string | undefined => safeParseString(localStorage.getItem("access_token"));
+/** 获取本地 JWT（直接读取字符串，避免将 token 当作 JSON 解析成空字符串） */
+const getJwt = (): string | undefined => {
+    const v = localStorage.getItem("access_token");
+    return v === null ? undefined : v;
+};
 
 /** 统一的身份错误处理 */
 function handleAuthError(toaster: ReturnType<typeof useToast>, error: any) {
