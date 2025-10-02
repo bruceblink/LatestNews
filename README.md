@@ -13,7 +13,9 @@
 - 优雅的阅读界面设计，实时获取最新热点新闻
 - 支持 GitHub 登录及数据同步
 - 默认缓存时长为 30 分钟，登录用户可强制刷新获取最新数据
+- 登录用户支持同步用户关注的内容
 - 根据内容源更新频率动态调整抓取间隔（最快每 2 分钟），避免频繁抓取导致 IP 被封禁
+- 支持使用第三方鉴权和授权服务，使用方式可以参考[ani-updater](https://github.com/bruceblink/ani-updater)中的[auth](https://github.com/bruceblink/ani-updater/tree/main/ani_subs/src/routes/auth)
 - 支持 MCP server
 
 ```json
