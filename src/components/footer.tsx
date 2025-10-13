@@ -1,5 +1,5 @@
 import dayjs from "dayjs/esm";
-import { Author, APP_NAME, PROJECT_URL } from "@shared/consts";
+import { Author, PROJECT_URL } from "@shared/consts";
 
 export function Footer() {
     return (
@@ -9,7 +9,7 @@ export function Footer() {
             </a>
             <span>
                 <span>
-                    {APP_NAME} © {dayjs().year()} By{" "}
+                    {`${import.meta.env.VITE_APP_TITLE}`} © {dayjs().year()} By{" "}
                 </span>
                 <a href={Author.url} target="_blank">
                     {Author.name}
