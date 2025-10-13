@@ -11,7 +11,7 @@ export const Interval = 10 * 60 * 1000;
 // 项目名称
 export const APP_NAME = packageJSON.name;
 // GitHub项目地址
-export const PROJECT_URL = packageJSON.projectUrl;
+export const PROJECT_URL = packageJSON.repository;
 // 应用部署地址
 export const HOME_PAGE = packageJSON.homepage;
 // 应用版本

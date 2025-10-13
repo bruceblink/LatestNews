@@ -9,7 +9,7 @@
     "email": "likanug.g@qq.com",
     "name": "likanug"
   },
-  "projectUrl": "https://github.com/bruceblink/latestnews",
+  "repository": "https://github.com/bruceblink/latestnews",
   "homepage": "https://news.likanug.top",
   "scripts": {
     "dev": "npm run presource && vite dev",
