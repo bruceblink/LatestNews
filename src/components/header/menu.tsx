@@ -71,13 +71,13 @@ export function Menu() {
                                 <a href={`${PROJECT_URL}`}>
                                     <img
                                         alt="GitHub stars badge"
-                                        src="https://img.shields.io/github/stars/bruceblink/newsnow?logo=github&style=flat&labelColor=%235e3c40&color=%23614447"
+                                        src="https://img.shields.io/github/stars/bruceblink/LatestNews?logo=github&style=flat&labelColor=%235e3c40&color=%23614447"
                                     />
                                 </a>
                                 <a href={`${PROJECT_URL}/fork`}>
                                     <img
                                         alt="GitHub forks badge"
-                                        src="https://img.shields.io/github/forks/bruceblink/newsnow?logo=github&style=flat&labelColor=%235e3c40&color=%23614447"
+                                        src="https://img.shields.io/github/forks/bruceblink/LatestNews?logo=github&style=flat&labelColor=%235e3c40&color=%23614447"
                                     />
                                 </a>
                             </li>
