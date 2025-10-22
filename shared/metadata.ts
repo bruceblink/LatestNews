@@ -29,6 +29,7 @@ export const columnConfig: Record<string, ColumnConfigItem> = {
         sourceRule: (_, s) => s.column === "finance" && !s.redirect,
     },
     focus: { name: "关注" },
+    history: { name: "历史" },
     realtime: {
         name: "实时",
         sourceRule: (_, s) => s.type === "realtime" && !s.redirect,
@@ -45,9 +46,9 @@ export const columnConfig: Record<string, ColumnConfigItem> = {
 export type ColumnID = keyof typeof columnConfig;
 
 // ---------------------------
-// 固定列 / 隐藏列
+// 导航栏 固定列 / 隐藏列的配置
 // ---------------------------
-export const fixedColumnIds = ["focus", "hottest", "realtime"] as const;
+export const fixedColumnIds = ["focus", "hottest", "realtime", "history"] as const;
 export type FixedColumnId = (typeof fixedColumnIds)[number];
 
 const fixedSet = new Set<FixedColumnId>(fixedColumnIds);
