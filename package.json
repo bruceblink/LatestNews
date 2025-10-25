@@ -24,7 +24,6 @@
     "prepare": "simple-git-hooks",
     "log": "wrangler pages deployment tail --project-name latestnews",
     "test": "vitest -c vitest.config.ts",
-    "queries": "ts-node ./server/database/queries.ts",
     "caching": "ts-node ./server/database/caching.ts"
   },
   "dependencies": {
