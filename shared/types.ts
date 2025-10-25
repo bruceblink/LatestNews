@@ -17,6 +17,11 @@ export type HiddenColumnID = Exclude<ColumnID, FixedColumnID>;
 type ConstSources = typeof originSources;
 type MainSourceID = keyof ConstSources;
 
+// define OriginSource interface
+export interface OriginSource extends Partial<Source> {
+    sub?: Record<string, Partial<Source>>;
+}
+
 export type SourceID = {
     [Key in MainSourceID]: ConstSources[Key] extends { disable?: true }
         ? never
