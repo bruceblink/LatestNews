@@ -151,6 +151,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
                 </div>
                 <div className={clsx("flex gap-2 text-lg", `color-${dataSources[id].color}`)}>
                     <button
+                        title="isFetching"
                         type="button"
                         className={clsx(
                             "btn i-ph:arrow-counter-clockwise-duotone",
@@ -159,6 +160,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
                         onClick={() => refresh(id)}
                     />
                     <button
+                        title="isFocused"
                         type="button"
                         className={clsx("btn", isFocused ? "i-ph:star-fill" : "i-ph:star-duotone")}
                         onClick={toggleFocus}
