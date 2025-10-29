@@ -5,7 +5,7 @@ import { useWindowSize } from "react-use";
 import dataSources from "@shared/data-sources.ts";
 import { useNewsSource } from "~/hooks/useNewsSource";
 import { useRelativeTime } from "~/hooks/useRelativeTime.ts";
-import { CardHeader } from "~/components/column/CardHeader.tsx";
+import { CardHeader } from "~/components/column/cardHeader.tsx";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 
@@ -76,7 +76,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
                 defer
             >
                 <div className={clsx("transition-opacity-500", isFetching && "op-20")}>
-                    {!!data?.items?.length && renderNewsList(id, data.items)}
+                    {!!data?.items?.length && RenderNewsList(id, data.items)}
                 </div>
             </OverlayScrollbar>
         </>
@@ -88,7 +88,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
  * @param id
  * @param items
  */
-function renderNewsList(id: SourceID, items: any[]) {
+function RenderNewsList(id: SourceID, items: any[]) {
     switch (dataSources[id].type) {
         case "hottest":
             return <NewsListHot items={items} />;
