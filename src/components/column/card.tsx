@@ -1,15 +1,12 @@
-import type { NewsItem, SourceID, SourceResponse } from "@shared/types";
+import type { NewsItem, SourceID } from "@shared/types";
 
 import clsx from "clsx";
-import { myFetch } from "~/utils";
-import { delay } from "@shared/utils.ts";
 import { useWindowSize } from "react-use";
-import { useQuery } from "@tanstack/react-query";
 import dataSources from "@shared/data-sources.ts";
 import { useRefetch } from "~/hooks/useRefetch.ts";
 import { useFocusWith } from "~/hooks/useFocus.ts";
+import { useNewsSource } from "~/hooks/useNewsSource";
 import { useRelativeTime } from "~/hooks/useRelativeTime.ts";
-import { cacheSources, refetchSources } from "~/utils/data.ts";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 
@@ -63,55 +60,7 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
 
 function NewsCard({ id, setHandleRef }: NewsCardProps) {
     const { refresh } = useRefetch();
-    const { data, isFetching, isError } = useQuery({
-        queryKey: ["source", id],
-        queryFn: async ({ queryKey }) => {
-            const sid = queryKey[1] as SourceID;
-            let url = `/s?id=${sid}`;
-            const headers: Record<string, any> = {};
-            if (refetchSources.has(sid)) {
-                url = `/s?id=${sid}&latest`;
-                const jwt = localStorage.getItem("access_token");
-                if (jwt) headers.Authorization = `Bearer ${jwt}`;
-                refetchSources.delete(sid);
-            } else if (cacheSources.has(sid)) {
-                // wait animation
-                await delay(200);
-                return cacheSources.get(sid);
-            }
-
-            const response: SourceResponse = await myFetch(url, {
-                headers,
-            });
-
-            function diff() {
-                try {
-                    if (response.items && dataSources[sid].type === "hottest" && cacheSources.has(sid)) {
-                        response.items.forEach((item, i) => {
-                            const o = cacheSources.get(sid)!.items.findIndex((k) => k.id === item.id);
-                            item.extra = {
-                                ...item?.extra,
-                                diff: o === -1 ? undefined : o - i,
-                            };
-                        });
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-
-            diff();
-
-            cacheSources.set(sid, response);
-            return response;
-        },
-        placeholderData: (prev) => prev,
-        staleTime: Infinity,
-        refetchOnMount: false,
-        refetchOnReconnect: false,
-        refetchOnWindowFocus: false,
-        retry: false,
-    });
+    const { data, isFetching, isError } = useNewsSource(id);
 
     const { isFocused, toggleFocus } = useFocusWith(id);
 
