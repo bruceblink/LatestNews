@@ -3,10 +3,9 @@ import type { NewsItem, SourceID } from "@shared/types";
 import clsx from "clsx";
 import { useWindowSize } from "react-use";
 import dataSources from "@shared/data-sources.ts";
-import { useRefetch } from "~/hooks/useRefetch.ts";
-import { useFocusWith } from "~/hooks/useFocus.ts";
 import { useNewsSource } from "~/hooks/useNewsSource";
 import { useRelativeTime } from "~/hooks/useRelativeTime.ts";
+import { CardHeader } from "~/components/column/CardHeader.tsx";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 
@@ -59,70 +58,11 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
 );
 
 function NewsCard({ id, setHandleRef }: NewsCardProps) {
-    const { refresh } = useRefetch();
     const { data, isFetching, isError } = useNewsSource(id);
-
-    const { isFocused, toggleFocus } = useFocusWith(id);
 
     return (
         <>
-            <div className={clsx("flex justify-between mx-2 mt-0 mb-2 items-center")}>
-                <div className="flex gap-2 items-center">
-                    <a
-                        className={clsx("w-8 h-8 rounded-full bg-cover")}
-                        target="_blank"
-                        href={dataSources[id].home}
-                        title={dataSources[id].desc}
-                        style={{
-                            backgroundImage: `url(/icons/${id.split("-")[0]}.png)`,
-                        }}
-                    />
-                    <span className="flex flex-col">
-                        <span className="flex items-center gap-2">
-                            <span className="text-xl font-bold" title={dataSources[id].desc}>
-                                {dataSources[id].name}
-                            </span>
-                            {dataSources[id]?.title && (
-                                <span
-                                    className={clsx(
-                                        "text-sm",
-                                        `color-${dataSources[id].color} bg-base op-80 bg-op-50\\! px-1 rounded`
-                                    )}
-                                >
-                                    {dataSources[id].title}
-                                </span>
-                            )}
-                        </span>
-                        <span className="text-xs op-70">
-                            <UpdatedTime isError={isError} updatedTime={data?.updatedTime} />
-                        </span>
-                    </span>
-                </div>
-                <div className={clsx("flex gap-2 text-lg", `color-${dataSources[id].color}`)}>
-                    <button
-                        title="isFetching"
-                        type="button"
-                        className={clsx(
-                            "btn i-ph:arrow-counter-clockwise-duotone",
-                            isFetching && "animate-spin i-ph:spinner-duotone"
-                        )}
-                        onClick={() => refresh(id)}
-                    />
-                    <button
-                        title="isFocused"
-                        type="button"
-                        className={clsx("btn", isFocused ? "i-ph:star-fill" : "i-ph:star-duotone")}
-                        onClick={toggleFocus}
-                    />
-                    {/* firefox cannot drag a button */}
-                    {setHandleRef && (
-                        <div
-                            ref={setHandleRef}
-                            className={clsx("btn", "i-ph:dots-six-vertical-duotone", "cursor-grab")}
-                        />
-                    )}
-                </div>
-            </div>
+            <CardHeader id={id} data={data} isFetching={isFetching} isError={isError} setHandleRef={setHandleRef} />
 
             <OverlayScrollbar
                 className={clsx([
@@ -146,13 +86,6 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
             </OverlayScrollbar>
         </>
     );
-}
-
-function UpdatedTime({ isError, updatedTime }: { updatedTime: any; isError: boolean }) {
-    const relativeTime = useRelativeTime(updatedTime ?? "");
-    if (relativeTime) return `${relativeTime}更新`;
-    if (isError) return "获取失败";
-    return "加载中...";
 }
 
 function DiffNumber({ diff }: { diff: number }) {
