@@ -481,5 +481,14 @@
     "home": "https://www.chongbuluo.com/forum.php?mod=guide&view=hot",
     "title": "最热",
     "type": "hottest"
+  },
+  "steam": {
+    "name": "Steam",
+    "interval": 600000,
+    "color": "blue",
+    "type": "hottest",
+    "column": "world",
+    "home": "https://store.steampowered.com",
+    "title": "热门游戏"
   }
 }

@@ -423,6 +423,14 @@ export const originSources = {
             },
         },
     },
+    steam: {
+        name: "Steam",
+        column: "world",
+        title: "热门游戏",
+        color: "blue",
+        type: "hottest",
+        home: "https://store.steampowered.com",
+    },
 } as const satisfies Record<string, OriginSource>;
 
 export function genSources() {
