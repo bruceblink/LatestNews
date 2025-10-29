@@ -76,16 +76,27 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
                 defer
             >
                 <div className={clsx("transition-opacity-500", isFetching && "op-20")}>
-                    {!!data?.items?.length &&
-                        (dataSources[id].type === "hottest" ? (
-                            <NewsListHot items={data.items} />
-                        ) : (
-                            <NewsListTimeLine items={data.items} />
-                        ))}
+                    {!!data?.items?.length && renderNewsList(id, data.items)}
                 </div>
             </OverlayScrollbar>
         </>
     );
+}
+
+/**
+ * 渲染不同卡片类型的新闻
+ * @param id
+ * @param items
+ */
+function renderNewsList(id: SourceID, items: any[]) {
+    switch (dataSources[id].type) {
+        case "hottest":
+            return <NewsListHot items={items} />;
+        case "realtime":
+            return <NewsListTimeLine items={items} />;
+        default:
+            return <NewsListHot items={items} />;
+    }
 }
 
 function DiffNumber({ diff }: { diff: number }) {
@@ -113,6 +124,7 @@ function DiffNumber({ diff }: { diff: number }) {
         </AnimatePresence>
     );
 }
+
 function ExtraInfo({ item }: { item: NewsItem }) {
     if (item?.extra?.info) {
         return <>{item.extra.info}</>;
@@ -143,6 +155,7 @@ function NewsUpdatedTime({ date }: { date: string | number }) {
     const relativeTime = useRelativeTime(date);
     return <>{relativeTime}</>;
 }
+
 function NewsListHot({ items }: { items: NewsItem[] }) {
     const { width } = useWindowSize();
     return (
