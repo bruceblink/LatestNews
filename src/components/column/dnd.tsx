@@ -30,6 +30,7 @@ const WIDTH = 350;
 export function Dnd() {
     const [items, setItems] = useAtom(currentSourcesAtom);
     const [parent] = useAutoAnimate({ duration: AnimationDuration });
+    // 查询全部新闻 调用 '/api/s/entire' 接口
     useEntireQuery(items);
     const { width } = useWindowSize();
     const minWidth = useMemo(() => {
