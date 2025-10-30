@@ -34,7 +34,7 @@ export const columnConfig: Record<string, ColumnConfigItem> = {
         sourceRule: (_, s) => s.type === "realtime" && !s.redirect,
     },
     hottest: {
-        name: "最热",
+        name: "热门",
         sourceRule: (_, s) => s.type === "hottest" && !s.redirect,
     },
 };

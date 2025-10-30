@@ -87,7 +87,7 @@ export const originSources = {
                 interval: Time.Common,
             },
             hot: {
-                title: "最热",
+                title: "热门",
                 type: "hottest",
                 interval: Time.Common,
             },
@@ -416,7 +416,7 @@ export const originSources = {
                 home: "https://www.chongbuluo.com/forum.php?mod=guide&view=newthread",
             },
             hot: {
-                title: "最热",
+                title: "热门",
                 type: "hottest",
                 interval: Time.Common,
                 home: "https://www.chongbuluo.com/forum.php?mod=guide&view=hot",
