@@ -40,7 +40,7 @@ export function useSync() {
         await apiFetch("/api/sync/me", {
             method: "POST",
             headers: { Authorization: `Bearer ${jwt}` },
-            body: { data: metadata.data, setting_type: "news" },
+            body: { data: metadata.data, settingType: "news" },
         });
     }, []);
 
@@ -51,7 +51,7 @@ export function useSync() {
 
         const res = await apiFetch<{ data: PrimitiveMetadata["data"]; updatedTime: number }>("/api/sync/me", {
             headers: { Authorization: `Bearer ${jwt}` },
-            query: { setting_type: "news" },
+            query: { settingType: "news" },
         });
 
         if (res?.data) {
