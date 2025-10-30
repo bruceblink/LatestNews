@@ -80,8 +80,8 @@ ENABLE_CACHE=true
 
 ### Docker 部署
 对于 Docker 部署，只需要项目根目录 `docker-compose.yaml` 文件，同一目录下执行
-```
-docker compose up
+```bash
+  docker compose up
 ```
 同样可以通过 `docker-compose.yaml` 配置环境变量。
 
@@ -91,9 +91,9 @@ docker compose up
 
 启动应用
 ```bash
-npm install -g pnpm
-pnpm i
-pnpm dev
+  npm install -g pnpm
+  pnpm i
+  pnpm dev
 ```
 
 你可能想要添加数据源，请关注 `shared/sources` `server/sources`，项目类型完备，结构简单，请自行探索。
