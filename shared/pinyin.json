@@ -7,7 +7,7 @@
   "mktnews-flash": "MKTNews-kuaixun",
   "wallstreetcn-quick": "huaerjiejianwen-kuaixun",
   "wallstreetcn-news": "huaerjiejianwen-zuixin",
-  "wallstreetcn-hot": "huaerjiejianwen-zuire",
+  "wallstreetcn-hot": "huaerjiejianwen-remen",
   "36kr-quick": "36ke-kuaixun",
   "douyin": "douyin",
   "hupu": "hupu-zhugandaoretie",
@@ -42,6 +42,6 @@
   "juejin": "xitujuejin",
   "ifeng": "fenghuangwang-redianzixun",
   "chongbuluo-latest": "chongbuluo-zuixin",
-  "chongbuluo-hot": "chongbuluo-zuire",
+  "chongbuluo-hot": "chongbuluo-remen",
   "steam": "Steam-remenyouxi"
 }
