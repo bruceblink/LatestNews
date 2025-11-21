@@ -495,6 +495,7 @@
     "name": "腾讯新闻",
     "interval": 1800000,
     "color": "blue",
+    "column": "china",
     "home": "https://news.qq.com/tag/aEWqxLtdgmQ=",
     "title": "综合早报",
     "type": "hottest",
@@ -504,6 +505,7 @@
     "name": "腾讯新闻",
     "interval": 1800000,
     "color": "blue",
+    "column": "china",
     "home": "https://news.qq.com/tag/aEWqxLtdgmQ=",
     "title": "综合早报",
     "type": "hottest"
