@@ -509,5 +509,14 @@
     "home": "https://news.qq.com/tag/aEWqxLtdgmQ=",
     "title": "综合早报",
     "type": "hottest"
+  },
+  "freebuf": {
+    "name": "Freebuf",
+    "interval": 600000,
+    "color": "green",
+    "type": "hottest",
+    "column": "china",
+    "home": "https://www.freebuf.com/",
+    "title": "网络安全"
   }
 }
