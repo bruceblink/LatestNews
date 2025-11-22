@@ -99,7 +99,7 @@ function extractCategory($article: cheerio.Cheerio<any>): string {
 }
 
 export default defineSource(async () => {
-    const baseUrl = "https://www.freebuf.com/";
+    const baseUrl = "https://www.freebuf.com";
     const html = await myFetch<any>(baseUrl, {
         headers: {
             "User-Agent":
