@@ -111,6 +111,7 @@ export interface NewsItem {
 export interface SourceResponse {
     status: "success" | "cache";
     id: SourceID;
+    name?: string;
     updatedTime: number | string;
     items: NewsItem[];
 }

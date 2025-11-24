@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
             return caches.map((cache) => ({
                 status: "cache",
                 id: cache.id,
+                name: dataSources[cache.id].name,
                 items: cache.items,
                 updatedTime: now - cache.updated < dataSources[cache.id].interval ? now : cache.updated,
             })) as SourceResponse[];

@@ -49,13 +49,13 @@ async function getCacheOrFetch(id: SourceID, latest: boolean, event: any): Promi
 
     // 1. interval 内直接返回缓存（视为最新）
     if (cache && now - cache.updated < sourceInterval) {
-        return { status: "success", id, updatedTime: cache.updated, items: cache.items };
+        return { status: "success", id, updatedTime: cache.updated, name: dataSources[id].name, items: cache.items };
     }
 
     // 2. TTL 内，根据 latest 和登录状态判断是否返回缓存
     if (cache && now - cache.updated < TTL) {
         if (!latest || (!event.context.disabledLogin && !event.context.user)) {
-            return { status: "cache", id, updatedTime: cache.updated, items: cache.items };
+            return { status: "cache", id, name: dataSources[id].name, updatedTime: cache.updated, items: cache.items };
         }
     }
 
@@ -69,5 +69,5 @@ async function getCacheOrFetch(id: SourceID, latest: boolean, event: any): Promi
     }
 
     logger.success(`fetch ${id} latest`);
-    return { status: "success", id, updatedTime: now, items: newData };
+    return { status: "success", id, name: dataSources[id].name, updatedTime: now, items: newData };
 }
