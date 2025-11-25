@@ -99,80 +99,84 @@ function extractCategory($article: cheerio.Cheerio<any>): string {
 }
 
 export default defineSource(async () => {
-    const baseUrl = "https://www.freebuf.com";
-    const html = await myFetch<any>(baseUrl, {
-        headers: {
-            "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            Referer: "https://www.freebuf.com/",
-            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        },
-    });
-    const $ = cheerio.load(html);
-    const articles: ArticleData[] = [];
-    // 遍历每个文章项
-    $(".article-item").each((index: number, articleElement) => {
-        const $article = $(articleElement);
+    try {
+        const baseUrl = "https://www.freebuf.com";
+        const html = await myFetch<any>(baseUrl, {
+            headers: {
+                "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                Referer: "https://www.freebuf.com/",
+                Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            },
+        });
+        const $ = cheerio.load(html);
+        const articles: ArticleData[] = [];
+        // 遍历每个文章项
+        $(".article-item").each((index: number, articleElement) => {
+            try {
+                const $article = $(articleElement);
+                // 提取文章标题和URL
+                const titleLink = $article.find(".title-left .title").parent();
+                const title = titleLink.find(".title").text().trim();
+                const url = formatUrl(titleLink.attr("href"), baseUrl);
 
-        try {
-            // 提取文章标题和URL
-            const titleLink = $article.find(".title-left .title").parent();
-            const title = titleLink.find(".title").text().trim();
-            const url = formatUrl(titleLink.attr("href"), baseUrl);
+                // 如果标题为空，跳过此项
+                if (!title) return;
 
-            // 如果标题为空，跳过此项
-            if (!title) return;
+                // 提取文章描述
+                const description = safeExtract($article, ".item-right .text-line-2");
 
-            // 提取文章描述
-            const description = safeExtract($article, ".item-right .text-line-2");
+                // 提取发布时间
+                const publishTime = safeExtract($article, ".item-bottom span:last-child");
 
-            // 提取发布时间
-            const publishTime = safeExtract($article, ".item-bottom span:last-child");
+                // 提取作者信息
+                const author = extractAuthor($article);
 
-            // 提取作者信息
-            const author = extractAuthor($article);
+                // 提取统计信息
+                const stats = extractStats($article);
 
-            // 提取统计信息
-            const stats = extractStats($article);
+                // 提取专辑信息
+                const album = safeExtract($article, ".from-column span");
 
-            // 提取专辑信息
-            const album = safeExtract($article, ".from-column span");
+                // 提取图片
+                const image = safeExtractAttribute($article, ".img-view img", "src");
 
-            // 提取图片
-            const image = safeExtractAttribute($article, ".img-view img", "src");
+                // 提取分类
+                const category = extractCategory($article);
 
-            // 提取分类
-            const category = extractCategory($article);
+                // 构建完整的文章对象
+                const article: ArticleData = {
+                    title,
+                    url,
+                    description,
+                    publishTime,
+                    author,
+                    stats,
+                    album: album || undefined,
+                    image: image || undefined,
+                    category: category || undefined,
+                };
 
-            // 构建完整的文章对象
-            const article: ArticleData = {
-                title,
-                url,
-                description,
-                publishTime,
-                author,
-                stats,
-                album: album || undefined,
-                image: image || undefined,
-                category: category || undefined,
-            };
-
-            articles.push(article);
-        } catch (error) {
-            console.warn(`解析第${index + 1}篇文章时出错:`, error instanceof Error ? error.message : String(error));
-        }
-    });
-    // 转换数据格式
-    return articles.map((item) => ({
-        id: "",
-        title: item.title,
-        url: item.url,
-        extra: {
-            hover: item.description,
-            time: item.publishTime,
-            author: item.author,
-            stats: item.stats,
-            album: item.album,
-        },
-    }));
+                articles.push(article);
+            } catch (error) {
+                console.warn(`解析第${index + 1}篇文章时出错:`, error instanceof Error ? error.message : String(error));
+            }
+        });
+        // 转换数据格式
+        return articles.map((item) => ({
+            id: "",
+            title: item.title,
+            url: item.url,
+            extra: {
+                hover: item.description,
+                time: item.publishTime,
+                author: item.author,
+                stats: item.stats,
+                album: item.album,
+            },
+        }));
+    } catch (err) {
+        console.error("获取 Freebuf 文章失败:", err instanceof Error ? err.message : String(err));
+        return []; // 优雅降级
+    }
 });
