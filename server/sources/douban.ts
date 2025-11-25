@@ -31,21 +31,27 @@ interface MovieItem {
 }
 
 export default defineSource(async () => {
-    const baseURL = "https://m.douban.com/rexxar/api/v2/subject/recent_hot/movie";
-    const res = await myFetch<HotMoviesRes>(baseURL, {
-        headers: {
-            "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            Referer: "https://movie.douban.com/",
-            Accept: "application/json, text/plain, */*",
-        },
-    });
-    return res.items.map((movie) => ({
-        id: movie.id,
-        title: `《${movie.title}》${movie.card_subtitle}`,
-        url: `https://movie.douban.com/subject/${movie.id}`,
-        extra: {
-            hover: movie.card_subtitle,
-        },
-    }));
+    try {
+        const baseURL = "https://m.douban.com/rexxar/api/v2/subject/recent_hot/movie";
+        const res = await myFetch<HotMoviesRes>(baseURL, {
+            headers: {
+                "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                Referer: "https://movie.douban.com/",
+                Accept: "application/json, text/plain, */*",
+            },
+        });
+
+        return (res?.items ?? []).map((movie) => ({
+            id: movie.id,
+            title: `《${movie.title}》${movie.card_subtitle}`,
+            url: `https://movie.douban.com/subject/${movie.id}`,
+            extra: {
+                hover: movie.card_subtitle,
+            },
+        }));
+    } catch (err) {
+        console.error("获取豆瓣热门电影失败:", err);
+        return []; // 优雅降级
+    }
 });
