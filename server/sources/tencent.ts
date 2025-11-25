@@ -42,20 +42,22 @@ interface WapRes {
  * 综合早报
  */
 const comprehensiveNews = defineSource(async () => {
-    const url = "https://i.news.qq.com/web_backend/v2/getTagInfo?tagId=aEWqxLtdgmQ%3D";
-    const res = await myFetch<WapRes>(url, {
-        headers: {
-            Referer: "https://news.qq.com/",
-        },
-    });
-    return res.data.tabs[0].articleList.map((news) => ({
-        id: news.id,
-        title: news.title,
-        url: news.link_info.url,
-        extra: {
-            hover: news.desc,
-        },
-    }));
+    try {
+        const url = "https://i.news.qq.com/web_backend/v2/getTagInfo?tagId=aEWqxLtdgmQ%3D";
+        const res = await myFetch<WapRes>(url, { headers: { Referer: "https://news.qq.com/" } });
+
+        const articles = res?.data?.tabs?.[0]?.articleList ?? []; // 👈 空数组兜底
+
+        return articles.map((news) => ({
+            id: news.id,
+            title: news.title,
+            url: news.link_info.url,
+            extra: { hover: news.desc },
+        }));
+    } catch (err) {
+        console.error("获取腾讯新闻-综合早报失败:", err instanceof Error ? err.message : err);
+        return []; // 优雅降级
+    }
 });
 
 export default defineSource({
