@@ -164,7 +164,7 @@ export default defineSource(async () => {
         });
         // 转换数据格式
         return articles.map((item) => ({
-            id: "",
+            id: `${item.url}-${item.author}`,
             title: item.title,
             url: item.url,
             extra: {
