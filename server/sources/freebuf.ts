@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { generateNewsId } from "#/utils/crypto";
 
 import { myFetch } from "../utils/fetch";
 import { defineSource } from "../utils/source";
@@ -164,7 +165,7 @@ export default defineSource(async () => {
         });
         // 转换数据格式
         return articles.map((item) => ({
-            id: `${item.url}-${item.author}`,
+            id: generateNewsId("", item.url),
             title: item.title,
             url: item.url,
             extra: {
