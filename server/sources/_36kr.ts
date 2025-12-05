@@ -82,8 +82,6 @@ const renqi = defineSource(async () => {
             });
         }
     });
-
-    console.log("articles: ", articles);
     return articles;
 });
 
