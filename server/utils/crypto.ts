@@ -29,21 +29,22 @@ export async function myCrypto(s: string, algorithm: Algorithm) {
  * @param url URL，如果没有 rawId，则使用 URL 做哈希
  * @returns string
  */
-export async function generateNewsId(
-    rawId: string | null | undefined,
-    url: string | null | undefined
-): Promise<string> {
+export function generateNewsId(rawId: string | null | undefined, url: string | null | undefined): string {
     const id = (rawId ?? "").trim();
-    if (id !== "") {
-        return id;
-    }
+    if (id !== "") return id;
 
     const link = (url ?? "").trim();
     if (link !== "") {
-        // 使用你的 myCrypto 函数生成 SHA-256
-        return await myCrypto(link, "SHA-256");
+        // 简单同步哈希 (不需要 await)
+        let hash = 0;
+        for (let i = 0; i < link.length; i++) {
+            // eslint-disable-next-line no-bitwise
+            hash = (hash << 5) - hash + link.charCodeAt(i);
+            // eslint-disable-next-line no-bitwise
+            hash |= 0;
+        }
+        return hash.toString(16);
     }
 
-    // Web Crypto 提供随机 UUID
     return crypto.randomUUID();
 }
