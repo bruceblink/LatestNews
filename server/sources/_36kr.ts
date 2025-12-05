@@ -74,7 +74,8 @@ const renqi = defineSource(async () => {
             articles.push({
                 url: href.startsWith("http") ? href : `${baseURL}${href}`,
                 title,
-                id: href.slice(3),
+                id: href.slice(3), //简化处理
+                // url.slice(url.lastIndexOf("/") + 1)
                 extra: {
                     info: `${author}  |  ${hot}`,
                     hover: description,
