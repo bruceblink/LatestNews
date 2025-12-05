@@ -1,6 +1,5 @@
 import _md5 from "md5";
 import { subtle as _ } from "uncrypto";
-import { createHash, randomUUID } from "node:crypto";
 
 type T = typeof crypto.subtle;
 const subtle: T = _;
@@ -24,7 +23,16 @@ export async function myCrypto(s: string, algorithm: Algorithm) {
     return hashHex;
 }
 
-export function generateNewsId(rawId: string | null | undefined, url: string | null | undefined): string {
+/**
+ * 生成新闻 ID
+ * @param rawId 原始 ID，如果有直接使用
+ * @param url URL，如果没有 rawId，则使用 URL 做哈希
+ * @returns string
+ */
+export async function generateNewsId(
+    rawId: string | null | undefined,
+    url: string | null | undefined
+): Promise<string> {
     const id = (rawId ?? "").trim();
     if (id !== "") {
         return id;
@@ -32,9 +40,10 @@ export function generateNewsId(rawId: string | null | undefined, url: string | n
 
     const link = (url ?? "").trim();
     if (link !== "") {
-        return createHash("sha256").update(link).digest("hex");
+        // 使用你的 myCrypto 函数生成 SHA-256
+        return await myCrypto(link, "SHA-256");
     }
 
-    // 最兜底
-    return randomUUID();
+    // Web Crypto 提供随机 UUID
+    return crypto.randomUUID();
 }
