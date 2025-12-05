@@ -1,5 +1,4 @@
 import * as cheerio from "cheerio";
-import { generateNewsId } from "#/utils/crypto";
 
 import { myFetch } from "../utils/fetch";
 import { defineSource } from "../utils/source";
@@ -98,6 +97,14 @@ function extractCategory($article: cheerio.Cheerio<any>): string {
 
     return "";
 }
+// 通过截取freebuf的url获取文章id
+function extractIdFromUrl(url: string): string {
+    // 找到最后一个斜杠
+    const lastPart = url.slice(url.lastIndexOf("/") + 1); // "460614.html"
+    // 去掉 .html，只保留数字
+    const match = lastPart.match(/\d+/);
+    return match ? match[0] : "";
+}
 
 export default defineSource(async () => {
     const baseUrl = "https://www.freebuf.com";
@@ -164,7 +171,7 @@ export default defineSource(async () => {
     });
     // 转换数据格式
     return articles.map((item) => ({
-        id: generateNewsId("", item.url),
+        id: extractIdFromUrl(item.url),
         title: item.title,
         url: item.url,
         extra: {
