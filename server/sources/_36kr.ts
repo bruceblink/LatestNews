@@ -5,7 +5,6 @@ import { load } from "cheerio";
 import { myFetch } from "#/utils/fetch";
 import { defineSource } from "#/utils/source";
 import { parseRelativeDate } from "#/utils/date";
-import { generateNewsId } from "#/utils/crypto.ts";
 
 const quick = defineSource(async () => {
     const baseURL = "https://www.36kr.com";
@@ -75,7 +74,7 @@ const renqi = defineSource(async () => {
             articles.push({
                 url: href.startsWith("http") ? href : `${baseURL}${href}`,
                 title,
-                id: generateNewsId("", href),
+                id: href.slice(3),
                 extra: {
                     info: `${author}  |  ${hot}`,
                     hover: description,
