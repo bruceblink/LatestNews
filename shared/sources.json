@@ -125,6 +125,16 @@
     "disable": "cf",
     "title": "快讯"
   },
+  "36kr-renqi": {
+    "name": "36氪",
+    "interval": 600000,
+    "color": "blue",
+    "type": "hottest",
+    "column": "tech",
+    "home": "https://36kr.com",
+    "disable": "cf",
+    "title": "人气榜"
+  },
   "douyin": {
     "name": "抖音",
     "interval": 600000,

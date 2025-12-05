@@ -105,6 +105,10 @@ export const originSources = {
             quick: {
                 title: "快讯",
             },
+            renqi: {
+                type: "hottest",
+                title: "人气榜",
+            },
         },
     },
     douyin: {
