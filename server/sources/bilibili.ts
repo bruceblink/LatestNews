@@ -97,6 +97,8 @@ const hotSearch = defineSource(async () => {
     //const res: WapRes = await myFetch(url);
     const res: WapRes = await myFetch(url, {
         headers: {
+            "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
             Referer: "https://www.bilibili.com/",
         },
     });
@@ -114,6 +116,8 @@ const hotVideo = defineSource(async () => {
     const url = "https://api.bilibili.com/x/web-interface/popular";
     const res: HotVideoRes = await myFetch(url, {
         headers: {
+            "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
             Referer: "https://www.bilibili.com/",
         },
     });
@@ -135,6 +139,8 @@ const ranking = defineSource(async () => {
     const url = "https://api.bilibili.com/x/web-interface/ranking/v2";
     const res: HotVideoRes = await myFetch(url, {
         headers: {
+            "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
             Referer: "https://www.bilibili.com/",
         },
     });
