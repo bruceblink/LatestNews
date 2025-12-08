@@ -1,5 +1,5 @@
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface Res {
     data: {
@@ -19,16 +19,22 @@ export default defineSource(async () => {
     const jsonStr = (rawData as string).match(/<!--s-data:(.*?)-->/s);
     const data: Res = JSON.parse(jsonStr![1]);
 
-    return data.data.cards[0].content
-        .filter((k) => !k.isTop)
-        .map((k) => {
-            return {
-                id: k.rawUrl,
-                title: k.word,
-                url: k.rawUrl,
-                extra: {
-                    hover: k.desc,
-                },
-            };
-        });
+    // 使用 Promise.all并行化处理提升generateUrlHashId函数的哈希性能
+    return await Promise.all(
+        data.data.cards[0].content
+            .filter((k) => !k.isTop)
+            .map(async (k) => {
+                // 使用 generateUrlHashId 生成news id
+                const hashId = await generateUrlHashId(k.rawUrl);
+
+                return {
+                    id: hashId, // 使用生成的哈希作为唯一ID
+                    title: k.word,
+                    url: k.rawUrl,
+                    extra: {
+                        hover: k.desc,
+                    },
+                };
+            })
+    );
 });

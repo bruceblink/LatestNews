@@ -71,11 +71,11 @@ export function proxySource(proxyUrl: string, source: SourceGetter) {
  * 根据URL的生成固定长度哈希ID
  * @param url - 原始URL字符串
  * @param options - 配置选项
- * @param options.length - 返回的ID长度（默认16）
+ * @param options.length - 返回的ID长度（默认32）
  * @returns 固定长度的哈希字符串
  */
 export async function generateUrlHashId(url: string, options: { length?: number } = {}): Promise<string> {
-    const { length = 16 } = options;
+    const { length = 32 } = options;
 
     // 1. 规范化URL（关键步骤，确保相同页面的不同URL变体能生成相同ID）
     const normalizedUrl = normalizeUrl(url);
