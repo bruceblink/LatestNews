@@ -1,5 +1,5 @@
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface HotMoviesRes {
     category: string;
@@ -42,14 +42,22 @@ export default defineSource(async () => {
             },
         });
 
-        return (res?.items ?? []).map((movie) => ({
-            id: movie.id,
-            title: `《${movie.title}》${movie.card_subtitle}`,
-            url: `https://movie.douban.com/subject/${movie.id}`,
-            extra: {
-                hover: movie.card_subtitle,
-            },
-        }));
+        return await Promise.all(
+            res?.items?.map(async (movie) => {
+                const fullUrl = `https://movie.douban.com/subject/${movie.id}`;
+
+                const hashId = await generateUrlHashId(fullUrl);
+                return {
+                    id: hashId,
+                    title: movie.title,
+                    url: fullUrl,
+                    extra: {
+                        info: movie.card_subtitle.split(" / ").slice(0, 3).join(" / "),
+                        hover: movie.card_subtitle,
+                    },
+                };
+            })
+        );
     } catch (err) {
         console.error("获取豆瓣热门电影失败:", err);
         return []; // 优雅降级
