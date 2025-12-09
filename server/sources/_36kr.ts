@@ -13,15 +13,20 @@ const quick = defineSource(async () => {
     const $ = load(response);
     const news: NewsItem[] = [];
     const $items = $(".newsflash-item");
-    $items.each((_, el) => {
+
+    for (const el of $items) {
         const $el = $(el);
         const $a = $el.find("a.item-title");
         const href = $a.attr("href");
         const title = $a.text();
         const relativeDate = $el.find(".time").text();
+
         if (href && title && relativeDate) {
+            const fullUrl = href.startsWith("http") ? href : `${baseURL}${href}`;
+            const hashId = await generateUrlHashId(fullUrl);
+
             news.push({
-                url: `${baseURL}${href}`,
+                url: hashId,
                 title,
                 id: href,
                 extra: {
@@ -29,7 +34,7 @@ const quick = defineSource(async () => {
                 },
             });
         }
-    });
+    }
 
     return news;
 });
