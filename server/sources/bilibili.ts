@@ -1,6 +1,6 @@
 import { myFetch } from "#/utils/fetch";
 import { proxyPicture } from "#/utils/proxy";
-import { defineSource } from "#/utils/source";
+import { defineSource, generateUrlHashId } from "#/utils/source";
 
 interface WapRes {
     code: number;
@@ -102,14 +102,20 @@ const hotSearch = defineSource(async () => {
             Referer: "https://www.bilibili.com/",
         },
     });
-    return res.list.map((k) => ({
-        id: k.keyword,
-        title: k.show_name,
-        url: `https://search.bilibili.com/all?keyword=${encodeURIComponent(k.keyword)}`,
-        extra: {
-            icon: k.icon && proxyPicture(k.icon),
-        },
-    }));
+    return await Promise.all(
+        res.list.map(async (k) => {
+            const fulUrl = `https://search.bilibili.com/all?keyword=${encodeURIComponent(k.keyword)}`;
+            const hashId = await generateUrlHashId(fulUrl);
+            return {
+                id: hashId,
+                title: k.show_name,
+                url: fulUrl,
+                extra: {
+                    icon: k.icon && proxyPicture(k.icon),
+                },
+            };
+        })
+    );
 });
 
 const hotVideo = defineSource(async () => {
@@ -122,17 +128,24 @@ const hotVideo = defineSource(async () => {
         },
     });
 
-    return res.data.list.map((video) => ({
-        id: video.bvid,
-        title: video.title,
-        url: `https://www.bilibili.com/video/${video.bvid}`,
-        pubDate: video.pubdate * 1000,
-        extra: {
-            info: `${video.owner.name} · ${formatNumber(video.stat.view)}观看 · ${formatNumber(video.stat.like)}点赞`,
-            hover: video.desc,
-            icon: proxyPicture(video.pic),
-        },
-    }));
+    return await Promise.all(
+        res.data.list.map(async (video) => {
+            const fulUrl = `https://www.bilibili.com/video/${video.bvid}`;
+            const hashId = await generateUrlHashId(fulUrl);
+
+            return {
+                id: hashId,
+                title: video.title,
+                url: fulUrl,
+                pubDate: video.pubdate * 1000,
+                extra: {
+                    info: `${video.owner.name} · ${formatNumber(video.stat.view)}观看 · ${formatNumber(video.stat.like)}点赞`,
+                    hover: video.desc,
+                    icon: proxyPicture(video.pic),
+                },
+            };
+        })
+    );
 });
 
 const ranking = defineSource(async () => {
@@ -145,17 +158,24 @@ const ranking = defineSource(async () => {
         },
     });
 
-    return res.data.list.map((video) => ({
-        id: video.bvid,
-        title: video.title,
-        url: `https://www.bilibili.com/video/${video.bvid}`,
-        pubDate: video.pubdate * 1000,
-        extra: {
-            info: `${video.owner.name} · ${formatNumber(video.stat.view)}观看 · ${formatNumber(video.stat.like)}点赞`,
-            hover: video.desc,
-            icon: proxyPicture(video.pic),
-        },
-    }));
+    return await Promise.all(
+        res.data.list.map(async (video) => {
+            const fulUrl = `https://www.bilibili.com/video/${video.bvid}`;
+            const hashId = await generateUrlHashId(fulUrl);
+
+            return {
+                id: hashId,
+                title: video.title,
+                url: fulUrl,
+                pubDate: video.pubdate * 1000,
+                extra: {
+                    info: `${video.owner.name} · ${formatNumber(video.stat.view)}观看 · ${formatNumber(video.stat.like)}点赞`,
+                    hover: video.desc,
+                    icon: proxyPicture(video.pic),
+                },
+            };
+        })
+    );
 });
 
 function formatNumber(num: number): string {
