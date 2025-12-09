@@ -1,5 +1,5 @@
 import { myFetch } from "#/utils/fetch";
-import { defineSource } from "#/utils/source";
+import { defineSource, generateUrlHashId } from "#/utils/source";
 
 interface WapRes {
     ret: number;
@@ -48,12 +48,20 @@ const comprehensiveNews = defineSource(async () => {
 
         const articles = res?.data?.tabs?.[0]?.articleList ?? []; // 👈 空数组兜底
 
-        return articles.map((news) => ({
-            id: news.id,
-            title: news.title,
-            url: news.link_info.url,
-            extra: { hover: news.desc },
-        }));
+        return await Promise.all(
+            articles.map(async (news) => {
+                // 构建完整URL
+                const fullUrl = news.link_info.url;
+
+                const hashId = await generateUrlHashId(fullUrl);
+                return {
+                    id: hashId,
+                    title: news.title,
+                    url: news.link_info.url,
+                    extra: { hover: news.desc },
+                };
+            })
+        );
     } catch (err) {
         console.error("获取腾讯新闻-综合早报失败:", err instanceof Error ? err.message : err);
         return []; // 优雅降级
