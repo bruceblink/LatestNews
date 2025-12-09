@@ -1,6 +1,6 @@
 import { myFetch } from "../utils/fetch";
 import { tranformToUTC } from "../utils/date";
-import { defineSource } from "../utils/source";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface Res {
     list: {
@@ -20,16 +20,24 @@ export default defineSource(async () => {
             (k) => myFetch(`https://china.cankaoxiaoxi.com/json/channel/${k}/list.json`) as Promise<Res>
         )
     );
-    return res
-        .map((k) => k.list)
-        .flat()
-        .map((k) => ({
-            id: k.data.id,
-            title: k.data.title,
-            extra: {
-                date: tranformToUTC(k.data.publishTime),
-            },
-            url: k.data.url,
-        }))
-        .sort((m, n) => (m.extra.date < n.extra.date ? 1 : -1));
+
+    const flatList = res.flatMap((k) => k.list);
+
+    const items = await Promise.all(
+        flatList.map(async (k) => {
+            const fullUrl = k.data.url;
+            const hashId = await generateUrlHashId(fullUrl);
+
+            return {
+                id: hashId,
+                title: k.data.title,
+                extra: {
+                    date: tranformToUTC(k.data.publishTime),
+                },
+                url: fullUrl,
+            };
+        })
+    );
+
+    return items.sort((m, n) => (m.extra.date < n.extra.date ? 1 : -1));
 });
