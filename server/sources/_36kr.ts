@@ -26,9 +26,9 @@ const quick = defineSource(async () => {
             const hashId = await generateUrlHashId(fullUrl);
 
             news.push({
-                url: hashId,
+                id: hashId,
                 title,
-                id: href,
+                url: fullUrl,
                 extra: {
                     date: parseRelativeDate(relativeDate, "Asia/Shanghai").valueOf(),
                 },
