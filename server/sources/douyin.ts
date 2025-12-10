@@ -1,5 +1,5 @@
 import { myFetch } from "#/utils/fetch";
-import { defineSource } from "#/utils/source";
+import { defineSource, generateUrlHashId } from "#/utils/source";
 
 interface Res {
     data: {
@@ -21,11 +21,15 @@ export default defineSource(async () => {
             cookie: cookie.join("; "),
         },
     });
-    return res.data.word_list.map((k) => {
-        return {
-            id: k.sentence_id,
-            title: k.word,
-            url: `https://www.douyin.com/hot/${k.sentence_id}`,
-        };
-    });
+    return await Promise.all(
+        res?.data.word_list.map(async (k) => {
+            const fulUrl = `https://www.douyin.com/hot/${k.sentence_id}`;
+            const hashId = await generateUrlHashId(fulUrl);
+            return {
+                id: hashId,
+                title: k.word,
+                url: fulUrl,
+            };
+        })
+    );
 });
