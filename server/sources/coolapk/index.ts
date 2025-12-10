@@ -1,6 +1,6 @@
 import { load } from "cheerio";
 import { myFetch } from "#/utils/fetch";
-import { defineSource } from "#/utils/source";
+import { defineSource, generateUrlHashId } from "#/utils/source";
 
 import { genHeaders } from "./utils";
 
@@ -31,16 +31,23 @@ export default defineSource({
             headers: await genHeaders(),
         });
         if (!r.data.length) throw new Error("Failed to fetch");
-        return r.data
-            .filter((k) => k.id)
-            .map((i) => ({
-                id: i.id,
-                title: i.editor_title || load(i.message).text().split("\n")[0],
-                url: `https://www.coolapk.com${i.url}`,
-                extra: {
-                    info: i.targetRow?.subTitle,
-                    // date: new Date(i.dateline * 1000).getTime(),
-                },
-            }));
+        return await Promise.all(
+            r?.data
+                .filter((k) => k.id)
+                .map(async (i) => {
+                    const fullUrl = `https://www.coolapk.com${i.url}`;
+                    const hashId = await generateUrlHashId(fullUrl);
+
+                    return {
+                        id: hashId,
+                        title: i.editor_title || load(i.message).text().split("\n")[0],
+                        url: fullUrl,
+                        extra: {
+                            info: i.targetRow?.subTitle,
+                            // date: new Date(i.dateline * 1000).getTime(),
+                        },
+                    };
+                })
+        );
     },
 });
