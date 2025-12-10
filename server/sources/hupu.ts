@@ -1,12 +1,7 @@
-import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
+import type { NewsItem } from "@shared/types.ts";
 
-interface HotItem {
-    id: string;
-    title: string;
-    url: string;
-    mobileUrl: string;
-}
+import { myFetch } from "../utils/fetch";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 export default defineSource(async () => {
     // 获取虎扑新热榜页面的HTML内容
@@ -16,9 +11,9 @@ export default defineSource(async () => {
     const regex =
         /<li class="bbs-sl-web-post-body">[\s\S]*?<a href="(\/[^"]+?\.html)"[^>]*?class="p-title"[^>]*>([^<]+)<\/a>/g;
 
-    const result: HotItem[] = [];
     let match;
 
+    const newsTasks: Promise<NewsItem | null>[] = [];
     // 将赋值操作移到循环内部，修复no-cond-assign警告
     while (true) {
         match = regex.exec(html);
@@ -29,13 +24,20 @@ export default defineSource(async () => {
         // 构建完整URL
         const url = `https://bbs.hupu.com${path}`;
 
-        result.push({
-            id: path,
-            title: title.trim(),
-            url,
-            mobileUrl: url,
-        });
+        newsTasks.push(
+            (async () => {
+                const hashId = await generateUrlHashId(url);
+
+                return {
+                    id: hashId,
+                    title: title.trim(),
+                    url,
+                    mobileUrl: url,
+                } as NewsItem;
+            })()
+        );
     }
 
-    return result;
+    const results = await Promise.all(newsTasks);
+    return results as NewsItem[];
 });
