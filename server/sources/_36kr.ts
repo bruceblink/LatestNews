@@ -54,10 +54,11 @@ const renqi = defineSource(async () => {
     });
 
     const $ = load(response);
-    const articles: NewsItem[] = [];
 
     // 单条新闻选择器
     const $items = $(".article-item-info");
+
+    const articlesTasks: Promise<NewsItem | null>[] = [];
 
     // 使用 for...of 循环替代 .each()，以便支持 await
     for (const el of $items) {
@@ -76,25 +77,26 @@ const renqi = defineSource(async () => {
         // 热度
         const hot = $el.find(".kr-flow-bar-hot span").text().trim();
 
-        if (href && title) {
-            // 构建完整URL
-            const fullUrl = href.startsWith("http") ? href : `${baseURL}${href}`;
+        if (!url || !title) continue;
+        const fullUrl = href.startsWith("http") ? href : `${baseURL}${href}`;
 
-            // 核心修改：调用异步函数生成哈希ID
-            const hashId = await generateUrlHashId(fullUrl);
-
-            articles.push({
-                id: hashId, // 使用生成的哈希ID
-                title,
-                url: fullUrl,
-                extra: {
-                    info: `${author}  |  ${hot}`,
-                    hover: description,
-                },
-            });
-        }
+        articlesTasks.push(
+            (async () => {
+                const hashId = await generateUrlHashId(fullUrl);
+                return {
+                    id: hashId, // 使用生成的哈希ID
+                    title,
+                    url: fullUrl,
+                    extra: {
+                        info: `${author}  |  ${hot}`,
+                        hover: description,
+                    },
+                } as NewsItem;
+            })()
+        );
     }
-    return articles;
+    const results = await Promise.all(articlesTasks);
+    return results as NewsItem[];
 });
 
 export default defineSource({
