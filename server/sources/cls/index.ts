@@ -1,5 +1,5 @@
 import { myFetch } from "#/utils/fetch";
-import { defineSource } from "#/utils/source";
+import { defineSource, generateUrlHashId } from "#/utils/source";
 
 import { getSearchParams } from "./utils";
 
@@ -35,17 +35,22 @@ const depth = defineSource(async () => {
     const res: Depthes = await myFetch(apiUrl, {
         query: Object.fromEntries(await getSearchParams()),
     });
-    return res.data.depth_list
-        .sort((m, n) => n.ctime - m.ctime)
-        .map((k) => {
-            return {
-                id: k.id,
-                title: k.title || k.brief,
-                mobileUrl: k.shareurl,
-                pubDate: k.ctime * 1000,
-                url: `https://www.cls.cn/detail/${k.id}`,
-            };
-        });
+    return await Promise.all(
+        res?.data?.depth_list
+            .sort((m, n) => n.ctime - m.ctime)
+            .map(async (k) => {
+                const fullUrl = `https://www.cls.cn/detail/${k.id}`;
+                const hashId = await generateUrlHashId(fullUrl);
+
+                return {
+                    id: hashId,
+                    title: k.title || k.brief,
+                    mobileUrl: k.shareurl,
+                    pubDate: k.ctime * 1000,
+                    url: fullUrl,
+                };
+            })
+    );
 });
 
 const hot = defineSource(async () => {
@@ -53,14 +58,19 @@ const hot = defineSource(async () => {
     const res: Hot = await myFetch(apiUrl, {
         query: Object.fromEntries(await getSearchParams()),
     });
-    return res.data.map((k) => {
-        return {
-            id: k.id,
-            title: k.title || k.brief,
-            mobileUrl: k.shareurl,
-            url: `https://www.cls.cn/detail/${k.id}`,
-        };
-    });
+    return await Promise.all(
+        res?.data?.map(async (k) => {
+            const fullUrl = `https://www.cls.cn/detail/${k.id}`;
+            const hashId = await generateUrlHashId(fullUrl);
+
+            return {
+                id: hashId,
+                title: k.title || k.brief,
+                mobileUrl: k.shareurl,
+                url: fullUrl,
+            };
+        })
+    );
 });
 
 const telegraph = defineSource(async () => {
@@ -68,17 +78,22 @@ const telegraph = defineSource(async () => {
     const res: TelegraphRes = await myFetch(apiUrl, {
         query: Object.fromEntries(await getSearchParams()),
     });
-    return res.data.roll_data
-        .filter((k) => !k.is_ad)
-        .map((k) => {
-            return {
-                id: k.id,
-                title: k.title || k.brief,
-                mobileUrl: k.shareurl,
-                pubDate: k.ctime * 1000,
-                url: `https://www.cls.cn/detail/${k.id}`,
-            };
-        });
+    return await Promise.all(
+        res?.data?.roll_data
+            .filter((k) => !k.is_ad)
+            .map(async (k) => {
+                const fullUrl = `https://www.cls.cn/detail/${k.id}`;
+                const hashId = await generateUrlHashId(fullUrl);
+
+                return {
+                    id: hashId,
+                    title: k.title || k.brief,
+                    mobileUrl: k.shareurl,
+                    pubDate: k.ctime * 1000,
+                    url: fullUrl,
+                };
+            })
+    );
 });
 
 export default defineSource({
