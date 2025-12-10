@@ -3,8 +3,8 @@ import type { NewsItem } from "@shared/types";
 import * as cheerio from "cheerio";
 
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
 import { parseRelativeDate } from "../utils/date";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 export default defineSource(async () => {
     const baseURL = "https://www.gelonghui.com";
@@ -12,7 +12,7 @@ export default defineSource(async () => {
     const $ = cheerio.load(html);
     const $main = $(".article-content");
     const news: NewsItem[] = [];
-    $main.each((_, el) => {
+    for (const el of $main) {
         const a = $(el).find(".detail-right>a");
         // https://www.kzaobao.com/shiju/20241002/170659.html
         const url = a.attr("href");
@@ -21,16 +21,19 @@ export default defineSource(async () => {
         // 第三个 p
         const relatieveTime = $(el).find(".time > span:nth-child(3)").text();
         if (url && title && relatieveTime) {
+            const fullUrl = url.startsWith("http") ? url : `${baseURL}${url}`;
+            const hashId = await generateUrlHashId(fullUrl);
+
             news.push({
-                url: baseURL + url,
+                id: hashId,
                 title,
-                id: url,
+                url: fullUrl,
                 extra: {
                     date: parseRelativeDate(relatieveTime, "Asia/Shanghai").valueOf(),
                     info,
                 },
             });
         }
-    });
+    }
     return news;
 });
