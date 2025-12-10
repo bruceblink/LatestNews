@@ -314,7 +314,8 @@
     "color": "emerald",
     "column": "finance",
     "home": "https://www.fastbull.cn",
-    "title": "头条"
+    "title": "头条",
+    "type": "hottest"
   },
   "solidot": {
     "name": "Solidot",

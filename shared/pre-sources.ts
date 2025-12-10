@@ -250,6 +250,7 @@ export const originSources = {
             },
             news: {
                 title: "头条",
+                type: "hottest",
                 interval: Time.Common,
             },
         },
