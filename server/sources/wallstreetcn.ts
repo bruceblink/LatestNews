@@ -1,5 +1,5 @@
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface Item {
     uri: string;
@@ -37,14 +37,20 @@ const live = defineSource(async () => {
     const apiUrl = "https://api-one.wallstcn.com/apiv1/content/lives?channel=global-channel&limit=30";
 
     const res: LiveRes = await myFetch(apiUrl);
-    return res.data.items.map((k) => ({
-        id: k.id,
-        title: k.title || k.content_text,
-        extra: {
-            date: k.display_time * 1000,
-        },
-        url: k.uri,
-    }));
+    return await Promise.all(
+        res.data.items.map(async (k) => {
+            const hashId = await generateUrlHashId(k.uri);
+
+            return {
+                id: hashId,
+                title: k.title || k.content_text,
+                url: k.uri,
+                extra: {
+                    date: k.display_time * 1000,
+                },
+            };
+        })
+    );
 });
 
 const news = defineSource(async () => {
@@ -52,30 +58,44 @@ const news = defineSource(async () => {
         "https://api-one.wallstcn.com/apiv1/content/information-flow?channel=global-channel&accept=article&limit=30";
 
     const res: NewsRes = await myFetch(apiUrl);
-    return res.data.items
-        .filter(
-            (k) =>
-                k.resource_type !== "theme" && k.resource_type !== "ad" && k.resource.type !== "live" && k.resource.uri
-        )
-        .map(({ resource: h }) => ({
-            id: h.id,
-            title: h.title || h.content_short,
-            extra: {
-                date: h.display_time * 1000,
-            },
-            url: h.uri,
-        }));
+    return await Promise.all(
+        res.data.items
+            .filter(
+                (k) =>
+                    k.resource_type !== "theme" &&
+                    k.resource_type !== "ad" &&
+                    k.resource.type !== "live" &&
+                    k.resource.uri
+            )
+            .map(async ({ resource: h }) => {
+                const hashId = await generateUrlHashId(h.uri);
+
+                return {
+                    id: hashId,
+                    title: h.title || h.content_short,
+                    url: h.uri,
+                    extra: {
+                        date: h.display_time * 1000,
+                    },
+                };
+            })
+    );
 });
 
 const hot = defineSource(async () => {
     const apiUrl = "https://api-one.wallstcn.com/apiv1/content/articles/hot?period=all";
 
     const res: HotRes = await myFetch(apiUrl);
-    return res.data.day_items.map((h) => ({
-        id: h.id,
-        title: h.title!,
-        url: h.uri,
-    }));
+    return await Promise.all(
+        res.data.day_items.map(async (h) => {
+            const hashId = await generateUrlHashId(h.uri);
+            return {
+                id: hashId,
+                title: h.title!,
+                url: h.uri,
+            };
+        })
+    );
 });
 
 export default defineSource({
