@@ -1,5 +1,5 @@
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface Res {
     data: {
@@ -17,9 +17,15 @@ interface Res {
 export default defineSource(async () => {
     const url = "https://tieba.baidu.com/hottopic/browse/topicList";
     const res: Res = await myFetch(url);
-    return res.data.bang_topic.topic_list.map((k) => ({
-        id: k.topic_id,
-        title: k.topic_name,
-        url: k.topic_url,
-    }));
+    return await Promise.all(
+        res?.data?.bang_topic?.topic_list?.map(async (k) => {
+            const hashId = await generateUrlHashId(k.topic_url);
+
+            return {
+                id: hashId,
+                title: k.topic_name,
+                url: k.topic_url,
+            };
+        })
+    );
 });
