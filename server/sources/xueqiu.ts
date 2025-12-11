@@ -1,5 +1,5 @@
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface StockRes {
     data: {
@@ -22,16 +22,22 @@ const hotstock = defineSource(async () => {
             cookie: cookie.join("; "),
         },
     });
-    return res.data.items
-        .filter((k) => !k.ad)
-        .map((k) => ({
-            id: k.code,
-            url: `https://xueqiu.com/s/${k.code}`,
-            title: k.name,
-            extra: {
-                info: `${k.percent}% ${k.exchange}`,
-            },
-        }));
+    return await Promise.all(
+        res.data.items
+            .filter((k) => !k.ad)
+            .map(async (k) => {
+                const fulUrl = `https://xueqiu.com/s/${k.code}`;
+                const hashId = await generateUrlHashId(fulUrl);
+                return {
+                    id: hashId,
+                    url: `https://xueqiu.com/s/${k.code}`,
+                    title: k.name,
+                    extra: {
+                        info: `${k.percent}% ${k.exchange}`,
+                    },
+                };
+            })
+    );
 });
 
 export default defineSource({
