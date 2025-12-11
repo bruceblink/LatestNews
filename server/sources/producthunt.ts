@@ -3,7 +3,7 @@ import type { NewsItem } from "@shared/types";
 import process from "node:process";
 
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 export default defineSource(async () => {
     const apiToken = process.env.PRODUCTHUNT_API_TOKEN;
@@ -38,23 +38,30 @@ export default defineSource(async () => {
         body: JSON.stringify({ query }),
     });
 
-    const news: NewsItem[] = [];
     const posts = response?.data?.posts?.edges || [];
-
+    const newsTasks: Promise<NewsItem | null>[] = [];
     for (const edge of posts) {
         const post = edge.node;
-        if (post.id && post.name) {
-            news.push({
-                id: post.id,
-                title: post.name,
-                url: post.url || `https://www.producthunt.com/posts/${post.slug}`,
-                extra: {
-                    info: ` △︎ ${post.votesCount || 0}`,
-                    hover: post.tagline,
-                },
-            });
-        }
-    }
 
-    return news;
+        if (!post.id || !post.name) continue;
+
+        newsTasks.push(
+            (async () => {
+                const fullUrl = post.url || `https://www.producthunt.com/posts/${post.slug}`;
+                const hashId = await generateUrlHashId(fullUrl);
+
+                return {
+                    id: hashId,
+                    title: post.name,
+                    url: fullUrl,
+                    extra: {
+                        info: ` △︎ ${post.votesCount || 0}`,
+                        hover: post.tagline,
+                    },
+                } as NewsItem;
+            })()
+        );
+    }
+    const news = await Promise.all(newsTasks);
+    return news as NewsItem[];
 });
