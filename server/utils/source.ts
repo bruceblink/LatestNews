@@ -20,12 +20,17 @@ export function defineRSSSource(url: string, option?: SourceOption): SourceGette
     return async () => {
         const data = await rss2json(url);
         if (!data?.items.length) throw new Error("Cannot fetch rss data");
-        return data.items.map((item) => ({
-            title: item.title,
-            url: item.link,
-            id: item.link,
-            pubDate: !option?.hiddenDate ? item.created : undefined,
-        }));
+        return await Promise.all(
+            data.items.map(async (item) => {
+                const hashId = await generateUrlHashId(item.link);
+                return {
+                    id: hashId,
+                    title: item.title,
+                    url: item.link,
+                    pubDate: !option?.hiddenDate ? item.created : undefined,
+                };
+            })
+        );
     };
 }
 
@@ -48,12 +53,18 @@ export function defineRSSHubSource(
         });
         // @ts-ignore
         const data: RSSHubResponse = await myFetch(url);
-        return data.items.map((item) => ({
-            title: item.title,
-            url: item.url,
-            id: item.id ?? item.url,
-            pubDate: !sourceOption?.hiddenDate ? item.date_published : undefined,
-        }));
+        return await Promise.all(
+            data.items.map(async (item) => {
+                const hashId = await generateUrlHashId(item.url);
+
+                return {
+                    id: hashId,
+                    title: item.title,
+                    url: item.url,
+                    pubDate: !sourceOption?.hiddenDate ? item.date_published : undefined,
+                };
+            })
+        );
     };
 }
 
