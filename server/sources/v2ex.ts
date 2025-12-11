@@ -1,5 +1,5 @@
 import { myFetch } from "#/utils/fetch";
-import { defineSource } from "#/utils/source";
+import { defineSource, generateUrlHashId } from "#/utils/source";
 
 interface Res {
     version: string;
@@ -20,25 +20,27 @@ interface Res {
 }
 
 const share = defineSource(async () => {
-    const res = await Promise.all(
-        ["create", "ideas", "programmer", "share"].map(
-            (k) => myFetch(`https://www.v2ex.com/feed/${k}.json`) as Promise<Res>
-        )
-    );
-    return res
-        .map((k) => k.items)
-        .flat()
-        .map((k) => ({
-            id: k.id,
-            title: k.title,
+    const cats = ["create", "ideas", "programmer", "share"];
+
+    const feeds = await Promise.all(cats.map((k) => myFetch(`https://www.v2ex.com/feed/${k}.json`) as Promise<Res>));
+
+    const items = feeds.flatMap((f) => f.items);
+
+    const results = await Promise.all(
+        items.map(async (item) => ({
+            id: await generateUrlHashId(item.url),
+            title: item.title,
+            url: item.url,
             extra: {
-                date: k.date_modified ?? k.date_published,
+                date: Date.parse(item.date_modified ?? item.date_published),
             },
-            url: k.url,
         }))
-        .sort((m, n) => (m.extra.date < n.extra.date ? 1 : -1));
+    );
+
+    return results.sort((a, b) => b.extra.date - a.extra.date);
 });
 
 export default defineSource({
     v2ex: share,
+    "v2ex-share": share,
 });
