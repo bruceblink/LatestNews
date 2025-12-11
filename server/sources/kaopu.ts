@@ -1,5 +1,5 @@
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 type Res = {
     description: string;
@@ -16,17 +16,22 @@ export default defineSource(async () => {
             "https://kaopustorage.blob.core.windows.net/jsondata/news_list_beta_hans_1.json",
         ].map((url) => myFetch(url) as Promise<Res>)
     );
-    return res
-        .flat()
-        .filter((k) => ["财新", "公视"].every((h) => k.publisher !== h))
-        .map((k) => ({
-            id: k.link,
-            title: k.title,
-            pubDate: k.pubDate,
-            extra: {
-                hover: k.description,
-                info: k.publisher,
-            },
-            url: k.link,
-        }));
+    return await Promise.all(
+        res
+            .flat()
+            .filter((k) => ["财新", "公视"].every((h) => k.publisher !== h))
+            .map(async (k) => {
+                const hashId = await generateUrlHashId(k.link);
+                return {
+                    id: hashId,
+                    title: k.title,
+                    pubDate: k.pubDate,
+                    extra: {
+                        hover: k.description,
+                        info: k.publisher,
+                    },
+                    url: k.link,
+                };
+            })
+    );
 });
