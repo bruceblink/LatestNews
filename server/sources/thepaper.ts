@@ -1,5 +1,5 @@
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface Res {
     data: {
@@ -14,12 +14,17 @@ interface Res {
 export default defineSource(async () => {
     const url = "https://cache.thepaper.cn/contentapi/wwwIndex/rightSidebar";
     const res: Res = await myFetch(url);
-    return res.data.hotNews.map((k) => {
-        return {
-            id: k.contId,
-            title: k.name,
-            url: `https://www.thepaper.cn/newsDetail_forward_${k.contId}`,
-            mobileUrl: `https://m.thepaper.cn/newsDetail_forward_${k.contId}`,
-        };
-    });
+    return await Promise.all(
+        res.data.hotNews.map(async (k) => {
+            const fulUrl = `https://www.thepaper.cn/newsDetail_forward_${k.contId}`;
+            const hashId = await generateUrlHashId(fulUrl);
+
+            return {
+                id: hashId,
+                title: k.name,
+                url: fulUrl,
+                mobileUrl: fulUrl,
+            };
+        })
+    );
 });
