@@ -1,6 +1,6 @@
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
 import { parseRelativeDate } from "../utils/date";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface Jin10Item {
     id: string;
@@ -35,20 +35,26 @@ export default defineSource(async () => {
         .trim(); // 移除首尾空白字符
     const data: Jin10Item[] = JSON.parse(jsonStr);
 
-    return data
-        .filter((k) => (k.data.title || k.data.content) && !k.channel?.includes(5))
-        .map((k) => {
-            const text = (k.data.title || k.data.content)!.replace(/<\/?b>/g, "");
-            const [, title, desc] = text.match(/^【([^】]*)】(.*)$/) ?? [];
-            return {
-                id: k.id,
-                title: title ?? text,
-                pubDate: parseRelativeDate(k.time, "Asia/Shanghai").valueOf(),
-                url: `https://flash.jin10.com/detail/${k.id}`,
-                extra: {
-                    hover: desc,
-                    info: !!k.important && "✰",
-                },
-            };
-        });
+    return await Promise.all(
+        data
+            .filter((k) => (k.data.title || k.data.content) && !k.channel?.includes(5))
+            .map(async (k) => {
+                const text = (k.data.title || k.data.content)!.replace(/<\/?b>/g, "");
+                const [, title, desc] = text.match(/^【([^】]*)】(.*)$/) ?? [];
+
+                const fulUrl = `https://flash.jin10.com/detail/${k.id}`;
+                const hashId = await generateUrlHashId(fulUrl);
+
+                return {
+                    id: hashId,
+                    title: title ?? text,
+                    pubDate: parseRelativeDate(k.time, "Asia/Shanghai").valueOf(),
+                    url: fulUrl,
+                    extra: {
+                        hover: desc,
+                        info: !!k.important && "✰",
+                    },
+                };
+            })
+    );
 });
