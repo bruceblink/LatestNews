@@ -1,5 +1,5 @@
 import { myFetch } from "../utils/fetch";
-import { defineSource } from "../utils/source";
+import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface Report {
     id: string;
@@ -33,18 +33,24 @@ interface Res {
 const flash = defineSource(async () => {
     const res: Res = await myFetch("https://api.mktnews.net/api/flash?type=0&limit=50");
 
-    return res.data
-        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-        .map((item) => ({
-            id: item.id,
-            title: item.data.title || item.data.content.match(/^【([^】]*)】(.*)$/)?.[1] || item.data.content,
-            pubDate: item.time,
-            extra: {
-                info: item.important === 1 ? "Important" : undefined,
-                hover: item.data.content,
-            },
-            url: `https://mktnews.net/flashDetail.html?id=${item.id}`,
-        }));
+    return await Promise.all(
+        res.data
+            .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+            .map(async (item) => {
+                const fulUrl = `https://mktnews.net/flashDetail.html?id=${item.id}`;
+                const hashId = await generateUrlHashId(fulUrl);
+                return {
+                    id: hashId,
+                    title: item.data.title || item.data.content.match(/^【([^】]*)】(.*)$/)?.[1] || item.data.content,
+                    pubDate: item.time,
+                    extra: {
+                        info: item.important === 1 ? "Important" : undefined,
+                        hover: item.data.content,
+                    },
+                    url: hashId,
+                };
+            })
+    );
 });
 
 export default defineSource({
