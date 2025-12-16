@@ -476,20 +476,6 @@ export const originSources = {
             },
         },
     },
-    iqiyi: {
-        name: "爱奇艺",
-        column: "china",
-        color: "green",
-        home: "https://www.iqiyi.com",
-        sub: {
-            "tv-hot-new": {
-                title: "电视剧-热播榜",
-                type: "hottest",
-                interval: Time.Common,
-                home: "https://www.iqiyi.com/tv/",
-            },
-        },
-    },
 } as const satisfies Record<string, OriginSource>;
 
 export function genSources() {

@@ -554,24 +554,5 @@
     "home": "https://v.qq.com/channel/tv",
     "title": "电视剧-热搜榜",
     "type": "hottest"
-  },
-  "iqiyi": {
-    "name": "爱奇艺",
-    "interval": 1800000,
-    "color": "green",
-    "column": "china",
-    "home": "https://www.iqiyi.com/tv/",
-    "title": "电视剧-热播榜",
-    "type": "hottest",
-    "redirect": "iqiyi-tv-hot-new"
-  },
-  "iqiyi-tv-hot-new": {
-    "name": "爱奇艺",
-    "interval": 1800000,
-    "color": "green",
-    "column": "china",
-    "home": "https://www.iqiyi.com/tv/",
-    "title": "电视剧-热播榜",
-    "type": "hottest"
   }
 }
