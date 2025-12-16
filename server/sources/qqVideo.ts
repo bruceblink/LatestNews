@@ -23,8 +23,6 @@ const qqCartoon = defineSource(async () => {
         return [];
     }
 
-    console.info("成功获取腾讯视频动漫数据");
-
     // 3. 提取今日更新视频
     const tabId: string = daily.selectedTabId ?? "";
     const todayVideos: any[] = daily.videoBannerMap?.[tabId]?.videoList ?? [];
