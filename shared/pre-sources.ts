@@ -468,12 +468,12 @@ export const originSources = {
                 interval: Time.Slow,
                 home: "https://v.qq.com/channel/cartoon",
             },
-            /*            tv: {
-                title: "腾讯电视剧",
+            "tv-hotSearch": {
+                title: "电视剧-热搜榜",
                 type: "hottest",
-                interval: Time.Slow,
+                interval: Time.Common,
                 home: "https://v.qq.com/channel/tv",
-            },*/
+            },
         },
     },
 } as const satisfies Record<string, OriginSource>;

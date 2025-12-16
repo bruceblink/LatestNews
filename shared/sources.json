@@ -545,5 +545,14 @@
     "home": "https://v.qq.com/channel/cartoon",
     "title": "动漫",
     "type": "hottest"
+  },
+  "qqVideo-tv-hotSearch": {
+    "name": "腾讯视频",
+    "interval": 1800000,
+    "color": "blue",
+    "column": "china",
+    "home": "https://v.qq.com/channel/tv",
+    "title": "电视剧-热搜榜",
+    "type": "hottest"
   }
 }
