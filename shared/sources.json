@@ -533,7 +533,7 @@
     "color": "blue",
     "column": "china",
     "home": "https://v.qq.com/channel/cartoon",
-    "title": "动漫",
+    "title": "动漫-今日更新",
     "type": "hottest",
     "redirect": "qqVideo-cartoon"
   },
@@ -543,7 +543,7 @@
     "color": "blue",
     "column": "china",
     "home": "https://v.qq.com/channel/cartoon",
-    "title": "动漫",
+    "title": "动漫-今日更新",
     "type": "hottest"
   },
   "qqVideo-tv-hotSearch": {
