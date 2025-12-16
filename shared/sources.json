@@ -526,5 +526,33 @@
     "column": "china",
     "home": "https://www.freebuf.com/",
     "title": "网络安全"
+  },
+  "qqVideo": {
+    "name": "腾讯视频",
+    "interval": 3600000,
+    "color": "blue",
+    "column": "china",
+    "home": "https://v.qq.com/channel/cartoon",
+    "title": "腾讯动漫",
+    "type": "hottest",
+    "redirect": "qqVideo-cartoon"
+  },
+  "qqVideo-cartoon": {
+    "name": "腾讯视频",
+    "interval": 3600000,
+    "color": "blue",
+    "column": "china",
+    "home": "https://v.qq.com/channel/cartoon",
+    "title": "腾讯动漫",
+    "type": "hottest"
+  },
+  "qqVideo-tv": {
+    "name": "腾讯视频",
+    "interval": 3600000,
+    "color": "blue",
+    "column": "china",
+    "home": "https://v.qq.com/channel/tv",
+    "title": "腾讯电视剧",
+    "type": "hottest"
   }
 }
