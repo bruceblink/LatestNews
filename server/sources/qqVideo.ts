@@ -171,7 +171,6 @@ const qqCartoon = defineSource(async () => {
                 .filter(Boolean)
                 .join(" ");
 
-            console.log(item);
             return {
                 id: item?.id,
                 title: item?.params?.title,
