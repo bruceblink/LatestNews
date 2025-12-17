@@ -576,10 +576,29 @@
   },
   "iqiyi-cartoon-today": {
     "name": "爱奇艺",
-    "interval": 1800000,
+    "interval": 3600000,
     "color": "green",
     "column": "china",
     "home": "https://www.iqiyi.com/comic",
+    "title": "动漫-追番表",
+    "type": "hottest"
+  },
+  "youku": {
+    "name": "优酷",
+    "interval": 3600000,
+    "color": "blue",
+    "column": "china",
+    "home": "https://www.youku.com/ku/webcomic",
+    "title": "动漫-追番表",
+    "type": "hottest",
+    "redirect": "youku-webcomic-today"
+  },
+  "youku-webcomic-today": {
+    "name": "优酷",
+    "interval": 3600000,
+    "color": "blue",
+    "column": "china",
+    "home": "https://www.youku.com/ku/webcomic",
     "title": "动漫-追番表",
     "type": "hottest"
   }
