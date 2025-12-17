@@ -491,7 +491,7 @@ export const originSources = {
             "cartoon-today": {
                 title: "动漫-追番表",
                 type: "hottest",
-                interval: Time.Common,
+                interval: Time.Slow,
                 home: "https://www.iqiyi.com/comic",
             },
         },
