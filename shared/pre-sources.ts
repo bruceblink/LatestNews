@@ -463,7 +463,7 @@ export const originSources = {
         home: "https://v.qq.com/",
         sub: {
             cartoon: {
-                title: "动漫-今日更新",
+                title: "动漫-追番表",
                 type: "hottest",
                 interval: Time.Slow,
                 home: "https://v.qq.com/channel/cartoon",
