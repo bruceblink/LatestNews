@@ -573,5 +573,14 @@
     "home": "https://www.iqiyi.com",
     "title": "热播榜",
     "type": "hottest"
+  },
+  "iqiyi-cartoon-today": {
+    "name": "爱奇艺",
+    "interval": 1800000,
+    "color": "green",
+    "column": "china",
+    "home": "https://www.iqiyi.com/comic",
+    "title": "动漫-追番表",
+    "type": "hottest"
   }
 }

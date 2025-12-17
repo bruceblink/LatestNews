@@ -488,6 +488,12 @@ export const originSources = {
                 interval: Time.Common,
                 home: "https://www.iqiyi.com",
             },
+            "cartoon-today": {
+                title: "动漫-追番表",
+                type: "hottest",
+                interval: Time.Common,
+                home: "https://www.iqiyi.com/comic",
+            },
         },
     },
 } as const satisfies Record<string, OriginSource>;
