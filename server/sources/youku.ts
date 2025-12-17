@@ -5,7 +5,7 @@ import { myFetch } from "#/utils/fetch";
 import { defineSource } from "#/utils/source";
 
 /**
- * 优酷动漫
+ * 优酷动漫 -追番表
  */
 const webcomicToday = defineSource(async () => {
     const url = "https://www.youku.com/ku/webcomic";
@@ -99,10 +99,11 @@ function buildAniItem(item: any): NewsItem {
     const info = [item?.desc, item?.lbTexts].filter(Boolean).join(" ");
 
     const hover = [item?.subtitle].filter(Boolean).join(" ");
+
     return {
         id: item?.id,
         title,
-        url: "https://www.youku.com/ku/webcomic",
+        url: getYoukuVideoUrl(item?.action_value, item?.scm, item?.scg_id),
         pubDate: getTodaySlash(),
         extra: {
             info,
@@ -114,6 +115,10 @@ function buildAniItem(item: any): NewsItem {
 
 export function getTodaySlash(): string {
     return dayjs().format("YYYY-MM-DD");
+}
+
+function getYoukuVideoUrl(action_value: string, scm: string, scg_id: string) {
+    return `https://v.youku.com/video?s=${action_value}&amp;scm=${scm}&amp;scg_id=${scg_id}`;
 }
 
 export default defineSource({
