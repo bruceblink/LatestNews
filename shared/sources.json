@@ -405,7 +405,7 @@
     "home": "https://www.bilibili.com",
     "title": "动漫-追番表",
     "column": "china",
-    "type": "hottest",
+    "type": "realtime",
     "disable": "cf"
   },
   "kuaishou": {
@@ -544,7 +544,7 @@
     "column": "china",
     "home": "https://v.qq.com/channel/cartoon",
     "title": "动漫-追番表",
-    "type": "hottest",
+    "type": "realtime",
     "disable": "cf",
     "redirect": "qqvideo-cartoon"
   },
@@ -555,7 +555,7 @@
     "column": "china",
     "home": "https://v.qq.com/channel/cartoon",
     "title": "动漫-追番表",
-    "type": "hottest",
+    "type": "realtime",
     "disable": "cf"
   },
   "qqvideo-tv-hotsearch": {
@@ -593,7 +593,7 @@
     "column": "china",
     "home": "https://www.iqiyi.com/comic",
     "title": "动漫-追番表",
-    "type": "hottest"
+    "type": "realtime"
   },
   "youku": {
     "name": "优酷",
@@ -602,7 +602,7 @@
     "column": "china",
     "home": "https://www.youku.com/ku/webcomic",
     "title": "动漫-追番表",
-    "type": "hottest",
+    "type": "realtime",
     "redirect": "youku-webcomic-today"
   },
   "youku-webcomic-today": {
@@ -612,6 +612,6 @@
     "column": "china",
     "home": "https://www.youku.com/ku/webcomic",
     "title": "动漫-追番表",
-    "type": "hottest"
+    "type": "realtime"
   }
 }

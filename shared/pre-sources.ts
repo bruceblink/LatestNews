@@ -314,7 +314,7 @@ export const originSources = {
             "anime-today": {
                 title: "动漫-追番表",
                 column: "china",
-                type: "hottest",
+                type: "realtime",
                 interval: Time.Slow,
                 // cloudflare pages cannot access
                 disable: "cf",
@@ -472,7 +472,7 @@ export const originSources = {
         sub: {
             cartoon: {
                 title: "动漫-追番表",
-                type: "hottest",
+                type: "realtime",
                 interval: Time.Slow,
                 // cloudflare pages cannot access
                 disable: "cf",
@@ -500,7 +500,7 @@ export const originSources = {
             },
             "cartoon-today": {
                 title: "动漫-追番表",
-                type: "hottest",
+                type: "realtime",
                 interval: Time.Slow,
                 home: "https://www.iqiyi.com/comic",
             },
@@ -514,7 +514,7 @@ export const originSources = {
         sub: {
             "webcomic-today": {
                 title: "动漫-追番表",
-                type: "hottest",
+                type: "realtime",
                 interval: Time.Slow,
                 home: "https://www.youku.com/ku/webcomic",
             },
