@@ -77,6 +77,7 @@ interface CardParams {
     topic_label: string;
     type: string;
     uni_imgtag: string;
+    update_notify_desc: string;
 }
 
 /**
@@ -162,15 +163,11 @@ const qqCartoon = defineSource(async () => {
         .map((item) => {
             const uni_imgtag = JSON.parse(item?.params?.uni_imgtag);
             // 去掉空值
-            const info = [
-                item?.params?.second_title,
-                item?.params?.topic_label,
-                uni_imgtag?.tag_2?.text,
-                uni_imgtag?.tag_4?.text,
-            ]
+            const info = [uni_imgtag?.tag_2?.text, item?.params?.update_notify_desc, item?.params?.episode_updated]
                 .filter(Boolean)
                 .join(" ");
 
+            const hover = [item?.params?.second_title, item?.params?.sub_title].filter(Boolean).join(" ");
             return {
                 id: item?.id,
                 title: item?.params?.title,
@@ -178,7 +175,7 @@ const qqCartoon = defineSource(async () => {
                 pubDate: item?.params?.publish_date ?? getTodaySlash(),
                 extra: {
                     info,
-                    hover: item?.params?.sub_title,
+                    hover,
                 },
             };
         });
