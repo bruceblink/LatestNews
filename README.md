@@ -16,24 +16,6 @@
 - 登录用户支持同步用户关注的内容
 - 根据内容源更新频率动态调整抓取间隔（最快每 2 分钟），避免频繁抓取导致 IP 被封禁
 - 支持使用第三方鉴权和授权服务，使用方式可以参考[ani-updater](https://github.com/bruceblink/ani-updater)中的[auth](https://github.com/bruceblink/ani-updater/tree/main/ani_subs/src/routes/auth)
-- 支持 MCP server
-
-```json
-{
-  "mcpServers": {
-    "newsnow": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "newsnow-mcp-server"
-      ],
-      "env": {
-        "BASE_URL": "https://news.likanug.top"
-      }
-    }
-  }
-}
-```
 
 你可以将 `BASE_URL` 修改为你的域名。
 
