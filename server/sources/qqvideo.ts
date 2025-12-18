@@ -82,12 +82,13 @@ interface CardParams {
 }
 
 function isAfterPublishTime(payTime?: string) {
-    if (!payTime) return true; // 没有时间就直接展示
+    if (!payTime) return true;
 
-    const now = dayjs();
+    // 当前北京时间
+    const now = dayjs().tz("Asia/Shanghai");
 
-    // 拼成“今天的更新时间”
-    const publishTime = dayjs(`${now.format("YYYY-MM-DD")} ${payTime}`);
+    // 今天的北京时间 + payTime
+    const publishTime = dayjs.tz(`${now.format("YYYY-MM-DD")} ${payTime}`, "Asia/Shanghai");
 
     return now.isAfter(publishTime);
 }
