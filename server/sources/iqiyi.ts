@@ -85,6 +85,15 @@ interface WarpCartoon {
     extData: any;
 }
 
+/**
+ * 提取字符串中的时间，例如 '每周一周四10:00更新1集', 提取中间的10:00
+ * @param desc
+ */
+export function extractTime(desc?: string): string | undefined {
+    if (!desc) return "";
+    return desc.match(/(\d{1,2}:\d{2})/)?.[1];
+}
+
 const cartoonToday = defineSource(async () => {
     const url = "https://mesh.if.iqiyi.com/portal/lw/v7/channel/cartoon";
     const resp = await myFetch<WarpCartoon>(url, {
@@ -97,18 +106,21 @@ const cartoonToday = defineSource(async () => {
     const weekday = dayjs().day() || 7;
     // 获取今天的追番表数据
     const videos = items?.video[weekday - 1]; // 减去1是因为数组索引从0开始
+
     return videos?.data.map((item) => {
         const creator = item.creator?.map((a) => a.name).join(" ");
         const contributor = item.contributor?.map((a) => a.name).join(" ");
-        const info = [item.desc, item.dq_updatestatus, creator, contributor].filter(Boolean).join("|");
+        const info = [item.desc, item.dq_updatestatus, creator, contributor].filter(Boolean).join(" ");
+        const pt = extractTime(item?.desc);
         return {
             id: item.entity_id,
             title: item.title,
             url: item.page_url,
-            pubDate: item?.showDate,
+            pubDate: `${dayjs().format("YYYY-MM-DD")} ${pt}`,
             extra: {
                 info,
                 hover: item.description,
+                showDate: item?.showDate,
                 tag: item.tag,
             },
         };
