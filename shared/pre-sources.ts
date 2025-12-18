@@ -316,6 +316,8 @@ export const originSources = {
                 column: "china",
                 type: "hottest",
                 interval: Time.Slow,
+                // cloudflare pages cannot access
+                disable: "cf",
             },
         },
     },
@@ -472,6 +474,8 @@ export const originSources = {
                 title: "动漫-追番表",
                 type: "hottest",
                 interval: Time.Slow,
+                // cloudflare pages cannot access
+                disable: "cf",
                 home: "https://v.qq.com/channel/cartoon",
             },
             "tv-hotsearch": {

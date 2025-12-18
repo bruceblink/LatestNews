@@ -405,7 +405,8 @@
     "home": "https://www.bilibili.com",
     "title": "动漫-追番表",
     "column": "china",
-    "type": "hottest"
+    "type": "hottest",
+    "disable": "cf"
   },
   "kuaishou": {
     "name": "快手",
@@ -544,6 +545,7 @@
     "home": "https://v.qq.com/channel/cartoon",
     "title": "动漫-追番表",
     "type": "hottest",
+    "disable": "cf",
     "redirect": "qqvideo-cartoon"
   },
   "qqvideo-cartoon": {
@@ -553,7 +555,8 @@
     "column": "china",
     "home": "https://v.qq.com/channel/cartoon",
     "title": "动漫-追番表",
-    "type": "hottest"
+    "type": "hottest",
+    "disable": "cf"
   },
   "qqvideo-tv-hotsearch": {
     "name": "腾讯视频",
