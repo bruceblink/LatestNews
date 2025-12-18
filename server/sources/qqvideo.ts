@@ -273,6 +273,6 @@ const hotSearch = defineSource(async () => {
 });
 
 export default defineSource({
-    "qqVideo-cartoon": qqCartoon,
-    "qqVideo-tv-hotSearch": hotSearch,
+    "qqvideo-cartoon": qqCartoon,
+    "qqvideo-tv-hotsearch": hotSearch,
 });
