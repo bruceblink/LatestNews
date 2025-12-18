@@ -403,7 +403,7 @@
     "interval": 3600000,
     "color": "blue",
     "home": "https://www.bilibili.com",
-    "title": "追番表",
+    "title": "动漫-追番表",
     "column": "china",
     "type": "hottest"
   },

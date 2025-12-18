@@ -312,7 +312,7 @@ export const originSources = {
                 interval: Time.Common,
             },
             "anime-today": {
-                title: "追番表",
+                title: "动漫-追番表",
                 column: "china",
                 type: "hottest",
                 interval: Time.Slow,
