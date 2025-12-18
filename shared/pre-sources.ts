@@ -311,6 +311,12 @@ export const originSources = {
                 type: "hottest",
                 interval: Time.Common,
             },
+            "anime-today": {
+                title: "追番表",
+                column: "china",
+                type: "hottest",
+                interval: Time.Slow,
+            },
         },
     },
     kuaishou: {
