@@ -70,6 +70,7 @@ interface CardParams {
     recall_alg: string;
     recall_item_type: string;
     publish_date?: string;
+    pay_time: string;
     second_title?: string;
     sub_title: string;
     title: string;
@@ -78,6 +79,17 @@ interface CardParams {
     type: string;
     uni_imgtag: string;
     update_notify_desc: string;
+}
+
+function isAfterPublishTime(payTime?: string) {
+    if (!payTime) return true; // 没有时间就直接展示
+
+    const now = dayjs();
+
+    // 拼成“今天的更新时间”
+    const publishTime = dayjs(`${now.format("YYYY-MM-DD")} ${payTime}`);
+
+    return now.isAfter(publishTime);
 }
 
 /**
@@ -160,6 +172,11 @@ const qqCartoon = defineSource(async () => {
 
     return resp?.data?.card?.children_list?.list?.cards
         ?.filter((item) => item.type == "poster") // type == "poster"是视频
+        ?.filter((item) => {
+            // 例如：18:00 才更新
+            const payTime = item?.params?.pay_time;
+            return isAfterPublishTime(payTime);
+        })
         .map((item) => {
             const uni_imgtag = JSON.parse(item?.params?.uni_imgtag);
             // 去掉空值
@@ -172,7 +189,7 @@ const qqCartoon = defineSource(async () => {
                 id: item?.id,
                 title: item?.params?.title,
                 url: getQqVideoUrl(item?.params?.cid),
-                pubDate: item?.params?.publish_date ?? getTodaySlash(),
+                pubDate: `${dayjs().format("YYYY-MM-DD")} ${item?.params?.pay_time}`,
                 extra: {
                     info,
                     hover,
