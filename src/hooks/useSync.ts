@@ -70,7 +70,7 @@ export function useSync() {
                 handleAuthError(toaster, err);
             }
         },
-        10000,
+        5000,
         [primitiveMetadata, loggedIn, uploadMetadata, toaster]
     );
 
