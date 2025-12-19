@@ -81,7 +81,7 @@ interface CardParams {
     update_notify_desc: string;
 }
 
-function isAfterPublishTime(payTime?: string) {
+export function isAfterPublishTime(payTime?: string) {
     if (!payTime) return true;
 
     // 当前北京时间

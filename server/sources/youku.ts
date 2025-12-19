@@ -4,6 +4,7 @@ import dayjs from "dayjs/esm";
 import { myFetch } from "#/utils/fetch";
 import { defineSource } from "#/utils/source";
 import { extractTime } from "#/sources/iqiyi.ts";
+import { isAfterPublishTime } from "#/sources/qqvideo.ts";
 
 /**
  * 优酷动漫 - 追番表
@@ -45,7 +46,13 @@ function extractTodayAnime(modules: any[]): NewsItem[] {
 
     if (!Array.isArray(todayItems)) return [];
 
-    return todayItems.map(buildAniItem);
+    return todayItems
+        ?.filter((item) => {
+            // 例如：18:00 才更新
+            const pt = extractTime(item?.subtitle ?? item?.reason?.text?.title);
+            return isAfterPublishTime(pt);
+        })
+        .map(buildAniItem);
 }
 
 /* ------------------------ helpers ------------------------ */
@@ -75,7 +82,7 @@ function extractInitialData(html: string): any {
 
 function buildAniItem(item: any): NewsItem {
     // 获取更新时间
-    const pt = extractTime(item?.subtitle);
+    const pt = extractTime(item?.subtitle ?? item?.reason?.text?.title);
 
     return {
         id: item?.id ?? "",
