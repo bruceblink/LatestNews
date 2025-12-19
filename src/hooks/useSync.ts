@@ -78,7 +78,7 @@ export function useSync() {
     useEffect(() => {
         if (!loggedIn) return;
 
-        const tryDownload = async () => {
+        const trySync = async () => {
             try {
                 const metadata = await downloadMetadata();
                 if (metadata) setPrimitiveMetadata(preprocessMetadata(metadata));
@@ -87,7 +87,7 @@ export function useSync() {
             }
         };
 
-        tryDownload();
+        trySync();
     }, [loggedIn, setPrimitiveMetadata, toaster, downloadMetadata]);
 
     return { uploadMetadata, downloadMetadata };
