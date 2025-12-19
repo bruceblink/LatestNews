@@ -84,7 +84,7 @@ function createPrimitiveMetadataAtom(
 
             const nextValue = update instanceof Function ? update(current) : update;
 
-            if (nextValue.updatedTime > current.updatedTime) {
+            if (nextValue.updatedTime >= current.updatedTime) {
                 set(baseAtom, nextValue);
                 localStorage.setItem(key, JSON.stringify(nextValue));
             }

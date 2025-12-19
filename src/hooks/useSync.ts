@@ -4,7 +4,8 @@ import { useAtom } from "jotai";
 import { apiFetch } from "~/utils";
 import { useDebounce } from "react-use";
 import { useEffect, useCallback } from "react";
-import { preprocessMetadata, primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom.ts";
+import { fixedColumnIds } from "@shared/metadata";
+import { primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom.ts";
 
 import { useToast } from "./useToast";
 import { login, logout, useLoginState } from "./useLogin";
@@ -24,6 +25,25 @@ function handleAuthError(toaster: ReturnType<typeof useToast>, error: any) {
         });
         logout();
     }
+}
+
+export function mergePrimitiveMetadata(local: PrimitiveMetadata, remote: PrimitiveMetadata): PrimitiveMetadata {
+    const merged: PrimitiveMetadata = {
+        updatedTime: Math.max(local.updatedTime, remote.updatedTime),
+        data: {
+            focus: [],
+            hottest: [],
+            realtime: [],
+        },
+        // ⭐ 关键：merge 本身就是一次本地写
+        action: "manual",
+    };
+
+    for (const key of fixedColumnIds) {
+        merged.data[key] = Array.from(new Set([...(local.data[key] ?? []), ...(remote.data[key] ?? [])]));
+    }
+
+    return merged;
 }
 
 /** Hook: 自动同步 primitiveMetadataAtom */
@@ -74,14 +94,16 @@ export function useSync() {
         [primitiveMetadata, loggedIn, uploadMetadata, toaster]
     );
 
-    /** 登录状态变化时自动下载 */
+    /** 登录状态变化时自动同步配置 */
     useEffect(() => {
         if (!loggedIn) return;
 
         const trySync = async () => {
             try {
-                const metadata = await downloadMetadata();
-                if (metadata) setPrimitiveMetadata(preprocessMetadata(metadata));
+                const remoteMetadata = await downloadMetadata();
+                if (remoteMetadata) {
+                    setPrimitiveMetadata((prev) => mergePrimitiveMetadata(prev, remoteMetadata));
+                }
             } catch (err: any) {
                 handleAuthError(toaster, err);
             }
