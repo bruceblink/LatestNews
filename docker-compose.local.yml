@@ -1,15 +1,25 @@
 services:
   latestnews:
-    build: .
+    container_name: latestnews
+    build:
+      context: .
+      args:
+        VITE_APP_TITLE: LatestNews
+        # 需要的话，可以继续加
+        # VITE_API_BASE: http://localhost:4444
     ports:
-      - '4444:4444'
+      - "4444:4444"
     volumes:
       - newsnow_data:/usr/app/.data
     environment:
-      - VITE_APP_TITLE=LatestNews
-      - JWT_SECRET=
-      - INIT_TABLE=true
-      - ENABLE_CACHE=true
+      # ⚠️ 只放「运行时」变量（Node / Nitro 用）
+      NODE_ENV: production
+      PORT: 4444
+      INIT_TABLE: true
+      ENABLE_CACHE: true
+      JWT_SECRET: ${JWT_SECRET}
+      VITE_API_URL: ${VITE_API_URL}
+    restart: unless-stopped
 
 volumes:
   newsnow_data:
