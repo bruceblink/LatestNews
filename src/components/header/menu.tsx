@@ -47,7 +47,7 @@ export function Menu() {
                         }}
                     >
                         <ol className="bg-base bg-op-70! backdrop-blur-md p-2 rounded-lg color-base text-base">
-                            {enableLogin &&
+                            {enableLogin.enable &&
                                 (loggedIn ? (
                                     <li onClick={logout}>
                                         <span className="i-ph:sign-out-duotone inline-block" />
