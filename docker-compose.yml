@@ -7,13 +7,13 @@ services:
     volumes:
       - newsnow_data:/usr/app/.data
     environment:
-      - HOST=0.0.0.0
-      - PORT=4444
-      - NODE_ENV=production
-      - VITE_APP_TITLE=LatestNews
-      - JWT_SECRET=
-      - INIT_TABLE=true
-      - ENABLE_CACHE=true
+      # ⚠️ 只放「运行时」变量（Node / Nitro 用）
+      NODE_ENV: production
+      PORT: 4444
+      INIT_TABLE: true
+      ENABLE_CACHE: true
+      JWT_SECRET: ${JWT_SECRET}
+    restart: unless-stopped
 
 volumes:
   newsnow_data:
