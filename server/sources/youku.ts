@@ -3,6 +3,7 @@ import type { NewsItem } from "@shared/types";
 import dayjs from "dayjs/esm";
 import { myFetch } from "#/utils/fetch";
 import { defineSource } from "#/utils/source";
+import { extractTime } from "#/sources/iqiyi.ts";
 
 /**
  * 优酷动漫 - 追番表
@@ -73,11 +74,14 @@ function extractInitialData(html: string): any {
 }
 
 function buildAniItem(item: any): NewsItem {
+    // 获取更新时间
+    const pt = extractTime(item?.subtitle);
+
     return {
         id: item?.id ?? "",
         title: (item?.title ?? "").trim(),
         url: getYoukuVideoUrl(item),
-        pubDate: getTodaySlash(),
+        pubDate: `${getTodaySlash()} ${pt}`,
         extra: {
             info: [item?.mark?.text, item?.subtitle, item?.lbTexts].filter(Boolean).join(" "),
             hover: [item?.desc].filter(Boolean).join(" "),
