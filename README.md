@@ -86,3 +86,24 @@ ENABLE_CACHE=true
 ## License
 
 [MIT](LICENSE)
+
+## Contributors
+
+<a href="https://github.com/bruceblink/LatestNews/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=bruceblink/LatestNews" />
+</a>
+
+[![Sponsor](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/bruceblink) [![Buy Me Coffee](https://img.shields.io/badge/Buy%20Me%20Coffee-FF5A5F?style=for-the-badge&logo=coffee&logoColor=FFFFFF)](https://buymeacoffee.com/bruceblink)
+
+
+## Acknowledgements
+
+- [React](https://react.dev/)
+- [Nitro](https://nitro.build/)
+- [Vite](https://vite.dev/)
+- [Cheerio](https://cheerio.js.org/)
+
+
+## Contact
+
+Thank you for checking out this project! If you find it useful, consider giving it a star and helping spread the word.
