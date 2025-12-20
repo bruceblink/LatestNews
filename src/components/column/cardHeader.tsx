@@ -1,9 +1,10 @@
 import type { SourceID } from "@shared/types.ts";
 
 import clsx from "clsx";
+import { useRefetch } from "~/hooks/useRefetch";
+import { useLoginState } from "~/hooks/useLogin";
 import dataSources from "@shared/data-sources.ts";
 import { useFocusWith } from "~/hooks/useFocus.ts";
-import { useRefetch } from "@root/src/hooks/useRefetch";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 
 interface CardHeaderProps {
@@ -20,7 +21,7 @@ interface CardHeaderProps {
  */
 export function CardHeader({ id, data, isFetching, isError, setHandleRef }: CardHeaderProps) {
     const { refresh } = useRefetch();
-
+    const { enableLogin } = useLoginState();
     const { isFocused, toggleFocus } = useFocusWith(id);
     const ds = dataSources[id];
 
@@ -55,15 +56,17 @@ export function CardHeader({ id, data, isFetching, isError, setHandleRef }: Card
                 </span>
             </div>
             <div className={clsx("flex gap-2 text-lg", `color-${ds.color}`)}>
-                <button
-                    title="isFetching"
-                    type="button"
-                    className={clsx(
-                        "btn i-ph:arrow-counter-clockwise-duotone",
-                        isFetching && "animate-spin i-ph:spinner-duotone"
-                    )}
-                    onClick={() => refresh(id)}
-                />
+                {enableLogin.enable && (
+                    <button
+                        title="isFetching"
+                        type="button"
+                        className={clsx(
+                            "btn i-ph:arrow-counter-clockwise-duotone",
+                            isFetching && "animate-spin i-ph:spinner-duotone"
+                        )}
+                        onClick={() => refresh(id)}
+                    />
+                )}
                 <button
                     title="isFocused"
                     type="button"

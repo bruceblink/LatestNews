@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { useAtomValue } from "jotai";
 import { Link } from "@tanstack/react-router";
 import { useRefetch } from "~/hooks/useRefetch.ts";
+import { useLoginState } from "~/hooks/useLogin.ts";
 import { Version, PROJECT_URL } from "@shared/consts";
 import { useIsFetching } from "@tanstack/react-query";
 import { goToTopAtom, currentSourcesAtom } from "~/atoms";
@@ -61,6 +62,7 @@ function Refresh() {
 }
 
 export function Header() {
+    const { enableLogin } = useLoginState();
     return (
         <>
             <span className="flex justify-self-start">
@@ -89,7 +91,7 @@ export function Header() {
             </span>
             <span className="justify-self-end flex gap-2 items-center text-xl text-primary-600 dark:text-primary">
                 <GoTop />
-                <Refresh />
+                {enableLogin.enable && <Refresh />}
                 <Github />
                 <Menu />
             </span>
