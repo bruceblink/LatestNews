@@ -15,9 +15,6 @@
 - 默认缓存时长为 30 分钟，登录用户可强制刷新获取最新数据
 - 登录用户支持同步用户关注的内容
 - 根据内容源更新频率动态调整抓取间隔（最快每 2 分钟），避免频繁抓取导致 IP 被封禁
-- 支持使用第三方鉴权和授权服务，使用方式可以参考[ani-updater](https://github.com/bruceblink/ani-updater)中的[auth](https://github.com/bruceblink/ani-updater/tree/main/ani_subs/src/routes/auth)
-
-你可以将 `BASE_URL` 修改为你的域名。
 
 ## 部署指南
 
@@ -30,24 +27,22 @@
 - 构建命令：`pnpm run build`
 - 输出目录：`dist/output/public`
 
-### GitHub OAuth 配置
-1. [创建 GitHub App](https://github.com/settings/applications/new)
-2. 无需特殊权限
-3. 回调 URL 设置为：`https://your-domain.com/api/oauth/github`（替换 your-domain 为实际域名）
-4. 获取 Client ID 和 Client Secret
-
 ### 环境变量配置
 
 参考 `example.env.server` 文件，本地运行时重命名为 `.env` 并填写以下配置：
 
 ```env
-# JWT Secret, 通常就用 Clien Secret
-JWT_SECRET=
+# 网页的标签title
+VITE_APP_TITLE=LatestNews
+# 只有配置了VITE_API_URL和JWT_SECRET两个环境变量才有登录按钮选项
+VITE_API_URL=http://localhost:8000  # 配置后端登录相关服务使用的API地址
+JWT_SECRET=  # 可以使用`openssl rand -base64 32` 生成 # 配置后端登录相关服务使用的jwt密钥，与后端的API保持一致
 # 初始化数据库, 首次运行必须设置为 true，之后可以将其关闭
 INIT_TABLE=true
 # 是否启用缓存
 ENABLE_CACHE=true
 ```
+以上为最基本的环境变量配置`VITE_APP_TITLE`、`INIT_TABLE`和`ENABLE_CACHE` 必须配置，`VITE_API_URL`和`JWT_SECRET`为可选配置，如果不配置将没有登录和手动刷新功能，登录后才能同步用户关注和页面布局等配置到其他浏览器。
 
 ### 数据库支持
 
