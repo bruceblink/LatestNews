@@ -58,7 +58,7 @@ ENABLE_CACHE=true
 ### Docker 部署
 对于 Docker 部署，只需要项目根目录 `docker-compose.yaml` 文件，同一目录下执行
 ```bash
-  docker compose up
+  docker-compose -f docker-compose.yaml up
 ```
 同样可以通过 `docker-compose.yaml` 配置环境变量。
 
