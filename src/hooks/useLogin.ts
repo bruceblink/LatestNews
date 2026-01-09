@@ -1,7 +1,8 @@
-import { myFetch } from "~/utils";
+import { myFetch, apiFetch } from "~/utils";
 import { atomWithStorage } from "jotai/utils";
 import { useAtomValue, getDefaultStore } from "jotai";
 
+import { queryClient } from "../main";
 import { userAtom, authStatusAtom } from "../auth/authAtoms";
 
 // -----------------------------
@@ -30,17 +31,30 @@ export const login = () => {
     )}`;
 };
 
-export const logout = () => {
-    // 更新 atom
+export async function logout() {
     const store = getDefaultStore();
+
+    try {
+        // 1️⃣ 通知后端（必须等待）
+        await apiFetch("/logout", {
+            method: "POST",
+            credentials: "include",
+        });
+    } catch (e) {
+        // 即使失败，也继续本地登出
+        console.warn("logout api failed", e);
+    }
+
+    // 2️⃣ 清空 auth 状态（关键）
     store.set(userAtom, null);
-    // 清除本地存储
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("metadata");
-    localStorage.removeItem("user");
-    // 刷新页面
-    window.location.href = "/";
-};
+    store.set(authStatusAtom, "unauthenticated");
+
+    // 3️⃣ 清空所有登录态相关缓存
+    queryClient.clear();
+
+    // 4️⃣ 路由级跳转（而不是刷新页面）
+    window.location.replace("/");
+}
 
 // -----------------------------
 // Hook 获取登录状态（任意组件可用）

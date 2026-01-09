@@ -31,7 +31,7 @@ function CallbackPage() {
                     type: "error",
                     action: { label: "登录", onClick: login },
                 });
-                logout();
+                void logout();
             }
         })();
     }, [setPrimitiveMetadata, navigate, toaster, downloadMetadata]);
