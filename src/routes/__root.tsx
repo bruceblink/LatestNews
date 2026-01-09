@@ -11,7 +11,6 @@ import { Footer } from "~/components/footer";
 import { isMobile } from "react-device-detect";
 import { Toast } from "~/components/common/toast";
 import { useOnReload } from "~/hooks/useOnReload.ts";
-import { useLoginManager } from "~/hooks/useLogin.ts";
 import { SearchBar } from "~/components/common/search-bar";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -34,7 +33,6 @@ function NotFoundComponent() {
 
 function RootComponent() {
     useOnReload();
-    useLoginManager();
     useSync();
     usePWA();
     return (
