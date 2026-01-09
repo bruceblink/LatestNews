@@ -32,7 +32,7 @@ enableLoginAtom.onMount = (set) => {
 // 登录/登出函数（全局独立）
 // -----------------------------
 export const login = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/github/login?redirect_uri=${encodeURIComponent(
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/oauth/github/login?redirect_uri=${encodeURIComponent(
         `${window.location.origin}/auth/callback`
     )}`;
 };
