@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSetAtom } from "jotai";
 import { useToast } from "~/hooks/useToast.ts";
-import { login, logout, jwtAtom } from "~/hooks/useLogin";
+import { login, logout } from "~/hooks/useLogin";
 import { useSync, mergePrimitiveMetadata } from "~/hooks/useSync";
 import { useNavigate, createFileRoute } from "@tanstack/react-router";
 import { primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom";
@@ -13,24 +13,12 @@ export const Route = createFileRoute("/auth/callback")({
 function CallbackPage() {
     const toaster = useToast();
     const navigate = useNavigate();
-    const setJwt = useSetAtom(jwtAtom);
     const setPrimitiveMetadata = useSetAtom(primitiveMetadataAtom);
     const { downloadMetadata } = useSync(); // 复用 hook 提供的函数
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get("token");
-
-        if (!token) {
-            toaster("登录失败：缺少 token", { type: "error" });
-            return;
-        }
-
         (async () => {
             try {
-                setJwt(token);
-                localStorage.setItem("access_token", token);
-
                 const metadata = await downloadMetadata();
                 if (metadata) {
                     setPrimitiveMetadata((prev) => mergePrimitiveMetadata(prev, metadata));
@@ -46,7 +34,7 @@ function CallbackPage() {
                 logout();
             }
         })();
-    }, [setJwt, setPrimitiveMetadata, navigate, toaster, downloadMetadata]);
+    }, [setPrimitiveMetadata, navigate, toaster, downloadMetadata]);
 
     return null;
 }
