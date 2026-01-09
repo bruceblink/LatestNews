@@ -22,7 +22,7 @@ export function Menu() {
     return (
         <span className="relative" onMouseEnter={() => show(true)} onMouseLeave={() => show(false)}>
             <span className="flex items-center scale-90">
-                {enableLogin && loggedIn && userInfo.avatar ? (
+                {enableLogin && loggedIn && userInfo?.avatar ? (
                     <button
                         type="button"
                         className="h-6 w-6 rounded-full bg-cover"
