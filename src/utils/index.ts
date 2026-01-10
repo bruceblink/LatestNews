@@ -45,6 +45,7 @@ export const myFetch = $fetch.create({
 });
 
 export const apiFetch = $fetch.create({
+    credentials: "include",
     timeout: 15000,
     retry: 0,
     baseURL: `${import.meta.env.VITE_API_URL}`,
