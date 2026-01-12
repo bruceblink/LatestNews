@@ -47,7 +47,7 @@ interface kxToday {
 
 const kuaixun = defineSource(async () => {
     const kxUrl = "https://api.amz123.com/ugc/v1/user_content/kx_list";
-    const now = dayjs().startOf("day").unix(); // 当前时间
+    const now = dayjs().tz("Asia/Shanghai").startOf("day").unix(); // 今天时间
     const resp: KxResp = await myFetch<KxResp>(kxUrl, {
         method: "POST",
         headers: { Referer: "https://www.amz123.com/" },
@@ -62,11 +62,10 @@ const kuaixun = defineSource(async () => {
         },
     });
     const today = now.toString();
-    console.log("today: ", today);
-    const kxToday = resp.data.row_map[today];
+    const kxToday = resp?.data?.row_map[today];
 
     return await Promise.all(
-        kxToday.kx_content?.map(async (item) => {
+        kxToday?.kx_content?.map(async (item) => {
             const fullUrl = `https://www.amz123.com/kx/${item?.id}`;
             //const readable = dayjs(item?.published_at * 1000).format("YYYY-MM-DD HH:mm:ss");
             const hashId = await generateUrlHashId(fullUrl);
