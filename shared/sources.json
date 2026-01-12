@@ -613,5 +613,24 @@
     "home": "https://www.youku.com/ku/webcomic",
     "title": "动漫-追番表",
     "type": "realtime"
+  },
+  "amz123": {
+    "name": "跨境头条",
+    "interval": 1800000,
+    "color": "blueGray",
+    "column": "china",
+    "home": "https://www.amz123.com/kx",
+    "title": "跨境快讯",
+    "type": "realtime",
+    "redirect": "amz123-kx"
+  },
+  "amz123-kx": {
+    "name": "跨境头条",
+    "interval": 1800000,
+    "color": "blueGray",
+    "column": "china",
+    "home": "https://www.amz123.com/kx",
+    "title": "跨境快讯",
+    "type": "realtime"
   }
 }
