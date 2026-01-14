@@ -1,40 +1,22 @@
-import { useEffect } from "react";
-import { useSetAtom } from "jotai";
-import { useToast } from "~/hooks/useToast.ts";
-import { login, logout } from "~/hooks/useLogin";
-import { useSync, mergePrimitiveMetadata } from "~/hooks/useSync";
-import { useNavigate, createFileRoute } from "@tanstack/react-router";
+import { getDefaultStore } from "jotai";
+import { redirect, createFileRoute } from "@tanstack/react-router";
 import { primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom";
+import { downloadMetadata, mergePrimitiveMetadata } from "~/services/metadata.service.ts";
 
 export const Route = createFileRoute("/auth/callback")({
-    component: CallbackPage,
+    beforeLoad: async () => {
+        const metadata = await downloadMetadata();
+
+        if (metadata) {
+            const store = getDefaultStore();
+            debugger;
+            store.set(primitiveMetadataAtom, (prev) => mergePrimitiveMetadata(prev, metadata));
+        }
+
+        throw redirect({
+            to: "/",
+            replace: true,
+        });
+    },
+    component: () => null,
 });
-
-function CallbackPage() {
-    const toaster = useToast();
-    const navigate = useNavigate();
-    const setPrimitiveMetadata = useSetAtom(primitiveMetadataAtom);
-    const { downloadMetadata } = useSync(); // 复用 hook 提供的函数
-
-    useEffect(() => {
-        (async () => {
-            try {
-                const metadata = await downloadMetadata();
-                if (metadata) {
-                    setPrimitiveMetadata((prev) => mergePrimitiveMetadata(prev, metadata));
-                }
-
-                await navigate({ to: "/", replace: true });
-            } catch (err: any) {
-                console.error("同步 metadata 失败:", err);
-                toaster("身份校验失败，无法同步，请重新登录", {
-                    type: "error",
-                    action: { label: "登录", onClick: login },
-                });
-                void logout();
-            }
-        })();
-    }, [setPrimitiveMetadata, navigate, toaster, downloadMetadata]);
-
-    return null;
-}
