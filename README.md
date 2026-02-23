@@ -6,7 +6,7 @@
 
 > [!NOTE]
 > 当前版本为 DEMO，仅支持中文。正式版将提供更好的定制化功能和英文内容支持。
-> 当前项目是基于[newsnow](https://github.com/ourongxing/newsnow),不得不承认原项目是一个优秀的项目，
+> 当前项目是基于[ourongxing/newsnow](https://github.com/ourongxing/newsnow),不得不承认原项目是一个优秀的项目，
 > 但是也有许多小问题，我会修复它们。由于我的个人风格和审美和原作者的差异比较大，我想基于个人想法开发出一个新的项目，并加入一些其他的功能和技术。
 
 ## 功能特性
