@@ -534,6 +534,20 @@ export const originSources = {
             },
         },
     },
+    epic: {
+        name: "epic游戏",
+        column: "world",
+        color: "blueGray",
+        home: "https://store.epicgames.com",
+        sub: {
+            "free-game": {
+                title: "免费游戏",
+                type: "hottest",
+                interval: Time.Common,
+                home: "https://store.epicgames.com/zh-CN/free-games",
+            },
+        },
+    },
 } as const satisfies Record<string, OriginSource>;
 
 export function genSources() {
