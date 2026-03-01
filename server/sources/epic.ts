@@ -1,21 +1,72 @@
 import { myFetch } from "#/utils/fetch";
 import { defineSource, generateUrlHashId } from "#/utils/source";
 
-interface FreeGameItem {
+interface GameItem {
     title: string;
+    id: string;
+    namespace: string;
     description: string;
-    productSlug: string | null;
-    urlSlug: string;
+    effectiveDate: string;
+    offerType: string;
+    expiryDate: null;
+    viewableDate: string;
+    status: string;
+    isCodeRedemptionOnly: boolean;
     keyImages: { type: string; url: string }[];
-    promotions: {
-        promotionalOffers: {
-            startDate: string;
-            endDate: string;
-            discountSetting: {
-                discountPercentage: number;
+    seller: { id: string; name: string };
+    productSlug: null | string;
+    urlSlug: string;
+    url: null;
+    items: { id: string; namespace: string }[];
+    customAttributes: { key: string; value: string }[];
+    categories: { path: string }[];
+    tags: { id: string }[];
+    catalogNs: { mappings: { pageSlug: string; pageType: string }[] | null };
+    offerMappings: { pageSlug: string; pageType: string }[] | null;
+    price: {
+        totalPrice: {
+            discountPrice: number;
+            originalPrice: number;
+            voucherDiscount: number;
+            discount: number;
+            currencyCode: string;
+            currencyInfo: { decimals: number };
+            fmtPrice: {
+                originalPrice: string;
+                discountPrice: string;
+                intermediatePrice: string;
             };
+        };
+        lineOffers: {
+            appliedRules: {
+                id: string;
+                endDate: string;
+                discountSetting: { discountType: string };
+            }[];
         }[];
-    }[];
+    };
+    promotions: null | {
+        promotionalOffers: {
+            promotionalOffers: {
+                startDate: string;
+                endDate: string;
+                discountSetting: {
+                    discountType: string;
+                    discountPercentage: number;
+                };
+            }[];
+        }[];
+        upcomingPromotionalOffers: {
+            promotionalOffers: {
+                startDate: string;
+                endDate: string;
+                discountSetting: {
+                    discountType: string;
+                    discountPercentage: number;
+                };
+            }[];
+        }[];
+    };
 }
 
 const freeGame = defineSource(async () => {
@@ -30,13 +81,21 @@ const freeGame = defineSource(async () => {
         },
     });
 
-    const games: FreeGameItem[] = res?.data?.Catalog?.searchStore?.elements || [];
+    const allGames = (res?.data?.Catalog?.searchStore?.elements || []) as GameItem[];
+
+    const activeGames = allGames
+        .filter((e) => ["OTHERS", "BASE_GAME"].some((type) => type === e.offerType) && !!getFreeOffer(e))
+        .toSorted(
+            (a, b) =>
+                compareDate(getFreeOffer(a)?.startDate || "", getFreeOffer(b)?.startDate || "") ||
+                a.title.localeCompare(b.title)
+        );
 
     return Promise.all(
-        games.map(async (game) => {
-            const promo = game.promotions?.[0]?.promotionalOffers?.[0];
-
-            const slug = game.productSlug || game.urlSlug || "";
+        activeGames.map(async (game) => {
+            console.log("gameItem: ", game);
+            const slug = game.offerMappings?.[0]?.pageSlug || game.productSlug || game.urlSlug || "";
+            console.log("slug: ", slug);
             const fulUrl = slug ? `https://store.epicgames.com/zh-CN/p/${slug}` : "";
 
             const cover = game.keyImages.find((e) => e.type === "OfferImageWide")?.url || game.keyImages[0]?.url || "";
@@ -47,7 +106,7 @@ const freeGame = defineSource(async () => {
                 id: hashId,
                 title: game.title.replace("Mystery Game", "神秘游戏"),
                 url: fulUrl,
-                pubDate: promo?.startDate,
+                pubDate: game.viewableDate,
                 extra: {
                     info: "Epic Games Store · 今日免费",
                     hover: game.description || "",
@@ -57,6 +116,22 @@ const freeGame = defineSource(async () => {
         })
     );
 });
+
+function getFreeOffer(gameItem: GameItem) {
+    const promotion =
+        gameItem.promotions?.upcomingPromotionalOffers.find((e) =>
+            e.promotionalOffers.find((ep) => ep.discountSetting.discountPercentage === 0)
+        ) ||
+        gameItem.promotions?.promotionalOffers.find((e) =>
+            e.promotionalOffers.find((ep) => ep.discountSetting.discountPercentage === 0)
+        );
+
+    return promotion?.promotionalOffers.find((e) => e.discountSetting.discountPercentage === 0);
+}
+
+function compareDate(a: string, b: string) {
+    return new Date(a).getTime() - new Date(b).getTime();
+}
 
 export default defineSource({
     epic: freeGame,
