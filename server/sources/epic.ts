@@ -1,77 +1,27 @@
 import { myFetch } from "#/utils/fetch";
 import { defineSource, generateUrlHashId } from "#/utils/source";
 
-interface GameItem {
+interface FreeGameItem {
     title: string;
-    id: string;
-    namespace: string;
     description: string;
-    effectiveDate: string;
-    offerType: string;
-    expiryDate: null;
-    viewableDate: string;
-    status: string;
-    isCodeRedemptionOnly: boolean;
-    keyImages: { type: string; url: string }[];
-    seller: { id: string; name: string };
-    productSlug: null | string;
+    productSlug: string | null;
     urlSlug: string;
-    url: null;
-    items: { id: string; namespace: string }[];
-    customAttributes: { key: string; value: string }[];
-    categories: { path: string }[];
-    tags: { id: string }[];
-    catalogNs: { mappings: { pageSlug: string; pageType: string }[] | null };
-    offerMappings: { pageSlug: string; pageType: string }[] | null;
-    price: {
-        totalPrice: {
-            discountPrice: number;
-            originalPrice: number;
-            voucherDiscount: number;
-            discount: number;
-            currencyCode: string;
-            currencyInfo: { decimals: number };
-            fmtPrice: {
-                originalPrice: string;
-                discountPrice: string;
-                intermediatePrice: string;
-            };
-        };
-        lineOffers: {
-            appliedRules: {
-                id: string;
-                endDate: string;
-                discountSetting: { discountType: string };
-            }[];
-        }[];
-    };
-    promotions: null | {
+    keyImages: { type: string; url: string }[];
+    promotions: {
         promotionalOffers: {
-            promotionalOffers: {
-                startDate: string;
-                endDate: string;
-                discountSetting: {
-                    discountType: string;
-                    discountPercentage: number;
-                };
-            }[];
+            startDate: string;
+            endDate: string;
+            discountSetting: {
+                discountPercentage: number;
+            };
         }[];
-        upcomingPromotionalOffers: {
-            promotionalOffers: {
-                startDate: string;
-                endDate: string;
-                discountSetting: {
-                    discountType: string;
-                    discountPercentage: number;
-                };
-            }[];
-        }[];
-    };
+    }[];
 }
 
 const freeGame = defineSource(async () => {
     const url =
         "https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions?locale=zh-CN&country=CN&allowCountries=CN";
+
     const res: any = await myFetch(url, {
         headers: {
             "User-Agent":
@@ -79,35 +29,28 @@ const freeGame = defineSource(async () => {
             Referer: "https://store.epicgames.com/",
         },
     });
-    const allGames = (res?.data?.Catalog?.searchStore?.elements || []) as GameItem[];
 
-    const activeGames = allGames.filter((e) => ["OTHERS", "BASE_GAME"].some((type) => type === e.offerType));
+    const games: FreeGameItem[] = res?.data?.Catalog?.searchStore?.elements || [];
 
-    return await Promise.all(
-        activeGames.map(async (game) => {
-            const slug =
-                game.productSlug ||
-                game.catalogNs?.mappings?.[0]?.pageSlug ||
-                game.offerMappings?.[0]?.pageSlug ||
-                game.urlSlug ||
-                "";
-            const fulUrl = slug ? `https://store.epicgames.com/store/zh-CN/p/${slug}` : "";
+    return Promise.all(
+        games.map(async (game) => {
+            const promo = game.promotions?.[0]?.promotionalOffers?.[0];
 
-            const originalCover =
-                game.keyImages?.find((e) => e.type === "OfferImageWide")?.url || game.keyImages[0]?.url || "";
+            const slug = game.productSlug || game.urlSlug || "";
+            const fulUrl = slug ? `https://store.epicgames.com/zh-CN/p/${slug}` : "";
 
-            const cover = originalCover.startsWith("http")
-                ? originalCover
-                : originalCover.includes("?cover=")
-                  ? decodeURIComponent(originalCover.split("?cover=")[1] || "")
-                  : originalCover;
+            const cover = game.keyImages.find((e) => e.type === "OfferImageWide")?.url || game.keyImages[0]?.url || "";
 
             const hashId = await generateUrlHashId(fulUrl);
+
             return {
                 id: hashId,
-                title: (game.title || "-").replace("Mystery Game", "神秘游戏"),
+                title: game.title.replace("Mystery Game", "神秘游戏"),
                 url: fulUrl,
+                pubDate: promo?.startDate,
                 extra: {
+                    info: "Epic Games Store · 今日免费",
+                    hover: game.description || "",
                     icon: cover,
                 },
             };
