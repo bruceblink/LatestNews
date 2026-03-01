@@ -1,6 +1,5 @@
 import type { NewsItem } from "@shared/types";
 
-import dayjs from "dayjs/esm";
 import { load } from "cheerio";
 import { myFetch } from "#/utils/fetch";
 import { parseRelativeDate } from "#/utils/date";
@@ -39,12 +38,34 @@ const quick = defineSource(async () => {
     return news;
 });
 
-const renqi = defineSource(async () => {
-    const baseURL = "https://36kr.com";
-    const formatted = dayjs().format("YYYY-MM-DD");
-    const url = `${baseURL}/hot-list/renqi/${formatted}/1`;
+interface Res {
+    msg: string;
+    name: string;
+    title: string;
+    type: string;
+    update_time: string;
+    total: string;
+    data: Item[];
+}
 
-    const response = await myFetch<any>(url, {
+interface Item {
+    id: number;
+    timestamp: string;
+    title: string;
+    statRead: number;
+    statCollect: number;
+    statPraise: number;
+    statFormat: string;
+    author: string;
+    head_pic: string;
+    url: string;
+    mobileUrl: string;
+}
+
+const renqi = defineSource(async () => {
+    const baseURL = "http://api.cc1990.cc/api/hotlist/36kr?type=hot";
+
+    const res: Res = await myFetch(baseURL, {
         headers: {
             "User-Agent":
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -53,50 +74,26 @@ const renqi = defineSource(async () => {
         },
     });
 
-    const $ = load(response);
-
-    // 单条新闻选择器
-    const $items = $(".article-item-info");
-
-    const articlesTasks: Promise<NewsItem | null>[] = [];
-
-    // 使用 for...of 循环替代 .each()，以便支持 await
-    for (const el of $items) {
-        const $el = $(el);
-
-        // 标题和链接
-        const $a = $el.find("a.article-item-title.weight-bold");
-        const href = $a.attr("href") || "";
-        const title = $a.text().trim();
-
-        const description = $el.find("a.article-item-description.ellipsis-2").text().trim();
-
-        // 作者
-        const author = $el.find(".kr-flow-bar-author").text().trim();
-
-        // 热度
-        const hot = $el.find(".kr-flow-bar-hot span").text().trim();
-
-        if (!url || !title) continue;
-        const fullUrl = href.startsWith("http") ? href : `${baseURL}${href}`;
-
-        articlesTasks.push(
-            (async () => {
-                const hashId = await generateUrlHashId(fullUrl);
-                return {
-                    id: hashId, // 使用生成的哈希ID
-                    title,
-                    url: fullUrl,
-                    extra: {
-                        info: `${author}  |  ${hot}`,
-                        hover: description,
-                    },
-                } as NewsItem;
-            })()
-        );
-    }
-    const results = await Promise.all(articlesTasks);
-    return results as NewsItem[];
+    return await Promise.all(
+        res.data.map(async (news) => {
+            const hashId = await generateUrlHashId(news.url);
+            const parts = [
+                news.author,
+                news.statPraise ? `${news.statPraise}点赞` : null,
+                news.statCollect ? `${news.statCollect}收藏` : null,
+            ].filter(Boolean);
+            return {
+                id: hashId,
+                title: news.title,
+                url: news.url,
+                pubDate: news.timestamp,
+                extra: {
+                    info: parts.join("  |  "),
+                    hover: news.head_pic,
+                },
+            };
+        })
+    );
 });
 
 export default defineSource({
