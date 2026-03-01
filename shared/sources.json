@@ -651,5 +651,14 @@
         "home": "https://store.epicgames.com/zh-CN/free-games",
         "title": "免费游戏",
         "type": "hottest"
+    },
+    "jiqizhixin": {
+        "name": "机器之心",
+        "interval": 600000,
+        "color": "warmGray",
+        "type": "hottest",
+        "column": "world",
+        "home": "https://www.jiqizhixin.com",
+        "title": "人工智能"
     }
 }

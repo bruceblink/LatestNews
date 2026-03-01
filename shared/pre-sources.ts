@@ -548,6 +548,14 @@ export const originSources = {
             },
         },
     },
+    jiqizhixin: {
+        name: "机器之心",
+        column: "world",
+        title: "人工智能",
+        color: "warmGray",
+        type: "hottest",
+        home: "https://www.jiqizhixin.com",
+    },
 } as const satisfies Record<string, OriginSource>;
 
 export function genSources() {
