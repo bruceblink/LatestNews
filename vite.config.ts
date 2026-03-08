@@ -32,4 +32,23 @@ export default defineConfig({
         pwa(),
         initVoteNitro(),
     ],
+    build: {
+        target: "es2022",
+
+        chunkSizeWarningLimit: 1000,
+
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    router: ["@tanstack/react-router"],
+
+                    query: ["@tanstack/react-query"],
+
+                    motion: ["framer-motion"],
+
+                    utils: ["dayjs", "clsx", "ofetch"],
+                },
+            },
+        },
+    },
 });
