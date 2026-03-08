@@ -9,24 +9,31 @@ const nitroOption: Parameters<typeof viteNitro>[0] = {
     experimental: {
         database: true,
     },
+
     rollupConfig: {
         plugins: [RollopGlob()] as any,
     },
+
     sourceMap: false,
+
     database: {
         default: {
             connector: "better-sqlite3",
         },
     },
+
     devDatabase: {
         default: {
             connector: "better-sqlite3",
         },
     },
+
     imports: {
         dirs: ["server/utils", "shared"],
     },
+
     preset: "node-server",
+
     alias: {
         "@shared": join(projectDir, "shared"),
         "#": join(projectDir, "server"),
@@ -35,20 +42,17 @@ const nitroOption: Parameters<typeof viteNitro>[0] = {
 
 if (process.env.VERCEL) {
     nitroOption.preset = "vercel-edge";
-    // You can use other online database, do it yourself. For more info: https://db0.unjs.io/connectors
     nitroOption.database = undefined;
-    // nitroOption.vercel = {
-    //   config: {
-    //     cache: []
-    //   },
-    // }
 } else if (process.env.CF_PAGES) {
     nitroOption.preset = "cloudflare-pages";
+
+    // ⭐ 修复 node builtin
     nitroOption.unenv = {
         alias: {
-            "safer-buffer": "node:buffer",
+            "node:buffer": "buffer",
         },
     };
+
     nitroOption.database = {
         default: {
             connector: "cloudflare-d1",
@@ -59,6 +63,7 @@ if (process.env.VERCEL) {
     };
 } else if (process.env.BUN) {
     nitroOption.preset = "bun";
+
     nitroOption.database = {
         default: {
             connector: "bun-sqlite",
