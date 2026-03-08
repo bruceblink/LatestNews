@@ -93,9 +93,7 @@ const freeGame = defineSource(async () => {
 
     return Promise.all(
         activeGames.map(async (game) => {
-            console.log("gameItem: ", game);
             const slug = game.offerMappings?.[0]?.pageSlug || game.productSlug || game.urlSlug || "";
-            console.log("slug: ", slug);
             const fulUrl = slug ? `https://store.epicgames.com/zh-CN/p/${slug}` : "";
 
             const cover = game.keyImages.find((e) => e.type === "OfferImageWide")?.url || game.keyImages[0]?.url || "";
