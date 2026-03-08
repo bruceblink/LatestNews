@@ -39,6 +39,7 @@
         "@unocss/reset": "^66.0.0",
         "ahooks": "^3.8.4",
         "better-sqlite3": "^11.10.0",
+        "buffer": "^6.0.3",
         "cheerio": "^1.0.0",
         "clsx": "^2.1.1",
         "cmdk": "^1.0.4",
