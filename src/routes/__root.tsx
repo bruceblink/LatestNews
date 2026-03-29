@@ -14,8 +14,8 @@ import { useOnReload } from "~/hooks/useOnReload.ts";
 import { SearchBar } from "~/components/common/search-bar";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { GlobalOverlayScrollbar } from "~/components/common/overlay-scrollbar";
+import { Outlet, Navigate, createRootRouteWithContext } from "@tanstack/react-router";
 
 export const Route = createRootRouteWithContext<{
     queryClient: QueryClient;
@@ -25,10 +25,7 @@ export const Route = createRootRouteWithContext<{
 });
 
 function NotFoundComponent() {
-    const nav = Route.useNavigate();
-    nav({
-        to: "/",
-    });
+    return <Navigate to="/" />;
 }
 
 function RootComponent() {

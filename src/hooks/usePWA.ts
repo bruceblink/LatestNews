@@ -1,5 +1,5 @@
 import { myFetch } from "~/utils";
-import { useMount } from "react-use";
+import { useEffect } from "react";
 import { delay } from "@shared/utils.ts";
 import { Version, PROJECT_URL } from "@shared/consts";
 import { useRegisterSW } from "virtual:pwa-register/react";
@@ -13,12 +13,41 @@ export function usePWA() {
         needRefresh: [needRefresh],
     } = useRegisterSW();
 
-    useMount(async () => {
+    useEffect(() => {
+        let cancelled = false;
         const update = () => {
             updateServiceWorker().then(() => localStorage.setItem("updated", "1"));
         };
-        await delay(1000);
-        if (localStorage.getItem("updated")) {
+
+        const showUpdateToast = async () => {
+            if (!needRefresh) return;
+            if ("onLine" in navigator && !navigator.onLine) return;
+
+            await delay(1000);
+            const resp = await myFetch<{ v?: string }>("/latest");
+            if (cancelled || !resp.v || resp.v === Version) return;
+
+            toaster("有更新，5 秒后自动更新", {
+                action: {
+                    label: "立刻更新",
+                    onClick: update,
+                },
+                onDismiss: update,
+            });
+        };
+
+        void showUpdateToast();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [needRefresh, toaster, updateServiceWorker]);
+
+    useEffect(() => {
+        void (async () => {
+            await delay(1000);
+            if (!localStorage.getItem("updated")) return;
+
             localStorage.removeItem("updated");
             toaster("更新成功，赶快体验吧", {
                 action: {
@@ -28,22 +57,6 @@ export function usePWA() {
                     },
                 },
             });
-        } else if (needRefresh) {
-            if (!navigator) return;
-
-            if ("connection" in navigator && !navigator.onLine) return;
-
-            const resp = await myFetch("/latest");
-
-            if (resp.v && resp.v !== Version) {
-                toaster("有更新，5 秒后自动更新", {
-                    action: {
-                        label: "立刻更新",
-                        onClick: update,
-                    },
-                    onDismiss: update,
-                });
-            }
-        }
-    });
+        })();
+    }, [toaster]);
 }

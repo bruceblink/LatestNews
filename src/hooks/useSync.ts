@@ -23,7 +23,7 @@ export function useSync() {
             if (!loggedIn || primitiveMetadata.action !== "manual") return;
             try {
                 await uploadMetadata(primitiveMetadata);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 handleAuthError(toaster, err);
             }
         },
@@ -41,12 +41,12 @@ export function useSync() {
                 if (remoteMetadata) {
                     setPrimitiveMetadata((prev) => mergePrimitiveMetadata(prev, remoteMetadata));
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 handleAuthError(toaster, err);
             }
         };
 
-        trySync();
+        void trySync();
     }, [loggedIn, setPrimitiveMetadata, toaster]);
 
     return { uploadMetadata, downloadMetadata };

@@ -12,8 +12,8 @@ export const getJwt = (): string | undefined => {
 };
 
 /** 统一的身份错误处理 */
-export function handleAuthError(toaster: ReturnType<typeof useToast>, error: any) {
-    if (error?.statusCode !== 506) {
+export function handleAuthError(toaster: ReturnType<typeof useToast>, error: unknown) {
+    if (!(typeof error === "object" && error && "statusCode" in error && error.statusCode === 506)) {
         toaster("身份校验失败，无法同步，请重新登录", {
             type: "error",
             action: { label: "登录", onClick: login },
@@ -30,8 +30,7 @@ export function mergePrimitiveMetadata(local: PrimitiveMetadata, remote: Primiti
             hottest: [],
             realtime: [],
         },
-        // ⭐ 关键：merge 本身就是一次本地写
-        action: "manual",
+        action: local.updatedTime > remote.updatedTime ? "manual" : "sync",
     };
 
     for (const key of fixedColumnIds) {
