@@ -15,11 +15,13 @@
         "dev": "pnpm presource && vite dev",
         "build": "pnpm presource && vite build",
         "lint": "eslint . --fix",
+        "lint:check": "eslint .",
         "presource": "tsx ./scripts/favicon.ts && tsx ./scripts/source.ts",
         "start": "node --env-file .env.server dist/output/server/index.mjs",
         "preview": "cross-env CF_PAGES=1 pnpm build && wrangler pages dev dist/output/public",
         "deploy": "cross-env CF_PAGES=1 pnpm build && wrangler pages deploy dist/output/public",
         "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.app.json",
+        "check": "pnpm lint:check && pnpm typecheck && pnpm test",
         "release": "bumpp",
         "prepare": "simple-git-hooks",
         "log": "wrangler pages deployment tail --project-name latestnews",
@@ -145,6 +147,6 @@
         "pre-commit": "npx lint-staged"
     },
     "lint-staged": {
-        "*": "eslint --fix"
+        "*.{js,mjs,cjs,ts,tsx}": "eslint --fix"
     }
 }
