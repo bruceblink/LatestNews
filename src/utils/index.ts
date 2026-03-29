@@ -2,16 +2,16 @@ import type { MaybePromise } from "@shared/type.util";
 
 import { $fetch } from "ofetch";
 
-export function safeParseString(str: any) {
+export function safeParseString<T = unknown>(str: string): T | "" {
     try {
-        return JSON.parse(str);
+        return JSON.parse(str) as T;
     } catch {
         return "";
     }
 }
 
 export class Timer {
-    private timerId?: any;
+    private timerId?: ReturnType<typeof setTimeout>;
     private start!: number;
     private remaining: number;
     private callback: () => MaybePromise<void>;
