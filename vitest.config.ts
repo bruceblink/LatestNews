@@ -28,6 +28,6 @@ export default defineConfig({
             ],
             dirs: ["server/utils", "shared"],
             // dts: false,
-        }),
+        }) as any,
     ],
 });
