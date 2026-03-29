@@ -8,7 +8,7 @@ import { logger } from "../utils/logger";
 import type { CacheRow, CacheInfo } from "../types";
 
 export class Cache {
-    private db;
+    private db: Database;
     constructor(db: Database) {
         this.db = db;
     }
@@ -58,14 +58,16 @@ export class Cache {
     }
 
     async getEntire(keys: string[]): Promise<CacheInfo[]> {
-        const keysStr = keys.map((k) => `id = '${k}'`).join(" or ");
+        if (!keys.length) return [];
+
+        const placeholders = keys.map(() => "?").join(", ");
         const res = (await this.db
             .prepare(
                 `SELECT id, data, updated
-                                         FROM cache
-               WHERE ${keysStr}`
+                    FROM cache
+                    WHERE id IN (${placeholders})`
             )
-            .all()) as any;
+            .all(...keys)) as any;
         const rows = (res.results ?? res) as CacheRow[];
 
         /**
@@ -94,17 +96,22 @@ export class Cache {
     }
 }
 
+let cacheTablePromise: Promise<Cache | undefined> | undefined;
+
 export async function getCacheTable() {
-    try {
-        // @ts-ignore
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const db = useDatabase();
-        if (process.env.ENABLE_CACHE === "false") return;
-        const cacheTable = new Cache(db);
-        if (process.env.INIT_TABLE !== "false") await cacheTable.init();
-        // eslint-disable-next-line consistent-return
-        return cacheTable;
-    } catch (e) {
-        logger.error("failed to init database ", e);
-    }
+    cacheTablePromise ??= (async () => {
+        try {
+            if (process.env.ENABLE_CACHE === "false") return undefined;
+
+            const cacheTable = new Cache(useDatabase());
+            if (process.env.INIT_TABLE !== "false") await cacheTable.init();
+            return cacheTable;
+        } catch (e) {
+            cacheTablePromise = undefined;
+            logger.error("failed to init database ", e);
+            return undefined;
+        }
+    })();
+
+    return cacheTablePromise;
 }

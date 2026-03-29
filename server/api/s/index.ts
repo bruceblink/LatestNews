@@ -1,5 +1,7 @@
-import type { SourceID, SourceResponse } from "@shared/types";
+import type { H3Event } from "h3";
+import type { NewsItem, SourceID, SourceResponse } from "@shared/types";
 
+import { z } from "zod";
 import { getters } from "#/getters";
 import { TTL } from "@shared/consts";
 import { logger } from "#/utils/logger.ts";
@@ -8,24 +10,63 @@ import { getCacheTable } from "#/database/cache";
 import { getQuery, createError, defineEventHandler } from "h3";
 
 const isValidSource = (id?: SourceID) => !!id && !!dataSources[id] && !!getters[id];
+const inflightRequests = new Map<SourceID, Promise<NewsItem[]>>();
+const sourceQuerySchema = z.object({
+    id: z.union([z.string(), z.array(z.string())]).transform((value) => (Array.isArray(value) ? value[0] : value)),
+    latest: z
+        .union([z.string(), z.array(z.string()), z.boolean()])
+        .optional()
+        .transform((value) => (Array.isArray(value) ? value[0] : value)),
+});
+
+function resolveSourceId(input: string): SourceID {
+    const initialId = input as SourceID;
+    if (isValidSource(initialId)) return initialId;
+
+    const redirectID = dataSources[input as keyof typeof dataSources]?.redirect;
+    if (redirectID && isValidSource(redirectID)) return redirectID;
+
+    throw createError({
+        statusCode: 400,
+        message: "Invalid source id",
+    });
+}
+
+function isLatestRequest(latest: string | boolean | undefined) {
+    return latest !== undefined && latest !== "false" && latest !== false;
+}
+
+function fetchLatestItems(id: SourceID) {
+    const pending = inflightRequests.get(id);
+    if (pending) return pending;
+
+    const request = getters[id]()
+        .then((items) => items.slice(0, 30))
+        .finally(() => {
+            inflightRequests.delete(id);
+        });
+
+    inflightRequests.set(id, request);
+    return request;
+}
 
 export default defineEventHandler(async (event): Promise<SourceResponse> => {
     try {
-        const query = getQuery(event);
-        const latest = query.latest !== undefined && query.latest !== "false";
-        let id = query.id as SourceID;
-
-        // 检查 source id 是否有效
-        if (!isValidSource(id)) {
-            const redirectID = dataSources?.[id]?.redirect;
-            if (redirectID) id = redirectID;
-            if (!isValidSource(id)) throw new Error("Invalid source id");
+        const parsedQuery = sourceQuerySchema.safeParse(getQuery(event));
+        if (!parsedQuery.success) {
+            throw createError({
+                statusCode: 400,
+                message: "Invalid query",
+            });
         }
 
-        // 调用封装好的函数处理缓存或获取最新数据
+        const latest = isLatestRequest(parsedQuery.data.latest);
+        const id = resolveSourceId(parsedQuery.data.id);
+
         return await getCacheOrFetch(id, latest, event);
-    } catch (e: any) {
+    } catch (e: unknown) {
         logger.error(e);
+        if (e && typeof e === "object" && "statusCode" in e) throw e;
         throw createError({
             statusCode: 500,
             message: e instanceof Error ? e.message : "Internal Server Error",
@@ -36,14 +77,10 @@ export default defineEventHandler(async (event): Promise<SourceResponse> => {
 /**
  * 尝试获取缓存，如果缓存不可用则获取最新数据并更新缓存
  */
-async function getCacheOrFetch(id: SourceID, latest: boolean, event: any): Promise<SourceResponse> {
+async function getCacheOrFetch(id: SourceID, latest: boolean, event: H3Event): Promise<SourceResponse> {
     const cacheTable = await getCacheTable();
     const now = Date.now();
-    let cache: { updated: number; items: any[] } | undefined;
-
-    if (cacheTable) {
-        cache = await cacheTable.get(id);
-    }
+    const cache = cacheTable ? await cacheTable.get(id) : undefined;
 
     const sourceInterval = dataSources[id].interval ?? TTL;
 
@@ -60,7 +97,7 @@ async function getCacheOrFetch(id: SourceID, latest: boolean, event: any): Promi
     }
 
     // 3. 缓存不可用或需要刷新，获取最新数据
-    const newData = (await getters[id]()).slice(0, 30);
+    const newData = await fetchLatestItems(id);
 
     if (cacheTable && newData.length) {
         const setCache = cacheTable.set(id, newData);
