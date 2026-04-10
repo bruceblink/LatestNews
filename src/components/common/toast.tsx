@@ -86,6 +86,7 @@ function Item({ info }: { info: ToastItem }) {
                 {hoverd ? (
                     <button
                         type="button"
+                        title="Close"
                         className={`i-ph:x-circle color-${color}-500 i-ph:info`}
                         onClick={() => hidden(false)}
                     />

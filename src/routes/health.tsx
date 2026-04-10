@@ -1,10 +1,12 @@
+import type { SourceResponse } from "@shared/types";
+
 import clsx from "clsx";
 import { myFetch } from "~/utils";
+import { useTitle } from "react-use";
 import { useMemo, useState } from "react";
+import { useToast } from "~/hooks/useToast";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useTitle } from "react-use";
-
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 
 type SourceHealthStatus = "idle" | "healthy" | "failing";
@@ -52,6 +54,7 @@ function HealthPage() {
     useTitle(`${import.meta.env.VITE_APP_TITLE} | 数据源健康`);
     const [keyword, setKeyword] = useState("");
     const [statusFilter, setStatusFilter] = useState<"all" | SourceHealthStatus>("all");
+    const toaster = useToast();
 
     const { data, isFetching, isError, refetch, error } = useQuery<SourceHealthSummary>({
         queryKey: ["source-health"],
@@ -59,6 +62,20 @@ function HealthPage() {
         staleTime: 1000 * 30,
         retry: false,
     });
+
+    const prioritizedFailingSources = useMemo(() => {
+        if (!data?.sources) return [];
+
+        return data.sources
+            .filter((source) => source.status === "failing")
+            .sort((left, right) => {
+                if (left.consecutiveFailures !== right.consecutiveFailures) {
+                    return right.consecutiveFailures - left.consecutiveFailures;
+                }
+
+                return (right.lastErrorAt ?? 0) - (left.lastErrorAt ?? 0);
+            });
+    }, [data?.sources]);
 
     const filteredSources = useMemo(() => {
         if (!data?.sources) return [];
@@ -86,7 +103,9 @@ function HealthPage() {
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                     <span className="rounded-full bg-base/70 px-3 py-1">
-                        {data ? `最近更新 ${new Date(data.updatedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "等待数据"}
+                        {data
+                            ? `最近更新 ${new Date(data.updatedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+                            : "等待数据"}
                     </span>
                     <button
                         type="button"
@@ -112,12 +131,14 @@ function HealthPage() {
 
             <div className="flex flex-col gap-3 rounded-2xl bg-base/60 p-4 shadow shadow-primary/5 md:flex-row md:items-center md:justify-between">
                 <div className="flex flex-wrap gap-2">
-                    {([
-                        ["all", "全部"],
-                        ["failing", "仅异常"],
-                        ["healthy", "仅正常"],
-                        ["idle", "仅未采样"],
-                    ] as const).map(([value, label]) => (
+                    {(
+                        [
+                            ["all", "全部"],
+                            ["failing", "仅异常"],
+                            ["healthy", "仅正常"],
+                            ["idle", "仅未采样"],
+                        ] as const
+                    ).map(([value, label]) => (
                         <button
                             key={value}
                             type="button"
@@ -156,23 +177,42 @@ function HealthPage() {
                         <span className="i-ph:warning-circle-duotone text-lg" />
                         <span className="font-semibold">需要优先处理的异常源</span>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        {data.sources
-                            .filter((source) => source.status === "failing")
-                            .slice(0, 8)
-                            .map((source) => (
-                                <span key={source.id} className="rounded-full bg-base/70 px-3 py-1 text-sm">
-                                    {source.name}
-                                    {source.consecutiveFailures > 0 ? ` · 连续失败 ${source.consecutiveFailures}` : ""}
-                                </span>
-                            ))}
+                    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                        {prioritizedFailingSources.slice(0, 6).map((source, index) => (
+                            <div
+                                key={source.id}
+                                className="rounded-xl bg-base/70 px-3 py-3 text-sm shadow shadow-red/5"
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="font-medium">
+                                        #{index + 1} {source.name}
+                                    </span>
+                                    <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-600 dark:text-red-300">
+                                        连续失败 {source.consecutiveFailures}
+                                    </span>
+                                </div>
+                                <div className="mt-2 text-xs op-70">
+                                    {source.lastErrorMessage ?? "最近抓取失败，建议优先探测"}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
 
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {filteredSources.map((source) => (
-                    <SourceHealthCard key={source.id} source={source} />
+                    <SourceHealthCard
+                        key={source.id}
+                        source={source}
+                        onProbeSuccess={async (result) => {
+                            toaster(`${source.name} 探测成功，拉取 ${result.items.length} 条数据`, { type: "success" });
+                            await refetch();
+                        }}
+                        onProbeError={(message) => {
+                            toaster(`${source.name} 探测失败：${message}`, { type: "error" });
+                        }}
+                    />
                 ))}
             </div>
             {data && filteredSources.length === 0 && (
@@ -184,7 +224,15 @@ function HealthPage() {
     );
 }
 
-function SummaryCard({ label, value, tone }: { label: string; value: number; tone: "neutral" | "green" | "red" | "slate" }) {
+function SummaryCard({
+    label,
+    value,
+    tone,
+}: {
+    label: string;
+    value: number;
+    tone: "neutral" | "green" | "red" | "slate";
+}) {
     const toneClass = {
         neutral: "bg-primary/6 text-primary-700 dark:text-primary-300",
         green: "bg-green-500/10 text-green-700 dark:text-green-300",
@@ -200,9 +248,50 @@ function SummaryCard({ label, value, tone }: { label: string; value: number; ton
     );
 }
 
-function SourceHealthCard({ source }: { source: SourceHealthSnapshot }) {
+function SourceHealthCard({
+    source,
+    onProbeSuccess,
+    onProbeError,
+}: {
+    source: SourceHealthSnapshot;
+    onProbeSuccess: (result: SourceResponse) => Promise<void>;
+    onProbeError: (message: string) => void;
+}) {
     const lastSuccess = useRelativeTime(source.lastSuccessAt ?? "");
     const lastError = useRelativeTime(source.lastErrorAt ?? "");
+    const [detailsOpen, setDetailsOpen] = useState(source.status === "failing");
+    const [probing, setProbing] = useState(false);
+    const [probeResult, setProbeResult] = useState<string>();
+
+    const severityLabel =
+        source.status === "failing"
+            ? source.consecutiveFailures >= 5
+                ? "高优先级"
+                : "待处理"
+            : source.status === "idle"
+              ? "待采样"
+              : "稳定";
+
+    const handleProbe = async () => {
+        setProbing(true);
+        try {
+            const result = await myFetch<SourceResponse>("/s", {
+                query: {
+                    id: source.id,
+                    latest: true,
+                },
+            });
+
+            setProbeResult(`最近探测成功，返回 ${result.items.length} 条数据`);
+            await onProbeSuccess(result);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "探测失败，请稍后重试";
+            setProbeResult(message);
+            onProbeError(message);
+        } finally {
+            setProbing(false);
+        }
+    };
 
     return (
         <article className="rounded-2xl bg-base/70 p-4 shadow shadow-primary/8 backdrop-blur-sm">
@@ -211,9 +300,17 @@ function SourceHealthCard({ source }: { source: SourceHealthSnapshot }) {
                     <h2 className="m-0 text-lg font-semibold">{source.name}</h2>
                     <div className="mt-1 text-xs op-55">{source.id}</div>
                 </div>
-                <span className={clsx("rounded-full px-2.5 py-1 text-xs font-semibold", statusClassMap[source.status])}>
-                    {statusLabelMap[source.status]}
-                </span>
+                <div className="flex flex-col items-end gap-2">
+                    <span
+                        className={clsx(
+                            "rounded-full px-2.5 py-1 text-xs font-semibold",
+                            statusClassMap[source.status]
+                        )}
+                    >
+                        {statusLabelMap[source.status]}
+                    </span>
+                    <span className="rounded-full bg-neutral-500/8 px-2.5 py-1 text-xs op-70">{severityLabel}</span>
+                </div>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -223,13 +320,66 @@ function SourceHealthCard({ source }: { source: SourceHealthSnapshot }) {
                 <MetricItem label="耗时" value={source.lastDurationMs ? `${source.lastDurationMs} ms` : "-"} />
                 <MetricItem label="最近成功" value={lastSuccess ?? "-"} />
                 <MetricItem label="最近错误" value={lastError ?? "-"} />
-                <MetricItem label="最近条数" value={source.lastItemCount !== undefined ? String(source.lastItemCount) : "-"} />
+                <MetricItem
+                    label="最近条数"
+                    value={source.lastItemCount !== undefined ? String(source.lastItemCount) : "-"}
+                />
             </div>
 
-            {source.lastErrorMessage && (
-                <p className="mt-4 rounded-xl bg-red-500/6 px-3 py-2 text-sm text-red-600 dark:text-red-300">
-                    {source.lastErrorMessage}
-                </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    className="rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary-700 transition-all hover:bg-primary/14 dark:text-primary-300"
+                    onClick={() => void handleProbe()}
+                >
+                    <span
+                        className={clsx(
+                            "mr-1 inline-block align-middle",
+                            probing ? "i-ph:spinner-gap-duotone animate-spin" : "i-ph:radar-duotone"
+                        )}
+                    />
+                    <span>{probing ? "探测中" : "探测最新"}</span>
+                </button>
+                <button
+                    type="button"
+                    className="rounded-full bg-neutral-500/8 px-3 py-1.5 text-sm transition-all hover:bg-neutral-500/12"
+                    onClick={() => setDetailsOpen((prev) => !prev)}
+                >
+                    <span className="mr-1 inline-block align-middle i-ph:list-magnifying-glass-duotone" />
+                    <span>{detailsOpen ? "收起详情" : "查看详情"}</span>
+                </button>
+            </div>
+
+            {probeResult && (
+                <div className="mt-3 rounded-xl bg-primary/6 px-3 py-2 text-sm text-primary-700 dark:text-primary-300">
+                    {probeResult}
+                </div>
+            )}
+
+            {detailsOpen && (
+                <div className="mt-3 rounded-xl bg-neutral-500/6 px-3 py-3 text-sm leading-6">
+                    <div>
+                        <span className="op-60">最近成功时间：</span>
+                        <span>{lastSuccess ?? "-"}</span>
+                    </div>
+                    <div>
+                        <span className="op-60">最近错误时间：</span>
+                        <span>{lastError ?? "-"}</span>
+                    </div>
+                    <div>
+                        <span className="op-60">最近耗时：</span>
+                        <span>{source.lastDurationMs ? `${source.lastDurationMs} ms` : "-"}</span>
+                    </div>
+                    <div>
+                        <span className="op-60">最近返回条数：</span>
+                        <span>{source.lastItemCount !== undefined ? source.lastItemCount : "-"}</span>
+                    </div>
+                    {source.lastErrorMessage && (
+                        <div className="mt-2 rounded-lg bg-red-500/6 px-3 py-2 text-red-600 dark:text-red-300">
+                            {source.lastErrorMessage}
+                        </div>
+                    )}
+                </div>
             )}
         </article>
     );
