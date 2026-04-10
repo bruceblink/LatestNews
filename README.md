@@ -1,109 +1,139 @@
-# The Latest News
+# LatestNews
 
-![](/public/og-image.png)
+![LatestNews logo](./public/icon.svg)
 
-***优雅地阅读实时热门新闻***
+更干净地阅读实时热点，聚合你真正关心的新闻源。
 
-> [!NOTE]
-> 当前版本为 DEMO，仅支持中文。正式版将提供更好的定制化功能和英文内容支持。
-> 当前项目是基于[ourongxing/newsnow](https://github.com/ourongxing/newsnow),不得不承认原项目是一个优秀的项目，
-> 但是也有许多小问题，我会修复它们。由于我的个人风格和审美和原作者的差异比较大，我想基于个人想法开发出一个新的项目，并加入一些其他的功能和技术。
+[在线体验](https://news.likanug.top) · [贡献指南](./CONTRIBUTING.md) · [反馈问题](https://github.com/bruceblink/LatestNews/issues)
 
-## 功能特性
-- 优雅的阅读界面设计，实时获取最新热点新闻
-- 支持 GitHub 登录及数据同步
-- 默认缓存时长为 30 分钟，登录用户可强制刷新获取最新数据
-- 登录用户支持同步用户关注的内容
-- 根据内容源更新频率动态调整抓取间隔（最快每 2 分钟），避免频繁抓取导致 IP 被封禁
+## 项目简介
 
-## 部署指南
+LatestNews 是一个以中文资讯聚合为核心的实时阅读应用，提供更轻量的页面结构、更明确的个性化布局，以及适合长期维护的数据源治理能力。项目基于 React、Vite 和 Nitro 构建，前后端同仓，既可以部署为 Web/PWA，也支持 Docker 部署。
 
-### 基础部署
-无需登录和缓存功能时，可直接部署至 Cloudflare Pages 或 Vercel：
-1. Fork 本仓库
-2. 导入至目标平台
+当前版本重点关注以下方向：
 
-### Cloudflare Pages 配置(必须按如下配置)
+- 实时热点与高频新闻源的稳定聚合
+- 基于 GitHub 登录的布局同步
+- 面向移动端的 PWA 使用体验
+- 数据源健康监控与抓取质量治理
+
+## 当前能力
+
+- 实时拉取并聚合多类中文热点与资讯源
+- 自定义首页栏目布局，并支持一键重置
+- GitHub 登录后自动同步用户布局配置
+- 支持手动同步、同步状态提示和失败重试
+- 提供数据源健康页，可查看异常源、错误信息和单源探测结果
+- 支持安装为 PWA，并提供离线与更新反馈
+- 支持缓存、限频抓取与登录用户强制刷新
+
+## 技术栈
+
+- 前端：React 18、Vite 7、TanStack Router、TanStack Query、Jotai、UnoCSS
+- 服务端：Nitro、H3、better-sqlite3、db0
+- 抓取与解析：Cheerio、ofetch、fast-xml-parser
+- 工程化：TypeScript、ESLint、Vitest、Commitlint、GitHub Actions
+
+## 快速开始
+
+### 环境要求
+
+- Node.js 22+
+- pnpm 10+
+
+### 本地开发
+
+```bash
+pnpm install
+pnpm dev
+```
+
+默认会在启动前执行资源预处理脚本。如果你需要完整的登录和同步能力，请同时配置服务端环境变量。
+
+## 环境变量
+
+可参考 [example.env.server](./example.env.server) 进行配置：
+
+```env
+TZ=Asia/Shanghai
+VITE_APP_TITLE=LatestNews
+VITE_API_URL=http://localhost:8000
+JWT_SECRET=
+ENABLE_CACHE=true
+INIT_TABLE=true
+PRODUCTHUNT_API_TOKEN=
+```
+
+变量说明：
+
+- `VITE_APP_TITLE`：浏览器标题和页面展示名称
+- `VITE_API_URL`：登录与用户同步相关 API 地址
+- `JWT_SECRET`：与登录服务保持一致的 JWT 密钥
+- `ENABLE_CACHE`：是否启用服务端缓存
+- `INIT_TABLE`：首次初始化数据库时设置为 `true`
+
+如果未配置 `VITE_API_URL` 和 `JWT_SECRET`，应用仍可运行，但不会显示登录与同步能力。
+
+## 部署
+
+### Cloudflare Pages
+
 - 构建命令：`pnpm run build`
 - 输出目录：`dist/output/public`
 
-### 环境变量配置
+如果需要缓存与数据库能力：
 
-参考 `example.env.server` 文件，本地运行时重命名为 `.env` 并填写以下配置：
+1. 创建 D1 数据库
+2. 复制并修改 [example.wrangler.toml](./example.wrangler.toml)
+3. 配置 `database_id` 与 `database_name`
+4. 重新部署
 
-```env
-# 网页的标签title
-VITE_APP_TITLE=LatestNews
-# 只有配置了VITE_API_URL和JWT_SECRET两个环境变量才有登录按钮选项
-VITE_API_URL=http://localhost:8000  # 配置后端登录相关服务使用的API地址
-JWT_SECRET=  # 可以使用`openssl rand -base64 32` 生成 # 配置后端登录相关服务使用的jwt密钥，与后端的API保持一致
-# 初始化数据库, 首次运行必须设置为 true，之后可以将其关闭
-INIT_TABLE=true
-# 是否启用缓存
-ENABLE_CACHE=true
-```
-以上为最基本的环境变量配置`VITE_APP_TITLE`、`INIT_TABLE`和`ENABLE_CACHE` 必须配置，`VITE_API_URL`和`JWT_SECRET`为可选配置，如果不配置将没有登录和手动刷新功能，登录后才能同步用户关注和页面布局等配置到其他浏览器。
+### Docker
 
-### 数据库支持
+项目根目录已提供 Dockerfile 和 Compose 配置：
 
-本项目主推 Cloudflare Pages 以及 Docker 部署， ~~~Vercel 需要你自行搞定数据库(
-尝试了很多种方式vercel上部署，数据库的问题无法解决，如果需要完整功能推荐使用Cloudflare Pages)~~
-，其他支持的数据库可以查看 https://db0.unjs.io/connectors 。
-
-1. 在 Cloudflare Worker 控制面板创建 D1 数据库
-2. 在 `wrangler.toml` 中配置 `database_id` 和 `database_name`
-3. 若无 `wrangler.toml` ，可将 `example.wrangler.toml` 重命名并修改配置
-4. 重新部署生效
-
-### Docker 部署
-对于 Docker 部署，只需要项目根目录 `docker-compose.yaml` 文件，同一目录下执行
 ```bash
-  docker-compose -f docker-compose.yaml up
-```
-同样可以通过 `docker-compose.yaml` 配置环境变量。
-
-## 开发
-> [!Note]
-> 需要 Node.js >= 22
-
-启动应用
-```bash
-  npm install -g pnpm
-  pnpm i
-  pnpm dev
+docker compose -f docker-compose.yml up -d
 ```
 
-你可能想要添加数据源，请关注 `shared/sources` `server/sources`，项目类型完备，结构简单，请自行探索。
+如需本地联调，可使用 [docker-compose.local.yml](./docker-compose.local.yml)。
 
-## 路线图
-- 添加 **多语言支持**（英语、中文，更多语言即将推出）
-- 改进 **个性化选项**（基于分类的新闻、保存的偏好设置）
-- 扩展 **数据源** 以涵盖多种语言的全球新闻
+## 常用脚本
 
-## 贡献指南
-欢迎贡献代码！您可以提交 pull request 或创建 issue 来提出功能请求和报告 bug
+| 命令 | 说明 |
+| --- | --- |
+| `pnpm dev` | 本地开发 |
+| `pnpm build` | 生产构建 |
+| `pnpm brand:assets` | 根据 SVG 生成 favicon、PWA 图标和分享图 |
+| `pnpm preview` | 本地预览 Pages 构建结果 |
+| `pnpm check` | 执行 lint、typecheck 和 test |
+| `pnpm typecheck` | 运行 TypeScript 检查 |
+| `pnpm test` | 运行 Vitest |
+| `pnpm deploy` | 部署到 Cloudflare Pages |
+
+## 项目结构
+
+- [src](./src)：前端页面、组件、状态和 hooks
+- [server](./server)：Nitro API、抓取逻辑、数据库与中间件
+- [shared](./shared)：前后端共享常量、类型和数据源定义
+- [scripts](./scripts)：资源预处理和数据源辅助脚本
+- [public](./public)：静态资源、图标和 PWA 相关文件
+
+## 路线方向
+
+- 继续提升同步状态和多端体验
+- 持续完善数据源健康治理和排障效率
+- 优化移动端阅读、离线缓存和安装体验
+- 逐步扩展高质量数据源与分类能力
+
+## 致谢
+
+项目最初参考了 [ourongxing/newsnow](https://github.com/ourongxing/newsnow) 的思路，并在此基础上按当前维护方向继续演进。
+
+## 贡献
+
+欢迎通过 issue 或 pull request 参与改进。提交前请先阅读 [CONTRIBUTING.md](./CONTRIBUTING.md)，并遵循当前仓库的 Conventional Commits 规范。
 
 ## License
 
-[MIT](LICENSE)
-
-## Contributors
-
-<a href="https://github.com/bruceblink/LatestNews/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=bruceblink/LatestNews" />
-</a>
-
-[![Sponsor](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/bruceblink) [![Buy Me Coffee](https://img.shields.io/badge/Buy%20Me%20Coffee-FF5A5F?style=for-the-badge&logo=coffee&logoColor=FFFFFF)](https://buymeacoffee.com/bruceblink)
-
-
-## Acknowledgements
-
-- [React](https://react.dev/)
-- [Nitro](https://nitro.build/)
-- [Vite](https://vite.dev/)
-- [Cheerio](https://cheerio.js.org/)
-
-
-## Contact
-
-Thank you for checking out this project! If you find it useful, consider giving it a star and helping spread the word.
+[MIT](./LICENSE)

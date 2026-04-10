@@ -10,7 +10,7 @@ import packageJSON from "../../package.json";
 export function getServer() {
     const server = new McpServer(
         {
-            name: "NewsNow",
+            name: "LatestNews",
             version: packageJSON.version,
         },
         { capabilities: { logging: {} } }
