@@ -5,6 +5,9 @@ import { apiFetch } from "~/utils";
 import { login, logout } from "~/hooks/useLogin";
 import { fixedColumnIds } from "@root/shared/metadata";
 
+const AUTH_SYNC_FEEDBACK_KEY = "auth-sync-feedback";
+export type AuthSyncFeedback = "success" | "error";
+
 /** 获取本地 JWT（直接读取字符串，避免将 token 当作 JSON 解析成空字符串） */
 export const getJwt = (): string | undefined => {
     const v = localStorage.getItem("access_token");
@@ -20,6 +23,18 @@ export function handleAuthError(toaster: ReturnType<typeof useToast>, error: unk
         });
         logout();
     }
+}
+
+export function setAuthSyncFeedback(status: AuthSyncFeedback) {
+    sessionStorage.setItem(AUTH_SYNC_FEEDBACK_KEY, status);
+}
+
+export function takeAuthSyncFeedback(): AuthSyncFeedback | undefined {
+    const status = sessionStorage.getItem(AUTH_SYNC_FEEDBACK_KEY);
+    if (status !== "success" && status !== "error") return undefined;
+
+    sessionStorage.removeItem(AUTH_SYNC_FEEDBACK_KEY);
+    return status;
 }
 
 export function mergePrimitiveMetadata(local: PrimitiveMetadata, remote: PrimitiveMetadata): PrimitiveMetadata {

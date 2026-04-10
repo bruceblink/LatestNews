@@ -6,6 +6,7 @@ import {
     handleAuthError,
     downloadMetadata,
     mergePrimitiveMetadata,
+    takeAuthSyncFeedback,
 } from "~/services/metadata.service.ts";
 
 import { useToast } from "./useToast";
@@ -17,6 +18,15 @@ export function useSync() {
     const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
     const toaster = useToast();
     const { loggedIn } = useLoginState();
+
+    useEffect(() => {
+        const feedback = takeAuthSyncFeedback();
+        if (feedback === "success") {
+            toaster("登录成功，已同步最新布局", { type: "success" });
+        } else if (feedback === "error") {
+            toaster("登录成功，但远程布局同步失败，已继续使用本地布局", { type: "warning" });
+        }
+    }, [toaster]);
 
     useDebounce(
         async () => {
