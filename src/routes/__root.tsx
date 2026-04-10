@@ -31,7 +31,7 @@ function NotFoundComponent() {
 function RootComponent() {
     useOnReload();
     useSync();
-    usePWA();
+    const pwa = usePWA();
     return (
         <>
             <GlobalOverlayScrollbar
@@ -45,6 +45,7 @@ function RootComponent() {
                 >
                     <Header />
                 </header>
+                <PwaStatusBanner isOffline={pwa.isOffline} needRefresh={pwa.needRefresh} onUpdate={pwa.applyUpdate} />
                 <main
                     className={clsx([
                         "mt-2",
@@ -68,5 +69,49 @@ function RootComponent() {
                 </>
             )}
         </>
+    );
+}
+
+function PwaStatusBanner({
+    isOffline,
+    needRefresh,
+    onUpdate,
+}: {
+    isOffline: boolean;
+    needRefresh: boolean;
+    onUpdate: () => Promise<void>;
+}) {
+    if (!isOffline && !needRefresh) return null;
+
+    return (
+        <section className="mb-3 flex flex-col gap-2 rounded-2xl bg-primary/6 px-4 py-3 shadow shadow-primary/8 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+                <span
+                    className={clsx(
+                        "mt-0.5 text-lg",
+                        needRefresh
+                            ? "i-ph:rocket-launch-duotone text-primary-600 dark:text-primary-300"
+                            : "i-ph:wifi-x-duotone text-amber-600 dark:text-amber-300"
+                    )}
+                />
+                <div>
+                    <div className="font-semibold">{needRefresh ? "发现新版本" : "当前处于离线模式"}</div>
+                    <div className="mt-1 text-sm op-75">
+                        {needRefresh
+                            ? "刷新后可获取最新修复和内容体验。"
+                            : "你仍可以浏览已缓存页面与最近访问过的内容。"}
+                    </div>
+                </div>
+            </div>
+            {needRefresh && (
+                <button
+                    type="button"
+                    className="rounded-full bg-primary px-4 py-2 text-sm text-white transition-all hover:opacity-90"
+                    onClick={() => void onUpdate()}
+                >
+                    立即更新
+                </button>
+            )}
+        </section>
     );
 }
