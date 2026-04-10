@@ -1,8 +1,11 @@
 import clsx from "clsx"; // function ThemeToggle() {
 import { useState } from "react";
+import { useSetAtom } from "jotai";
 import { motion } from "framer-motion";
 import { PROJECT_URL } from "@shared/consts";
+import { useToast } from "~/hooks/useToast";
 import { login, logout, useLoginState } from "~/hooks/useLogin";
+import { primitiveMetadataAtom, createDefaultPrimitiveMetadata } from "~/atoms/primitiveMetadataAtom";
 
 // function ThemeToggle() {
 //   const { isDark, toggleDark } = useDark()
@@ -19,19 +22,38 @@ import { login, logout, useLoginState } from "~/hooks/useLogin";
 export function Menu() {
     const { loggedIn, userInfo, enableLogin } = useLoginState();
     const [shown, show] = useState(false);
+    const toaster = useToast();
+    const setPrimitiveMetadata = useSetAtom(primitiveMetadataAtom);
+
+    const handleResetLayout = () => {
+        if (!window.confirm("确认重置当前布局到默认配置吗？")) return;
+
+        setPrimitiveMetadata(createDefaultPrimitiveMetadata("manual"));
+        toaster(loggedIn ? "布局已重置，稍后会自动同步到云端" : "布局已重置为默认配置", {
+            type: "success",
+        });
+    };
+
     return (
         <span className="relative" onMouseEnter={() => show(true)} onMouseLeave={() => show(false)}>
             <span className="flex items-center scale-90">
                 {enableLogin && loggedIn && userInfo?.avatar ? (
                     <button
                         type="button"
+                        title="打开用户菜单"
+                        aria-label="打开用户菜单"
                         className="h-6 w-6 rounded-full bg-cover"
                         style={{
                             backgroundImage: `url(${userInfo.avatar}&s=24)`,
                         }}
                     />
                 ) : (
-                    <button type="button" className="btn i-si:more-muted-horiz-circle-duotone" />
+                    <button
+                        type="button"
+                        title="打开菜单"
+                        aria-label="打开菜单"
+                        className="btn i-si:more-muted-horiz-circle-duotone"
+                    />
                 )}
             </span>
             {shown && (
@@ -59,6 +81,10 @@ export function Menu() {
                                         <span>Github 账号登录</span>
                                     </li>
                                 ))}
+                            <li onClick={handleResetLayout}>
+                                <span className="i-ph:arrows-counter-clockwise-duotone inline-block" />
+                                <span>重置布局</span>
+                            </li>
                             {/* <ThemeToggle /> */}
                             <li
                                 onClick={() => window.open(PROJECT_URL)}

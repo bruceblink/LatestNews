@@ -92,14 +92,18 @@ function createPrimitiveMetadataAtom(
     );
 }
 
+export function createDefaultPrimitiveMetadata(action: PrimitiveMetadata["action"] = "init"): PrimitiveMetadata {
+    return {
+        updatedTime: action === "init" ? 0 : Date.now(),
+        data: initialMetadata,
+        action,
+    };
+}
+
 // ========== 导出全局唯一 atom ==========
 
 export const primitiveMetadataAtom = createPrimitiveMetadataAtom(
     "metadata",
-    {
-        updatedTime: 0,
-        data: initialMetadata,
-        action: "init",
-    },
+    createDefaultPrimitiveMetadata(),
     preprocessMetadata
 );
