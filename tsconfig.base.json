@@ -9,6 +9,7 @@
     "allowImportingTsExtensions": true,
     "strict": true,
     "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -16,20 +17,19 @@
     "esModuleInterop": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "rootDir": ".",
     "paths": {
       "@root/*": [
         "./*"
       ],
       "~/*": [
-        "src/*"
+        "./src/*"
       ],
       "@shared/*": [
-        "shared/*"
+        "./shared/*"
       ],
       "#/*": [
-        "server/*"
+        "./server/*"
       ],
       "@prisma/client": [
         "./generated/prisma/client"

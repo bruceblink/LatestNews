@@ -26,11 +26,8 @@ function getSourceMeta(id: SourceID) {
     return dataSources[id];
 }
 
-function getOrCreateSnapshot(id: SourceID): MutableSourceHealthSnapshot {
-    const existing = sourceHealthMap.get(id);
-    if (existing) return existing;
-
-    const snapshot: MutableSourceHealthSnapshot = {
+function createIdleSnapshot(id: SourceID): SourceHealthSnapshot {
+    return {
         id,
         name: getSourceMeta(id).name,
         status: "idle",
@@ -38,6 +35,13 @@ function getOrCreateSnapshot(id: SourceID): MutableSourceHealthSnapshot {
         errorCount: 0,
         consecutiveFailures: 0,
     };
+}
+
+function getOrCreateSnapshot(id: SourceID): MutableSourceHealthSnapshot {
+    const existing = sourceHealthMap.get(id);
+    if (existing) return existing;
+
+    const snapshot: MutableSourceHealthSnapshot = createIdleSnapshot(id);
 
     sourceHealthMap.set(id, snapshot);
     return snapshot;
@@ -64,23 +68,14 @@ export function recordSourceFailure(id: SourceID, durationMs: number, error: unk
     snapshot.lastErrorMessage = error instanceof Error ? error.message : String(error);
 }
 
-export function getSourceHealthSnapshots() {
+export function getSourceHealthSnapshots(): SourceHealthSnapshot[] {
     return Object.entries(dataSources)
         .filter(([_, source]) => !source.redirect)
-        .map(([id, source]) => {
+        .map(([id]) => {
             const sourceId = id as SourceID;
             const snapshot = sourceHealthMap.get(sourceId);
 
-            return (
-                snapshot ?? {
-                    id: sourceId,
-                    name: source.name,
-                    status: "idle",
-                    successCount: 0,
-                    errorCount: 0,
-                    consecutiveFailures: 0,
-                }
-            );
+            return snapshot ?? createIdleSnapshot(sourceId);
         })
         .sort((left, right) => {
             if (left.status !== right.status) {
