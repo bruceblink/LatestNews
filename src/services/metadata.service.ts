@@ -55,6 +55,13 @@ export function mergePrimitiveMetadata(local: PrimitiveMetadata, remote: Primiti
     return merged;
 }
 
+export function markPrimitiveMetadataSynced(metadata: PrimitiveMetadata): PrimitiveMetadata {
+    return {
+        ...metadata,
+        action: "sync",
+    };
+}
+
 export async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
     //const jwt = getJwt();
     //if (!jwt) return undefined;

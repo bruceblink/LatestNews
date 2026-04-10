@@ -1,11 +1,18 @@
+import type { PrimitiveMetadata } from "@shared/types";
+
 import clsx from "clsx"; // function ThemeToggle() {
 import { useEffect, useState } from "react";
-import { useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import { motion } from "framer-motion";
 import { PROJECT_URL } from "@shared/consts";
 import { useNavigate } from "@tanstack/react-router";
 import { useToast } from "~/hooks/useToast";
 import { login, logout, useLoginState } from "~/hooks/useLogin";
+import {
+    uploadMetadata,
+    handleAuthError,
+    markPrimitiveMetadataSynced,
+} from "~/services/metadata.service.ts";
 import { primitiveMetadataAtom, createDefaultPrimitiveMetadata } from "~/atoms/primitiveMetadataAtom";
 
 // function ThemeToggle() {
@@ -24,9 +31,10 @@ export function Menu() {
     const { loggedIn, userInfo, enableLogin } = useLoginState();
     const [shown, show] = useState(false);
     const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [syncing, setSyncing] = useState(false);
     const navigate = useNavigate();
     const toaster = useToast();
-    const setPrimitiveMetadata = useSetAtom(primitiveMetadataAtom);
+    const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (event: Event) => {
@@ -78,6 +86,24 @@ export function Menu() {
         void navigate({ to: "/health" });
     };
 
+    const handleManualSync = async () => {
+        if (!loggedIn) {
+            login();
+            return;
+        }
+
+        setSyncing(true);
+        try {
+            await uploadMetadata(primitiveMetadata);
+            setPrimitiveMetadata((prev: PrimitiveMetadata) => markPrimitiveMetadataSynced(prev));
+            toaster("布局已同步到云端", { type: "success" });
+        } catch (error) {
+            handleAuthError(toaster, error);
+        } finally {
+            setSyncing(false);
+        }
+    };
+
     return (
         <span className="relative" onMouseEnter={() => show(true)} onMouseLeave={() => show(false)}>
             <span className="flex items-center scale-90">
@@ -125,6 +151,17 @@ export function Menu() {
                                         <span>Github 账号登录</span>
                                     </li>
                                 ))}
+                            {enableLogin.enable && loggedIn && (
+                                <li onClick={() => void handleManualSync()}>
+                                    <span
+                                        className={clsx(
+                                            "inline-block",
+                                            syncing ? "i-ph:spinner-gap-duotone animate-spin" : "i-ph:cloud-arrow-up-duotone"
+                                        )}
+                                    />
+                                    <span>{syncing ? "同步中" : "同步布局"}</span>
+                                </li>
+                            )}
                             <li onClick={handleResetLayout}>
                                 <span className="i-ph:arrows-counter-clockwise-duotone inline-block" />
                                 <span>重置布局</span>
