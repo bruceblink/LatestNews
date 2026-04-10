@@ -25,6 +25,18 @@ export function handleAuthError(toaster: ReturnType<typeof useToast>, error: unk
     }
 }
 
+export function getSyncErrorMessage(error: unknown) {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    if (typeof error === "string" && error.trim()) {
+        return error;
+    }
+
+    return "同步请求失败，请稍后重试";
+}
+
 export function setAuthSyncFeedback(status: AuthSyncFeedback) {
     sessionStorage.setItem(AUTH_SYNC_FEEDBACK_KEY, status);
 }
