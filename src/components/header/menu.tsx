@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSetAtom } from "jotai";
 import { motion } from "framer-motion";
 import { PROJECT_URL } from "@shared/consts";
+import { useNavigate } from "@tanstack/react-router";
 import { useToast } from "~/hooks/useToast";
 import { login, logout, useLoginState } from "~/hooks/useLogin";
 import { primitiveMetadataAtom, createDefaultPrimitiveMetadata } from "~/atoms/primitiveMetadataAtom";
@@ -23,6 +24,7 @@ export function Menu() {
     const { loggedIn, userInfo, enableLogin } = useLoginState();
     const [shown, show] = useState(false);
     const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const navigate = useNavigate();
     const toaster = useToast();
     const setPrimitiveMetadata = useSetAtom(primitiveMetadataAtom);
 
@@ -69,6 +71,11 @@ export function Menu() {
         if (outcome === "accepted") {
             toaster("安装请求已确认，稍后可从桌面或主屏启动", { type: "success" });
         }
+    };
+
+    const goToHealthPage = () => {
+        show(false);
+        void navigate({ to: "/health" });
     };
 
     return (
@@ -125,6 +132,10 @@ export function Menu() {
                             <li onClick={() => void handleInstall()}>
                                 <span className="i-ph:device-mobile-speaker-duotone inline-block" />
                                 <span>{installPrompt ? "安装应用" : "安装指引"}</span>
+                            </li>
+                            <li onClick={goToHealthPage}>
+                                <span className="i-ph:heartbeat-duotone inline-block" />
+                                <span>数据源健康</span>
                             </li>
                             {/* <ThemeToggle /> */}
                             <li

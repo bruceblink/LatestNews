@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
+import { Route as HealthImport } from './routes/health'
 import { Route as CColumnImport } from './routes/c.$column'
 import { Route as AuthCallbackImport } from './routes/auth/callback'
 
@@ -20,6 +21,12 @@ import { Route as AuthCallbackImport } from './routes/auth/callback'
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const HealthRoute = HealthImport.update({
+  id: '/health',
+  path: '/health',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -53,6 +60,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackImport
       parentRoute: typeof rootRoute
     }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthImport
+      parentRoute: typeof rootRoute
+    }
     '/c/$column': {
       id: '/c/$column'
       path: '/c/$column'
@@ -68,12 +82,14 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/health': typeof HealthRoute
   '/c/$column': typeof CColumnRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/health': typeof HealthRoute
   '/c/$column': typeof CColumnRoute
 }
 
@@ -81,27 +97,30 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/health': typeof HealthRoute
   '/c/$column': typeof CColumnRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/callback' | '/c/$column'
+  fullPaths: '/' | '/auth/callback' | '/health' | '/c/$column'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/callback' | '/c/$column'
-  id: '__root__' | '/' | '/auth/callback' | '/c/$column'
+  to: '/' | '/auth/callback' | '/health' | '/c/$column'
+  id: '__root__' | '/' | '/auth/callback' | '/health' | '/c/$column'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  HealthRoute: typeof HealthRoute
   CColumnRoute: typeof CColumnRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  HealthRoute: HealthRoute,
   CColumnRoute: CColumnRoute,
 }
 
@@ -117,6 +136,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/auth/callback",
+        "/health",
         "/c/$column"
       ]
     },
@@ -125,6 +145,9 @@ export const routeTree = rootRoute
     },
     "/auth/callback": {
       "filePath": "auth/callback.tsx"
+    },
+    "/health": {
+      "filePath": "health.tsx"
     },
     "/c/$column": {
       "filePath": "c.$column.tsx"
