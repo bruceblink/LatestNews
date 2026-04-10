@@ -7,6 +7,7 @@ import { TTL } from "@shared/consts";
 import { logger } from "#/utils/logger.ts";
 import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
+import { recordSourceFailure, recordSourceSuccess } from "#/utils/source-health";
 import { getQuery, createError, defineEventHandler } from "h3";
 
 const isValidSource = (id?: SourceID) => !!id && !!dataSources[id] && !!getters[id];
@@ -40,8 +41,17 @@ function fetchLatestItems(id: SourceID) {
     const pending = inflightRequests.get(id);
     if (pending) return pending;
 
+    const startTime = Date.now();
     const request = getters[id]()
-        .then((items) => items.slice(0, 30))
+        .then((items) => {
+            const normalizedItems = items.slice(0, 30);
+            recordSourceSuccess(id, Date.now() - startTime, normalizedItems.length);
+            return normalizedItems;
+        })
+        .catch((error) => {
+            recordSourceFailure(id, Date.now() - startTime, error);
+            throw error;
+        })
         .finally(() => {
             inflightRequests.delete(id);
         });
