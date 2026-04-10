@@ -16,6 +16,7 @@
         "build": "pnpm presource && vite build",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
+        "commitlint": "commitlint --edit",
         "presource": "tsx ./scripts/favicon.ts && tsx ./scripts/source.ts",
         "start": "node --env-file .env.server dist/output/server/index.mjs",
         "preview": "cross-env CF_PAGES=1 pnpm build && wrangler pages dev dist/output/public",
@@ -70,6 +71,8 @@
         "zod": "^4.0.0"
     },
     "devDependencies": {
+        "@commitlint/cli": "^20.5.0",
+        "@commitlint/config-conventional": "^20.5.0",
         "@eslint-react/eslint-plugin": "^1.29.0",
         "@eslint/js": "^9.36.0",
         "@iconify-json/ph": "^1.2.2",
@@ -144,7 +147,8 @@
         ]
     },
     "simple-git-hooks": {
-        "pre-commit": "npx lint-staged"
+        "pre-commit": "npx lint-staged",
+        "commit-msg": "pnpm exec commitlint --edit $1"
     },
     "lint-staged": {
         "*.{js,mjs,cjs,ts,tsx}": "eslint --fix"

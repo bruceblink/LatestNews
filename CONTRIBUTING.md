@@ -150,11 +150,51 @@ Access the application in your browser and ensure that your new source is appear
 
 ### 6. Commit Your Changes
 
-Once everything is working, commit your changes:
+Once everything is working, commit your changes.
+
+This repository uses Conventional Commits and validates commit messages in the `commit-msg` hook.
+Use the following format:
+
+```text
+<type>(<scope>): <subject>
+```
+
+Scope is optional:
+
+```text
+<type>: <subject>
+```
+
+Allowed types:
+
+```text
+feat fix docs style refactor perf test build ci chore revert
+```
+
+Examples:
+
+```bash
+git commit -m "feat(sync): add manual layout sync action"
+git commit -m "fix(health): keep source status typed"
+git commit -m "chore(git): enforce conventional commit messages"
+```
+
+Recommended rules:
+
+```text
+- use English for type and subject
+- keep the subject short and imperative
+- do not end the subject with a period
+- prefer a narrow scope such as sync, health, pwa, sources, ui, git
+```
+
+If your message does not match the rule, Git will reject the commit until it is corrected.
+
+Then commit normally:
 
 ```bash
 git add .
-git commit -m "Add new source: source-name"
+git commit -m "feat(source): add source-name"
 ```
 
 ### 7. Create a Pull Request
