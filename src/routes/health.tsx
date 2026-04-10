@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { myFetch } from "~/utils";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTitle } from "react-use";
@@ -49,6 +50,8 @@ export const Route = createFileRoute("/health")({
 
 function HealthPage() {
     useTitle(`${import.meta.env.VITE_APP_TITLE} | 数据源健康`);
+    const [keyword, setKeyword] = useState("");
+    const [statusFilter, setStatusFilter] = useState<"all" | SourceHealthStatus>("all");
 
     const { data, isFetching, isError, refetch, error } = useQuery<SourceHealthSummary>({
         queryKey: ["source-health"],
@@ -56,6 +59,21 @@ function HealthPage() {
         staleTime: 1000 * 30,
         retry: false,
     });
+
+    const filteredSources = useMemo(() => {
+        if (!data?.sources) return [];
+
+        return data.sources.filter((source) => {
+            const matchStatus = statusFilter === "all" || source.status === statusFilter;
+            const normalizedKeyword = keyword.trim().toLowerCase();
+            const matchKeyword =
+                normalizedKeyword.length === 0 ||
+                source.name.toLowerCase().includes(normalizedKeyword) ||
+                source.id.toLowerCase().includes(normalizedKeyword);
+
+            return matchStatus && matchKeyword;
+        });
+    }, [data?.sources, keyword, statusFilter]);
 
     return (
         <section className="mx-auto flex max-w-6xl flex-col gap-4 px-1 md:px-4">
@@ -92,6 +110,40 @@ function HealthPage() {
                 <SummaryCard label="未采样" value={data?.idle ?? 0} tone="slate" />
             </div>
 
+            <div className="flex flex-col gap-3 rounded-2xl bg-base/60 p-4 shadow shadow-primary/5 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap gap-2">
+                    {([
+                        ["all", "全部"],
+                        ["failing", "仅异常"],
+                        ["healthy", "仅正常"],
+                        ["idle", "仅未采样"],
+                    ] as const).map(([value, label]) => (
+                        <button
+                            key={value}
+                            type="button"
+                            className={clsx(
+                                "rounded-full px-3 py-1.5 text-sm transition-all",
+                                statusFilter === value
+                                    ? "bg-primary/15 text-primary-700 shadow shadow-primary/10 dark:text-primary-300"
+                                    : "bg-neutral-500/8 op-80 hover:bg-neutral-500/12"
+                            )}
+                            onClick={() => setStatusFilter(value)}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+                <label className="flex items-center gap-2 rounded-full bg-neutral-500/8 px-3 py-1.5 text-sm md:w-72">
+                    <span className="i-ph:magnifying-glass-duotone text-base" />
+                    <input
+                        value={keyword}
+                        onChange={(event) => setKeyword(event.target.value)}
+                        placeholder="搜索数据源名称或 ID"
+                        className="w-full bg-transparent outline-none placeholder:text-neutral-400"
+                    />
+                </label>
+            </div>
+
             {isError && (
                 <div className="rounded-2xl bg-red-500/10 p-4 text-red-600 dark:text-red-300">
                     加载健康统计失败{error instanceof Error ? `：${error.message}` : ""}
@@ -119,10 +171,15 @@ function HealthPage() {
             )}
 
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {data?.sources.map((source) => (
+                {filteredSources.map((source) => (
                     <SourceHealthCard key={source.id} source={source} />
                 ))}
             </div>
+            {data && filteredSources.length === 0 && (
+                <div className="rounded-2xl bg-neutral-500/8 p-6 text-center text-sm op-70">
+                    当前筛选条件下没有匹配的数据源
+                </div>
+            )}
         </section>
     );
 }
