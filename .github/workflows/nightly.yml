@@ -1,0 +1,48 @@
+name: Nightly CI
+
+on:
+  schedule:
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-ci
+  cancel-in-progress: true
+
+jobs:
+  nightly:
+    name: Check and build nightly
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run quality checks
+        run: pnpm check
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Upload nightly artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: latestnews-nightly-${{ github.run_number }}
+          path: |
+            dist/output/public
+            dist/output/server
+          if-no-files-found: error
+          retention-days: 7
