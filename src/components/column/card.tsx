@@ -1,4 +1,5 @@
 import type { NewsItem, SourceID } from "@shared/types";
+import type { SourceHealthStatus } from "~/hooks/useSourceHealth";
 
 import clsx from "clsx";
 import { useWindowSize } from "react-use";
@@ -13,6 +14,7 @@ import { OverlayScrollbar } from "../common/overlay-scrollbar";
 
 export interface ItemsProps extends React.HTMLAttributes<HTMLDivElement> {
     id: SourceID;
+    healthStatus?: SourceHealthStatus;
     /**
      * 是否显示透明度，拖动时原卡片的样式
      */
@@ -22,11 +24,12 @@ export interface ItemsProps extends React.HTMLAttributes<HTMLDivElement> {
 
 interface NewsCardProps {
     id: SourceID;
+    healthStatus?: SourceHealthStatus;
     setHandleRef?: (ref: HTMLElement | null) => void;
 }
 
 export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
-    ({ id, isDragging, setHandleRef, style, ...props }, dndRef) => {
+    ({ id, healthStatus, isDragging, setHandleRef, style, ...props }, dndRef) => {
         const ref = useRef<HTMLDivElement>(null);
 
         const inView = useInView(ref, {
@@ -40,9 +43,10 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
                 ref={ref}
                 className={clsx(
                     "flex flex-col h-500px rounded-2xl p-4 cursor-default",
-                    // "backdrop-blur-5",
                     "transition-opacity-300",
                     isDragging && "op-50",
+                    healthStatus === "failing" && "ring-1 ring-red-500/35 saturate-80 op-88",
+                    healthStatus === "idle" && "ring-1 ring-neutral-500/20",
                     `bg-${dataSources[id].color}-500 dark:bg-${dataSources[id].color} bg-op-40!`
                 )}
                 style={{
@@ -51,18 +55,25 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
                 }}
                 {...props}
             >
-                {inView && <NewsCard id={id} setHandleRef={setHandleRef} />}
+                {inView && <NewsCard id={id} healthStatus={healthStatus} setHandleRef={setHandleRef} />}
             </div>
         );
     }
 );
 
-function NewsCard({ id, setHandleRef }: NewsCardProps) {
+function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
     const { data, isFetching, isError } = useNewsSource(id);
 
     return (
         <>
-            <CardHeader id={id} data={data} isFetching={isFetching} isError={isError} setHandleRef={setHandleRef} />
+            <CardHeader
+                id={id}
+                data={data}
+                healthStatus={healthStatus}
+                isFetching={isFetching}
+                isError={isError}
+                setHandleRef={setHandleRef}
+            />
 
             <OverlayScrollbar
                 className={clsx([

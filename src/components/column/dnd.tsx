@@ -15,6 +15,7 @@ import dataSources from "@shared/data-sources.ts";
 import { useMemo, useEffect, useCallback } from "react";
 import { goToTopAtom, currentSourcesAtom } from "~/atoms";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { reorderWithEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge";
 
@@ -30,6 +31,7 @@ const WIDTH = 350;
 export function Dnd() {
     const [items, setItems] = useAtom(currentSourcesAtom);
     const [parent] = useAutoAnimate({ duration: AnimationDuration });
+    const { sourceHealthMap } = useSourceHealthSummary();
     // 查询全部新闻 调用 '/api/s/entire' 接口
     useEntireQuery(items);
     const { width } = useWindowSize();
@@ -95,7 +97,7 @@ export function Dnd() {
                                     },
                                 }}
                             >
-                                <SortableCardWrapper id={id} />
+                                <SortableCardWrapper id={id} healthStatus={sourceHealthMap.get(id)?.status} />
                             </motion.li>
                         ))}
                 </motion.ol>
@@ -194,7 +196,7 @@ function CardOverlay({ id }: { id: SourceID }) {
     );
 }
 
-function SortableCardWrapper({ id }: ItemsProps) {
+function SortableCardWrapper({ id, healthStatus }: ItemsProps) {
     const { isDragging, setNodeRef, setHandleRef, OverlayContainer } = useSortable({ id });
 
     useEffect(() => {
@@ -205,7 +207,13 @@ function SortableCardWrapper({ id }: ItemsProps) {
 
     return (
         <>
-            <CardWrapper ref={setNodeRef} id={id} isDragging={isDragging} setHandleRef={setHandleRef} />
+            <CardWrapper
+                ref={setNodeRef}
+                id={id}
+                healthStatus={healthStatus}
+                isDragging={isDragging}
+                setHandleRef={setHandleRef}
+            />
             {OverlayContainer && createPortal(<CardOverlay id={id} />, OverlayContainer)}
         </>
     );

@@ -1,4 +1,5 @@
 import type { SourceID } from "@shared/types.ts";
+import type { SourceHealthStatus } from "~/hooks/useSourceHealth";
 
 import clsx from "clsx";
 import { useRefetch } from "~/hooks/useRefetch";
@@ -10,6 +11,7 @@ import { useRelativeTime } from "~/hooks/useRelativeTime";
 interface CardHeaderProps {
     id: SourceID;
     data: any;
+    healthStatus?: SourceHealthStatus;
     isFetching: boolean;
     isError: boolean;
     updatedTime?: string | number;
@@ -19,11 +21,12 @@ interface CardHeaderProps {
 /**
  * 新闻源顶部栏
  */
-export function CardHeader({ id, data, isFetching, isError, setHandleRef }: CardHeaderProps) {
+export function CardHeader({ id, data, healthStatus, isFetching, isError, setHandleRef }: CardHeaderProps) {
     const { refresh } = useRefetch();
     const { enableLogin } = useLoginState();
     const { isFocused, toggleFocus } = useFocusWith(id);
     const ds = dataSources[id];
+    const healthStatusLabel = healthStatus === "failing" ? "异常" : healthStatus === "idle" ? "未采样" : undefined;
 
     return (
         <div className={clsx("flex justify-between mx-2 mt-0 mb-2 items-center")}>
@@ -42,6 +45,18 @@ export function CardHeader({ id, data, isFetching, isError, setHandleRef }: Card
                         <span className="text-xl font-bold" title={ds.desc}>
                             {ds.name}
                         </span>
+                        {healthStatusLabel && (
+                            <span
+                                className={clsx(
+                                    "rounded px-1.5 py-0.5 text-xs",
+                                    healthStatus === "failing"
+                                        ? "bg-red-500/10 text-red-700 dark:text-red-300"
+                                        : "bg-neutral-500/10 text-neutral-600 dark:text-neutral-300"
+                                )}
+                            >
+                                {healthStatusLabel}
+                            </span>
+                        )}
                         {ds?.title && (
                             <span
                                 className={clsx("text-sm", `color-${ds.color} bg-base op-80 bg-op-50\\! px-1 rounded`)}
