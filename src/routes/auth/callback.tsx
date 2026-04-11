@@ -1,7 +1,7 @@
 import { getDefaultStore } from "jotai";
 import { redirect, createFileRoute } from "@tanstack/react-router";
 import { primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom";
-import { downloadMetadata, mergePrimitiveMetadata, setAuthSyncFeedback } from "~/services/metadata.service.ts";
+import { downloadMetadata, setAuthSyncFeedback, mergePrimitiveMetadata } from "~/services/metadata.service.ts";
 
 export const Route = createFileRoute("/auth/callback")({
     beforeLoad: async () => {

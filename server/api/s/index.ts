@@ -7,8 +7,8 @@ import { TTL } from "@shared/consts";
 import { logger } from "#/utils/logger.ts";
 import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
-import { recordSourceFailure, recordSourceSuccess } from "#/utils/source-health";
 import { getQuery, createError, defineEventHandler } from "h3";
+import { recordSourceFailure, recordSourceSuccess } from "#/utils/source-health";
 
 const isValidSource = (id?: SourceID) => !!id && !!dataSources[id] && !!getters[id];
 const inflightRequests = new Map<SourceID, Promise<NewsItem[]>>();
