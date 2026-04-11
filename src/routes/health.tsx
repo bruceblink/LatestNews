@@ -3,11 +3,11 @@ import type { SourceResponse } from "@shared/types";
 import clsx from "clsx";
 import { myFetch } from "~/utils";
 import { useTitle } from "react-use";
-import { useMemo, useState } from "react";
 import { useToast } from "~/hooks/useToast";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
+import { useRef, useMemo, useState, useEffect } from "react";
 
 type SourceHealthStatus = "idle" | "healthy" | "failing";
 
@@ -63,14 +63,68 @@ function HealthPage() {
     useTitle(`${import.meta.env.VITE_APP_TITLE} | 数据源健康`);
     const [keyword, setKeyword] = useState("");
     const [statusFilter, setStatusFilter] = useState<"all" | SourceHealthStatus>("all");
+    const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
     const toaster = useToast();
+    const hasLoadedRef = useRef(false);
+    const previousFailingIdsRef = useRef<Set<string>>(new Set());
 
     const { data, isFetching, isError, refetch, error } = useQuery<SourceHealthSummary>({
         queryKey: ["source-health"],
         queryFn: () => myFetch("/s/health"),
         staleTime: 1000 * 30,
+        refetchInterval: autoRefreshEnabled ? 1000 * 60 : false,
         retry: false,
     });
+
+    useEffect(() => {
+        if (!data?.sources) return;
+
+        const currentFailingIds = new Set(
+            data.sources.filter((source) => source.status === "failing").map((source) => source.id)
+        );
+
+        if (!hasLoadedRef.current) {
+            previousFailingIdsRef.current = currentFailingIds;
+            hasLoadedRef.current = true;
+            return;
+        }
+
+        const previousFailingIds = previousFailingIdsRef.current;
+        const recoveredSources = data.sources.filter(
+            (source) => source.status !== "failing" && previousFailingIds.has(source.id)
+        );
+        const newlyFailingSources = data.sources.filter(
+            (source) => source.status === "failing" && !previousFailingIds.has(source.id)
+        );
+
+        if (recoveredSources.length > 0) {
+            const label = recoveredSources
+                .slice(0, 2)
+                .map((source) => source.name)
+                .join("、");
+            toaster(
+                recoveredSources.length > 2
+                    ? `${label} 等 ${recoveredSources.length} 个数据源已恢复`
+                    : `${label} 已恢复正常`,
+                { type: "success" }
+            );
+        }
+
+        if (newlyFailingSources.length > 0) {
+            const label = newlyFailingSources
+                .slice(0, 2)
+                .map((source) => source.name)
+                .join("、");
+            toaster(
+                newlyFailingSources.length > 2
+                    ? `${label} 等 ${newlyFailingSources.length} 个数据源出现异常`
+                    : `${label} 出现新的异常`,
+                { type: "warning" }
+            );
+        }
+
+        previousFailingIdsRef.current = currentFailingIds;
+    }, [data?.sources, toaster]);
 
     const prioritizedFailingSources = useMemo(() => {
         if (!data?.sources) return [];
@@ -111,6 +165,18 @@ function HealthPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
+                    <button
+                        type="button"
+                        className={clsx(
+                            "rounded-full px-3 py-1 transition-all",
+                            autoRefreshEnabled
+                                ? "bg-green-500/10 text-green-700 dark:text-green-300"
+                                : "bg-neutral-500/8 op-75"
+                        )}
+                        onClick={() => setAutoRefreshEnabled((prev) => !prev)}
+                    >
+                        {autoRefreshEnabled ? "自动刷新中" : "自动刷新已关闭"}
+                    </button>
                     <span className="rounded-full bg-base/70 px-3 py-1">
                         {data
                             ? `最近更新 ${new Date(data.updatedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
