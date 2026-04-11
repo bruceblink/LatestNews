@@ -11,6 +11,14 @@ import { useRelativeTime } from "~/hooks/useRelativeTime";
 
 type SourceHealthStatus = "idle" | "healthy" | "failing";
 
+interface SourceHealthEvent {
+    status: Exclude<SourceHealthStatus, "idle">;
+    occurredAt: number;
+    durationMs: number;
+    itemCount?: number;
+    errorMessage?: string;
+}
+
 interface SourceHealthSnapshot {
     id: string;
     name: string;
@@ -23,6 +31,7 @@ interface SourceHealthSnapshot {
     lastErrorAt?: number;
     lastErrorMessage?: string;
     lastItemCount?: number;
+    recentEvents: SourceHealthEvent[];
 }
 
 interface SourceHealthSummary {
@@ -379,6 +388,54 @@ function SourceHealthCard({
                             {source.lastErrorMessage}
                         </div>
                     )}
+                    <div className="mt-3 border-t border-neutral-500/10 pt-3">
+                        <div className="mb-2 font-medium op-75">最近 5 次事件</div>
+                        {source.recentEvents.length > 0 ? (
+                            <div className="flex flex-col gap-2">
+                                {source.recentEvents.map((event, index) => {
+                                    const occurredTime = new Date(event.occurredAt).toLocaleString("zh-CN", {
+                                        month: "2-digit",
+                                        day: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        second: "2-digit",
+                                    });
+
+                                    return (
+                                        <div
+                                            key={`${source.id}-${event.occurredAt}-${index}`}
+                                            className="rounded-lg bg-base/70 px-3 py-2"
+                                        >
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span
+                                                    className={clsx(
+                                                        "rounded-full px-2 py-0.5 text-xs font-medium",
+                                                        event.status === "healthy"
+                                                            ? "bg-green-500/10 text-green-700 dark:text-green-300"
+                                                            : "bg-red-500/10 text-red-700 dark:text-red-300"
+                                                    )}
+                                                >
+                                                    {event.status === "healthy" ? "成功" : "失败"}
+                                                </span>
+                                                <span className="text-xs op-55">{occurredTime}</span>
+                                            </div>
+                                            <div className="mt-1 text-xs op-70">
+                                                耗时 {event.durationMs} ms
+                                                {event.itemCount !== undefined ? ` · 返回 ${event.itemCount} 条` : ""}
+                                            </div>
+                                            {event.errorMessage && (
+                                                <div className="mt-1 text-xs text-red-600 dark:text-red-300">
+                                                    {event.errorMessage}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-xs op-55">暂无事件记录</div>
+                        )}
+                    </div>
                 </div>
             )}
         </article>

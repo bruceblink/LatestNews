@@ -4,6 +4,14 @@ import dataSources from "@shared/data-sources";
 
 export type SourceHealthStatus = "idle" | "healthy" | "failing";
 
+export interface SourceHealthEvent {
+    status: Exclude<SourceHealthStatus, "idle">;
+    occurredAt: number;
+    durationMs: number;
+    itemCount?: number;
+    errorMessage?: string;
+}
+
 export interface SourceHealthSnapshot {
     id: SourceID;
     name: string;
@@ -16,6 +24,7 @@ export interface SourceHealthSnapshot {
     lastErrorAt?: number;
     lastErrorMessage?: string;
     lastItemCount?: number;
+    recentEvents: SourceHealthEvent[];
 }
 
 type MutableSourceHealthSnapshot = SourceHealthSnapshot;
@@ -34,7 +43,12 @@ function createIdleSnapshot(id: SourceID): SourceHealthSnapshot {
         successCount: 0,
         errorCount: 0,
         consecutiveFailures: 0,
+        recentEvents: [],
     };
+}
+
+function pushRecentEvent(snapshot: MutableSourceHealthSnapshot, event: SourceHealthEvent) {
+    snapshot.recentEvents = [event, ...snapshot.recentEvents].slice(0, 5);
 }
 
 function getOrCreateSnapshot(id: SourceID): MutableSourceHealthSnapshot {
@@ -56,16 +70,29 @@ export function recordSourceSuccess(id: SourceID, durationMs: number, itemCount:
     snapshot.lastSuccessAt = Date.now();
     snapshot.lastItemCount = itemCount;
     snapshot.lastErrorMessage = undefined;
+    pushRecentEvent(snapshot, {
+        status: "healthy",
+        occurredAt: snapshot.lastSuccessAt,
+        durationMs,
+        itemCount,
+    });
 }
 
 export function recordSourceFailure(id: SourceID, durationMs: number, error: unknown) {
     const snapshot = getOrCreateSnapshot(id);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     snapshot.status = "failing";
     snapshot.errorCount += 1;
     snapshot.consecutiveFailures += 1;
     snapshot.lastDurationMs = durationMs;
     snapshot.lastErrorAt = Date.now();
-    snapshot.lastErrorMessage = error instanceof Error ? error.message : String(error);
+    snapshot.lastErrorMessage = errorMessage;
+    pushRecentEvent(snapshot, {
+        status: "failing",
+        occurredAt: snapshot.lastErrorAt,
+        durationMs,
+        errorMessage,
+    });
 }
 
 export function getSourceHealthSnapshots(): SourceHealthSnapshot[] {
