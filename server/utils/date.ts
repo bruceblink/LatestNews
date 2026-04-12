@@ -95,12 +95,17 @@ export function parseRelativeDate(date: string, timezone: string = "UTC") {
             if (wordMatches) {
                 // The default parser of dayjs() can parse '8:00 pm' but not '8:00pm'
                 // so we need to insert a space in between
-                return dayjs
-                    .tz(
-                        `${w.startAt.format("YYYY-MM-DD")} ${/a|pm$/.test(wordMatches[1]) ? wordMatches[1].replace(/a|pm/, " $&") : wordMatches[1]}`,
-                        timezone
-                    )
-                    .toDate();
+                const normalizedTime = /a|pm$/.test(wordMatches[1])
+                    ? wordMatches[1].replace(/a|pm/, " $&")
+                    : wordMatches[1];
+                const dateTime = `${w.startAt.format("YYYY-MM-DD")} ${normalizedTime}`;
+
+                // Use explicit format for am/pm inputs to keep behavior consistent across environments.
+                if (/\b(?:am|pm)\b/.test(normalizedTime)) {
+                    return dayjs.tz(dateTime, "YYYY-MM-DD h:mm a", timezone).toDate();
+                }
+
+                return dayjs.tz(dateTime, timezone).toDate();
             }
         }
     }
