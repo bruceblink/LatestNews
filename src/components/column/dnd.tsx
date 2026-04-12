@@ -189,7 +189,12 @@ function CardOverlay({ id }: { id: SourceID }) {
                     </span>
                 </div>
                 <div className={clsx("flex gap-2 text-lg", `color-${dataSources[id].color}`)}>
-                    <button type="button" className={clsx("i-ph:dots-six-vertical-duotone", "cursor-grabbing")} />
+                    <button
+                        type="button"
+                        title="拖拽排序"
+                        aria-label="拖拽排序"
+                        className={clsx("i-ph:dots-six-vertical-duotone", "cursor-grabbing")}
+                    />
                 </div>
             </div>
         </div>
