@@ -1,181 +1,92 @@
+import type { NewsItem } from "@shared/types";
+
 import * as cheerio from "cheerio";
 
 import { myFetch } from "../utils/fetch";
 import { defineSource, generateUrlHashId } from "../utils/source";
 
-// 定义文章统计信息接口
-interface ArticleStats {
-    views: number;
-    collections: number;
+const BASE_URL = "https://www.freebuf.com";
+
+function normalizeUrl(url: string) {
+    const cleaned = url.replace(/\\\//g, "/").trim();
+    return cleaned.startsWith("http") ? cleaned : `${BASE_URL}${cleaned}`;
 }
 
-// 定义作者信息接口
-interface AuthorInfo {
-    name: string;
-    avatar?: string;
-    profileUrl?: string;
+function normalizeTitle(title: string) {
+    return title
+        .replace(/\\u003C[^>]*\\u003E/g, "")
+        .replace(/\\\"/g, '"')
+        .replace(/\s+/g, " ")
+        .trim();
 }
 
-// 定义文章数据接口
-interface ArticleData {
-    title: string;
-    url: string;
-    description: string;
-    publishTime: string;
-    author: AuthorInfo;
-    stats: ArticleStats;
-    album?: string;
-    image?: string;
-    category?: string;
+function extractFromLegacyDom(html: string) {
+    const $ = cheerio.load(html);
+    const pairs: Array<{ title: string; url: string }> = [];
+    const seen = new Set<string>();
+
+    $(".article-item").each((_, articleElement) => {
+        const $article = $(articleElement);
+        const title = normalizeTitle($article.find(".title-left .title").first().text());
+        const href = $article.find(".title-left .title").first().parent().attr("href") || "";
+        const url = normalizeUrl(href);
+
+        if (!title || !url || seen.has(url)) return;
+        seen.add(url);
+        pairs.push({ title, url });
+    });
+
+    return pairs;
 }
 
-// 辅助函数：安全提取文本
-function safeExtract($element: cheerio.Cheerio<any>, selector: string): string {
-    const result = $element.find(selector).first().text().trim();
-    return result || "";
-}
+function extractFromNuxtPayload(html: string) {
+    const patterns = [
+        /post_title:"([^"]{6,})"[\s\S]{0,1200}?url:"((?:\/articles|\/news)\/[^\"]+?\.html)"/g,
+        /title:"([^"]{6,})"[\s\S]{0,1200}?url:"((?:\/articles|\/news)\/[^\"]+?\.html)"/g,
+    ];
 
-// 辅助函数：安全提取属性
-function safeExtractAttribute($element: cheerio.Cheerio<any>, selector: string, attribute: string): string {
-    return $element.find(selector).first().attr(attribute) || "";
-}
+    const pairs: Array<{ title: string; url: string }> = [];
+    const seen = new Set<string>();
 
-// 辅助函数：格式化URL
-function formatUrl(url: string | undefined, baseUrl: string = "https://www.freebuf.com"): string {
-    if (!url) return "";
-    return url.startsWith("http") ? url : `${baseUrl}${url}`;
-}
-
-// 辅助函数：提取统计信息
-function extractStats($article: cheerio.Cheerio<any>): ArticleStats {
-    const stats: ArticleStats = { views: 0, collections: 0 };
-
-    // 提取围观数
-    const viewElement = $article.find('a:contains("围观")');
-    if (viewElement.length) {
-        const viewText = viewElement.find("span").first().text();
-        stats.views = parseInt(viewText) || 0;
-    }
-
-    // 提取收藏数
-    const collectElement = $article.find('a:contains("收藏")');
-    if (collectElement.length) {
-        const collectText = collectElement.find("span").first().text();
-        stats.collections = parseInt(collectText) || 0;
-    }
-
-    return stats;
-}
-
-// 辅助函数：提取作者信息
-function extractAuthor($article: cheerio.Cheerio<any>): AuthorInfo {
-    const author: AuthorInfo = { name: "" };
-
-    const authorLink = $article.find(".item-bottom a").first();
-    if (authorLink.length) {
-        author.name = authorLink.find("span").last().text().trim();
-        author.profileUrl = formatUrl(authorLink.attr("href"));
-
-        const avatarImg = authorLink.find(".ant-avatar img");
-        if (avatarImg.length) {
-            author.avatar = avatarImg.attr("src");
+    for (const pattern of patterns) {
+        for (const match of html.matchAll(pattern)) {
+            const title = normalizeTitle(match[1] ?? "");
+            const url = normalizeUrl(match[2] ?? "");
+            if (!title || !url || seen.has(url)) continue;
+            seen.add(url);
+            pairs.push({ title, url });
         }
     }
 
-    return author;
-}
-
-// 辅助函数：提取分类信息
-function extractCategory($article: cheerio.Cheerio<any>): string {
-    // 从URL路径推断分类
-    const articleUrl = $article.find(".title-left .title").parent().attr("href") || "";
-    if (articleUrl.includes("/articles/web/")) return "Web安全";
-    if (articleUrl.includes("/articles/database/")) return "数据安全";
-    if (articleUrl.includes("/articles/network/")) return "网络安全";
-    if (articleUrl.includes("/articles/mobile/")) return "移动安全";
-    if (articleUrl.includes("/articles/cloud/")) return "云安全";
-
-    return "";
+    return pairs;
 }
 
 export default defineSource(async () => {
-    const baseUrl = "https://www.freebuf.com";
-    const html = await myFetch<any>(baseUrl, {
+    const html = await myFetch<string>(BASE_URL, {
         headers: {
             "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            Referer: "https://www.freebuf.com/",
-            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            Referer: `${BASE_URL}/`,
+            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         },
     });
-    const $ = cheerio.load(html);
-    const articles: ArticleData[] = [];
-    // 遍历每个文章项
-    $(".article-item").each((index: number, articleElement) => {
-        try {
-            const $article = $(articleElement);
-            // 提取文章标题和URL
-            const titleLink = $article.find(".title-left .title").parent();
-            const title = titleLink.find(".title").text().trim();
-            const url = formatUrl(titleLink.attr("href"), baseUrl);
 
-            // 如果标题为空，跳过此项
-            if (!title) return;
+    const articles = extractFromLegacyDom(html);
+    const fallbackArticles = articles.length ? articles : extractFromNuxtPayload(html);
+    const uniqueArticles = fallbackArticles.slice(0, 30);
 
-            // 提取文章描述
-            const description = safeExtract($article, ".item-right .text-line-2");
+    if (!uniqueArticles.length) {
+        throw new Error("Cannot extract freebuf articles from homepage payload");
+    }
 
-            // 提取发布时间
-            const publishTime = safeExtract($article, ".item-bottom span:last-child");
-
-            // 提取作者信息
-            const author = extractAuthor($article);
-
-            // 提取统计信息
-            const stats = extractStats($article);
-
-            // 提取专辑信息
-            const album = safeExtract($article, ".from-column span");
-
-            // 提取图片
-            const image = safeExtractAttribute($article, ".img-view img", "src");
-
-            // 提取分类
-            const category = extractCategory($article);
-
-            // 构建完整的文章对象
-            const article: ArticleData = {
-                title,
-                url,
-                description,
-                publishTime,
-                author,
-                stats,
-                album: album || undefined,
-                image: image || undefined,
-                category: category || undefined,
-            };
-
-            articles.push(article);
-        } catch (error) {
-            console.warn(`解析第${index + 1}篇文章时出错:`, error instanceof Error ? error.message : String(error));
-        }
+    const newsTasks: Promise<NewsItem>[] = uniqueArticles.map(async (item) => {
+        const hashId = await generateUrlHashId(item.url);
+        return {
+            id: hashId,
+            title: item.title,
+            url: item.url,
+        } as NewsItem;
     });
-    // 转换数据格式
-    return await Promise.all(
-        articles.map(async (item) => {
-            return {
-                id: await generateUrlHashId(item.url),
-                title: item.title,
-                url: item.url,
-                extra: {
-                    hover: item.description,
-                    time: item.publishTime,
-                    author: item.author,
-                    stats: item.stats,
-                    album: item.album,
-                },
-            };
-        })
-    );
+
+    return Promise.all(newsTasks);
 });
