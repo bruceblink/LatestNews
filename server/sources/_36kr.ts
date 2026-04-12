@@ -39,57 +39,70 @@ const quick = defineSource(async () => {
 });
 
 interface Res {
-    msg: string;
-    name: string;
-    title: string;
-    type: string;
-    update_time: string;
-    total: string;
-    data: Item[];
+    code: number;
+    data: {
+        hotRankList: Item[];
+    };
 }
 
 interface Item {
-    id: number;
-    timestamp: string;
-    title: string;
-    statRead: number;
-    statCollect: number;
-    statPraise: number;
-    statFormat: string;
-    author: string;
-    head_pic: string;
-    url: string;
-    mobileUrl: string;
+    itemId: number;
+    itemType: number;
+    templateMaterial: {
+        itemId: number;
+        templateType: number;
+        widgetImage: string;
+        widgetTitle: string;
+        publishTime: number;
+        authorName: string;
+        statRead: number;
+        statCollect: number;
+        statPraise: number;
+        statFormat: string;
+    };
+    route: string;
+    siteId: number;
+    publishTime: number;
 }
 
 const renqi = defineSource(async () => {
-    const baseURL = "http://api.cc1990.cc/api/hotlist/36kr?type=hot";
+    const baseURL = "https://gateway.36kr.com/api/mis/nav/home/nav/rank/hot?size=20";
 
     const res: Res = await myFetch(baseURL, {
+        method: "POST",
         headers: {
             "User-Agent":
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
             Referer: "https://36kr.com",
             Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         },
+        body: {
+            partner_id: "web",
+            param: {
+                siteId: 1,
+                platformId: 3,
+            },
+        },
     });
 
     return await Promise.all(
-        res.data.map(async (news) => {
-            const hashId = await generateUrlHashId(news.url);
+        res.data.hotRankList.map(async (news) => {
+            const fullUrl = `https://36kr.com/p/${news.itemId}`;
+            const hashId = await generateUrlHashId(fullUrl);
             const parts = [
-                news.author,
-                news.statPraise ? `${news.statPraise}点赞` : null,
-                news.statCollect ? `${news.statCollect}收藏` : null,
+                news.templateMaterial.authorName,
+                news.templateMaterial?.statRead ? `${news.templateMaterial?.statRead}阅读` : null,
+                news.templateMaterial?.statPraise ? `${news.templateMaterial?.statPraise}点赞` : null,
+                news.templateMaterial?.statCollect ? `${news.templateMaterial?.statCollect}收藏` : null,
             ].filter(Boolean);
             return {
                 id: hashId,
-                title: news.title,
-                url: news.url,
-                pubDate: news.timestamp,
+                title: news.templateMaterial.widgetTitle,
+                url: fullUrl,
+                pubDate: news.templateMaterial.publishTime,
                 extra: {
                     info: parts.join("  |  "),
-                    hover: news.head_pic,
+                    hover: news.templateMaterial.widgetImage,
                 },
             };
         })
