@@ -463,6 +463,23 @@ export const originSources = {
         color: "green",
         type: "hottest",
         home: "https://www.freebuf.com/",
+        desc: "数据抓取受限，内容可能无法正常加载",
+    },
+    seebug: {
+        name: "Seebug Paper",
+        column: "china",
+        title: "安全研究",
+        color: "blue",
+        home: "https://paper.seebug.org/",
+        interval: Time.Slow,
+    },
+    xianzhishe: {
+        name: "先知社区",
+        column: "china",
+        title: "安全技术",
+        color: "orange",
+        home: "https://xz.aliyun.com/",
+        interval: Time.Slow,
     },
     qqvideo: {
         name: "腾讯视频",

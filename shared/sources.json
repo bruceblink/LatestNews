@@ -533,9 +533,26 @@
     "interval": 600000,
     "color": "green",
     "type": "hottest",
+    "desc": "数据抓取受限，内容可能无法正常加载",
     "column": "china",
     "home": "https://www.freebuf.com/",
     "title": "网络安全"
+  },
+  "seebug": {
+    "name": "Seebug Paper",
+    "interval": 3600000,
+    "color": "blue",
+    "column": "china",
+    "home": "https://paper.seebug.org/",
+    "title": "安全研究"
+  },
+  "xianzhishe": {
+    "name": "先知社区",
+    "interval": 3600000,
+    "color": "orange",
+    "column": "china",
+    "home": "https://xz.aliyun.com/",
+    "title": "安全技术"
   },
   "qqvideo": {
     "name": "腾讯视频",
