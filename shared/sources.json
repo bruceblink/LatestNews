@@ -677,5 +677,23 @@
     "column": "world",
     "home": "https://www.jiqizhixin.com",
     "title": "人工智能"
+  },
+  "mikanani": {
+    "name": "蜜柑计划",
+    "interval": 3600000,
+    "color": "orange",
+    "type": "realtime",
+    "column": "china",
+    "home": "https://mikanani.me/",
+    "title": "动漫-今日更新"
+  },
+  "agedm": {
+    "name": "AGE动漫",
+    "interval": 3600000,
+    "color": "purple",
+    "type": "realtime",
+    "column": "china",
+    "home": "https://www.agedm.vip/",
+    "title": "今日更新"
   }
 }
