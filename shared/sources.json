@@ -542,6 +542,7 @@
     "name": "Seebug Paper",
     "interval": 3600000,
     "color": "blue",
+    "type": "hottest",
     "column": "china",
     "home": "https://paper.seebug.org/",
     "title": "安全研究"
@@ -550,6 +551,7 @@
     "name": "先知社区",
     "interval": 3600000,
     "color": "orange",
+    "type": "hottest",
     "column": "china",
     "home": "https://xz.aliyun.com/",
     "title": "安全技术"
