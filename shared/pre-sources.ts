@@ -573,6 +573,24 @@ export const originSources = {
         type: "hottest",
         home: "https://www.jiqizhixin.com",
     },
+    mikanani: {
+        name: "蜜柑计划",
+        column: "china",
+        title: "动漫-今日更新",
+        color: "orange",
+        type: "realtime",
+        interval: Time.Slow,
+        home: "https://mikanani.me/",
+    },
+    agedm: {
+        name: "AGE动漫",
+        column: "china",
+        title: "今日更新",
+        color: "purple",
+        type: "realtime",
+        interval: Time.Slow,
+        home: "https://www.agedm.vip/",
+    },
 } as const satisfies Record<string, OriginSource>;
 
 export function genSources() {
