@@ -3,12 +3,13 @@ import type { SourceHealthStatus } from "~/hooks/useSourceHealth";
 
 import clsx from "clsx";
 import { useWindowSize } from "react-use";
+import { useHistory } from "~/hooks/useHistory";
 import dataSources from "@shared/data-sources.ts";
 import { useNewsSource } from "~/hooks/useNewsSource";
 import { useRelativeTime } from "~/hooks/useRelativeTime.ts";
 import { CardHeader } from "~/components/column/cardHeader.tsx";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import React, { useRef, useState, useEffect, forwardRef, useCallback, useImperativeHandle } from "react";
 
 import { OverlayScrollbar } from "../common/overlay-scrollbar";
 
@@ -102,11 +103,11 @@ function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
 function RenderNewsList(id: SourceID, items: any[]) {
     switch (dataSources[id].type) {
         case "hottest":
-            return <NewsListHot items={items} />;
+            return <NewsListHot id={id} items={items} />;
         case "realtime":
-            return <NewsListTimeLine items={items} />;
+            return <NewsListTimeLine id={id} items={items} />;
         default:
-            return <NewsListHot items={items} />;
+            return <NewsListHot id={id} items={items} />;
     }
 }
 
@@ -167,8 +168,15 @@ function NewsUpdatedTime({ date }: { date: string | number }) {
     return <>{relativeTime}</>;
 }
 
-function NewsListHot({ items }: { items: NewsItem[] }) {
+function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
     const { width } = useWindowSize();
+    const { addHistory } = useHistory();
+    const handleClick = useCallback(
+        (item: NewsItem) => {
+            addHistory(id, item.id, item.title, item.url);
+        },
+        [id, addHistory]
+    );
     return (
         <ol className="flex flex-col gap-2">
             {items?.map((item, i) => (
@@ -177,6 +185,7 @@ function NewsListHot({ items }: { items: NewsItem[] }) {
                     target="_blank"
                     key={item.id}
                     title={item.extra?.hover}
+                    onClick={() => handleClick(item)}
                     className={clsx(
                         "flex gap-2 items-center items-stretch relative cursor-pointer [&_*]:cursor-pointer transition-all",
                         "hover:bg-neutral-400/10 rounded-md pr-1 visited:(text-neutral-400)"
@@ -202,8 +211,15 @@ function NewsListHot({ items }: { items: NewsItem[] }) {
     );
 }
 
-function NewsListTimeLine({ items }: { items: NewsItem[] }) {
+function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
     const { width } = useWindowSize();
+    const { addHistory } = useHistory();
+    const handleClick = useCallback(
+        (item: NewsItem) => {
+            addHistory(id, item.id, item.title, item.url);
+        },
+        [id, addHistory]
+    );
     return (
         <ol className="border-s border-neutral-400/50 flex flex-col ml-1">
             {items?.map((item) => (
@@ -228,6 +244,7 @@ function NewsListTimeLine({ items }: { items: NewsItem[] }) {
                         title={item.extra?.hover}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => handleClick(item)}
                     >
                         {item.title}
                     </a>
