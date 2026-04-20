@@ -86,7 +86,7 @@ function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
                 }}
                 defer
             >
-                <div className={clsx("transition-opacity-500", isFetching && "op-20")}>
+                <div className={clsx("transition-opacity-500", isFetching && "op-50")}>
                     {!!data?.items?.length && RenderNewsList(id, data.items)}
                 </div>
             </OverlayScrollbar>

@@ -83,7 +83,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                     />
                 )}
                 <button
-                    title="isFocused"
+                    title={isFocused ? "取消关注" : "加入关注"}
                     type="button"
                     className={clsx("btn", isFocused ? "i-ph:star-fill" : "i-ph:star-duotone")}
                     onClick={toggleFocus}

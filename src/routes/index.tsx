@@ -81,6 +81,12 @@ function IndexComponent() {
     );
 
     const applyFocusPreset = (presetName: string, sources: SourceID[]) => {
+        if (
+            focusSources.length > 0 &&
+            !window.confirm(`应用"${presetName}"将替换当前 ${focusSources.length} 个关注源，是否继续？`)
+        ) {
+            return;
+        }
         setFocusSources(sources);
         toaster(`${presetName} 已应用到关注栏`, { type: "success" });
     };
@@ -129,7 +135,11 @@ function IndexComponent() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="mt-1 text-xs op-60">{source.id}</div>
+                                                {sourceMeta.desc && (
+                                                    <div className="mt-1 text-xs op-60 line-clamp-1">
+                                                        {sourceMeta.desc}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <button
