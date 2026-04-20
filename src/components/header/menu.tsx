@@ -94,11 +94,6 @@ export function Menu() {
         void navigate({ to: "/health" });
     };
 
-    const goToHistoryPage = () => {
-        show(false);
-        void navigate({ to: "/history" });
-    };
-
     const handleManualSync = async () => {
         if (!loggedIn) {
             login();
@@ -249,10 +244,6 @@ export function Menu() {
                             <li onClick={goToHealthPage}>
                                 <span className="i-ph:heartbeat-duotone inline-block" />
                                 <span>数据源健康</span>
-                            </li>
-                            <li onClick={goToHistoryPage}>
-                                <span className="i-ph:clock-counter-clockwise-duotone inline-block" />
-                                <span>阅读历史</span>
                             </li>
                             {/* <ThemeToggle /> */}
                             <li
