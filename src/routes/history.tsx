@@ -1,9 +1,19 @@
 import clsx from "clsx";
-import { useState } from "react";
 import { useTitle } from "react-use";
+import { useMemo, useState } from "react";
 import { useHistory } from "~/hooks/useHistory";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
+
+function getDateLabel(ts: number): string {
+    const now = new Date();
+    const d = new Date(ts);
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const yesterdayStart = todayStart - 86400000;
+    if (d.getTime() >= todayStart) return "今天";
+    if (d.getTime() >= yesterdayStart) return "昨天";
+    return `${d.getFullYear() === now.getFullYear() ? "" : `${d.getFullYear()}年`}${d.getMonth() + 1}月${d.getDate()}日`;
+}
 
 export const Route = createFileRoute("/history")({
     component: HistoryPage,
@@ -63,6 +73,17 @@ function HistoryPage() {
           )
         : history;
 
+    // 按日期分组
+    const groups = useMemo(() => {
+        const map = new Map<string, typeof filtered>();
+        for (const item of filtered) {
+            const label = getDateLabel(item.readAt);
+            if (!map.has(label)) map.set(label, []);
+            map.get(label)!.push(item);
+        }
+        return Array.from(map.entries());
+    }, [filtered]);
+
     const handleClearAll = () => {
         if (history.length === 0) return;
         if (!window.confirm(`确认清空全部 ${history.length} 条阅读历史？`)) return;
@@ -115,16 +136,23 @@ function HistoryPage() {
             )}
 
             {filtered.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                    {filtered.map((item) => (
-                        <HistoryItem
-                            key={`${item.url}-${item.readAt}`}
-                            title={item.title}
-                            url={item.url}
-                            sourceName={item.sourceName}
-                            readAt={item.readAt}
-                            onRemove={() => removeHistory(item.url)}
-                        />
+                <div className="flex flex-col gap-5">
+                    {groups.map(([label, items]) => (
+                        <div key={label}>
+                            <div className="mb-2 px-1 text-xs font-semibold op-50 tracking-wide">{label}</div>
+                            <div className="flex flex-col gap-2">
+                                {items.map((item) => (
+                                    <HistoryItem
+                                        key={`${item.url}-${item.readAt}`}
+                                        title={item.title}
+                                        url={item.url}
+                                        sourceName={item.sourceName}
+                                        readAt={item.readAt}
+                                        onRemove={() => removeHistory(item.url)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
                     ))}
                 </div>
             ) : (
