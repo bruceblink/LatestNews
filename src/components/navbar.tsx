@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useMemo } from "react";
 import { useAtomValue } from "jotai";
+import { getTodayStart } from "~/utils/date";
 import { currentColumnIDAtom } from "~/atoms";
 import { useHistory } from "~/hooks/useHistory";
 import { useSearchBar } from "~/hooks/useSearch.ts";
@@ -15,9 +16,8 @@ export function NavBar() {
     const isHistoryActive = pathname === "/history";
 
     const todayCount = useMemo(() => {
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-        return history.filter((item) => item.readAt >= start.getTime()).length;
+        const start = getTodayStart();
+        return history.filter((item) => item.readAt >= start).length;
     }, [history]);
 
     return (

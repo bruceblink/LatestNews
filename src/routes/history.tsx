@@ -1,19 +1,10 @@
 import clsx from "clsx";
 import { useTitle } from "react-use";
 import { useMemo, useState } from "react";
+import { getDateLabel } from "~/utils/date";
 import { useHistory } from "~/hooks/useHistory";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
-
-function getDateLabel(ts: number): string {
-    const now = new Date();
-    const d = new Date(ts);
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const yesterdayStart = todayStart - 86400000;
-    if (d.getTime() >= todayStart) return "今天";
-    if (d.getTime() >= yesterdayStart) return "昨天";
-    return `${d.getFullYear() === now.getFullYear() ? "" : `${d.getFullYear()}年`}${d.getMonth() + 1}月${d.getDate()}日`;
-}
 
 export const Route = createFileRoute("/history")({
     component: HistoryPage,
@@ -65,21 +56,21 @@ function HistoryPage() {
     const { history, clearHistory, removeHistory } = useHistory();
     const [keyword, setKeyword] = useState("");
 
-    const filtered = keyword.trim()
-        ? history.filter(
-              (item) =>
-                  item.title.toLowerCase().includes(keyword.trim().toLowerCase()) ||
-                  item.sourceName.toLowerCase().includes(keyword.trim().toLowerCase())
-          )
-        : history;
+    const filtered = useMemo(() => {
+        const kw = keyword.trim().toLowerCase();
+        if (!kw) return history;
+        return history.filter(
+            (item) => item.title.toLowerCase().includes(kw) || item.sourceName.toLowerCase().includes(kw)
+        );
+    }, [history, keyword]);
 
-    // 按日期分组
     const groups = useMemo(() => {
         const map = new Map<string, typeof filtered>();
         for (const item of filtered) {
             const label = getDateLabel(item.readAt);
-            if (!map.has(label)) map.set(label, []);
-            map.get(label)!.push(item);
+            const group = map.get(label) ?? [];
+            map.set(label, group);
+            group.push(item);
         }
         return Array.from(map.entries());
     }, [filtered]);
