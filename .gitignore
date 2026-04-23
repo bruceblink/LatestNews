@@ -16,3 +16,5 @@ package-lock.json
 .specstory/
 /generated/
 .idea/
+.vscode/
+.claude/
