@@ -94,7 +94,7 @@ function IndexComponent() {
     return (
         <>
             {activeSources.length > 0 && (
-                <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-primary/6 p-4 shadow shadow-primary/10">
+                <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-900/80 border border-zinc-700/40 p-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                         <div>
                             <h2 className="m-0 text-lg font-semibold">活跃源推荐</h2>
@@ -109,7 +109,10 @@ function IndexComponent() {
                             const sourceMeta = dataSources[source.id];
 
                             return (
-                                <article key={source.id} className="rounded-xl bg-base/80 p-3 shadow shadow-primary/5">
+                                <article
+                                    key={source.id}
+                                    className="rounded-xl bg-zinc-800/60 border border-zinc-700/30 p-3 transition-all hover:border-zinc-600/50"
+                                >
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex gap-3">
                                             <a
@@ -128,7 +131,7 @@ function IndexComponent() {
                                                         <span
                                                             className={clsx(
                                                                 "rounded px-1.5 py-0.5 text-xs",
-                                                                `color-${sourceMeta.color} bg-base op-80 bg-op-50!`
+                                                                `color-${sourceMeta.color} bg-zinc-800 op-90`
                                                             )}
                                                         >
                                                             {sourceMeta.title}
@@ -147,8 +150,8 @@ function IndexComponent() {
                                             className={clsx(
                                                 "rounded-full px-3 py-1 text-xs transition-all",
                                                 isFocused(source.id)
-                                                    ? "bg-primary text-white"
-                                                    : "bg-primary/10 text-primary-700 dark:text-primary-300"
+                                                    ? "bg-cyan-500 text-zinc-900 font-semibold"
+                                                    : "bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
                                             )}
                                             onClick={() => toggleFocus(source.id)}
                                         >
@@ -156,13 +159,13 @@ function IndexComponent() {
                                         </button>
                                     </div>
                                     <div className="mt-3 flex flex-wrap gap-2 text-xs op-70">
-                                        <span className="rounded-full bg-neutral-500/8 px-2 py-1">
+                                        <span className="rounded-full bg-zinc-700/40 px-2 py-1">
                                             近期返回 {source.lastItemCount ?? 0} 条
                                         </span>
-                                        <span className="rounded-full bg-neutral-500/8 px-2 py-1">
+                                        <span className="rounded-full bg-zinc-700/40 px-2 py-1">
                                             成功 {source.successCount} 次
                                         </span>
-                                        <span className="rounded-full bg-neutral-500/8 px-2 py-1">
+                                        <span className="rounded-full bg-zinc-700/40 px-2 py-1">
                                             状态 {source.status === "healthy" ? "稳定" : "待观察"}
                                         </span>
                                     </div>
@@ -172,7 +175,7 @@ function IndexComponent() {
                     </div>
                 </section>
             )}
-            <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-base/80 p-4 shadow shadow-primary/5">
+            <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-900/60 border border-zinc-700/30 p-4">
                 <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                     <div>
                         <h2 className="m-0 text-lg font-semibold">快速关注预设</h2>
@@ -182,19 +185,22 @@ function IndexComponent() {
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
                     {focusPresets.map((preset) => (
-                        <article key={preset.id} className="rounded-xl bg-primary/6 p-4 shadow shadow-primary/5">
+                        <article
+                            key={preset.id}
+                            className="rounded-xl bg-zinc-800/60 border border-zinc-700/30 p-4 transition-all hover:border-cyan-500/20"
+                        >
                             <div className="font-semibold">{preset.name}</div>
                             <div className="mt-2 text-sm op-75">{preset.description}</div>
                             <div className="mt-3 flex flex-wrap gap-2 text-xs op-70">
                                 {preset.sources.slice(0, 4).map((sourceId) => (
-                                    <span key={sourceId} className="rounded-full bg-base/80 px-2 py-1">
+                                    <span key={sourceId} className="rounded-full bg-zinc-700/40 px-2 py-1">
                                         {dataSources[sourceId].name}
                                     </span>
                                 ))}
                             </div>
                             <button
                                 type="button"
-                                className="mt-4 rounded-full bg-primary px-4 py-2 text-sm text-white transition-all hover:opacity-90"
+                                className="mt-4 rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400"
                                 onClick={() => applyFocusPreset(preset.name, preset.sources)}
                             >
                                 立即使用

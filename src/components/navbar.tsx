@@ -23,8 +23,9 @@ export function NavBar() {
     return (
         <span
             className={clsx([
-                "flex p-3 rounded-2xl bg-primary/1 text-sm",
-                "shadow shadow-primary/20 hover:shadow-primary/50 transition-shadow-500",
+                "flex p-1.5 rounded-xl text-sm",
+                "bg-zinc-800/60 border border-zinc-700/40",
+                "backdrop-blur-sm",
             ])}
         >
             {fixedColumnIds.map((columnId) => (
@@ -33,8 +34,10 @@ export function NavBar() {
                     to="/c/$column"
                     params={{ column: columnId }}
                     className={clsx(
-                        "px-2 hover:(bg-primary/10 rounded-md) cursor-pointer transition-all",
-                        currentId === columnId ? "color-primary font-bold" : "op-70 dark:op-90"
+                        "px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
+                        currentId === columnId
+                            ? "bg-cyan-500/15 text-cyan-300 font-semibold shadow-[0_0_12px_rgba(6,182,212,0.2)]"
+                            : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50"
                     )}
                 >
                     {metadata[columnId].name}
@@ -43,13 +46,15 @@ export function NavBar() {
             <Link
                 to="/history"
                 className={clsx(
-                    "relative px-2 hover:(bg-primary/10 rounded-md) cursor-pointer transition-all",
-                    isHistoryActive ? "color-primary font-bold" : "op-70 dark:op-90"
+                    "relative px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
+                    isHistoryActive
+                        ? "bg-cyan-500/15 text-cyan-300 font-semibold shadow-[0_0_12px_rgba(6,182,212,0.2)]"
+                        : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50"
                 )}
             >
                 历史
                 {todayCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 min-w-4 h-4 rounded-full bg-primary text-white text-[10px] flex items-center justify-center px-0.5">
+                    <span className="absolute -right-0.5 -top-0.5 min-w-4 h-4 rounded-full bg-cyan-500 text-zinc-900 text-[9px] font-bold flex items-center justify-center px-0.5">
                         {todayCount > 99 ? "99+" : todayCount}
                     </span>
                 )}
@@ -58,8 +63,8 @@ export function NavBar() {
                 type="button"
                 onClick={() => toggle(true)}
                 className={clsx(
-                    "px-2 hover:(bg-primary/10 rounded-md) op-70 dark:op-90",
-                    "cursor-pointer transition-all"
+                    "px-3 py-1 rounded-lg text-sm cursor-pointer transition-all",
+                    "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50"
                 )}
             >
                 更多

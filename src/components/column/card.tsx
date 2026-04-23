@@ -46,9 +46,10 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
                     "flex flex-col h-500px rounded-2xl p-4 cursor-default",
                     "transition-opacity-300",
                     isDragging && "op-50",
-                    healthStatus === "failing" && "ring-1 ring-red-500/35 saturate-80 op-88",
+                    healthStatus === "failing" && "ring-1 ring-red-500/30 saturate-85 op-90",
                     healthStatus === "idle" && "ring-1 ring-neutral-500/20",
-                    `bg-${dataSources[id].color}-500 dark:bg-${dataSources[id].color} bg-op-40!`
+                    `bg-${dataSources[id].color}-500 dark:bg-${dataSources[id].color} bg-op-4!`,
+                    "border border-zinc-700/35"
                 )}
                 style={{
                     transformOrigin: "50% 50%",
@@ -78,9 +79,9 @@ function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
 
             <OverlayScrollbar
                 className={clsx([
-                    "h-full p-2 overflow-y-auto rounded-2xl bg-base bg-op-70!",
+                    "h-full p-2 overflow-y-auto rounded-xl bg-zinc-900/72",
+                    "border border-zinc-800/70",
                     isFetching && "animate-pulse",
-                    `sprinkle-${dataSources[id].color}`,
                 ])}
                 options={{
                     overflow: { x: "hidden" },
@@ -188,12 +189,12 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
                     onClick={() => handleClick(item)}
                     className={clsx(
                         "flex gap-2 items-center items-stretch relative cursor-pointer [&_*]:cursor-pointer transition-all",
-                        "hover:bg-neutral-400/10 rounded-md pr-1 visited:(text-neutral-400)"
+                        "hover:bg-cyan-500/8 rounded-md pr-1 visited:(text-zinc-500)"
                     )}
                 >
                     <span
                         className={clsx(
-                            "bg-neutral-400/10 min-w-6 flex justify-center items-center rounded-md text-sm"
+                            "bg-zinc-700/40 text-zinc-400 min-w-6 flex justify-center items-center rounded-md text-sm"
                         )}
                     >
                         {i + 1}
@@ -201,7 +202,7 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
                     {!!item.extra?.diff && <DiffNumber diff={item.extra.diff} />}
                     <span className="self-start line-height-none">
                         <span className="mr-2 text-base">{item.title}</span>
-                        <span className="text-xs text-neutral-400/80 truncate align-middle">
+                        <span className="text-xs text-zinc-500 truncate align-middle">
                             <ExtraInfo item={item} />
                         </span>
                     </span>
@@ -221,23 +222,23 @@ function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
         [id, addHistory]
     );
     return (
-        <ol className="border-s border-neutral-400/50 flex flex-col ml-1">
+        <ol className="border-s border-zinc-700/60 flex flex-col ml-1">
             {items?.map((item) => (
                 <li key={`${item.id}-${item.pubDate || item?.extra?.date || ""}`} className="flex flex-col">
-                    <span className="flex items-center gap-1 text-neutral-400/50 ml--1px">
+                    <span className="flex items-center gap-1 text-zinc-600 ml--1px">
                         <span className="">-</span>
-                        <span className="text-xs text-neutral-400/80">
+                        <span className="text-xs text-zinc-500">
                             {(item.pubDate || item?.extra?.date) && (
                                 <NewsUpdatedTime date={(item.pubDate || item?.extra?.date)!} />
                             )}
                         </span>
-                        <span className="text-xs text-neutral-400/80">
+                        <span className="text-xs text-zinc-500">
                             <ExtraInfo item={item} />
                         </span>
                     </span>
                     <a
                         className={clsx(
-                            "ml-2 px-1 hover:bg-neutral-400/10 rounded-md visited:(text-neutral-400/80)",
+                            "ml-2 px-1 hover:bg-cyan-500/8 rounded-md visited:(text-zinc-500)",
                             "cursor-pointer [&_*]:cursor-pointer transition-all"
                         )}
                         href={width < 768 ? item.mobileUrl || item.url : item.url}

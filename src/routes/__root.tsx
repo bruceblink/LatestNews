@@ -38,7 +38,13 @@ function RootComponent() {
                 className={clsx([!isMobile && "px-4", "h-full overflow-x-auto", "md:(px-10)", "lg:(px-24)"])}
             >
                 <header
-                    className={clsx(["grid items-center py-4 px-5", "lg:(py-6)", "sticky top-0 z-10 backdrop-blur-md"])}
+                    className={clsx([
+                        "grid items-center py-3 px-5",
+                        "lg:(py-4)",
+                        "sticky top-0 z-10",
+                        "backdrop-blur-xl bg-[#0a0e1a]/80",
+                        "border-b border-cyan-500/10",
+                    ])}
                     style={{
                         gridTemplateColumns: "50px auto 50px",
                     }}
@@ -56,7 +62,7 @@ function RootComponent() {
                 >
                     <Outlet />
                 </main>
-                <footer className="py-6 flex flex-col items-center justify-center text-sm text-neutral-500 font-mono">
+                <footer className="py-6 flex flex-col items-center justify-center text-sm text-cyan-500/40 font-mono border-t border-cyan-500/8">
                     <Footer />
                 </footer>
             </GlobalOverlayScrollbar>
@@ -84,14 +90,12 @@ function PwaStatusBanner({
     if (!isOffline && !needRefresh) return null;
 
     return (
-        <section className="mb-3 flex flex-col gap-2 rounded-2xl bg-primary/6 px-4 py-3 shadow shadow-primary/8 md:flex-row md:items-center md:justify-between">
+        <section className="mb-3 flex flex-col gap-2 rounded-xl bg-cyan-500/5 px-4 py-3 shadow shadow-cyan-500/10 border border-cyan-500/15 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
                 <span
                     className={clsx(
                         "mt-0.5 text-lg",
-                        needRefresh
-                            ? "i-ph:rocket-launch-duotone text-primary-600 dark:text-primary-300"
-                            : "i-ph:wifi-x-duotone text-amber-600 dark:text-amber-300"
+                        needRefresh ? "i-ph:rocket-launch-duotone text-cyan-400" : "i-ph:wifi-x-duotone text-amber-400"
                     )}
                 />
                 <div>
@@ -106,7 +110,7 @@ function PwaStatusBanner({
             {needRefresh && (
                 <button
                     type="button"
-                    className="rounded-full bg-primary px-4 py-2 text-sm text-white transition-all hover:opacity-90"
+                    className="rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400"
                     onClick={() => void onUpdate()}
                 >
                     立即更新
