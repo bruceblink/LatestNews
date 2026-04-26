@@ -23,8 +23,9 @@ export function NavBar() {
     return (
         <span
             className={clsx([
-                "flex p-3 rounded-2xl bg-primary/1 text-sm",
-                "shadow shadow-primary/20 hover:shadow-primary/50 transition-shadow-500",
+                "flex p-1 rounded-xl text-sm",
+                "bg-zinc-50/92 dark:bg-zinc-900/68 border border-zinc-200/90 dark:border-zinc-700/30",
+                "backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]",
             ])}
         >
             {fixedColumnIds.map((columnId) => (
@@ -33,8 +34,10 @@ export function NavBar() {
                     to="/c/$column"
                     params={{ column: columnId }}
                     className={clsx(
-                        "px-2 hover:(bg-primary/10 rounded-md) cursor-pointer transition-all",
-                        currentId === columnId ? "color-primary font-bold" : "op-70 dark:op-90"
+                        "px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
+                        currentId === columnId
+                            ? "bg-white/95 dark:bg-zinc-800/85 text-zinc-900 dark:text-zinc-200 border border-zinc-300/85 dark:border-zinc-600/45"
+                            : "text-zinc-700 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/75 dark:hover:bg-zinc-800/55"
                     )}
                 >
                     {metadata[columnId].name}
@@ -43,13 +46,15 @@ export function NavBar() {
             <Link
                 to="/history"
                 className={clsx(
-                    "relative px-2 hover:(bg-primary/10 rounded-md) cursor-pointer transition-all",
-                    isHistoryActive ? "color-primary font-bold" : "op-70 dark:op-90"
+                    "relative px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
+                    isHistoryActive
+                        ? "bg-white/95 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 border border-zinc-300/80 dark:border-zinc-600/50"
+                        : "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
                 )}
             >
                 历史
                 {todayCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 min-w-4 h-4 rounded-full bg-primary text-white text-[10px] flex items-center justify-center px-0.5">
+                    <span className="absolute -right-1 -top-1 min-w-4.5 h-4.5 rounded-full bg-red-500/92 dark:bg-blue-400/88 text-zinc-900 text-[10px] font-semibold leading-none flex items-center justify-center px-1 ring-1 ring-white/80 dark:ring-zinc-900/70 shadow-sm">
                         {todayCount > 99 ? "99+" : todayCount}
                     </span>
                 )}
@@ -58,8 +63,8 @@ export function NavBar() {
                 type="button"
                 onClick={() => toggle(true)}
                 className={clsx(
-                    "px-2 hover:(bg-primary/10 rounded-md) op-70 dark:op-90",
-                    "cursor-pointer transition-all"
+                    "px-3 py-1 rounded-lg text-sm cursor-pointer transition-all",
+                    "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
                 )}
             >
                 更多

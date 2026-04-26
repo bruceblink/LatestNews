@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useAtom } from "jotai";
+import { useMedia } from "react-use";
+import { useMemo, useEffect } from "react";
 import { atomWithStorage } from "jotai/utils";
-import { useAtom } from "jotai/react/useAtom";
-import { useMedia, useUpdateEffect } from "react-use";
 
 export declare type ColorScheme = "dark" | "light" | "auto";
 
@@ -15,7 +15,7 @@ export function useDark() {
         [colorScheme, prefersDarkMode]
     );
 
-    useUpdateEffect(() => {
+    useEffect(() => {
         document.documentElement.classList.toggle("dark", isDark);
     }, [isDark]);
 

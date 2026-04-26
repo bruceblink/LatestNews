@@ -11,10 +11,11 @@ concurrency:
 
 jobs:
   nightly:
-    name: Check and build nightly
+    name: Check, build and publish nightly
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: write
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -36,6 +37,35 @@ jobs:
 
       - name: Build project
         run: pnpm build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=nightly
+            type=raw,value=nightly-${{ github.run_number }}
+            type=sha,prefix=sha-
+
+      - name: Build and push image to GHCR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Upload nightly artifact
         uses: actions/upload-artifact@v4

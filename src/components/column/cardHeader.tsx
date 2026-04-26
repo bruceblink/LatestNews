@@ -18,9 +18,6 @@ interface CardHeaderProps {
     setHandleRef?: (el: HTMLDivElement | null) => void;
 }
 
-/**
- * 新闻源顶部栏
- */
 export function CardHeader({ id, data, healthStatus, isFetching, isError, setHandleRef }: CardHeaderProps) {
     const { refresh } = useRefetch();
     const { enableLogin } = useLoginState();
@@ -32,7 +29,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
         <div className={clsx("flex justify-between mx-2 mt-0 mb-2 items-center")}>
             <div className="flex gap-2 items-center">
                 <a
-                    className={clsx("w-8 h-8 rounded-full bg-cover")}
+                    className="w-8 h-8 rounded-full bg-cover ring-1 ring-zinc-300 dark:ring-zinc-700/60"
                     target="_blank"
                     href={ds.home}
                     title={ds.desc}
@@ -42,7 +39,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 />
                 <span className="flex flex-col">
                     <span className="flex items-center gap-2">
-                        <span className="text-xl font-bold" title={ds.desc}>
+                        <span className="text-base font-semibold text-zinc-800 dark:text-zinc-200/90" title={ds.desc}>
                             {ds.name}
                         </span>
                         {healthStatusLabel && (
@@ -50,8 +47,8 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                                 className={clsx(
                                     "rounded px-1.5 py-0.5 text-xs",
                                     healthStatus === "failing"
-                                        ? "bg-red-500/10 text-red-700 dark:text-red-300"
-                                        : "bg-neutral-500/10 text-neutral-600 dark:text-neutral-300"
+                                        ? "bg-red-500/8 text-red-400/85"
+                                        : "bg-zinc-200/75 dark:bg-zinc-700/35 text-zinc-700 dark:text-zinc-500"
                                 )}
                             >
                                 {healthStatusLabel}
@@ -59,24 +56,27 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                         )}
                         {ds?.title && (
                             <span
-                                className={clsx("text-sm", `color-${ds.color} bg-base op-80 bg-op-50\\! px-1 rounded`)}
+                                className={clsx(
+                                    "text-xs rounded px-1 py-0.5",
+                                    `color-${ds.color} bg-zinc-100/90 dark:bg-zinc-800/70 op-75`
+                                )}
                             >
                                 {ds.title}
                             </span>
                         )}
                     </span>
-                    <span className="text-xs op-70">
+                    <span className="text-xs text-zinc-600">
                         <UpdatedTime isError={isError} updatedTime={data?.updatedTime} />
                     </span>
                 </span>
             </div>
-            <div className={clsx("flex gap-2 text-lg", `color-${ds.color}`)}>
+            <div className="flex gap-2 text-lg text-zinc-600/80 dark:text-zinc-500/60">
                 {enableLogin.enable && (
                     <button
                         title="isFetching"
                         type="button"
                         className={clsx(
-                            "btn i-ph:arrow-counter-clockwise-duotone",
+                            "btn hover:text-zinc-800 dark:hover:text-cyan-400 i-ph:arrow-counter-clockwise-duotone",
                             isFetching && "animate-spin i-ph:spinner-duotone"
                         )}
                         onClick={() => refresh(id)}
@@ -85,12 +85,18 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 <button
                     title={isFocused ? "取消关注" : "加入关注"}
                     type="button"
-                    className={clsx("btn", isFocused ? "i-ph:star-fill" : "i-ph:star-duotone")}
+                    className={clsx(
+                        "btn hover:text-zinc-800 dark:hover:text-cyan-400",
+                        isFocused ? "i-ph:star-fill text-zinc-700 dark:text-cyan-400" : "i-ph:star-duotone"
+                    )}
                     onClick={toggleFocus}
                 />
                 {/* firefox cannot drag a button */}
                 {setHandleRef && (
-                    <div ref={setHandleRef} className={clsx("btn", "i-ph:dots-six-vertical-duotone", "cursor-grab")} />
+                    <div
+                        ref={setHandleRef}
+                        className="btn hover:text-zinc-800 dark:hover:text-cyan-400 i-ph:dots-six-vertical-duotone cursor-grab"
+                    />
                 )}
             </div>
         </div>

@@ -36,9 +36,9 @@ export default defineConfig({
         ],
     ],
     shortcuts: {
-        "color-base": "color-neutral-800 dark:color-neutral-300",
-        "bg-base": "bg-zinc-200 dark:bg-dark-600",
-        btn: "op50 hover:op85 cursor-pointer transition-all",
+        "color-base": "color-neutral-800 dark:color-neutral-100",
+        "bg-base": "bg-zinc-50 dark:bg-zinc-900",
+        btn: "op50 hover:op90 cursor-pointer transition-all",
     },
     safelist: [
         ...["orange", ...new Set(Object.values(dataSources).map((k) => k.color))]
@@ -53,7 +53,7 @@ export default defineConfig({
     ],
     extendTheme: (theme) => {
         // @ts-expect-error >_<
-        theme.colors.primary = theme.colors.red;
+        theme.colors.primary = theme.colors.cyan;
         return theme;
     },
 });
