@@ -24,8 +24,8 @@ export function NavBar() {
         <span
             className={clsx([
                 "flex p-1 rounded-xl text-sm",
-                "bg-zinc-900/70 border border-zinc-700/35",
-                "backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
+                "bg-zinc-50/90 dark:bg-zinc-900/72 border border-zinc-200/90 dark:border-zinc-700/35",
+                "backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
             ])}
         >
             {fixedColumnIds.map((columnId) => (
@@ -36,8 +36,8 @@ export function NavBar() {
                     className={clsx(
                         "px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
                         currentId === columnId
-                            ? "bg-zinc-800/90 text-zinc-200 border border-zinc-600/50"
-                            : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/55"
+                            ? "bg-white/98 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-200 border border-zinc-300/90 dark:border-zinc-600/50"
+                            : "text-zinc-700 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/75 dark:hover:bg-zinc-800/55"
                     )}
                 >
                     {metadata[columnId].name}
@@ -48,13 +48,13 @@ export function NavBar() {
                 className={clsx(
                     "relative px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
                     isHistoryActive
-                        ? "bg-zinc-800/90 text-zinc-200 border border-zinc-600/50"
-                        : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/55"
+                        ? "bg-white/95 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 border border-zinc-300/80 dark:border-zinc-600/50"
+                        : "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
                 )}
             >
                 历史
                 {todayCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 min-w-4 h-4 rounded-full bg-zinc-200 text-zinc-900 text-[9px] font-bold flex items-center justify-center px-0.5">
+                    <span className="absolute -right-0.5 -top-0.5 min-w-4 h-4 rounded-full bg-zinc-100 dark:bg-zinc-200 text-zinc-900 text-[9px] font-bold flex items-center justify-center px-0.5 border border-zinc-300/80 dark:border-zinc-300/40">
                         {todayCount > 99 ? "99+" : todayCount}
                     </span>
                 )}
@@ -64,7 +64,7 @@ export function NavBar() {
                 onClick={() => toggle(true)}
                 className={clsx(
                     "px-3 py-1 rounded-lg text-sm cursor-pointer transition-all",
-                    "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/55"
+                    "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
                 )}
             >
                 更多

@@ -29,7 +29,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
         <div className={clsx("flex justify-between mx-2 mt-0 mb-2 items-center")}>
             <div className="flex gap-2 items-center">
                 <a
-                    className="w-8 h-8 rounded-full bg-cover ring-1 ring-zinc-700/60"
+                    className="w-8 h-8 rounded-full bg-cover ring-1 ring-zinc-300 dark:ring-zinc-700/60"
                     target="_blank"
                     href={ds.home}
                     title={ds.desc}
@@ -39,7 +39,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 />
                 <span className="flex flex-col">
                     <span className="flex items-center gap-2">
-                        <span className="text-base font-semibold text-zinc-200/90" title={ds.desc}>
+                        <span className="text-base font-semibold text-zinc-800 dark:text-zinc-200/90" title={ds.desc}>
                             {ds.name}
                         </span>
                         {healthStatusLabel && (
@@ -48,7 +48,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                                     "rounded px-1.5 py-0.5 text-xs",
                                     healthStatus === "failing"
                                         ? "bg-red-500/8 text-red-400/85"
-                                        : "bg-zinc-700/35 text-zinc-500"
+                                        : "bg-zinc-200/75 dark:bg-zinc-700/35 text-zinc-700 dark:text-zinc-500"
                                 )}
                             >
                                 {healthStatusLabel}
@@ -58,7 +58,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                             <span
                                 className={clsx(
                                     "text-xs rounded px-1 py-0.5",
-                                    `color-${ds.color} bg-zinc-800/70 op-75`
+                                    `color-${ds.color} bg-zinc-100/90 dark:bg-zinc-800/70 op-75`
                                 )}
                             >
                                 {ds.title}
@@ -70,13 +70,13 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                     </span>
                 </span>
             </div>
-            <div className="flex gap-2 text-lg text-cyan-500/60">
+            <div className="flex gap-2 text-lg text-zinc-600/80 dark:text-zinc-500/60">
                 {enableLogin.enable && (
                     <button
                         title="isFetching"
                         type="button"
                         className={clsx(
-                            "btn hover:text-cyan-400 i-ph:arrow-counter-clockwise-duotone",
+                            "btn hover:text-zinc-800 dark:hover:text-cyan-400 i-ph:arrow-counter-clockwise-duotone",
                             isFetching && "animate-spin i-ph:spinner-duotone"
                         )}
                         onClick={() => refresh(id)}
@@ -86,8 +86,8 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                     title={isFocused ? "取消关注" : "加入关注"}
                     type="button"
                     className={clsx(
-                        "btn hover:text-cyan-400",
-                        isFocused ? "i-ph:star-fill text-cyan-400" : "i-ph:star-duotone"
+                        "btn hover:text-zinc-800 dark:hover:text-cyan-400",
+                        isFocused ? "i-ph:star-fill text-zinc-700 dark:text-cyan-400" : "i-ph:star-duotone"
                     )}
                     onClick={toggleFocus}
                 />
@@ -95,7 +95,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 {setHandleRef && (
                     <div
                         ref={setHandleRef}
-                        className="btn hover:text-cyan-400 i-ph:dots-six-vertical-duotone cursor-grab"
+                        className="btn hover:text-zinc-800 dark:hover:text-cyan-400 i-ph:dots-six-vertical-duotone cursor-grab"
                     />
                 )}
             </div>

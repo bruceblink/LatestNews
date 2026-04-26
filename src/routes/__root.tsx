@@ -42,8 +42,8 @@ function RootComponent() {
                         "grid items-center py-3 px-5",
                         "lg:(py-4)",
                         "sticky top-0 z-10",
-                        "backdrop-blur-xl bg-[#0a0e1a]/80",
-                        "border-b border-zinc-700/30",
+                        "backdrop-blur-xl bg-zinc-50/92 dark:bg-[#0a0e1a]/82",
+                        "border-b border-zinc-200/80 dark:border-zinc-700/30",
                     ])}
                     style={{
                         gridTemplateColumns: "50px auto 50px",
@@ -62,7 +62,7 @@ function RootComponent() {
                 >
                     <Outlet />
                 </main>
-                <footer className="py-6 flex flex-col items-center justify-center text-sm text-cyan-500/40 font-mono border-t border-cyan-500/8">
+                <footer className="py-6 flex flex-col items-center justify-center text-sm text-rose-900/45 dark:text-cyan-500/40 font-mono border-t border-rose-900/10 dark:border-cyan-500/8">
                     <Footer />
                 </footer>
             </GlobalOverlayScrollbar>
@@ -90,7 +90,7 @@ function PwaStatusBanner({
     if (!isOffline && !needRefresh) return null;
 
     return (
-        <section className="mb-3 flex flex-col gap-2 rounded-xl bg-cyan-500/5 px-4 py-3 shadow shadow-cyan-500/10 border border-cyan-500/15 md:flex-row md:items-center md:justify-between">
+        <section className="mb-3 flex flex-col gap-2 rounded-xl bg-blue-500/6 dark:bg-cyan-500/5 px-4 py-3 shadow shadow-blue-500/10 dark:shadow-cyan-500/10 border border-blue-500/20 dark:border-cyan-500/15 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
                 <span
                     className={clsx(

@@ -20,7 +20,7 @@ function GoTop() {
         <button
             type="button"
             title="Go To Top"
-            className={clsx("i-ph:arrow-fat-up-duotone", ok ? "op-65 text-zinc-300 btn" : "op-0")}
+            className={clsx("i-ph:arrow-fat-up-duotone", ok ? "op-65 text-zinc-700 dark:text-zinc-300 btn" : "op-0")}
             onClick={goToTop}
         />
     );
@@ -31,7 +31,7 @@ function Github() {
         <button
             type="button"
             title="Github"
-            className="i-ph:github-logo-duotone btn text-zinc-500/80 hover:text-zinc-300"
+            className="i-ph:github-logo-duotone btn text-zinc-600 dark:text-zinc-500/80 hover:text-zinc-900 dark:hover:text-zinc-300"
             onClick={() => window.open(PROJECT_URL)}
         />
     );
@@ -54,7 +54,7 @@ function Refresh() {
             type="button"
             title="Refresh"
             className={clsx(
-                "btn text-zinc-500/80 hover:text-zinc-300",
+                "btn text-zinc-600 dark:text-zinc-500/80 hover:text-zinc-900 dark:hover:text-zinc-300",
                 isFetching
                     ? "animate-spin i-ph:circle-dashed-duotone text-zinc-300"
                     : "i-ph:arrow-counter-clockwise-duotone"
@@ -74,7 +74,7 @@ function ThemeToggle() {
                 "btn",
                 isDark
                     ? "i-ph:sun-dim-duotone text-zinc-500/80 hover:text-zinc-300"
-                    : "i-ph:moon-stars-duotone text-zinc-600 hover:text-zinc-900"
+                    : "i-ph:moon-stars-duotone text-zinc-700 hover:text-zinc-900"
             )}
             onClick={toggleDark}
         />
@@ -93,17 +93,17 @@ export function Header() {
                         style={{ backgroundImage: "url(/icon.svg)" }}
                     />
                     <span className="text-xl font-brand line-height-none! tracking-tight">
-                        <p className="text-neutral-200">Latest</p>
+                        <p className="text-zinc-700 dark:text-neutral-200">Latest</p>
                         <p className="mt--1">
-                            <span className="text-cyan-400">N</span>
-                            <span className="text-neutral-200">ews</span>
+                            <span className="text-cyan-500 dark:text-cyan-400">N</span>
+                            <span className="text-zinc-700 dark:text-neutral-200">ews</span>
                         </p>
                     </span>
                 </Link>
                 <a
                     target="_blank"
                     href={`${PROJECT_URL}/releases/tag/v${Version}`}
-                    className="btn text-xs ml-2 font-mono text-zinc-600 hover:text-zinc-400 self-end mb-0.5"
+                    className="btn text-xs ml-2 font-mono text-zinc-700 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-400 self-end mb-0.5"
                 >
                     {`v${Version}`}
                 </a>
@@ -113,7 +113,7 @@ export function Header() {
                     <NavBar />
                 </span>
             </span>
-            <span className="justify-self-end flex gap-3 items-center text-xl text-zinc-500/80">
+            <span className="justify-self-end flex gap-3 items-center text-xl text-zinc-600 dark:text-zinc-500/80">
                 <GoTop />
                 {enableLogin.enable && <Refresh />}
                 <ThemeToggle />

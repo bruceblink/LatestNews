@@ -94,15 +94,15 @@ function IndexComponent() {
     return (
         <>
             {activeSources.length > 0 && (
-                <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-900/80 border border-zinc-700/40 p-4">
+                <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-50/92 dark:bg-zinc-900/80 border border-zinc-200/90 dark:border-zinc-700/40 p-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <h2 className="m-0 text-lg font-semibold">活跃源推荐</h2>
-                            <p className="m-0 mt-1 text-sm op-70">
+                            <h2 className="m-0 text-lg font-semibold text-zinc-800 dark:text-zinc-100">活跃源推荐</h2>
+                            <p className="m-0 mt-1 text-sm text-zinc-600 dark:text-zinc-500">
                                 优先展示最近更新稳定、内容量较高的数据源，可一键加入关注。
                             </p>
                         </div>
-                        <div className="text-xs op-55">推荐结果每分钟更新一次</div>
+                        <div className="text-xs text-zinc-600 dark:text-zinc-500">推荐结果每分钟更新一次</div>
                     </div>
                     <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                         {activeSources.map((source) => {
@@ -111,7 +111,7 @@ function IndexComponent() {
                             return (
                                 <article
                                     key={source.id}
-                                    className="rounded-xl bg-zinc-800/60 border border-zinc-700/30 p-3 transition-all hover:border-zinc-600/50"
+                                    className="rounded-xl bg-zinc-50/88 dark:bg-zinc-800/60 border border-zinc-200/90 dark:border-zinc-700/30 p-3 transition-all hover:border-zinc-300/80 dark:hover:border-zinc-600/50 hover:bg-zinc-100/75 dark:hover:bg-zinc-800/70"
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex gap-3">
@@ -131,7 +131,7 @@ function IndexComponent() {
                                                         <span
                                                             className={clsx(
                                                                 "rounded px-1.5 py-0.5 text-xs",
-                                                                `color-${sourceMeta.color} bg-zinc-800 op-90`
+                                                                `color-${sourceMeta.color} bg-zinc-100/90 dark:bg-zinc-800 op-90`
                                                             )}
                                                         >
                                                             {sourceMeta.title}
@@ -139,7 +139,7 @@ function IndexComponent() {
                                                     )}
                                                 </div>
                                                 {sourceMeta.desc && (
-                                                    <div className="mt-1 text-xs op-60 line-clamp-1">
+                                                    <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-500 line-clamp-1">
                                                         {sourceMeta.desc}
                                                     </div>
                                                 )}
@@ -151,21 +151,21 @@ function IndexComponent() {
                                                 "rounded-full px-3 py-1 text-xs transition-all",
                                                 isFocused(source.id)
                                                     ? "bg-cyan-500 text-zinc-900 font-semibold"
-                                                    : "bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
+                                                    : "bg-cyan-500/12 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/22"
                                             )}
                                             onClick={() => toggleFocus(source.id)}
                                         >
                                             {isFocused(source.id) ? "已关注" : "加入关注"}
                                         </button>
                                     </div>
-                                    <div className="mt-3 flex flex-wrap gap-2 text-xs op-70">
-                                        <span className="rounded-full bg-zinc-700/40 px-2 py-1">
+                                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
+                                        <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1">
                                             近期返回 {source.lastItemCount ?? 0} 条
                                         </span>
-                                        <span className="rounded-full bg-zinc-700/40 px-2 py-1">
+                                        <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1">
                                             成功 {source.successCount} 次
                                         </span>
-                                        <span className="rounded-full bg-zinc-700/40 px-2 py-1">
+                                        <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1">
                                             状态 {source.status === "healthy" ? "稳定" : "待观察"}
                                         </span>
                                     </div>
@@ -175,25 +175,30 @@ function IndexComponent() {
                     </div>
                 </section>
             )}
-            <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-900/60 border border-zinc-700/30 p-4">
+            <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-50/88 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-zinc-700/30 p-4">
                 <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <h2 className="m-0 text-lg font-semibold">快速关注预设</h2>
-                        <p className="m-0 mt-1 text-sm op-70">先用一组预设快速建立首页关注，再按自己的习惯继续微调。</p>
+                        <h2 className="m-0 text-lg font-semibold text-zinc-800 dark:text-zinc-100">快速关注预设</h2>
+                        <p className="m-0 mt-1 text-sm text-zinc-600 dark:text-zinc-500">
+                            先用一组预设快速建立首页关注，再按自己的习惯继续微调。
+                        </p>
                     </div>
-                    <div className="text-xs op-55">应用后会直接替换当前关注栏内容</div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-500">应用后会直接替换当前关注栏内容</div>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
                     {focusPresets.map((preset) => (
                         <article
                             key={preset.id}
-                            className="rounded-xl bg-zinc-800/60 border border-zinc-700/30 p-4 transition-all hover:border-cyan-500/20"
+                            className="rounded-xl bg-zinc-50/88 dark:bg-zinc-800/60 border border-zinc-200/90 dark:border-zinc-700/30 p-4 transition-all hover:border-zinc-300/80 dark:hover:border-cyan-500/20 hover:bg-zinc-100/75 dark:hover:bg-zinc-800/70"
                         >
-                            <div className="font-semibold">{preset.name}</div>
-                            <div className="mt-2 text-sm op-75">{preset.description}</div>
-                            <div className="mt-3 flex flex-wrap gap-2 text-xs op-70">
+                            <div className="font-semibold text-zinc-800 dark:text-zinc-100">{preset.name}</div>
+                            <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-500">{preset.description}</div>
+                            <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                                 {preset.sources.slice(0, 4).map((sourceId) => (
-                                    <span key={sourceId} className="rounded-full bg-zinc-700/40 px-2 py-1">
+                                    <span
+                                        key={sourceId}
+                                        className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1"
+                                    >
                                         {dataSources[sourceId].name}
                                     </span>
                                 ))}
