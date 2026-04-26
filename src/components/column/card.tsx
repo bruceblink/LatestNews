@@ -48,8 +48,8 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
                     isDragging && "op-50",
                     healthStatus === "failing" && "ring-1 ring-red-500/30 saturate-85 op-90",
                     healthStatus === "idle" && "ring-1 ring-neutral-500/20",
-                    `bg-${dataSources[id].color}-500 dark:bg-${dataSources[id].color} bg-op-12! dark:bg-op-4!`,
-                    "border border-zinc-300/65 dark:border-zinc-700/35"
+                    `bg-${dataSources[id].color}-500 dark:bg-${dataSources[id].color} bg-op-9! dark:bg-op-6!`,
+                    "border border-zinc-300/65 dark:border-zinc-700/30"
                 )}
                 style={{
                     transformOrigin: "50% 50%",
@@ -79,8 +79,8 @@ function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
 
             <OverlayScrollbar
                 className={clsx([
-                    "h-full p-2 overflow-y-auto rounded-xl bg-white/72 dark:bg-zinc-900/72",
-                    "border border-zinc-300/75 dark:border-zinc-800/70",
+                    "h-full p-2 overflow-y-auto rounded-xl bg-zinc-50/76 dark:bg-zinc-900/68",
+                    "border border-zinc-300/70 dark:border-zinc-800/65",
                     isFetching && "animate-pulse",
                 ])}
                 options={{

@@ -85,7 +85,7 @@ function HistoryPage() {
 
     return (
         <section className="mx-auto flex max-w-4xl flex-col gap-4 px-1 md:px-4">
-            <div className="flex flex-col gap-3 rounded-2xl bg-zinc-50/92 dark:bg-zinc-900/80 border border-zinc-200/90 dark:border-zinc-700/40 p-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-3 rounded-2xl bg-zinc-50/90 dark:bg-zinc-900/68 border border-zinc-200/88 dark:border-zinc-700/32 p-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="m-0 text-2xl font-bold text-zinc-800 dark:text-zinc-100">阅读历史</h1>
                     <p className="m-0 mt-2 text-sm text-zinc-600 dark:text-zinc-500">

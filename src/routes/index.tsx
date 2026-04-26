@@ -94,7 +94,7 @@ function IndexComponent() {
     return (
         <>
             {activeSources.length > 0 && (
-                <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-50/92 dark:bg-zinc-900/80 border border-zinc-200/90 dark:border-zinc-700/40 p-4">
+                <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-50/90 dark:bg-zinc-900/68 border border-zinc-200/88 dark:border-zinc-700/32 p-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                         <div>
                             <h2 className="m-0 text-lg font-semibold text-zinc-800 dark:text-zinc-100">活跃源推荐</h2>
@@ -177,7 +177,7 @@ function IndexComponent() {
                     </div>
                 </section>
             )}
-            <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-50/88 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-zinc-700/30 p-4">
+            <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-50/86 dark:bg-zinc-900/62 border border-zinc-200/88 dark:border-zinc-700/30 p-4">
                 <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                     <div>
                         <h2 className="m-0 text-lg font-semibold text-zinc-800 dark:text-zinc-100">快速关注预设</h2>

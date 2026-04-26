@@ -24,8 +24,8 @@ export function NavBar() {
         <span
             className={clsx([
                 "flex p-1 rounded-xl text-sm",
-                "bg-zinc-50/90 dark:bg-zinc-900/72 border border-zinc-200/90 dark:border-zinc-700/35",
-                "backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
+                "bg-zinc-50/92 dark:bg-zinc-900/68 border border-zinc-200/90 dark:border-zinc-700/30",
+                "backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]",
             ])}
         >
             {fixedColumnIds.map((columnId) => (
@@ -36,7 +36,7 @@ export function NavBar() {
                     className={clsx(
                         "px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
                         currentId === columnId
-                            ? "bg-white/98 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-200 border border-zinc-300/90 dark:border-zinc-600/50"
+                            ? "bg-white/95 dark:bg-zinc-800/85 text-zinc-900 dark:text-zinc-200 border border-zinc-300/85 dark:border-zinc-600/45"
                             : "text-zinc-700 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/75 dark:hover:bg-zinc-800/55"
                     )}
                 >
