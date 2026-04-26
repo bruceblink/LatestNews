@@ -43,7 +43,7 @@ function RootComponent() {
                         "lg:(py-4)",
                         "sticky top-0 z-10",
                         "backdrop-blur-xl bg-[#0a0e1a]/80",
-                        "border-b border-cyan-500/10",
+                        "border-b border-zinc-700/30",
                     ])}
                     style={{
                         gridTemplateColumns: "50px auto 50px",

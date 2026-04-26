@@ -36,8 +36,8 @@ export default defineConfig({
         ],
     ],
     shortcuts: {
-        "color-base": "color-neutral-200 dark:color-neutral-100",
-        "bg-base": "bg-zinc-900 dark:bg-zinc-900",
+        "color-base": "color-neutral-800 dark:color-neutral-100",
+        "bg-base": "bg-zinc-50 dark:bg-zinc-900",
         btn: "op50 hover:op90 cursor-pointer transition-all",
     },
     safelist: [

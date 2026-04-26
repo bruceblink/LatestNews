@@ -3,6 +3,7 @@ import type { SourceID } from "@shared/types";
 import clsx from "clsx";
 import { useCallback } from "react";
 import { useAtomValue } from "jotai";
+import { useDark } from "~/hooks/useDark";
 import { Link } from "@tanstack/react-router";
 import { useRefetch } from "~/hooks/useRefetch.ts";
 import { useLoginState } from "~/hooks/useLogin.ts";
@@ -19,7 +20,7 @@ function GoTop() {
         <button
             type="button"
             title="Go To Top"
-            className={clsx("i-ph:arrow-fat-up-duotone text-cyan-400", ok ? "op-60 btn" : "op-0")}
+            className={clsx("i-ph:arrow-fat-up-duotone", ok ? "op-65 text-zinc-300 btn" : "op-0")}
             onClick={goToTop}
         />
     );
@@ -30,7 +31,7 @@ function Github() {
         <button
             type="button"
             title="Github"
-            className="i-ph:github-logo-duotone btn text-cyan-400/70 hover:text-cyan-300"
+            className="i-ph:github-logo-duotone btn text-zinc-500/80 hover:text-zinc-300"
             onClick={() => window.open(PROJECT_URL)}
         />
     );
@@ -53,10 +54,29 @@ function Refresh() {
             type="button"
             title="Refresh"
             className={clsx(
-                "btn text-cyan-400/70 hover:text-cyan-300",
-                isFetching ? "animate-spin i-ph:circle-dashed-duotone" : "i-ph:arrow-counter-clockwise-duotone"
+                "btn text-zinc-500/80 hover:text-zinc-300",
+                isFetching
+                    ? "animate-spin i-ph:circle-dashed-duotone text-zinc-300"
+                    : "i-ph:arrow-counter-clockwise-duotone"
             )}
             onClick={refreshAll}
+        />
+    );
+}
+
+function ThemeToggle() {
+    const { isDark, toggleDark } = useDark();
+    return (
+        <button
+            type="button"
+            title={isDark ? "切换到亮色主题" : "切换到暗色主题"}
+            className={clsx(
+                "btn",
+                isDark
+                    ? "i-ph:sun-dim-duotone text-zinc-500/80 hover:text-zinc-300"
+                    : "i-ph:moon-stars-duotone text-zinc-600 hover:text-zinc-900"
+            )}
+            onClick={toggleDark}
         />
     );
 }
@@ -83,7 +103,7 @@ export function Header() {
                 <a
                     target="_blank"
                     href={`${PROJECT_URL}/releases/tag/v${Version}`}
-                    className="btn text-xs ml-2 font-mono text-cyan-500/50 hover:text-cyan-400/80 self-end mb-0.5"
+                    className="btn text-xs ml-2 font-mono text-zinc-600 hover:text-zinc-400 self-end mb-0.5"
                 >
                     {`v${Version}`}
                 </a>
@@ -93,9 +113,10 @@ export function Header() {
                     <NavBar />
                 </span>
             </span>
-            <span className="justify-self-end flex gap-3 items-center text-xl text-cyan-400/80">
+            <span className="justify-self-end flex gap-3 items-center text-xl text-zinc-500/80">
                 <GoTop />
                 {enableLogin.enable && <Refresh />}
+                <ThemeToggle />
                 <Github />
                 <Menu />
             </span>
