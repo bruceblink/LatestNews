@@ -26,7 +26,7 @@ function HistoryItem({
     const relativeTime = useRelativeTime(readAt);
 
     return (
-        <div className="group flex items-start justify-between gap-3 rounded-xl bg-zinc-50/88 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/30 px-4 py-3 transition-all hover:border-zinc-300/80 dark:hover:border-zinc-600/50 hover:bg-zinc-100/75 dark:hover:bg-zinc-800/60">
+        <div className="group flex items-start justify-between gap-3 rounded-xl bg-white/82 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/30 px-4 py-3 transition-all hover:border-zinc-300/80 dark:hover:border-zinc-600/50 hover:bg-zinc-100/95 dark:hover:bg-zinc-800/60">
             <div className="min-w-0 flex-1">
                 <a
                     href={url}
@@ -112,7 +112,7 @@ function HistoryPage() {
             </div>
 
             {history.length > 0 && (
-                <label className="flex items-center gap-2 rounded-2xl bg-zinc-50/88 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/40 px-4 py-2.5">
+                <label className="flex items-center gap-2 rounded-2xl bg-white/78 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/40 px-4 py-2.5">
                     <span className="i-ph:magnifying-glass-duotone text-lg op-50" />
                     <input
                         value={keyword}
@@ -153,7 +153,7 @@ function HistoryPage() {
                     ))}
                 </div>
             ) : (
-                <div className="rounded-2xl bg-zinc-50/78 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-700/30 p-10 text-center text-sm text-zinc-600 dark:text-zinc-500">
+                <div className="rounded-2xl bg-white/68 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-700/30 p-10 text-center text-sm text-zinc-600 dark:text-zinc-500">
                     {history.length === 0 ? "还没有阅读记录，点击任意新闻即可自动记录" : "没有匹配的记录"}
                 </div>
             )}

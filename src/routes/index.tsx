@@ -111,7 +111,7 @@ function IndexComponent() {
                             return (
                                 <article
                                     key={source.id}
-                                    className="rounded-xl bg-zinc-50/88 dark:bg-zinc-800/60 border border-zinc-200/90 dark:border-zinc-700/30 p-3 transition-all hover:border-zinc-300/80 dark:hover:border-zinc-600/50 hover:bg-zinc-100/75 dark:hover:bg-zinc-800/70"
+                                    className="rounded-xl bg-white/82 dark:bg-zinc-800/60 border border-zinc-200/90 dark:border-zinc-700/30 p-3 transition-all hover:border-zinc-300/80 dark:hover:border-zinc-600/50 hover:bg-zinc-100/95 dark:hover:bg-zinc-800/70"
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex gap-3">
@@ -126,7 +126,9 @@ function IndexComponent() {
                                             />
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-semibold">{source.name}</span>
+                                                    <span className="font-semibold text-zinc-800 dark:text-zinc-100">
+                                                        {source.name}
+                                                    </span>
                                                     {sourceMeta.title && (
                                                         <span
                                                             className={clsx(
@@ -151,7 +153,7 @@ function IndexComponent() {
                                                 "rounded-full px-3 py-1 text-xs transition-all",
                                                 isFocused(source.id)
                                                     ? "bg-cyan-500 text-zinc-900 font-semibold"
-                                                    : "bg-cyan-500/12 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/22"
+                                                    : "bg-cyan-500/14 text-cyan-800 dark:text-cyan-300 hover:bg-cyan-500/24"
                                             )}
                                             onClick={() => toggleFocus(source.id)}
                                         >
@@ -189,7 +191,7 @@ function IndexComponent() {
                     {focusPresets.map((preset) => (
                         <article
                             key={preset.id}
-                            className="rounded-xl bg-zinc-50/88 dark:bg-zinc-800/60 border border-zinc-200/90 dark:border-zinc-700/30 p-4 transition-all hover:border-zinc-300/80 dark:hover:border-cyan-500/20 hover:bg-zinc-100/75 dark:hover:bg-zinc-800/70"
+                            className="rounded-xl bg-white/82 dark:bg-zinc-800/60 border border-zinc-200/90 dark:border-zinc-700/30 p-4 transition-all hover:border-zinc-300/80 dark:hover:border-cyan-500/20 hover:bg-zinc-100/95 dark:hover:bg-zinc-800/70"
                         >
                             <div className="font-semibold text-zinc-800 dark:text-zinc-100">{preset.name}</div>
                             <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-500">{preset.description}</div>
