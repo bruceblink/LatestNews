@@ -54,7 +54,7 @@ export function NavBar() {
             >
                 历史
                 {todayCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 min-w-4 h-4 rounded-full bg-zinc-100 dark:bg-zinc-200 text-zinc-900 text-[9px] font-bold flex items-center justify-center px-0.5 border border-zinc-300/80 dark:border-zinc-300/40">
+                    <span className="absolute -right-1 -top-1 min-w-4.5 h-4.5 rounded-full bg-red-500/92 dark:bg-blue-400/88 text-zinc-900 text-[10px] font-semibold leading-none flex items-center justify-center px-1 ring-1 ring-white/80 dark:ring-zinc-900/70 shadow-sm">
                         {todayCount > 99 ? "99+" : todayCount}
                     </span>
                 )}
