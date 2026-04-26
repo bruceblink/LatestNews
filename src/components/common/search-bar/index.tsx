@@ -1,5 +1,6 @@
 import "./cmdk.css";
 
+import type { CSSProperties } from "react";
 import type { SourceID } from "@shared/types";
 
 import clsx from "clsx";
@@ -8,6 +9,7 @@ import { useMount } from "react-use";
 import pinyin from "@shared/pinyin.json";
 import { columns } from "@shared/metadata";
 import { useFocusWith } from "~/hooks/useFocus";
+import * as Dialog from "@radix-ui/react-dialog";
 import { useSearchBar } from "~/hooks/useSearch";
 import { useRef, useMemo, useState } from "react";
 import dataSources from "@shared/data-sources.ts";
@@ -23,6 +25,18 @@ interface SourceItemProps {
     column: any;
     pinyin: string;
 }
+
+const visuallyHiddenStyle: CSSProperties = {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    padding: 0,
+    margin: -1,
+    overflow: "hidden",
+    clip: "rect(0, 0, 0, 0)",
+    whiteSpace: "nowrap",
+    border: 0,
+};
 
 function groupByColumn(items: SourceItemProps[]) {
     return items
@@ -95,6 +109,8 @@ export function SearchBar() {
                 }
             }}
         >
+            <Dialog.Title style={visuallyHiddenStyle}>搜索新闻源</Dialog.Title>
+            <Dialog.Description style={visuallyHiddenStyle}>输入关键词搜索并选择新闻源加入关注。</Dialog.Description>
             <Command.Input ref={inputRef} autoFocus placeholder="搜索你想要的" />
             <div className="md:flex pt-2">
                 <OverlayScrollbar defer className="overflow-y-auto md:min-w-275px">
