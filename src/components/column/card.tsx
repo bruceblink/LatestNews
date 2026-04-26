@@ -189,19 +189,19 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
                     onClick={() => handleClick(item)}
                     className={clsx(
                         "flex gap-2 items-center items-stretch relative cursor-pointer [&_*]:cursor-pointer transition-all",
-                        "hover:bg-cyan-500/8 rounded-md pr-1 visited:(text-zinc-500)"
+                        "hover:bg-cyan-500/6 rounded-md pr-1 visited:(text-zinc-500)"
                     )}
                 >
                     <span
                         className={clsx(
-                            "bg-zinc-700/40 text-zinc-400 min-w-6 flex justify-center items-center rounded-md text-sm"
+                            "bg-zinc-700/25 text-zinc-500 min-w-6 flex justify-center items-center rounded-md text-sm"
                         )}
                     >
                         {i + 1}
                     </span>
                     {!!item.extra?.diff && <DiffNumber diff={item.extra.diff} />}
                     <span className="self-start line-height-none">
-                        <span className="mr-2 text-base">{item.title}</span>
+                        <span className="mr-2 text-base text-zinc-200/90">{item.title}</span>
                         <span className="text-xs text-zinc-500 truncate align-middle">
                             <ExtraInfo item={item} />
                         </span>
@@ -238,7 +238,7 @@ function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
                     </span>
                     <a
                         className={clsx(
-                            "ml-2 px-1 hover:bg-cyan-500/8 rounded-md visited:(text-zinc-500)",
+                            "ml-2 px-1 hover:bg-cyan-500/6 rounded-md visited:(text-zinc-500)",
                             "cursor-pointer [&_*]:cursor-pointer transition-all"
                         )}
                         href={width < 768 ? item.mobileUrl || item.url : item.url}
@@ -247,7 +247,7 @@ function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
                         rel="noopener noreferrer"
                         onClick={() => handleClick(item)}
                     >
-                        {item.title}
+                        <span className="text-zinc-300/90">{item.title}</span>
                     </a>
                 </li>
             ))}

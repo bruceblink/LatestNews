@@ -39,7 +39,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 />
                 <span className="flex flex-col">
                     <span className="flex items-center gap-2">
-                        <span className="text-base font-semibold text-zinc-100" title={ds.desc}>
+                        <span className="text-base font-semibold text-zinc-200/90" title={ds.desc}>
                             {ds.name}
                         </span>
                         {healthStatusLabel && (
@@ -47,8 +47,8 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                                 className={clsx(
                                     "rounded px-1.5 py-0.5 text-xs",
                                     healthStatus === "failing"
-                                        ? "bg-red-500/10 text-red-400"
-                                        : "bg-zinc-700/50 text-zinc-400"
+                                        ? "bg-red-500/8 text-red-400/85"
+                                        : "bg-zinc-700/35 text-zinc-500"
                                 )}
                             >
                                 {healthStatusLabel}
@@ -56,13 +56,16 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                         )}
                         {ds?.title && (
                             <span
-                                className={clsx("text-xs rounded px-1 py-0.5", `color-${ds.color} bg-zinc-800 op-90`)}
+                                className={clsx(
+                                    "text-xs rounded px-1 py-0.5",
+                                    `color-${ds.color} bg-zinc-800/70 op-75`
+                                )}
                             >
                                 {ds.title}
                             </span>
                         )}
                     </span>
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-zinc-600">
                         <UpdatedTime isError={isError} updatedTime={data?.updatedTime} />
                     </span>
                 </span>
