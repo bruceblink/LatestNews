@@ -3,7 +3,7 @@ import type { PrimitiveMetadata } from "@shared/types";
 
 import { apiFetch } from "~/utils";
 import { login, logout } from "~/hooks/useLogin";
-import { fixedColumnIds } from "@root/shared/metadata";
+import { mergePrimitiveMetadata } from "@shared/metadata-merge";
 
 const AUTH_SYNC_FEEDBACK_KEY = "auth-sync-feedback";
 export type AuthSyncFeedback = "success" | "error";
@@ -49,23 +49,7 @@ export function takeAuthSyncFeedback(): AuthSyncFeedback | undefined {
     return status;
 }
 
-export function mergePrimitiveMetadata(local: PrimitiveMetadata, remote: PrimitiveMetadata): PrimitiveMetadata {
-    const merged: PrimitiveMetadata = {
-        updatedTime: Math.max(local.updatedTime, remote.updatedTime),
-        data: {
-            focus: [],
-            hottest: [],
-            realtime: [],
-        },
-        action: local.updatedTime > remote.updatedTime ? "manual" : "sync",
-    };
-
-    for (const key of fixedColumnIds) {
-        merged.data[key] = Array.from(new Set([...(local.data[key] ?? []), ...(remote.data[key] ?? [])]));
-    }
-
-    return merged;
-}
+export { mergePrimitiveMetadata };
 
 export function markPrimitiveMetadataSynced(metadata: PrimitiveMetadata): PrimitiveMetadata {
     return {

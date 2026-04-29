@@ -20,6 +20,12 @@ function uniqueSources(sources: SourceID[]) {
     return Array.from(new Set(sources));
 }
 
+function healthWeight(status: "idle" | "healthy" | "failing") {
+    if (status === "healthy") return 3;
+    if (status === "idle") return 1;
+    return 0;
+}
+
 function IndexComponent() {
     const [focusSources, setFocusSources] = useAtom(focusSourcesAtom);
     const { toggleFocus, isFocused } = useFocus();
@@ -33,15 +39,22 @@ function IndexComponent() {
         return data.sources
             .filter((source) => source.status !== "failing")
             .sort((left, right) => {
-                if ((right.lastItemCount ?? 0) !== (left.lastItemCount ?? 0)) {
-                    return (right.lastItemCount ?? 0) - (left.lastItemCount ?? 0);
+                const rightScore =
+                    healthWeight(right.status) * 1000 +
+                    (right.lastItemCount ?? 0) * 100 +
+                    right.successCount * 10 -
+                    right.consecutiveFailures * 20;
+                const leftScore =
+                    healthWeight(left.status) * 1000 +
+                    (left.lastItemCount ?? 0) * 100 +
+                    left.successCount * 10 -
+                    left.consecutiveFailures * 20;
+
+                if (rightScore !== leftScore) {
+                    return rightScore - leftScore;
                 }
 
-                if (right.successCount !== left.successCount) {
-                    return right.successCount - left.successCount;
-                }
-
-                return left.consecutiveFailures - right.consecutiveFailures;
+                return (right.lastSuccessAt ?? 0) - (left.lastSuccessAt ?? 0);
             })
             .slice(0, 6);
     }, [data?.sources]);

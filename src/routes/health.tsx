@@ -59,6 +59,16 @@ export const Route = createFileRoute("/health")({
     component: HealthPage,
 });
 
+function sourcePriorityScore(source: SourceHealthSnapshot) {
+    if (source.status !== "failing") return -1;
+
+    const failureWeight = source.consecutiveFailures * 100;
+    const errorRecencyWeight = Math.floor((source.lastErrorAt ?? 0) / 1000);
+    const durationWeight = source.lastDurationMs ?? 0;
+
+    return failureWeight + errorRecencyWeight + durationWeight;
+}
+
 function HealthPage() {
     useTitle(`${import.meta.env.VITE_APP_TITLE} | 数据源健康`);
     const [keyword, setKeyword] = useState("");
@@ -131,13 +141,7 @@ function HealthPage() {
 
         return data.sources
             .filter((source) => source.status === "failing")
-            .sort((left, right) => {
-                if (left.consecutiveFailures !== right.consecutiveFailures) {
-                    return right.consecutiveFailures - left.consecutiveFailures;
-                }
-
-                return (right.lastErrorAt ?? 0) - (left.lastErrorAt ?? 0);
-            });
+            .sort((left, right) => sourcePriorityScore(right) - sourcePriorityScore(left));
     }, [data?.sources]);
 
     const filteredSources = useMemo(() => {
@@ -252,6 +256,9 @@ function HealthPage() {
                         <span className="i-ph:warning-circle-duotone text-lg" />
                         <span className="font-semibold">需要优先处理的异常源</span>
                     </div>
+                    <div className="mb-3 rounded-xl bg-red-500/6 px-3 py-2 text-xs text-red-700 dark:text-red-300">
+                        优先级根据连续失败次数、最近错误时间和最近耗时综合排序。
+                    </div>
                     <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                         {prioritizedFailingSources.slice(0, 6).map((source, index) => (
                             <div
@@ -265,6 +272,12 @@ function HealthPage() {
                                     <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-600 dark:text-red-300">
                                         连续失败 {source.consecutiveFailures}
                                     </span>
+                                </div>
+                                <div className="mt-1 text-xs text-red-700/80 dark:text-red-300/80">
+                                    最近错误{" "}
+                                    {source.lastErrorAt
+                                        ? new Date(source.lastErrorAt).toLocaleTimeString("zh-CN")
+                                        : "未知"}
                                 </div>
                                 <div className="mt-2 text-xs op-70">
                                     {source.lastErrorMessage ?? "最近抓取失败，建议优先探测"}

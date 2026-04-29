@@ -95,14 +95,16 @@ export function recordSourceFailure(id: SourceID, durationMs: number, error: unk
     });
 }
 
+export function getSourceHealthSnapshot(id: SourceID): SourceHealthSnapshot {
+    return sourceHealthMap.get(id) ?? createIdleSnapshot(id);
+}
+
 export function getSourceHealthSnapshots(): SourceHealthSnapshot[] {
     return Object.entries(dataSources)
         .filter(([_, source]) => !source.redirect)
         .map(([id]) => {
             const sourceId = id as SourceID;
-            const snapshot = sourceHealthMap.get(sourceId);
-
-            return snapshot ?? createIdleSnapshot(sourceId);
+            return getSourceHealthSnapshot(sourceId);
         })
         .sort((left, right) => {
             if (left.status !== right.status) {

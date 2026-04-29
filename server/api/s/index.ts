@@ -8,7 +8,7 @@ import { logger } from "#/utils/logger.ts";
 import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
 import { getQuery, createError, defineEventHandler } from "h3";
-import { recordSourceFailure, recordSourceSuccess } from "#/utils/source-health";
+import { recordSourceFailure, recordSourceSuccess, getSourceHealthSnapshot } from "#/utils/source-health";
 
 const isValidSource = (id?: SourceID) => !!id && !!dataSources[id] && !!getters[id];
 const inflightRequests = new Map<SourceID, Promise<NewsItem[]>>();
@@ -35,6 +35,12 @@ function resolveSourceId(input: string): SourceID {
 
 function isLatestRequest(latest: string | boolean | undefined) {
     return latest !== undefined && latest !== "false" && latest !== false;
+}
+
+function shouldDegradeToCache(id: SourceID) {
+    const health = getSourceHealthSnapshot(id);
+    if (health.status !== "failing") return false;
+    return health.consecutiveFailures >= 2;
 }
 
 function fetchLatestItems(id: SourceID) {
@@ -93,15 +99,16 @@ async function getCacheOrFetch(id: SourceID, latest: boolean, event: H3Event): P
     const cache = cacheTable ? await cacheTable.get(id) : undefined;
 
     const sourceInterval = dataSources[id].interval ?? TTL;
+    const degraded = shouldDegradeToCache(id);
 
     // 1. interval 内直接返回缓存（视为最新）
     if (cache && now - cache.updated < sourceInterval) {
         return { status: "success", id, updatedTime: cache.updated, name: dataSources[id].name, items: cache.items };
     }
 
-    // 2. TTL 内，根据 latest 和登录状态判断是否返回缓存
+    // 2. TTL 内，根据 latest、登录状态与健康降级策略判断是否返回缓存
     if (cache && now - cache.updated < TTL) {
-        if (!latest || (!event.context.disabledLogin && !event.context.user)) {
+        if (degraded || !latest || (!event.context.disabledLogin && !event.context.user)) {
             return { status: "cache", id, name: dataSources[id].name, updatedTime: cache.updated, items: cache.items };
         }
     }
