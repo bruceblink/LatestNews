@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/useToast";
 import { PROJECT_URL } from "@shared/consts";
-import { useAtom, useAtomValue } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
+import { useAtom, useSetAtom, useAtomValue } from "jotai";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { login, logout, useLoginState } from "~/hooks/useLogin";
 import { metadataSyncStatusAtom } from "~/atoms/syncStatusAtom";
@@ -14,7 +14,9 @@ import { primitiveMetadataAtom, createDefaultPrimitiveMetadata } from "~/atoms/p
 import {
     uploadMetadata,
     handleAuthError,
+    downloadMetadata,
     getSyncErrorMessage,
+    mergePrimitiveMetadata,
     markPrimitiveMetadataSynced,
 } from "~/services/metadata.service.ts";
 
@@ -39,6 +41,7 @@ export function Menu() {
     const toaster = useToast();
     const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
     const syncStatus = useAtomValue(metadataSyncStatusAtom);
+    const setSyncStatus = useSetAtom(metadataSyncStatusAtom);
     const lastSynced = useRelativeTime(syncStatus.lastSyncedAt ?? "");
     const lastAttempt = useRelativeTime(syncStatus.lastAttemptAt ?? "");
 
@@ -101,11 +104,162 @@ export function Menu() {
         }
 
         setSyncing(true);
+        setSyncStatus((prev) => ({
+            ...prev,
+            phase: "syncing",
+            lastAttemptAt: Date.now(),
+            lastErrorMessage: undefined,
+        }));
         try {
             await uploadMetadata(primitiveMetadata);
             setPrimitiveMetadata((prev: PrimitiveMetadata) => markPrimitiveMetadataSynced(prev));
+            setSyncStatus((prev) => ({
+                ...prev,
+                phase: "success",
+                lastAttemptAt: Date.now(),
+                lastSyncedAt: Date.now(),
+                lastErrorMessage: undefined,
+            }));
             toaster("布局已同步到云端", { type: "success" });
         } catch (error) {
+            setSyncStatus((prev) => ({
+                ...prev,
+                phase: "error",
+                lastAttemptAt: Date.now(),
+                lastErrorMessage: getSyncErrorMessage(error),
+            }));
+            toaster(getSyncErrorMessage(error), { type: "error" });
+            handleAuthError(toaster, error);
+        } finally {
+            setSyncing(false);
+        }
+    };
+
+    const handleRetrySync = async () => {
+        if (!loggedIn) {
+            login();
+            return;
+        }
+
+        setSyncing(true);
+        setSyncStatus((prev) => ({
+            ...prev,
+            phase: "syncing",
+            lastAttemptAt: Date.now(),
+            lastErrorMessage: undefined,
+        }));
+
+        try {
+            if (primitiveMetadata.action === "manual") {
+                await uploadMetadata(primitiveMetadata);
+                setPrimitiveMetadata((prev) => markPrimitiveMetadataSynced(prev));
+            } else {
+                const remote = await downloadMetadata();
+                if (remote) {
+                    setPrimitiveMetadata((prev) => mergePrimitiveMetadata(prev, remote));
+                }
+            }
+
+            setSyncStatus((prev) => ({
+                ...prev,
+                phase: "success",
+                lastAttemptAt: Date.now(),
+                lastSyncedAt: Date.now(),
+                lastErrorMessage: undefined,
+            }));
+            toaster("同步已重试并成功", { type: "success" });
+        } catch (error) {
+            setSyncStatus((prev) => ({
+                ...prev,
+                phase: "error",
+                lastAttemptAt: Date.now(),
+                lastErrorMessage: getSyncErrorMessage(error),
+            }));
+            toaster(getSyncErrorMessage(error), { type: "error" });
+            handleAuthError(toaster, error);
+        } finally {
+            setSyncing(false);
+        }
+    };
+
+    const handleRestoreFromRemote = async () => {
+        if (!loggedIn) {
+            login();
+            return;
+        }
+        if (!window.confirm("确认使用云端布局覆盖当前本地布局吗？")) return;
+
+        setSyncing(true);
+        setSyncStatus((prev) => ({
+            ...prev,
+            phase: "syncing",
+            lastAttemptAt: Date.now(),
+            lastErrorMessage: undefined,
+        }));
+
+        try {
+            const remote = await downloadMetadata();
+            if (!remote) {
+                toaster("云端暂无可用布局", { type: "info" });
+                return;
+            }
+
+            setPrimitiveMetadata(remote);
+            setSyncStatus((prev) => ({
+                ...prev,
+                phase: "success",
+                lastAttemptAt: Date.now(),
+                lastSyncedAt: Date.now(),
+                lastErrorMessage: undefined,
+            }));
+            toaster("已使用云端布局恢复本地配置", { type: "success" });
+        } catch (error) {
+            setSyncStatus((prev) => ({
+                ...prev,
+                phase: "error",
+                lastAttemptAt: Date.now(),
+                lastErrorMessage: getSyncErrorMessage(error),
+            }));
+            toaster(getSyncErrorMessage(error), { type: "error" });
+            handleAuthError(toaster, error);
+        } finally {
+            setSyncing(false);
+        }
+    };
+
+    const handleRestoreToRemote = async () => {
+        if (!loggedIn) {
+            login();
+            return;
+        }
+        if (!window.confirm("确认使用当前本地布局覆盖云端布局吗？")) return;
+
+        setSyncing(true);
+        setSyncStatus((prev) => ({
+            ...prev,
+            phase: "syncing",
+            lastAttemptAt: Date.now(),
+            lastErrorMessage: undefined,
+        }));
+
+        try {
+            await uploadMetadata(primitiveMetadata);
+            setPrimitiveMetadata((prev) => markPrimitiveMetadataSynced(prev));
+            setSyncStatus((prev) => ({
+                ...prev,
+                phase: "success",
+                lastAttemptAt: Date.now(),
+                lastSyncedAt: Date.now(),
+                lastErrorMessage: undefined,
+            }));
+            toaster("已使用本地布局覆盖云端配置", { type: "success" });
+        } catch (error) {
+            setSyncStatus((prev) => ({
+                ...prev,
+                phase: "error",
+                lastAttemptAt: Date.now(),
+                lastErrorMessage: getSyncErrorMessage(error),
+            }));
             toaster(getSyncErrorMessage(error), { type: "error" });
             handleAuthError(toaster, error);
         } finally {
@@ -228,6 +382,24 @@ export function Menu() {
                                                 : "同步布局"}
                                     </span>
                                 </li>
+                            )}
+                            {enableLogin.enable && loggedIn && syncStatus.phase === "error" && (
+                                <li onClick={() => void handleRetrySync()}>
+                                    <span className="i-ph:arrows-clockwise-duotone inline-block" />
+                                    <span>立即重试同步</span>
+                                </li>
+                            )}
+                            {enableLogin.enable && loggedIn && (
+                                <>
+                                    <li onClick={() => void handleRestoreFromRemote()}>
+                                        <span className="i-ph:cloud-arrow-down-duotone inline-block" />
+                                        <span>使用云端恢复本地</span>
+                                    </li>
+                                    <li onClick={() => void handleRestoreToRemote()}>
+                                        <span className="i-ph:cloud-arrow-up-duotone inline-block" />
+                                        <span>使用本地覆盖云端</span>
+                                    </li>
+                                </>
                             )}
                             {enableLogin.enable && (
                                 <li className="block! cursor-default! p-0! [&_*]:cursor-default! hover:bg-transparent!">
