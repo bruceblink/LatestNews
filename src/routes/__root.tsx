@@ -51,7 +51,13 @@ function RootComponent() {
                 >
                     <Header />
                 </header>
-                <PwaStatusBanner isOffline={pwa.isOffline} needRefresh={pwa.needRefresh} onUpdate={pwa.applyUpdate} />
+                <PwaStatusBanner
+                    isOffline={pwa.isOffline}
+                    needRefresh={pwa.needRefresh}
+                    offlineReady={pwa.offlineReady}
+                    justRecovered={pwa.justRecovered}
+                    onUpdate={pwa.applyUpdate}
+                />
                 <main
                     className={clsx([
                         "mt-2",
@@ -81,30 +87,42 @@ function RootComponent() {
 function PwaStatusBanner({
     isOffline,
     needRefresh,
+    offlineReady,
+    justRecovered,
     onUpdate,
 }: {
     isOffline: boolean;
     needRefresh: boolean;
+    offlineReady: boolean;
+    justRecovered: boolean;
     onUpdate: () => Promise<void>;
 }) {
-    if (!isOffline && !needRefresh) return null;
+    const showBanner = isOffline || needRefresh || justRecovered;
+    if (!showBanner) return null;
+
+    const iconClass = needRefresh
+        ? "i-ph:rocket-launch-duotone text-cyan-400"
+        : isOffline
+          ? "i-ph:wifi-x-duotone text-amber-400"
+          : "i-ph:wifi-high-duotone text-green-500 dark:text-emerald-300";
+
+    const title = needRefresh ? "发现新版本" : isOffline ? "当前处于离线模式" : "网络已恢复";
+
+    const description = needRefresh
+        ? "刷新后可获取最新修复和内容体验。"
+        : isOffline
+          ? offlineReady
+              ? "你仍可以浏览已缓存页面与最近访问过的内容。"
+              : "当前网络不可用，正在等待连接恢复后刷新在线内容。"
+          : "已切回在线内容拉取策略，稍后会自动补齐最新资讯。";
 
     return (
         <section className="mb-3 flex flex-col gap-2 rounded-xl bg-blue-500/6 dark:bg-cyan-500/5 px-4 py-3 shadow shadow-blue-500/10 dark:shadow-cyan-500/10 border border-blue-500/20 dark:border-cyan-500/15 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
-                <span
-                    className={clsx(
-                        "mt-0.5 text-lg",
-                        needRefresh ? "i-ph:rocket-launch-duotone text-cyan-400" : "i-ph:wifi-x-duotone text-amber-400"
-                    )}
-                />
+                <span className={clsx("mt-0.5 text-lg", iconClass)} />
                 <div>
-                    <div className="font-semibold">{needRefresh ? "发现新版本" : "当前处于离线模式"}</div>
-                    <div className="mt-1 text-sm op-75">
-                        {needRefresh
-                            ? "刷新后可获取最新修复和内容体验。"
-                            : "你仍可以浏览已缓存页面与最近访问过的内容。"}
-                    </div>
+                    <div className="font-semibold">{title}</div>
+                    <div className="mt-1 text-sm op-75">{description}</div>
                 </div>
             </div>
             {needRefresh && (

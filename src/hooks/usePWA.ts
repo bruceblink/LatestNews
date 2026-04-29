@@ -1,8 +1,8 @@
 import { myFetch } from "~/utils";
 import { delay } from "@shared/utils.ts";
 import { Version, PROJECT_URL } from "@shared/consts";
-import { useState, useEffect, useCallback } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
+import { useRef, useState, useEffect, useCallback } from "react";
 
 import { useToast } from "./useToast";
 
@@ -10,6 +10,7 @@ export interface PWAState {
     isOffline: boolean;
     needRefresh: boolean;
     offlineReady: boolean;
+    justRecovered: boolean;
     applyUpdate: () => Promise<void>;
 }
 
@@ -21,6 +22,8 @@ export function usePWA() {
         needRefresh: [needRefresh],
     } = useRegisterSW();
     const [isOffline, setIsOffline] = useState(() => ("onLine" in navigator ? !navigator.onLine : false));
+    const [justRecovered, setJustRecovered] = useState(false);
+    const recoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const applyUpdate = useCallback(async () => {
         await updateServiceWorker();
@@ -30,11 +33,19 @@ export function usePWA() {
     useEffect(() => {
         const handleOffline = () => {
             setIsOffline(true);
+            setJustRecovered(false);
+            if (recoverTimerRef.current) {
+                clearTimeout(recoverTimerRef.current);
+                recoverTimerRef.current = null;
+            }
             toaster("网络已断开，当前将优先展示已缓存内容", { type: "warning" });
         };
 
         const handleOnline = () => {
             setIsOffline(false);
+            setJustRecovered(true);
+            if (recoverTimerRef.current) clearTimeout(recoverTimerRef.current);
+            recoverTimerRef.current = setTimeout(() => setJustRecovered(false), 8000);
             toaster("网络已恢复，可以继续获取最新资讯", { type: "success" });
         };
 
@@ -44,6 +55,7 @@ export function usePWA() {
         return () => {
             window.removeEventListener("offline", handleOffline);
             window.removeEventListener("online", handleOnline);
+            if (recoverTimerRef.current) clearTimeout(recoverTimerRef.current);
         };
     }, [toaster]);
 
@@ -104,6 +116,7 @@ export function usePWA() {
         isOffline,
         needRefresh,
         offlineReady,
+        justRecovered,
         applyUpdate,
     } satisfies PWAState;
 }
