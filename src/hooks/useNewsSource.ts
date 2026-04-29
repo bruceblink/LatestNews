@@ -5,12 +5,47 @@ import { delay } from "@root/shared/utils";
 import { useQuery } from "@tanstack/react-query";
 import dataSources from "@root/shared/data-sources";
 
+import { useSourceHealthSummary } from "./useSourceHealth";
 import { cacheSources, refetchSources } from "../utils/data";
+
+function getSourceSchedule(id: SourceID, failing: boolean) {
+    const sourceType = dataSources[id].type;
+
+    if (failing) {
+        return {
+            staleTime: 1000 * 60 * 5,
+            refetchInterval: 1000 * 60 * 8,
+        };
+    }
+
+    if (sourceType === "realtime") {
+        return {
+            staleTime: 1000 * 60,
+            refetchInterval: 1000 * 60 * 2,
+        };
+    }
+
+    if (sourceType === "hottest") {
+        return {
+            staleTime: 1000 * 60 * 2,
+            refetchInterval: 1000 * 60 * 4,
+        };
+    }
+
+    return {
+        staleTime: 1000 * 60 * 4,
+        refetchInterval: 1000 * 60 * 6,
+    };
+}
 
 /**
  * 自定义 Hook: 管理单个新闻源的数据获取与缓存
  */
 export function useNewsSource(id: SourceID) {
+    const { sourceHealthMap } = useSourceHealthSummary();
+    const sourceHealth = sourceHealthMap.get(id);
+    const schedule = getSourceSchedule(id, sourceHealth?.status === "failing");
+
     return useQuery<SourceResponse>({
         queryKey: ["source", id],
         queryFn: async () => {
@@ -48,7 +83,8 @@ export function useNewsSource(id: SourceID) {
             return response;
         },
         placeholderData: (prev) => prev,
-        staleTime: Infinity,
+        staleTime: schedule.staleTime,
+        refetchInterval: schedule.refetchInterval,
         refetchOnMount: false,
         refetchOnReconnect: false,
         refetchOnWindowFocus: false,
