@@ -116,36 +116,50 @@ export function Menu() {
     const syncStatusLabel =
         syncStatus.phase === "syncing"
             ? "同步中"
-            : hasPendingSyncChanges
+            : syncStatus.phase === "queued"
               ? "待同步"
-              : syncStatus.phase === "error"
-                ? "同步失败"
-                : syncStatus.phase === "success"
-                  ? "已同步"
-                  : "未同步";
+              : syncStatus.phase === "merged"
+                ? "已合并"
+                : syncStatus.phase === "conflict-resolved"
+                  ? "已调和"
+                  : hasPendingSyncChanges
+                    ? "待同步"
+                    : syncStatus.phase === "error"
+                      ? "同步失败"
+                      : syncStatus.phase === "success"
+                        ? "已同步"
+                        : "未同步";
 
     const syncStatusTone =
         syncStatus.phase === "syncing"
             ? "text-primary-700 bg-primary/10 dark:text-primary-300"
-            : hasPendingSyncChanges
+            : syncStatus.phase === "queued" || hasPendingSyncChanges
               ? "text-amber-700 bg-amber-500/12 dark:text-amber-300"
-              : syncStatus.phase === "error"
-                ? "text-red-700 bg-red-500/12 dark:text-red-300"
-                : syncStatus.phase === "success"
-                  ? "text-green-700 bg-green-500/12 dark:text-green-300"
-                  : "text-neutral-600 bg-neutral-500/8 dark:text-neutral-300";
+              : syncStatus.phase === "merged" || syncStatus.phase === "conflict-resolved"
+                ? "text-cyan-700 bg-cyan-500/12 dark:text-cyan-300"
+                : syncStatus.phase === "error"
+                  ? "text-red-700 bg-red-500/12 dark:text-red-300"
+                  : syncStatus.phase === "success"
+                    ? "text-green-700 bg-green-500/12 dark:text-green-300"
+                    : "text-neutral-600 bg-neutral-500/8 dark:text-neutral-300";
 
     const syncStatusDescription = !loggedIn
         ? "登录后可在多端同步布局配置"
         : hasPendingSyncChanges
           ? "本地布局有新改动，等待同步到云端"
-          : syncStatus.phase === "syncing"
-            ? "正在和云端同步当前布局"
-            : syncStatus.phase === "success"
-              ? `最近同步 ${lastSynced ?? "刚刚"}`
-              : syncStatus.phase === "error"
-                ? `最近尝试 ${lastAttempt ?? "刚刚"}`
-                : "还没有同步记录";
+          : syncStatus.phase === "queued"
+            ? "检测到布局改动，准备发起同步"
+            : syncStatus.phase === "syncing"
+              ? "正在和云端同步当前布局"
+              : syncStatus.phase === "merged"
+                ? "本地与云端布局已完成合并"
+                : syncStatus.phase === "conflict-resolved"
+                  ? "本地与云端差异已自动调和"
+                  : syncStatus.phase === "success"
+                    ? `最近同步 ${lastSynced ?? "刚刚"}`
+                    : syncStatus.phase === "error"
+                      ? `最近尝试 ${lastAttempt ?? "刚刚"}`
+                      : "还没有同步记录";
 
     return (
         <span className="relative" onMouseEnter={() => show(true)} onMouseLeave={() => show(false)}>

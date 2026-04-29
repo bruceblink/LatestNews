@@ -48,6 +48,13 @@ export function useSync() {
 
             setSyncStatus((prev) => ({
                 ...prev,
+                phase: "queued",
+                lastAttemptAt: Date.now(),
+                lastErrorMessage: undefined,
+            }));
+
+            setSyncStatus((prev) => ({
+                ...prev,
                 phase: "syncing",
                 lastAttemptAt: Date.now(),
                 lastErrorMessage: undefined,
@@ -92,7 +99,14 @@ export function useSync() {
             try {
                 const remoteMetadata = await downloadMetadata();
                 if (remoteMetadata) {
-                    setPrimitiveMetadata((prev) => mergePrimitiveMetadata(prev, remoteMetadata));
+                    setPrimitiveMetadata((prev) => {
+                        const merged = mergePrimitiveMetadata(prev, remoteMetadata);
+                        setSyncStatus((current) => ({
+                            ...current,
+                            phase: merged.updatedTime === prev.updatedTime ? "conflict-resolved" : "merged",
+                        }));
+                        return merged;
+                    });
                 }
                 setSyncStatus((prev) => ({
                     ...prev,

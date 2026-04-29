@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-export type MetadataSyncPhase = "idle" | "syncing" | "success" | "error";
+export type MetadataSyncPhase = "idle" | "queued" | "syncing" | "merged" | "conflict-resolved" | "success" | "error";
 
 export interface MetadataSyncStatus {
     phase: MetadataSyncPhase;
@@ -10,6 +10,16 @@ export interface MetadataSyncStatus {
 }
 
 const STORAGE_KEY = "metadata-sync-status";
+
+const validPhases: MetadataSyncPhase[] = [
+    "idle",
+    "queued",
+    "syncing",
+    "merged",
+    "conflict-resolved",
+    "success",
+    "error",
+];
 
 export function createDefaultMetadataSyncStatus(): MetadataSyncStatus {
     return {
@@ -23,7 +33,7 @@ function readStoredSyncStatus(): MetadataSyncStatus {
 
     try {
         const parsed = JSON.parse(raw) as MetadataSyncStatus;
-        if (!["idle", "syncing", "success", "error"].includes(parsed.phase)) {
+        if (!validPhases.includes(parsed.phase)) {
             return createDefaultMetadataSyncStatus();
         }
 
