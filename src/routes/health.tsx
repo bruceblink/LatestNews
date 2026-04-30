@@ -1,4 +1,10 @@
 import type { SourceResponse } from "@shared/types";
+import type {
+    SourceHealthEvent,
+    SourceHealthStatus,
+    SourceHealthSummary,
+    SourceHealthSnapshot,
+} from "@shared/source-health-types";
 
 import clsx from "clsx";
 import { myFetch } from "~/utils";
@@ -9,40 +15,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useRef, useMemo, useState, useEffect } from "react";
 import { rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
-
-type SourceHealthStatus = "idle" | "healthy" | "failing";
-
-interface SourceHealthEvent {
-    status: Exclude<SourceHealthStatus, "idle">;
-    occurredAt: number;
-    durationMs: number;
-    itemCount?: number;
-    errorMessage?: string;
-}
-
-interface SourceHealthSnapshot {
-    id: string;
-    name: string;
-    status: SourceHealthStatus;
-    successCount: number;
-    errorCount: number;
-    consecutiveFailures: number;
-    lastDurationMs?: number;
-    lastSuccessAt?: number;
-    lastErrorAt?: number;
-    lastErrorMessage?: string;
-    lastItemCount?: number;
-    recentEvents: SourceHealthEvent[];
-}
-
-interface SourceHealthSummary {
-    updatedAt: number;
-    total: number;
-    healthy: number;
-    failing: number;
-    idle: number;
-    sources: SourceHealthSnapshot[];
-}
 
 const statusLabelMap: Record<SourceHealthStatus, string> = {
     healthy: "正常",
@@ -459,7 +431,7 @@ function SourceHealthCard({
                         <div className="mb-2 font-medium op-75">最近 5 次事件</div>
                         {source.recentEvents.length > 0 ? (
                             <div className="flex flex-col gap-2">
-                                {source.recentEvents.map((event, index) => {
+                                {source.recentEvents.map((event: SourceHealthEvent, index) => {
                                     const occurredTime = new Date(event.occurredAt).toLocaleString("zh-CN", {
                                         month: "2-digit",
                                         day: "2-digit",

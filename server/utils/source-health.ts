@@ -2,20 +2,20 @@ import type { SourceID } from "@shared/types";
 
 import dataSources from "@shared/data-sources";
 
-export type SourceHealthStatus = "idle" | "healthy" | "failing";
+export type ServerSourceHealthStatus = "idle" | "healthy" | "failing";
 
-export interface SourceHealthEvent {
-    status: Exclude<SourceHealthStatus, "idle">;
+export interface ServerSourceHealthEvent {
+    status: Exclude<ServerSourceHealthStatus, "idle">;
     occurredAt: number;
     durationMs: number;
     itemCount?: number;
     errorMessage?: string;
 }
 
-export interface SourceHealthSnapshot {
+export interface ServerSourceHealthSnapshot {
     id: SourceID;
     name: string;
-    status: SourceHealthStatus;
+    status: ServerSourceHealthStatus;
     successCount: number;
     errorCount: number;
     consecutiveFailures: number;
@@ -24,10 +24,10 @@ export interface SourceHealthSnapshot {
     lastErrorAt?: number;
     lastErrorMessage?: string;
     lastItemCount?: number;
-    recentEvents: SourceHealthEvent[];
+    recentEvents: ServerSourceHealthEvent[];
 }
 
-type MutableSourceHealthSnapshot = SourceHealthSnapshot;
+type MutableSourceHealthSnapshot = ServerSourceHealthSnapshot;
 
 const sourceHealthMap = new Map<SourceID, MutableSourceHealthSnapshot>();
 
@@ -35,7 +35,7 @@ function getSourceMeta(id: SourceID) {
     return dataSources[id];
 }
 
-function createIdleSnapshot(id: SourceID): SourceHealthSnapshot {
+function createIdleSnapshot(id: SourceID): ServerSourceHealthSnapshot {
     return {
         id,
         name: getSourceMeta(id).name,
@@ -47,7 +47,7 @@ function createIdleSnapshot(id: SourceID): SourceHealthSnapshot {
     };
 }
 
-function pushRecentEvent(snapshot: MutableSourceHealthSnapshot, event: SourceHealthEvent) {
+function pushRecentEvent(snapshot: MutableSourceHealthSnapshot, event: ServerSourceHealthEvent) {
     snapshot.recentEvents = [event, ...snapshot.recentEvents].slice(0, 5);
 }
 
@@ -95,11 +95,11 @@ export function recordSourceFailure(id: SourceID, durationMs: number, error: unk
     });
 }
 
-export function getSourceHealthSnapshot(id: SourceID): SourceHealthSnapshot {
+export function getSourceHealthSnapshot(id: SourceID): ServerSourceHealthSnapshot {
     return sourceHealthMap.get(id) ?? createIdleSnapshot(id);
 }
 
-export function getSourceHealthSnapshots(): SourceHealthSnapshot[] {
+export function getSourceHealthSnapshots(): ServerSourceHealthSnapshot[] {
     return Object.entries(dataSources)
         .filter(([_, source]) => !source.redirect)
         .map(([id]) => {
@@ -112,7 +112,7 @@ export function getSourceHealthSnapshots(): SourceHealthSnapshot[] {
                     failing: 0,
                     idle: 1,
                     healthy: 2,
-                } satisfies Record<SourceHealthStatus, number>;
+                } satisfies Record<ServerSourceHealthStatus, number>;
                 return weight[left.status] - weight[right.status];
             }
 
