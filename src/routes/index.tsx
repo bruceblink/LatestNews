@@ -11,6 +11,7 @@ import { Column } from "~/components/column";
 import dataSources from "@shared/data-sources";
 import { createFileRoute } from "@tanstack/react-router";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
+import { rankActiveSourcesForHome } from "@shared/source-ranking-policy";
 
 export const Route = createFileRoute("/")({
     component: IndexComponent,
@@ -18,12 +19,6 @@ export const Route = createFileRoute("/")({
 
 function uniqueSources(sources: SourceID[]) {
     return Array.from(new Set(sources));
-}
-
-function healthWeight(status: "idle" | "healthy" | "failing") {
-    if (status === "healthy") return 3;
-    if (status === "idle") return 1;
-    return 0;
 }
 
 function IndexComponent() {
@@ -35,28 +30,7 @@ function IndexComponent() {
 
     const activeSources = useMemo(() => {
         if (!data?.sources) return [];
-
-        return data.sources
-            .filter((source) => source.status !== "failing")
-            .sort((left, right) => {
-                const rightScore =
-                    healthWeight(right.status) * 1000 +
-                    (right.lastItemCount ?? 0) * 100 +
-                    right.successCount * 10 -
-                    right.consecutiveFailures * 20;
-                const leftScore =
-                    healthWeight(left.status) * 1000 +
-                    (left.lastItemCount ?? 0) * 100 +
-                    left.successCount * 10 -
-                    left.consecutiveFailures * 20;
-
-                if (rightScore !== leftScore) {
-                    return rightScore - leftScore;
-                }
-
-                return (right.lastSuccessAt ?? 0) - (left.lastSuccessAt ?? 0);
-            })
-            .slice(0, 6);
+        return rankActiveSourcesForHome(data.sources).slice(0, 6);
     }, [data?.sources]);
 
     const focusPresets = useMemo(

@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useRef, useMemo, useState, useEffect } from "react";
+import { rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
 
 type SourceHealthStatus = "idle" | "healthy" | "failing";
 
@@ -58,16 +59,6 @@ const statusClassMap: Record<SourceHealthStatus, string> = {
 export const Route = createFileRoute("/health")({
     component: HealthPage,
 });
-
-function sourcePriorityScore(source: SourceHealthSnapshot) {
-    if (source.status !== "failing") return -1;
-
-    const failureWeight = source.consecutiveFailures * 100;
-    const errorRecencyWeight = Math.floor((source.lastErrorAt ?? 0) / 1000);
-    const durationWeight = source.lastDurationMs ?? 0;
-
-    return failureWeight + errorRecencyWeight + durationWeight;
-}
 
 function HealthPage() {
     useTitle(`${import.meta.env.VITE_APP_TITLE} | 数据源健康`);
@@ -138,10 +129,7 @@ function HealthPage() {
 
     const prioritizedFailingSources = useMemo(() => {
         if (!data?.sources) return [];
-
-        return data.sources
-            .filter((source) => source.status === "failing")
-            .sort((left, right) => sourcePriorityScore(right) - sourcePriorityScore(left));
+        return rankFailingSourcesByPriority(data.sources);
     }, [data?.sources]);
 
     const filteredSources = useMemo(() => {
