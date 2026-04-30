@@ -1,78 +1,82 @@
-name: Nightly CI
+name: Docker nightly release
 
 on:
-  schedule:
-    - cron: '0 17 * * *'
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
 
-concurrency:
-  group: nightly-ci
-  cancel-in-progress: true
+permissions:
+  contents: write
+  packages: write
 
 jobs:
-  nightly:
-    name: Check, build and publish nightly
+  check_date:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    name: Check latest commit
+    outputs:
+      should_run: ${{ steps.should_run.outputs.should_run }}
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: print latest_commit
+        run: echo ${{ github.sha }}
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+      - id: should_run
+        continue-on-error: true
+        name: check latest commit is less than a day
+        if: ${{ github.event_name == 'schedule' }}
+        run: test -z $(git rev-list --after="24 hours" ${{ github.sha }}) && echo "should_run=false" >> $GITHUB_OUTPUT
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+  ci:
+    runs-on: ubuntu-latest
+    needs: check_date
+    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
-          cache: pnpm
+          node-version: 22
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run quality checks
-        run: pnpm check
+      - name: Validate project
+        run: pnpm validate
 
-      - name: Build project
-        run: pnpm build
+  build:
+    runs-on: ubuntu-latest
+    needs:
+      - ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=nightly
-            type=raw,value=nightly-${{ github.run_number }}
-            type=sha,prefix=sha-
-
-      - name: Build and push image to GHCR
-        uses: docker/build-push-action@v6
+      - name: Build and push
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            bruceblink/latestnews:nightly
+            ghcr.io/bruceblink/latestnews:nightly
 
-      - name: Upload nightly artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: latestnews-nightly-${{ github.run_number }}
-          path: |
-            dist/output/public
-            dist/output/server
-          if-no-files-found: error
-          retention-days: 7
