@@ -1,12 +1,13 @@
-import type { SourceID, SourceResponse } from "@shared/types";
+import type { SourceID } from "@shared/types";
 
 import { z } from "zod";
 import { getters } from "#/getters";
-import { TTL } from "@shared/consts";
 import { logger } from "#/utils/logger";
 import { getCacheTable } from "#/database/cache";
 import dataSources from "@shared/data-sources.ts";
 import { readBody, createError, defineEventHandler } from "h3";
+
+import { resolveEntireSources } from "../../utils/resolve-entire-sources";
 
 const entireSourcesSchema = z.object({
     sources: z.array(z.string()).max(100),
@@ -29,51 +30,19 @@ export default defineEventHandler(async (event) => {
 
         if (!ids.length) return [];
 
-        const now = Date.now();
-        const cachedResponses = new Map<SourceID, SourceResponse>();
+        const caches = cacheTable ? await cacheTable.getEntire(ids) : [];
 
-        if (cacheTable) {
-            const caches = await cacheTable.getEntire(ids);
-            for (const cache of caches) {
-                cachedResponses.set(cache.id, {
-                    status: "cache",
-                    id: cache.id,
-                    name: dataSources[cache.id].name,
-                    items: cache.items,
-                    updatedTime: now - cache.updated < (dataSources[cache.id].interval ?? TTL) ? now : cache.updated,
-                });
-            }
-        }
-
-        const missingIds = ids.filter((id) => !cachedResponses.has(id));
-
-        if (missingIds.length && cacheTable) {
-            const fetched = await Promise.allSettled(
-                missingIds.map(async (id) => {
-                    const items = (await getters[id]()).slice(0, 30);
-                    if (items.length) await cacheTable.set(id, items);
-                    return {
-                        status: "success" as const,
-                        id,
-                        name: dataSources[id].name,
-                        items,
-                        updatedTime: Date.now(),
-                    };
-                })
-            );
-
-            for (const result of fetched) {
-                if (result.status === "fulfilled") {
-                    cachedResponses.set(result.value.id, result.value);
-                } else {
-                    logger.error(result.reason);
-                }
-            }
-        }
-
-        return ids
-            .map((id) => cachedResponses.get(id))
-            .filter((response): response is SourceResponse => Boolean(response));
+        return await resolveEntireSources({
+            sourceIds: ids,
+            cacheEntries: caches,
+            fetchMissing: (id) => getters[id](),
+            saveCache: async (id, items) => {
+                if (!cacheTable) return;
+                await cacheTable.set(id, items);
+            },
+            now: Date.now(),
+            onFetchError: (error) => logger.error(error),
+        });
     } catch (error) {
         if (error && typeof error === "object" && "statusCode" in error) throw error;
     }
