@@ -8,6 +8,7 @@ import { logger } from "#/utils/logger.ts";
 import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
 import { getQuery, createError, defineEventHandler } from "h3";
+import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 import { recordSourceFailure, recordSourceSuccess, getSourceHealthSnapshot } from "#/utils/source-health";
 
 const isValidSource = (id?: SourceID) => !!id && !!dataSources[id] && !!getters[id];
@@ -39,8 +40,7 @@ function isLatestRequest(latest: string | boolean | undefined) {
 
 function shouldDegradeToCache(id: SourceID) {
     const health = getSourceHealthSnapshot(id);
-    if (health.status !== "failing") return false;
-    return health.consecutiveFailures >= 2;
+    return shouldDegradeSourceToCache(health);
 }
 
 function fetchLatestItems(id: SourceID) {
