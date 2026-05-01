@@ -106,14 +106,14 @@ export function Menu() {
         }
 
         setSyncing(true);
-        setSyncStatus((prev) => toSyncingStatus(prev));
+        setSyncStatus((prev) => toSyncingStatus(prev, "manual-sync"));
         try {
             await uploadMetadata(primitiveMetadata);
             setPrimitiveMetadata((prev: PrimitiveMetadata) => markPrimitiveMetadataSynced(prev));
-            setSyncStatus((prev) => toSuccessStatus(prev));
+            setSyncStatus((prev) => toSuccessStatus(prev, "manual-sync"));
             toaster("布局已同步到云端", { type: "success" });
         } catch (error) {
-            setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(error)));
+            setSyncStatus((prev) => toErrorStatus(prev, "manual-sync", getSyncErrorMessage(error)));
             toaster(getSyncErrorMessage(error), { type: "error" });
             handleAuthError(toaster, error);
         } finally {
@@ -128,7 +128,7 @@ export function Menu() {
         }
 
         setSyncing(true);
-        setSyncStatus((prev) => toSyncingStatus(prev));
+        setSyncStatus((prev) => toSyncingStatus(prev, "retry-sync"));
 
         try {
             if (primitiveMetadata.action === "manual") {
@@ -141,10 +141,10 @@ export function Menu() {
                 }
             }
 
-            setSyncStatus((prev) => toSuccessStatus(prev));
+            setSyncStatus((prev) => toSuccessStatus(prev, "retry-sync"));
             toaster("同步已重试并成功", { type: "success" });
         } catch (error) {
-            setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(error)));
+            setSyncStatus((prev) => toErrorStatus(prev, "retry-sync", getSyncErrorMessage(error)));
             toaster(getSyncErrorMessage(error), { type: "error" });
             handleAuthError(toaster, error);
         } finally {
@@ -160,7 +160,7 @@ export function Menu() {
         if (!window.confirm("确认使用云端布局覆盖当前本地布局吗？")) return;
 
         setSyncing(true);
-        setSyncStatus((prev) => toSyncingStatus(prev));
+        setSyncStatus((prev) => toSyncingStatus(prev, "restore-from-remote"));
 
         try {
             const remote = await downloadMetadata();
@@ -170,10 +170,10 @@ export function Menu() {
             }
 
             setPrimitiveMetadata(remote);
-            setSyncStatus((prev) => toSuccessStatus(prev));
+            setSyncStatus((prev) => toSuccessStatus(prev, "restore-from-remote"));
             toaster("已使用云端布局恢复本地配置", { type: "success" });
         } catch (error) {
-            setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(error)));
+            setSyncStatus((prev) => toErrorStatus(prev, "restore-from-remote", getSyncErrorMessage(error)));
             toaster(getSyncErrorMessage(error), { type: "error" });
             handleAuthError(toaster, error);
         } finally {
@@ -189,15 +189,15 @@ export function Menu() {
         if (!window.confirm("确认使用当前本地布局覆盖云端布局吗？")) return;
 
         setSyncing(true);
-        setSyncStatus((prev) => toSyncingStatus(prev));
+        setSyncStatus((prev) => toSyncingStatus(prev, "restore-to-remote"));
 
         try {
             await uploadMetadata(primitiveMetadata);
             setPrimitiveMetadata((prev) => markPrimitiveMetadataSynced(prev));
-            setSyncStatus((prev) => toSuccessStatus(prev));
+            setSyncStatus((prev) => toSuccessStatus(prev, "restore-to-remote"));
             toaster("已使用本地布局覆盖云端配置", { type: "success" });
         } catch (error) {
-            setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(error)));
+            setSyncStatus((prev) => toErrorStatus(prev, "restore-to-remote", getSyncErrorMessage(error)));
             toaster(getSyncErrorMessage(error), { type: "error" });
             handleAuthError(toaster, error);
         } finally {

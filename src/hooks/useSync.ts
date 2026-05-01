@@ -34,10 +34,10 @@ export function useSync() {
     useEffect(() => {
         const feedback = takeAuthSyncFeedback();
         if (feedback === "success") {
-            setSyncStatus((prev) => toSuccessStatus(prev));
+            setSyncStatus((prev) => toSuccessStatus(prev, "auth-feedback"));
             toaster("登录成功，已同步最新布局", { type: "success" });
         } else if (feedback === "error") {
-            setSyncStatus((prev) => toErrorStatus(prev, "登录后首次同步失败，已继续使用本地布局"));
+            setSyncStatus((prev) => toErrorStatus(prev, "auth-feedback", "登录后首次同步失败，已继续使用本地布局"));
             toaster("登录成功，但远程布局同步失败，已继续使用本地布局", { type: "warning" });
         }
     }, [setSyncStatus, toaster]);
@@ -46,15 +46,15 @@ export function useSync() {
         async () => {
             if (!loggedIn || primitiveMetadata.action !== "manual") return;
 
-            setSyncStatus((prev) => toQueuedStatus(prev));
-            setSyncStatus((prev) => toSyncingStatus(prev));
+            setSyncStatus((prev) => toQueuedStatus(prev, "auto-upload"));
+            setSyncStatus((prev) => toSyncingStatus(prev, "auto-upload"));
 
             try {
                 await uploadMetadata(primitiveMetadata);
                 setPrimitiveMetadata((prev) => markPrimitiveMetadataSynced(prev));
-                setSyncStatus((prev) => toSuccessStatus(prev));
+                setSyncStatus((prev) => toSuccessStatus(prev, "auto-upload"));
             } catch (err: unknown) {
-                setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(err)));
+                setSyncStatus((prev) => toErrorStatus(prev, "auto-upload", getSyncErrorMessage(err)));
                 handleAuthError(toaster, err);
             }
         },
@@ -67,7 +67,7 @@ export function useSync() {
         if (!loggedIn) return;
 
         const trySync = async () => {
-            setSyncStatus((prev) => toSyncingStatus(prev));
+            setSyncStatus((prev) => toSyncingStatus(prev, "login-sync"));
 
             try {
                 const remoteMetadata = await downloadMetadata();
@@ -76,15 +76,15 @@ export function useSync() {
                         const merged = mergePrimitiveMetadata(prev, remoteMetadata);
                         setSyncStatus((current) =>
                             merged.updatedTime === prev.updatedTime
-                                ? toConflictResolvedStatus(current)
-                                : toMergedStatus(current)
+                                ? toConflictResolvedStatus(current, "login-sync")
+                                : toMergedStatus(current, "login-sync")
                         );
                         return merged;
                     });
                 }
-                setSyncStatus((prev) => toSuccessStatus(prev));
+                setSyncStatus((prev) => toSuccessStatus(prev, "login-sync"));
             } catch (err: unknown) {
-                setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(err)));
+                setSyncStatus((prev) => toErrorStatus(prev, "login-sync", getSyncErrorMessage(err)));
                 handleAuthError(toaster, err);
             }
         };
