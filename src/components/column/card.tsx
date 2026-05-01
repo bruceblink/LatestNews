@@ -1,5 +1,5 @@
 import type { NewsItem, SourceID } from "@shared/types";
-import type { SourceHealthStatus } from "~/hooks/useSourceHealth";
+import type { SourceHealthStatus } from "@shared/source-health-types";
 
 import clsx from "clsx";
 import { useWindowSize } from "react-use";

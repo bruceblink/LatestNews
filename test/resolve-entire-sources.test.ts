@@ -9,8 +9,8 @@ function createResponseItems(id: SourceID): SourceResponse["items"] {
         {
             id: `${id}-1`,
             title: `${id} title`,
-            link: `https://example.com/${id}`,
-            created: "2026-01-01T00:00:00.000Z",
+            url: `https://example.com/${id}`,
+            pubDate: "2026-01-01T00:00:00.000Z",
             extra: {},
         },
     ];

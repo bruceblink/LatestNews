@@ -1,5 +1,5 @@
 import type { SourceID } from "@shared/types.ts";
-import type { SourceHealthStatus } from "~/hooks/useSourceHealth";
+import type { SourceHealthStatus } from "@shared/source-health-types";
 
 import clsx from "clsx";
 import { useRefetch } from "~/hooks/useRefetch";
