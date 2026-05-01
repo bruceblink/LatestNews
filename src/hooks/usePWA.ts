@@ -105,7 +105,7 @@ export function usePWA() {
                 action: {
                     label: "查看更新",
                     onClick: () => {
-                        window.open(`${PROJECT_URL}/releases/tag/v${Version}`);
+                        window.open(`${PROJECT_URL}/releases/tag/v${Version}`, "_blank", "noopener,noreferrer");
                     },
                 },
             });

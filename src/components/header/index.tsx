@@ -32,7 +32,7 @@ function Github() {
             type="button"
             title="Github"
             className="i-ph:github-logo-duotone btn text-zinc-600 dark:text-zinc-500/80 hover:text-zinc-900 dark:hover:text-zinc-300"
-            onClick={() => window.open(PROJECT_URL)}
+            onClick={() => window.open(PROJECT_URL, "_blank", "noopener,noreferrer")}
         />
     );
 }
@@ -102,6 +102,7 @@ export function Header() {
                 </Link>
                 <a
                     target="_blank"
+                    rel="noopener noreferrer"
                     href={`${PROJECT_URL}/releases/tag/v${Version}`}
                     className="btn text-xs ml-2 font-mono text-zinc-700 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-400 self-end mb-0.5"
                 >

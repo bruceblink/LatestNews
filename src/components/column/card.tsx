@@ -184,6 +184,7 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
                 <a
                     href={width < 768 ? item.mobileUrl || item.url : item.url}
                     target="_blank"
+                    rel="noopener noreferrer"
                     key={item.id}
                     title={item.extra?.hover}
                     onClick={() => handleClick(item)}

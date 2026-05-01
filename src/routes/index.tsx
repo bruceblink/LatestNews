@@ -106,6 +106,7 @@ function IndexComponent() {
                                                 className="mt-0.5 h-10 w-10 rounded-full bg-cover bg-center"
                                                 href={sourceMeta.home}
                                                 target="_blank"
+                                                rel="noopener noreferrer"
                                                 title={sourceMeta.desc}
                                                 style={{
                                                     backgroundImage: `url(/icons/${source.id.split("-")[0]}.png)`,

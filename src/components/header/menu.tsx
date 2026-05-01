@@ -335,7 +335,7 @@ export function Menu() {
                             </li>
                             {/* <ThemeToggle /> */}
                             <li
-                                onClick={() => window.open(PROJECT_URL)}
+                                onClick={() => window.open(PROJECT_URL, "_blank", "noopener,noreferrer")}
                                 className="cursor-pointer [&_*]:cursor-pointer transition-all"
                             >
                                 <span className="i-ph:github-logo-duotone inline-block" />

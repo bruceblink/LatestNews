@@ -31,6 +31,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 <a
                     className="w-8 h-8 rounded-full bg-cover ring-1 ring-zinc-300 dark:ring-zinc-700/60"
                     target="_blank"
+                    rel="noopener noreferrer"
                     href={ds.home}
                     title={ds.desc}
                     style={{
