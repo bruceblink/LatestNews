@@ -1,31 +1,9 @@
+import type { MetadataSyncStatus } from "@shared/metadata-sync-types";
+
 import { atom } from "jotai";
-
-export type MetadataSyncPhase = "idle" | "queued" | "syncing" | "merged" | "conflict-resolved" | "success" | "error";
-
-export interface MetadataSyncStatus {
-    phase: MetadataSyncPhase;
-    lastAttemptAt?: number;
-    lastSyncedAt?: number;
-    lastErrorMessage?: string;
-}
+import { metadataSyncPhases, createDefaultMetadataSyncStatus } from "@shared/metadata-sync-types";
 
 const STORAGE_KEY = "metadata-sync-status";
-
-const validPhases: MetadataSyncPhase[] = [
-    "idle",
-    "queued",
-    "syncing",
-    "merged",
-    "conflict-resolved",
-    "success",
-    "error",
-];
-
-export function createDefaultMetadataSyncStatus(): MetadataSyncStatus {
-    return {
-        phase: "idle",
-    };
-}
 
 function readStoredSyncStatus(): MetadataSyncStatus {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -33,7 +11,7 @@ function readStoredSyncStatus(): MetadataSyncStatus {
 
     try {
         const parsed = JSON.parse(raw) as MetadataSyncStatus;
-        if (!validPhases.includes(parsed.phase)) {
+        if (!metadataSyncPhases.includes(parsed.phase)) {
             return createDefaultMetadataSyncStatus();
         }
 
