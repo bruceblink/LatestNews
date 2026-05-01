@@ -10,6 +10,7 @@ import { useAtom, useSetAtom, useAtomValue } from "jotai";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { login, logout, useLoginState } from "~/hooks/useLogin";
 import { metadataSyncStatusAtom } from "~/atoms/syncStatusAtom";
+import { toErrorStatus, toSuccessStatus, toSyncingStatus } from "@shared/metadata-sync-flow";
 import { primitiveMetadataAtom, createDefaultPrimitiveMetadata } from "~/atoms/primitiveMetadataAtom";
 import { getSyncStatusTone, getSyncStatusLabel, getSyncStatusDescription } from "@shared/metadata-sync-view";
 import {
@@ -105,30 +106,14 @@ export function Menu() {
         }
 
         setSyncing(true);
-        setSyncStatus((prev) => ({
-            ...prev,
-            phase: "syncing",
-            lastAttemptAt: Date.now(),
-            lastErrorMessage: undefined,
-        }));
+        setSyncStatus((prev) => toSyncingStatus(prev));
         try {
             await uploadMetadata(primitiveMetadata);
             setPrimitiveMetadata((prev: PrimitiveMetadata) => markPrimitiveMetadataSynced(prev));
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "success",
-                lastAttemptAt: Date.now(),
-                lastSyncedAt: Date.now(),
-                lastErrorMessage: undefined,
-            }));
+            setSyncStatus((prev) => toSuccessStatus(prev));
             toaster("布局已同步到云端", { type: "success" });
         } catch (error) {
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "error",
-                lastAttemptAt: Date.now(),
-                lastErrorMessage: getSyncErrorMessage(error),
-            }));
+            setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(error)));
             toaster(getSyncErrorMessage(error), { type: "error" });
             handleAuthError(toaster, error);
         } finally {
@@ -143,12 +128,7 @@ export function Menu() {
         }
 
         setSyncing(true);
-        setSyncStatus((prev) => ({
-            ...prev,
-            phase: "syncing",
-            lastAttemptAt: Date.now(),
-            lastErrorMessage: undefined,
-        }));
+        setSyncStatus((prev) => toSyncingStatus(prev));
 
         try {
             if (primitiveMetadata.action === "manual") {
@@ -161,21 +141,10 @@ export function Menu() {
                 }
             }
 
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "success",
-                lastAttemptAt: Date.now(),
-                lastSyncedAt: Date.now(),
-                lastErrorMessage: undefined,
-            }));
+            setSyncStatus((prev) => toSuccessStatus(prev));
             toaster("同步已重试并成功", { type: "success" });
         } catch (error) {
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "error",
-                lastAttemptAt: Date.now(),
-                lastErrorMessage: getSyncErrorMessage(error),
-            }));
+            setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(error)));
             toaster(getSyncErrorMessage(error), { type: "error" });
             handleAuthError(toaster, error);
         } finally {
@@ -191,12 +160,7 @@ export function Menu() {
         if (!window.confirm("确认使用云端布局覆盖当前本地布局吗？")) return;
 
         setSyncing(true);
-        setSyncStatus((prev) => ({
-            ...prev,
-            phase: "syncing",
-            lastAttemptAt: Date.now(),
-            lastErrorMessage: undefined,
-        }));
+        setSyncStatus((prev) => toSyncingStatus(prev));
 
         try {
             const remote = await downloadMetadata();
@@ -206,21 +170,10 @@ export function Menu() {
             }
 
             setPrimitiveMetadata(remote);
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "success",
-                lastAttemptAt: Date.now(),
-                lastSyncedAt: Date.now(),
-                lastErrorMessage: undefined,
-            }));
+            setSyncStatus((prev) => toSuccessStatus(prev));
             toaster("已使用云端布局恢复本地配置", { type: "success" });
         } catch (error) {
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "error",
-                lastAttemptAt: Date.now(),
-                lastErrorMessage: getSyncErrorMessage(error),
-            }));
+            setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(error)));
             toaster(getSyncErrorMessage(error), { type: "error" });
             handleAuthError(toaster, error);
         } finally {
@@ -236,31 +189,15 @@ export function Menu() {
         if (!window.confirm("确认使用当前本地布局覆盖云端布局吗？")) return;
 
         setSyncing(true);
-        setSyncStatus((prev) => ({
-            ...prev,
-            phase: "syncing",
-            lastAttemptAt: Date.now(),
-            lastErrorMessage: undefined,
-        }));
+        setSyncStatus((prev) => toSyncingStatus(prev));
 
         try {
             await uploadMetadata(primitiveMetadata);
             setPrimitiveMetadata((prev) => markPrimitiveMetadataSynced(prev));
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "success",
-                lastAttemptAt: Date.now(),
-                lastSyncedAt: Date.now(),
-                lastErrorMessage: undefined,
-            }));
+            setSyncStatus((prev) => toSuccessStatus(prev));
             toaster("已使用本地布局覆盖云端配置", { type: "success" });
         } catch (error) {
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "error",
-                lastAttemptAt: Date.now(),
-                lastErrorMessage: getSyncErrorMessage(error),
-            }));
+            setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(error)));
             toaster(getSyncErrorMessage(error), { type: "error" });
             handleAuthError(toaster, error);
         } finally {

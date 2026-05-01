@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useDebounce } from "react-use";
 import { useAtom, useSetAtom } from "jotai";
+import { toErrorStatus, toSuccessStatus, toSyncingStatus } from "@shared/metadata-sync-flow";
 import {
     uploadMetadata,
     handleAuthError,
@@ -26,18 +27,10 @@ export function useSync() {
     useEffect(() => {
         const feedback = takeAuthSyncFeedback();
         if (feedback === "success") {
-            setSyncStatus({
-                phase: "success",
-                lastAttemptAt: Date.now(),
-                lastSyncedAt: Date.now(),
-            });
+            setSyncStatus((prev) => toSuccessStatus(prev));
             toaster("登录成功，已同步最新布局", { type: "success" });
         } else if (feedback === "error") {
-            setSyncStatus({
-                phase: "error",
-                lastAttemptAt: Date.now(),
-                lastErrorMessage: "登录后首次同步失败，已继续使用本地布局",
-            });
+            setSyncStatus((prev) => toErrorStatus(prev, "登录后首次同步失败，已继续使用本地布局"));
             toaster("登录成功，但远程布局同步失败，已继续使用本地布局", { type: "warning" });
         }
     }, [setSyncStatus, toaster]);
@@ -53,30 +46,14 @@ export function useSync() {
                 lastErrorMessage: undefined,
             }));
 
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "syncing",
-                lastAttemptAt: Date.now(),
-                lastErrorMessage: undefined,
-            }));
+            setSyncStatus((prev) => toSyncingStatus(prev));
 
             try {
                 await uploadMetadata(primitiveMetadata);
                 setPrimitiveMetadata((prev) => markPrimitiveMetadataSynced(prev));
-                setSyncStatus((prev) => ({
-                    ...prev,
-                    phase: "success",
-                    lastAttemptAt: Date.now(),
-                    lastSyncedAt: Date.now(),
-                    lastErrorMessage: undefined,
-                }));
+                setSyncStatus((prev) => toSuccessStatus(prev));
             } catch (err: unknown) {
-                setSyncStatus((prev) => ({
-                    ...prev,
-                    phase: "error",
-                    lastAttemptAt: Date.now(),
-                    lastErrorMessage: getSyncErrorMessage(err),
-                }));
+                setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(err)));
                 handleAuthError(toaster, err);
             }
         },
@@ -89,12 +66,7 @@ export function useSync() {
         if (!loggedIn) return;
 
         const trySync = async () => {
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "syncing",
-                lastAttemptAt: Date.now(),
-                lastErrorMessage: undefined,
-            }));
+            setSyncStatus((prev) => toSyncingStatus(prev));
 
             try {
                 const remoteMetadata = await downloadMetadata();
@@ -108,20 +80,9 @@ export function useSync() {
                         return merged;
                     });
                 }
-                setSyncStatus((prev) => ({
-                    ...prev,
-                    phase: "success",
-                    lastAttemptAt: Date.now(),
-                    lastSyncedAt: Date.now(),
-                    lastErrorMessage: undefined,
-                }));
+                setSyncStatus((prev) => toSuccessStatus(prev));
             } catch (err: unknown) {
-                setSyncStatus((prev) => ({
-                    ...prev,
-                    phase: "error",
-                    lastAttemptAt: Date.now(),
-                    lastErrorMessage: getSyncErrorMessage(err),
-                }));
+                setSyncStatus((prev) => toErrorStatus(prev, getSyncErrorMessage(err)));
                 handleAuthError(toaster, err);
             }
         };
