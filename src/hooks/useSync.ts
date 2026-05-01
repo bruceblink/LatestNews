@@ -1,7 +1,14 @@
 import { useEffect } from "react";
 import { useDebounce } from "react-use";
 import { useAtom, useSetAtom } from "jotai";
-import { toErrorStatus, toSuccessStatus, toSyncingStatus } from "@shared/metadata-sync-flow";
+import {
+    toErrorStatus,
+    toMergedStatus,
+    toQueuedStatus,
+    toSuccessStatus,
+    toSyncingStatus,
+    toConflictResolvedStatus,
+} from "@shared/metadata-sync-flow";
 import {
     uploadMetadata,
     handleAuthError,
@@ -39,13 +46,7 @@ export function useSync() {
         async () => {
             if (!loggedIn || primitiveMetadata.action !== "manual") return;
 
-            setSyncStatus((prev) => ({
-                ...prev,
-                phase: "queued",
-                lastAttemptAt: Date.now(),
-                lastErrorMessage: undefined,
-            }));
-
+            setSyncStatus((prev) => toQueuedStatus(prev));
             setSyncStatus((prev) => toSyncingStatus(prev));
 
             try {
@@ -73,10 +74,11 @@ export function useSync() {
                 if (remoteMetadata) {
                     setPrimitiveMetadata((prev) => {
                         const merged = mergePrimitiveMetadata(prev, remoteMetadata);
-                        setSyncStatus((current) => ({
-                            ...current,
-                            phase: merged.updatedTime === prev.updatedTime ? "conflict-resolved" : "merged",
-                        }));
+                        setSyncStatus((current) =>
+                            merged.updatedTime === prev.updatedTime
+                                ? toConflictResolvedStatus(current)
+                                : toMergedStatus(current)
+                        );
                         return merged;
                     });
                 }

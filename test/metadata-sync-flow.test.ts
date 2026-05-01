@@ -1,8 +1,30 @@
 import { it, expect, describe } from "vitest";
 
-import { toErrorStatus, toSuccessStatus, toSyncingStatus } from "../shared/metadata-sync-flow";
+import {
+    toErrorStatus,
+    toMergedStatus,
+    toQueuedStatus,
+    toSuccessStatus,
+    toSyncingStatus,
+    toConflictResolvedStatus,
+} from "../shared/metadata-sync-flow";
 
 describe("metadata sync flow policy", () => {
+    it("transitions to queued and clears error", () => {
+        const next = toQueuedStatus(
+            {
+                phase: "error",
+                lastErrorMessage: "failed",
+                lastAttemptAt: 1,
+            },
+            90
+        );
+
+        expect(next.phase).toBe("queued");
+        expect(next.lastAttemptAt).toBe(90);
+        expect(next.lastErrorMessage).toBeUndefined();
+    });
+
     it("transitions to syncing and clears error", () => {
         const next = toSyncingStatus(
             {
@@ -16,6 +38,24 @@ describe("metadata sync flow policy", () => {
         expect(next.phase).toBe("syncing");
         expect(next.lastAttemptAt).toBe(100);
         expect(next.lastErrorMessage).toBeUndefined();
+    });
+
+    it("transitions to merged", () => {
+        const next = toMergedStatus({
+            phase: "syncing",
+            lastAttemptAt: 1,
+        });
+
+        expect(next.phase).toBe("merged");
+    });
+
+    it("transitions to conflict-resolved", () => {
+        const next = toConflictResolvedStatus({
+            phase: "syncing",
+            lastAttemptAt: 1,
+        });
+
+        expect(next.phase).toBe("conflict-resolved");
     });
 
     it("transitions to success and updates synced timestamp", () => {

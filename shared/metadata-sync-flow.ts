@@ -1,11 +1,34 @@
 import type { MetadataSyncStatus } from "./metadata-sync-types";
 
+export function toQueuedStatus(prev: MetadataSyncStatus, now = Date.now()): MetadataSyncStatus {
+    return {
+        ...prev,
+        phase: "queued",
+        lastAttemptAt: now,
+        lastErrorMessage: undefined,
+    };
+}
+
 export function toSyncingStatus(prev: MetadataSyncStatus, now = Date.now()): MetadataSyncStatus {
     return {
         ...prev,
         phase: "syncing",
         lastAttemptAt: now,
         lastErrorMessage: undefined,
+    };
+}
+
+export function toMergedStatus(prev: MetadataSyncStatus): MetadataSyncStatus {
+    return {
+        ...prev,
+        phase: "merged",
+    };
+}
+
+export function toConflictResolvedStatus(prev: MetadataSyncStatus): MetadataSyncStatus {
+    return {
+        ...prev,
+        phase: "conflict-resolved",
     };
 }
 
