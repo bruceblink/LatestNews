@@ -104,6 +104,28 @@ function HealthPage() {
         return rankFailingSourcesByPriority(data.sources);
     }, [data?.sources]);
 
+    const copyFailingSummary = async () => {
+        if (!prioritizedFailingSources.length) return;
+
+        const lines = prioritizedFailingSources.map((source, index) => {
+            const lastErrorAt = source.lastErrorAt ? new Date(source.lastErrorAt).toLocaleString("zh-CN") : "未知";
+            return [
+                `#${index + 1} ${source.name} (${source.id})`,
+                `状态: ${statusLabelMap[source.status]}`,
+                `连续失败: ${source.consecutiveFailures}`,
+                `最近错误: ${lastErrorAt}`,
+                `错误信息: ${source.lastErrorMessage ?? "无"}`,
+            ].join("\n");
+        });
+
+        try {
+            await navigator.clipboard.writeText(lines.join("\n\n"));
+            toaster("异常源诊断摘要已复制", { type: "success" });
+        } catch {
+            toaster("复制失败，请检查浏览器剪贴板权限", { type: "error" });
+        }
+    };
+
     const filteredSources = useMemo(() => {
         if (!data?.sources) return [];
 
@@ -215,6 +237,13 @@ function HealthPage() {
                     <div className="mb-3 flex items-center gap-2 text-red-600 dark:text-red-300">
                         <span className="i-ph:warning-circle-duotone text-lg" />
                         <span className="font-semibold">需要优先处理的异常源</span>
+                        <button
+                            type="button"
+                            className="ml-auto rounded-full bg-red-500/10 px-3 py-1 text-xs transition-all hover:bg-red-500/16"
+                            onClick={() => void copyFailingSummary()}
+                        >
+                            复制诊断摘要
+                        </button>
                     </div>
                     <div className="mb-3 rounded-xl bg-red-500/6 px-3 py-2 text-xs text-red-700 dark:text-red-300">
                         优先级根据连续失败次数、最近错误时间和最近耗时综合排序。
