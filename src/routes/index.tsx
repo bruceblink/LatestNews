@@ -67,7 +67,7 @@ function IndexComponent() {
         []
     );
 
-    const applyFocusPreset = (presetName: string, sources: SourceID[]) => {
+    const replaceFocusPreset = (presetName: string, sources: SourceID[]) => {
         if (
             focusSources.length > 0 &&
             !window.confirm(`应用"${presetName}"将替换当前 ${focusSources.length} 个关注源，是否继续？`)
@@ -75,7 +75,20 @@ function IndexComponent() {
             return;
         }
         setFocusSources(sources);
-        toaster(`${presetName} 已应用到关注栏`, { type: "success" });
+        toaster(`${presetName} 已替换关注栏`, { type: "success" });
+    };
+
+    const appendFocusPreset = (presetName: string, sources: SourceID[]) => {
+        const nextSources = uniqueSources([...focusSources, ...sources]);
+        const addedCount = nextSources.length - focusSources.length;
+
+        if (addedCount === 0) {
+            toaster(`${presetName} 中的数据源都已在关注栏`, { type: "warning" });
+            return;
+        }
+
+        setFocusSources(nextSources);
+        toaster(`${presetName} 已追加 ${addedCount} 个数据源`, { type: "success" });
     };
 
     return (
@@ -173,7 +186,7 @@ function IndexComponent() {
                             先用一组预设快速建立首页关注，再按自己的习惯继续微调。
                         </p>
                     </div>
-                    <div className="text-xs text-zinc-600 dark:text-zinc-500">应用后会直接替换当前关注栏内容</div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-500">可追加到当前关注栏，也可一键替换</div>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
                     {focusPresets.map((preset) => (
@@ -193,13 +206,22 @@ function IndexComponent() {
                                     </span>
                                 ))}
                             </div>
-                            <button
-                                type="button"
-                                className="mt-4 rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400"
-                                onClick={() => applyFocusPreset(preset.name, preset.sources)}
-                            >
-                                立即使用
-                            </button>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    className="rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400"
+                                    onClick={() => appendFocusPreset(preset.name, preset.sources)}
+                                >
+                                    追加
+                                </button>
+                                <button
+                                    type="button"
+                                    className="rounded-full bg-zinc-200/80 px-4 py-2 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 dark:bg-zinc-700/45 dark:text-zinc-300 dark:hover:bg-zinc-700/70"
+                                    onClick={() => replaceFocusPreset(preset.name, preset.sources)}
+                                >
+                                    替换
+                                </button>
+                            </div>
                         </article>
                     ))}
                 </div>
