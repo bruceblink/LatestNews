@@ -1,13 +1,13 @@
 import type { SourceID } from "@shared/types";
 
+import { objectEntries } from "@shared/type.util";
 import * as x from "glob:./sources/{*.ts,**/index.ts}";
-import { typeSafeObjectEntries } from "@shared/type.util";
 
 import type { SourceGetter } from "./types";
 
 export const getters = (function initGetters() {
     const _getters = {} as Record<SourceID, SourceGetter>;
-    typeSafeObjectEntries(x).forEach(([id, dataSource]) => {
+    objectEntries(x).forEach(([id, dataSource]) => {
         if (dataSource.default instanceof Function) {
             Object.assign(_getters, { [id]: dataSource.default });
         } else {

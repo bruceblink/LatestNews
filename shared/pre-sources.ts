@@ -1,7 +1,7 @@
 import process from "node:process";
 
 import { Interval } from "./consts";
-import { typeSafeObjectFromEntries } from "./type.util";
+import { objectFromEntries } from "./type.util";
 
 import type { Source, OriginSource } from "./types";
 
@@ -667,5 +667,5 @@ export function genSources() {
     });
 
     // 过滤并返回最终结果
-    return typeSafeObjectFromEntries(sources.filter(([, source]) => isSourceEnabled(source))) as Record<string, Source>;
+    return objectFromEntries(sources.filter(([, source]) => isSourceEnabled(source))) as Record<string, Source>;
 }
