@@ -4,6 +4,7 @@ import type { SourceHealthStatus } from "@shared/source-health-types";
 import clsx from "clsx";
 import { useWindowSize } from "react-use";
 import { useHistory } from "~/hooks/useHistory";
+import { useRefetch } from "~/hooks/useRefetch";
 import dataSources from "@shared/data-sources.ts";
 import { useNewsSource } from "~/hooks/useNewsSource";
 import { useRelativeTime } from "~/hooks/useRelativeTime.ts";
@@ -64,7 +65,8 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
 );
 
 function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
-    const { data, isFetching, isError } = useNewsSource(id);
+    const { data, isFetching, isError, error } = useNewsSource(id);
+    const hasItems = !!data?.items?.length;
 
     return (
         <>
@@ -88,12 +90,123 @@ function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
                 }}
                 defer
             >
-                <div className={clsx("transition-opacity-500", isFetching && "op-50")}>
-                    {!!data?.items?.length && RenderNewsList(id, data.items)}
+                <div className={clsx("min-h-full transition-opacity-500", isFetching && hasItems && "op-50")}>
+                    {hasItems ? (
+                        RenderNewsList(id, data.items)
+                    ) : (
+                        <CardState
+                            id={id}
+                            healthStatus={healthStatus}
+                            isError={isError}
+                            isFetching={isFetching}
+                            error={error}
+                        />
+                    )}
                 </div>
             </OverlayScrollbar>
         </>
     );
+}
+
+function CardState({
+    id,
+    healthStatus,
+    isError,
+    isFetching,
+    error,
+}: {
+    id: SourceID;
+    healthStatus?: SourceHealthStatus;
+    isError: boolean;
+    isFetching: boolean;
+    error: unknown;
+}) {
+    const { refresh } = useRefetch();
+    const ds = dataSources[id];
+    const message = getCardStateMessage({ healthStatus, isError, isFetching, error });
+
+    return (
+        <div className="min-h-[360px] flex flex-col items-center justify-center px-5 py-8 text-center">
+            <div
+                className={clsx(
+                    "mb-4 flex h-12 w-12 items-center justify-center rounded-full text-2xl",
+                    message.tone === "danger"
+                        ? "bg-red-500/10 text-red-500 dark:text-red-400"
+                        : message.tone === "warning"
+                          ? "bg-amber-500/12 text-amber-600 dark:text-amber-300"
+                          : `bg-${ds.color}-500/12 color-${ds.color}-500 dark:color-${ds.color}`
+                )}
+            >
+                <span className={clsx(isFetching ? "i-ph:spinner-duotone animate-spin" : message.icon)} />
+            </div>
+            <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{message.title}</div>
+            <div className="mt-2 max-w-58 text-xs leading-5 text-zinc-600 dark:text-zinc-500">
+                {message.description}
+            </div>
+            {(isError || healthStatus === "failing") && (
+                <button
+                    type="button"
+                    className="mt-5 rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400"
+                    onClick={() => refresh(id)}
+                >
+                    重新获取
+                </button>
+            )}
+        </div>
+    );
+}
+
+function getCardStateMessage({
+    healthStatus,
+    isError,
+    isFetching,
+    error,
+}: {
+    healthStatus?: SourceHealthStatus;
+    isError: boolean;
+    isFetching: boolean;
+    error: unknown;
+}) {
+    if (isError) {
+        return {
+            title: "暂时获取失败",
+            description: getErrorMessage(error) || "这个数据源本次请求没有成功，可以稍后重试。",
+            icon: "i-ph:warning-circle-duotone",
+            tone: "danger" as const,
+        };
+    }
+
+    if (isFetching) {
+        return {
+            title: "正在拉取最新内容",
+            description: "首次加载可能需要几秒钟，请稍等片刻。",
+            icon: "i-ph:spinner-duotone",
+            tone: "info" as const,
+        };
+    }
+
+    if (healthStatus === "failing") {
+        return {
+            title: "数据源正在观察中",
+            description: "最近几次采样不稳定，当前没有可展示的内容。",
+            icon: "i-ph:heartbeat-duotone",
+            tone: "warning" as const,
+        };
+    }
+
+    return {
+        title: "暂无新内容",
+        description: "这个数据源当前没有返回可展示条目，稍后会自动再次检查。",
+        icon: "i-ph:tray-duotone",
+        tone: "info" as const,
+    };
+}
+
+function getErrorMessage(error: unknown) {
+    if (!error) return "";
+    if (error instanceof Error) return error.message;
+    if (typeof error === "string") return error;
+    return "";
 }
 
 /**

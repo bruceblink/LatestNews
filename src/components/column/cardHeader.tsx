@@ -74,7 +74,8 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
             <div className="flex gap-2 text-lg text-zinc-600/80 dark:text-zinc-500/60">
                 {enableLogin.enable && (
                     <button
-                        title="isFetching"
+                        title={isFetching ? "正在刷新" : "刷新数据"}
+                        aria-label={isFetching ? "正在刷新" : "刷新数据"}
                         type="button"
                         className={clsx(
                             "btn hover:text-zinc-800 dark:hover:text-cyan-400 i-ph:arrow-counter-clockwise-duotone",
@@ -85,6 +86,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 )}
                 <button
                     title={isFocused ? "取消关注" : "加入关注"}
+                    aria-label={isFocused ? "取消关注" : "加入关注"}
                     type="button"
                     className={clsx(
                         "btn hover:text-zinc-800 dark:hover:text-cyan-400",
