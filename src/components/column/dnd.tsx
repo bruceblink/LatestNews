@@ -12,10 +12,10 @@ import { useAtom, useAtomValue } from "jotai";
 import { isMobile } from "react-device-detect";
 import { useEntireQuery } from "~/hooks/query.ts";
 import dataSources from "@shared/data-sources.ts";
-import { useMemo, useEffect, useCallback } from "react";
 import { goToTopAtom, currentSourcesAtom } from "~/atoms";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { reorderWithEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge";
 
@@ -31,6 +31,7 @@ const WIDTH = 350;
 export function Dnd() {
     const [items, setItems] = useAtom(currentSourcesAtom);
     const [parent] = useAutoAnimate({ duration: AnimationDuration });
+    const [activeMobileIndex, setActiveMobileIndex] = useState(0);
     const { sourceHealthMap } = useSourceHealthSummary();
     // 查询全部新闻 调用 '/api/s/entire' 接口
     useEntireQuery(items);
@@ -44,7 +45,18 @@ export function Dnd() {
 
     return (
         <DndWrapper items={items} setItems={setItems} isSingleColumn={isMobile}>
-            <OverlayScrollbar defer className="overflow-x-auto">
+            <OverlayScrollbar
+                defer
+                className="overflow-x-auto"
+                onScroll={(event) => {
+                    if (!isMobile) return;
+                    const scrollLeft = event.currentTarget.scrollLeft;
+                    const itemWidth = width - 16 > WIDTH ? WIDTH : width - 16;
+                    const gap = 24;
+                    const nextIndex = Math.round(scrollLeft / (itemWidth + gap));
+                    setActiveMobileIndex(Math.min(items.length - 1, Math.max(0, nextIndex)));
+                }}
+            >
                 <motion.ol
                     className={isMobile ? "flex px-2 gap-6 pb-4 scroll-smooth" : "grid w-full gap-6"}
                     ref={parent}
@@ -103,8 +115,21 @@ export function Dnd() {
                 </motion.ol>
             </OverlayScrollbar>
             {isMobile && (
-                <div className="flex justify-center">
-                    <span className="text-sm text-gray-500 text-center">左右滑动查看更多</span>
+                <div className="flex items-center justify-center gap-2">
+                    <span className="text-sm text-gray-500 text-center">
+                        左右滑动查看更多 · {activeMobileIndex + 1}/{items.length}
+                    </span>
+                    <div className="flex gap-1">
+                        {items.map((item, index) => (
+                            <span
+                                key={item}
+                                className={clsx(
+                                    "h-1.5 rounded-full transition-all",
+                                    index === activeMobileIndex ? "w-4 bg-cyan-500" : "w-1.5 bg-zinc-400/45"
+                                )}
+                            />
+                        ))}
+                    </div>
                 </div>
             )}
         </DndWrapper>
