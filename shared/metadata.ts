@@ -1,81 +1,51 @@
 import { dataSources } from "./data-sources.ts";
-import { typeSafeObjectKeys, typeSafeObjectEntries, typeSafeObjectFromEntries } from "./type.util";
+import { objectEntries, objectFromEntries } from "./type.util";
 
-import type { SourceID, Metadata } from "./types";
+import type { Source, SourceID, Metadata, ColumnID } from "./types";
 
-// ---------------------------
-// 核心列配置
-// ---------------------------
-export interface ColumnConfigItem {
+type ColumnConfigItem = {
     name: string;
-    sourceRule?: (id: SourceID, s: (typeof dataSources)[SourceID]) => boolean;
-}
+    sourceRule?: (id: SourceID, source: Source) => boolean;
+};
 
-export const columnConfig: Record<string, ColumnConfigItem> = {
+const columnConfig: Record<ColumnID, ColumnConfigItem> = {
     china: {
         name: "国内",
-        sourceRule: (_, s) => s.column === "china" && !s.redirect,
+        sourceRule: (_, source) => source.column === "china" && !source.redirect,
     },
     world: {
         name: "国际",
-        sourceRule: (_, s) => s.column === "world" && !s.redirect,
+        sourceRule: (_, source) => source.column === "world" && !source.redirect,
     },
     tech: {
         name: "科技",
-        sourceRule: (_, s) => s.column === "tech" && !s.redirect,
+        sourceRule: (_, source) => source.column === "tech" && !source.redirect,
     },
     finance: {
         name: "财经",
-        sourceRule: (_, s) => s.column === "finance" && !s.redirect,
+        sourceRule: (_, source) => source.column === "finance" && !source.redirect,
     },
     focus: { name: "关注" },
     realtime: {
         name: "实时",
-        sourceRule: (_, s) => s.type === "realtime" && !s.redirect,
+        sourceRule: (_, source) => source.type === "realtime" && !source.redirect,
     },
     hottest: {
         name: "热门",
-        sourceRule: (_, s) => s.type === "hottest" && !s.redirect,
+        sourceRule: (_, source) => source.type === "hottest" && !source.redirect,
     },
 };
 
-// ---------------------------
-// 类型推导
-// ---------------------------
-export type ColumnID = keyof typeof columnConfig;
-
-// ---------------------------
-// 导航栏 固定列 / 隐藏列的配置
-// ---------------------------
-export const fixedColumnIds = ["focus", "hottest", "realtime"] as const;
-export type FixedColumnId = (typeof fixedColumnIds)[number];
-
-const fixedSet = new Set<FixedColumnId>(fixedColumnIds);
-
-export const hiddenColumns = typeSafeObjectKeys(columnConfig).filter(
-    (id): id is Exclude<ColumnID, FixedColumnId> => !fixedSet.has(id as FixedColumnId)
-);
-
-// ---------------------------
-// 生成 metadata
-// ---------------------------
-export const metadata: Metadata = typeSafeObjectFromEntries(
-    typeSafeObjectEntries(columnConfig).map(([columnId, cfg]) => [
+export const metadata: Metadata = objectFromEntries(
+    objectEntries(columnConfig).map(([columnId, cfg]) => [
         columnId,
         {
             name: cfg.name,
             sources: cfg.sourceRule
-                ? typeSafeObjectEntries(dataSources)
+                ? objectEntries(dataSources)
                       .filter(([id, s]) => cfg.sourceRule!(id as SourceID, s))
                       .map(([id]) => id as SourceID)
                 : [],
         },
     ])
-);
-
-// ---------------------------
-// 兼容旧代码 columns.zh
-// ---------------------------
-export const columns = typeSafeObjectFromEntries(
-    typeSafeObjectEntries(columnConfig).map(([id, cfg]) => [id, { zh: cfg.name }])
 );

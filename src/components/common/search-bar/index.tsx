@@ -7,14 +7,14 @@ import clsx from "clsx";
 import { Command } from "cmdk";
 import { useMount } from "react-use";
 import pinyin from "@shared/pinyin.json";
-import { columns } from "@shared/metadata";
+import { metadata } from "@shared/metadata";
 import { useFocusWith } from "~/hooks/useFocus";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useSearchBar } from "~/hooks/useSearch";
 import { useRef, useMemo, useState } from "react";
 import dataSources from "@shared/data-sources.ts";
+import { objectEntries } from "@shared/type.util";
 import { CardWrapper } from "~/components/column/card";
-import { typeSafeObjectEntries } from "@shared/type.util";
 
 import { OverlayScrollbar } from "../overlay-scrollbar";
 
@@ -68,12 +68,12 @@ export function SearchBar() {
     const sourceItems = useMemo(
         () =>
             groupByColumn(
-                typeSafeObjectEntries(dataSources)
+                objectEntries(dataSources)
                     .filter(([_, source]) => !source.redirect)
                     .map(([k, source]) => ({
                         id: k,
                         title: source.title,
-                        column: source.column ? columns[source.column].zh : "未分类",
+                        column: source.column ? metadata[source.column].name : "未分类",
                         name: source.name,
                         pinyin: pinyin?.[k as keyof typeof pinyin] ?? "",
                     }))

@@ -1,11 +1,12 @@
 import clsx from "clsx";
 import { useMemo } from "react";
 import { useAtomValue } from "jotai";
+import { metadata } from "@shared/metadata";
 import { getTodayStart } from "~/utils/date";
 import { currentColumnIDAtom } from "~/atoms";
+import { fixedColumnIds } from "@shared/types";
 import { useHistory } from "~/hooks/useHistory";
 import { useSearchBar } from "~/hooks/useSearch.ts";
-import { metadata, fixedColumnIds } from "@shared/metadata";
 import { Link, useRouterState } from "@tanstack/react-router";
 
 export function NavBar() {

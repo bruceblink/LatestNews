@@ -1,6 +1,6 @@
 import type { SourceID, PrimitiveMetadata } from "@shared/types";
 
-import { fixedColumnIds } from "./metadata";
+import { fixedColumnIds } from "./types";
 
 function mergeColumnSources(remoteSources: SourceID[] = [], localSources: SourceID[] = []) {
     const merged: SourceID[] = [];

@@ -2,29 +2,27 @@ import type { PrimitiveAtom } from "jotai";
 import type { SourceID, FixedColumnID, PrimitiveMetadata } from "@shared/types";
 
 import { atom } from "jotai";
+import { fixedColumnIds } from "@shared/types";
+import { metadata } from "@shared/metadata.ts";
 import dataSources from "@shared/data-sources.ts";
 import { verifyPrimitiveMetadata } from "@shared/verify.ts";
-import { metadata, fixedColumnIds } from "@shared/metadata.ts";
-import { typeSafeObjectEntries, typeSafeObjectFromEntries } from "@shared/type.util.ts";
+import { objectEntries, objectFromEntries } from "@shared/type.util.ts";
 
 import type { Update } from "./types";
 
-// ========== 工具函数 ==========
-
 // 生成初始的 metadata（只保留 fixedColumnIds）
-const initialMetadata = typeSafeObjectFromEntries(
-    typeSafeObjectEntries(metadata)
-        .filter(([id]) => fixedColumnIds.includes(id as any))
-        .map(([id, val]) => [id, val.sources] as [FixedColumnID, SourceID[]])
-);
+const initialMetadata = objectFromEntries(fixedColumnIds.map((id) => [id, metadata[id].sources] as const)) as Record<
+    FixedColumnID,
+    SourceID[]
+>;
 
 // 预处理 metadata：校正非法 source，补全缺失项
 export function preprocessMetadata(target: PrimitiveMetadata): PrimitiveMetadata {
     return {
         data: {
             ...initialMetadata,
-            ...typeSafeObjectFromEntries(
-                typeSafeObjectEntries(target.data)
+            ...objectFromEntries(
+                objectEntries(target.data)
                     .filter(([id]) => initialMetadata[id])
                     .map(([id, s]) => {
                         if (id === "focus") {
