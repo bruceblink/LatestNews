@@ -1,6 +1,11 @@
 import { it, expect, describe } from "vitest";
 
-import { getSyncStatusTone, getSyncStatusLabel, getSyncStatusDescription } from "../shared/metadata-sync-view";
+import {
+    getSyncStatusTone,
+    getSyncStatusLabel,
+    getSyncStatusDescription,
+    getSyncTransitionSourceLabel,
+} from "../shared/metadata-sync-view";
 
 describe("metadata sync view policy", () => {
     it("returns pending label when local manual changes exist", () => {
@@ -34,5 +39,11 @@ describe("metadata sync view policy", () => {
                 lastAttempt: null,
             })
         ).toBe("最近同步 3 分钟前");
+    });
+
+    it("returns readable transition source labels", () => {
+        expect(getSyncTransitionSourceLabel("auto-upload")).toBe("自动保存");
+        expect(getSyncTransitionSourceLabel("restore-to-remote")).toBe("本地覆盖云端");
+        expect(getSyncTransitionSourceLabel()).toBe("暂无记录");
     });
 });

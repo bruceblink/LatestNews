@@ -1,4 +1,4 @@
-import type { MetadataSyncPhase } from "./metadata-sync-types";
+import type { MetadataSyncPhase, MetadataSyncTransitionSource } from "./metadata-sync-types";
 
 export function getSyncStatusLabel(phase: MetadataSyncPhase, hasPendingSyncChanges: boolean) {
     if (phase === "syncing") return "同步中";
@@ -42,4 +42,15 @@ export function getSyncStatusDescription({
     if (phase === "success") return `最近同步 ${lastSynced ?? "刚刚"}`;
     if (phase === "error") return `最近尝试 ${lastAttempt ?? "刚刚"}`;
     return "还没有同步记录";
+}
+
+export function getSyncTransitionSourceLabel(source?: MetadataSyncTransitionSource) {
+    if (source === "auto-upload") return "自动保存";
+    if (source === "manual-sync") return "手动同步";
+    if (source === "retry-sync") return "重试同步";
+    if (source === "login-sync") return "登录同步";
+    if (source === "auth-feedback") return "登录回调";
+    if (source === "restore-from-remote") return "云端恢复";
+    if (source === "restore-to-remote") return "本地覆盖云端";
+    return "暂无记录";
 }

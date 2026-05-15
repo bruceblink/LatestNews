@@ -12,7 +12,12 @@ import { login, logout, useLoginState } from "~/hooks/useLogin";
 import { metadataSyncStatusAtom } from "~/atoms/syncStatusAtom";
 import { toErrorStatus, toSuccessStatus, toSyncingStatus } from "@shared/metadata-sync-flow";
 import { primitiveMetadataAtom, createDefaultPrimitiveMetadata } from "~/atoms/primitiveMetadataAtom";
-import { getSyncStatusTone, getSyncStatusLabel, getSyncStatusDescription } from "@shared/metadata-sync-view";
+import {
+    getSyncStatusTone,
+    getSyncStatusLabel,
+    getSyncStatusDescription,
+    getSyncTransitionSourceLabel,
+} from "@shared/metadata-sync-view";
 import {
     uploadMetadata,
     handleAuthError,
@@ -216,6 +221,7 @@ export function Menu() {
         lastSynced,
         lastAttempt,
     });
+    const syncTransitionSourceLabel = getSyncTransitionSourceLabel(syncStatus.lastTransitionSource);
 
     return (
         <span className="relative" onMouseEnter={() => show(true)} onMouseLeave={() => show(false)}>
@@ -313,6 +319,7 @@ export function Menu() {
                                             </span>
                                         </div>
                                         <div className="mt-2 op-75">{syncStatusDescription}</div>
+                                        <div className="mt-1 op-60">来源：{syncTransitionSourceLabel}</div>
                                         {syncStatus.phase === "error" && syncStatus.lastErrorMessage && (
                                             <div className="mt-2 rounded-lg bg-red-500/8 px-2.5 py-1.5 text-red-600 dark:text-red-300">
                                                 {syncStatus.lastErrorMessage}
