@@ -8,41 +8,80 @@ import { originSources } from "../shared/pre-sources";
 
 const projectDir = fileURLToPath(new URL("..", import.meta.url));
 const iconsDir = join(projectDir, "public", "icons");
-async function downloadImage(url: string, outputPath: string, id: string) {
+
+interface IconDownloadFailure {
+    id: string;
+    reason: string;
+    url: string;
+}
+
+const downloadTimeoutMs = 5000;
+
+function getErrorMessage(error: unknown) {
+    if (error instanceof Error) return error.message;
+    if (typeof error === "string") return error;
+    return "unknown error";
+}
+
+async function downloadImage(url: string, outputPath: string, id: string): Promise<IconDownloadFailure | null> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), downloadTimeoutMs);
+
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: controller.signal });
         if (!response.ok) {
-            throw new Error(`${id}: could not fetch ${url}, status: ${response.status}`);
+            return {
+                id,
+                reason: `HTTP ${response.status}`,
+                url,
+            };
         }
 
-        const image = await (await fetch(url)).arrayBuffer();
+        const image = await response.arrayBuffer();
         fs.writeFileSync(outputPath, Buffer.from(image));
-        consola.success(`${id}: downloaded successfully.`);
+        return null;
     } catch (error) {
-        consola.error(`${id}: error downloading the image. `, error);
+        return {
+            id,
+            reason: controller.signal.aborted ? `timeout after ${downloadTimeoutMs}ms` : getErrorMessage(error),
+            url,
+        };
+    } finally {
+        clearTimeout(timer);
     }
 }
 
 async function main() {
-    await Promise.all(
+    const results = await Promise.all(
         Object.entries(originSources).map(async ([id, source]) => {
             try {
                 const icon = join(iconsDir, `${id}.png`);
                 if (fs.existsSync(icon)) {
                     // consola.info(`${id}: icon exists. skip.`)
-                    return;
+                    return null;
                 }
-                if (!source.home) return;
-                await downloadImage(
-                    `https://icons.duckduckgo.com/ip3/${source.home.replace(/^https?:\/\//, "").replace(/\/$/, "")}.ico`,
-                    icon,
-                    id
-                );
+                if (!source.home) return null;
+                const url = `https://icons.duckduckgo.com/ip3/${source.home.replace(/^https?:\/\//, "").replace(/\/$/, "")}.ico`;
+                return await downloadImage(url, icon, id);
             } catch (e) {
-                consola.error(id, "\n", e);
+                return {
+                    id,
+                    reason: getErrorMessage(e),
+                    url: source.home ?? "",
+                };
             }
         })
     );
+    const failures = results.filter((failure): failure is IconDownloadFailure => !!failure);
+
+    if (failures.length) {
+        consola.warn(
+            `Skipped ${failures.length} icon download${failures.length > 1 ? "s" : ""}. Existing/default icons will be used.`
+        );
+        failures.forEach((failure) => {
+            consola.warn(`${failure.id}: ${failure.reason} (${failure.url})`);
+        });
+    }
 }
 
 void main();
