@@ -1,7 +1,10 @@
+import type { SourceID } from "@shared/types";
+
 import clsx from "clsx";
 import { useTitle } from "react-use";
 import { useMemo, useState } from "react";
 import { getDateLabel } from "~/utils/date";
+import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
@@ -55,16 +58,34 @@ function HistoryItem({
 
 function HistoryPage() {
     useTitle(`${import.meta.env.VITE_APP_TITLE} | 阅读历史`);
-    const { history, clearHistory, removeHistory } = useHistory();
+    const { history, clearHistory, clearSourceHistory, removeHistory } = useHistory();
     const [keyword, setKeyword] = useState("");
+    const [sourceFilter, setSourceFilter] = useState<SourceID | "">("");
+
+    const sourceOptions = useMemo(() => {
+        const map = new Map<string, { count: number; name: string }>();
+        for (const item of history) {
+            const current = map.get(item.sourceId) ?? {
+                count: 0,
+                name: dataSources[item.sourceId]?.name ?? item.sourceName,
+            };
+            current.count += 1;
+            map.set(item.sourceId, current);
+        }
+        return Array.from(map.entries())
+            .map(([id, item]) => ({ id, ...item }))
+            .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    }, [history]);
 
     const filtered = useMemo(() => {
         const kw = keyword.trim().toLowerCase();
-        if (!kw) return history;
-        return history.filter(
-            (item) => item.title.toLowerCase().includes(kw) || item.sourceName.toLowerCase().includes(kw)
-        );
-    }, [history, keyword]);
+        return history.filter((item) => {
+            const matchesKeyword =
+                !kw || item.title.toLowerCase().includes(kw) || item.sourceName.toLowerCase().includes(kw);
+            const matchesSource = !sourceFilter || item.sourceId === sourceFilter;
+            return matchesKeyword && matchesSource;
+        });
+    }, [history, keyword, sourceFilter]);
 
     const groups = useMemo(() => {
         const map = new Map<string, typeof filtered>();
@@ -81,6 +102,15 @@ function HistoryPage() {
         if (history.length === 0) return;
         if (!window.confirm(`确认清空全部 ${history.length} 条阅读历史？`)) return;
         clearHistory();
+    };
+
+    const selectedSource = sourceOptions.find((source) => source.id === sourceFilter);
+
+    const handleClearSource = () => {
+        if (!sourceFilter || !selectedSource) return;
+        if (!window.confirm(`确认清空「${selectedSource.name}」的 ${selectedSource.count} 条阅读历史？`)) return;
+        clearSourceHistory(sourceFilter);
+        setSourceFilter("");
     };
 
     return (
@@ -112,22 +142,47 @@ function HistoryPage() {
             </div>
 
             {history.length > 0 && (
-                <label className="flex items-center gap-2 rounded-2xl bg-white/78 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/40 px-4 py-2.5">
-                    <span className="i-ph:magnifying-glass-duotone text-lg op-50" />
-                    <input
-                        value={keyword}
-                        onChange={(e) => setKeyword(e.target.value)}
-                        placeholder="搜索标题或来源名称"
-                        className="w-full bg-transparent text-sm text-zinc-700 dark:text-zinc-300 outline-none placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
-                    />
-                    {keyword && (
+                <div className="flex flex-col gap-3 rounded-2xl bg-white/78 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/40 p-3 md:flex-row md:items-center">
+                    <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-zinc-50/80 dark:bg-zinc-950/30 border border-zinc-200/80 dark:border-zinc-700/35 px-3 py-2">
+                        <span className="i-ph:magnifying-glass-duotone text-lg op-50" />
+                        <input
+                            value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)}
+                            placeholder="搜索标题或来源名称"
+                            className="w-full bg-transparent text-sm text-zinc-700 dark:text-zinc-300 outline-none placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
+                        />
+                        {keyword && (
+                            <button
+                                type="button"
+                                title="清除搜索"
+                                className="i-ph:x-circle-duotone op-50 hover:op-80 transition-opacity"
+                                onClick={() => setKeyword("")}
+                            />
+                        )}
+                    </label>
+                    <select
+                        value={sourceFilter}
+                        className="rounded-xl bg-zinc-50/80 dark:bg-zinc-950/30 border border-zinc-200/80 dark:border-zinc-700/35 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 outline-none"
+                        onChange={(e) => setSourceFilter(e.target.value as SourceID | "")}
+                    >
+                        <option value="">全部来源</option>
+                        {sourceOptions.map((source) => (
+                            <option value={source.id} key={source.id}>
+                                {source.name} ({source.count})
+                            </option>
+                        ))}
+                    </select>
+                    {sourceFilter && (
                         <button
                             type="button"
-                            className="i-ph:x-circle-duotone op-50 hover:op-80 transition-opacity"
-                            onClick={() => setKeyword("")}
-                        />
+                            className="flex items-center justify-center gap-2 rounded-xl bg-red-500/8 px-3 py-2 text-sm text-red-700 transition-all hover:bg-red-500/14 dark:text-red-300"
+                            onClick={handleClearSource}
+                        >
+                            <span className="i-ph:trash-duotone" />
+                            <span>清空来源</span>
+                        </button>
                     )}
-                </label>
+                </div>
             )}
 
             {filtered.length > 0 ? (

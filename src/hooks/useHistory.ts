@@ -40,5 +40,12 @@ export function useHistory() {
         [setHistory]
     );
 
-    return { history, addHistory, clearHistory, removeHistory };
+    const clearSourceHistory = useCallback(
+        (sourceId: SourceID) => {
+            setHistory((prev) => prev.filter((item) => item.sourceId !== sourceId));
+        },
+        [setHistory]
+    );
+
+    return { history, addHistory, clearHistory, clearSourceHistory, removeHistory };
 }
