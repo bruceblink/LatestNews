@@ -1,4 +1,4 @@
-import type { AllSourceID } from "@shared/types.ts";
+import type { OriginSourceID } from "@shared/types.ts";
 import type { RSSHubOption, SourceGetter, SourceOption, RSSHubInfo as RSSHubResponse } from "#/types";
 
 import defu from "defu";
@@ -8,11 +8,11 @@ import { myFetch } from "./fetch";
 import { myCrypto } from "./crypto";
 import { rss2json } from "./rss2json";
 
-type R = Partial<Record<AllSourceID, SourceGetter>>;
+type SourceGetterMap = Partial<Record<OriginSourceID, SourceGetter>>;
 
 export function defineSource(source: SourceGetter): SourceGetter;
-export function defineSource(source: R): R;
-export function defineSource(source: SourceGetter | R): SourceGetter | R {
+export function defineSource<const T extends SourceGetterMap>(source: T): T;
+export function defineSource(source: SourceGetter | SourceGetterMap): SourceGetter | SourceGetterMap {
     return source;
 }
 

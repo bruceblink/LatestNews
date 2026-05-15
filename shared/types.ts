@@ -1,51 +1,37 @@
 import type { colors } from "unocss/preset-mini";
 
+import type sources from "./sources.json";
 import type { originSources } from "./pre-sources";
-import type { ColumnID, fixedColumnIds } from "./metadata";
 
 // ---------------------------
 // 基础类型
 // ---------------------------
 export type Color = "primary" | Exclude<keyof typeof colors, "current" | "inherit" | "transparent" | "black" | "white">;
 
+export const columnIds = ["china", "world", "tech", "finance", "focus", "realtime", "hottest"] as const;
+export const fixedColumnIds = ["focus", "hottest", "realtime"] as const;
+
+export type ColumnID = (typeof columnIds)[number];
 export type FixedColumnID = (typeof fixedColumnIds)[number];
-export type HiddenColumnID = Exclude<ColumnID, FixedColumnID>;
 
 // ---------------------------
-// SourceID 类型
+// 数据源 ID
 // ---------------------------
-type ConstSources = typeof originSources;
-type MainSourceID = keyof ConstSources;
+export type SourceID = keyof typeof sources & string;
 
-// define OriginSource interface
+type OriginSources = typeof originSources;
+type OriginMainSourceID = keyof OriginSources & string;
+type OriginSubSourceID<ID extends OriginMainSourceID> = OriginSources[ID] extends { sub: infer SubSources }
+    ? `${ID}-${keyof SubSources & string}`
+    : never;
+
+export type OriginSourceID = {
+    [ID in OriginMainSourceID]: ID | OriginSubSourceID<ID>;
+}[OriginMainSourceID];
+
 export interface OriginSource extends Partial<Source> {
     sub?: Record<string, Partial<Source>>;
 }
-
-export type SourceID = {
-    [Key in MainSourceID]: ConstSources[Key] extends { disable?: true }
-        ? never
-        : ConstSources[Key] extends { sub?: infer SubSource }
-          ?
-                | {
-                      [SubKey in keyof SubSource & string]: SubSource[SubKey] extends { disable?: true }
-                          ? never
-                          : `${Key}-${SubKey}`;
-                  }[keyof SubSource & string]
-                | Key
-          : Key;
-}[MainSourceID];
-
-export type AllSourceID = {
-    [Key in MainSourceID]: ConstSources[Key] extends { sub?: infer SubSource }
-        ?
-              | keyof {
-                    // @ts-expect-error >_<
-                    [SubKey in keyof SubSource as `${Key}-${SubKey}`]: never;
-                }
-              | Key
-        : Key;
-}[MainSourceID];
 
 export interface PrimitiveMetadata {
     updatedTime: number;
@@ -70,7 +56,7 @@ export interface Source {
      * Default normal timeline
      */
     type?: "hottest" | "realtime";
-    column?: ColumnID; // 改为 ColumnID，不直接用 HiddenColumnID，打破循环
+    column?: ColumnID;
     home?: string;
     /**
      * @default false
