@@ -15,6 +15,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useRef, useMemo, useState, useEffect } from "react";
 import { rankSourcesForHealthReview, rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
+import { filterSourceHealthSnapshots, type SourceHealthFilterStatus } from "@shared/source-health-filter";
 
 const statusLabelMap: Record<SourceHealthStatus, string> = {
     healthy: "正常",
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/health")({
 function HealthPage() {
     useTitle(`${import.meta.env.VITE_APP_TITLE} | 数据源健康`);
     const [keyword, setKeyword] = useState("");
-    const [statusFilter, setStatusFilter] = useState<"all" | SourceHealthStatus>("all");
+    const [statusFilter, setStatusFilter] = useState<SourceHealthFilterStatus>("all");
     const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
     const toaster = useToast();
     const hasLoadedRef = useRef(false);
@@ -129,17 +130,7 @@ function HealthPage() {
     const filteredSources = useMemo(() => {
         if (!data?.sources) return [];
 
-        const matchedSources = data.sources.filter((source) => {
-            const matchStatus = statusFilter === "all" || source.status === statusFilter;
-            const normalizedKeyword = keyword.trim().toLowerCase();
-            const matchKeyword =
-                normalizedKeyword.length === 0 ||
-                source.name.toLowerCase().includes(normalizedKeyword) ||
-                source.id.toLowerCase().includes(normalizedKeyword);
-
-            return matchStatus && matchKeyword;
-        });
-
+        const matchedSources = filterSourceHealthSnapshots(data.sources, { keyword, status: statusFilter });
         return rankSourcesForHealthReview(matchedSources);
     }, [data?.sources, keyword, statusFilter]);
 
@@ -199,6 +190,7 @@ function HealthPage() {
                         [
                             ["all", "全部"],
                             ["failing", "仅异常"],
+                            ["cache-degraded", "仅缓存降级"],
                             ["healthy", "仅正常"],
                             ["idle", "仅未采样"],
                         ] as const
