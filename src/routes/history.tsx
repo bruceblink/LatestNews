@@ -10,6 +10,7 @@ import { useHistory } from "~/hooks/useHistory";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { formatReadingHistoryExport } from "@shared/history-export";
+import { filterReadingHistory, hasReadingHistoryFilters } from "@shared/history-filter";
 
 export const Route = createFileRoute("/history")({
     component: HistoryPage,
@@ -80,15 +81,12 @@ function HistoryPage() {
             .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
     }, [history]);
 
-    const filtered = useMemo(() => {
-        const kw = keyword.trim().toLowerCase();
-        return history.filter((item) => {
-            const matchesKeyword =
-                !kw || item.title.toLowerCase().includes(kw) || item.sourceName.toLowerCase().includes(kw);
-            const matchesSource = !sourceFilter || item.sourceId === sourceFilter;
-            return matchesKeyword && matchesSource;
-        });
-    }, [history, keyword, sourceFilter]);
+    const hasActiveFilters = hasReadingHistoryFilters({ keyword, sourceId: sourceFilter });
+
+    const filtered = useMemo(
+        () => filterReadingHistory(history, { keyword, sourceId: sourceFilter }),
+        [history, keyword, sourceFilter]
+    );
 
     const groups = useMemo(() => {
         const map = new Map<string, typeof filtered>();
@@ -113,6 +111,11 @@ function HistoryPage() {
         if (!sourceFilter || !selectedSource) return;
         if (!window.confirm(`确认清空「${selectedSource.name}」的 ${selectedSource.count} 条阅读历史？`)) return;
         clearSourceHistory(sourceFilter);
+        setSourceFilter("");
+    };
+
+    const resetFilters = () => {
+        setKeyword("");
         setSourceFilter("");
     };
 
@@ -186,6 +189,16 @@ function HistoryPage() {
                             </option>
                         ))}
                     </select>
+                    {hasActiveFilters && (
+                        <button
+                            type="button"
+                            className="flex items-center justify-center gap-2 rounded-xl bg-zinc-100 px-3 py-2 text-sm text-zinc-700 transition-all hover:bg-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700/70"
+                            onClick={resetFilters}
+                        >
+                            <span className="i-ph:arrow-counter-clockwise-duotone" />
+                            <span>重置筛选</span>
+                        </button>
+                    )}
                     {sourceFilter && (
                         <button
                             type="button"
