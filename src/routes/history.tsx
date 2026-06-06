@@ -4,10 +4,12 @@ import clsx from "clsx";
 import { useTitle } from "react-use";
 import { useMemo, useState } from "react";
 import { getDateLabel } from "~/utils/date";
+import { useToast } from "~/hooks/useToast";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
+import { formatReadingHistoryExport } from "@shared/history-export";
 
 export const Route = createFileRoute("/history")({
     component: HistoryPage,
@@ -59,6 +61,7 @@ function HistoryItem({
 function HistoryPage() {
     useTitle(`${import.meta.env.VITE_APP_TITLE} | 阅读历史`);
     const { history, clearHistory, clearSourceHistory, removeHistory } = useHistory();
+    const toaster = useToast();
     const [keyword, setKeyword] = useState("");
     const [sourceFilter, setSourceFilter] = useState<SourceID | "">("");
 
@@ -111,6 +114,17 @@ function HistoryPage() {
         if (!window.confirm(`确认清空「${selectedSource.name}」的 ${selectedSource.count} 条阅读历史？`)) return;
         clearSourceHistory(sourceFilter);
         setSourceFilter("");
+    };
+
+    const copyFilteredHistory = async () => {
+        if (filtered.length === 0) return;
+
+        try {
+            await navigator.clipboard.writeText(formatReadingHistoryExport(filtered));
+            toaster(`已复制 ${filtered.length} 条阅读历史`, { type: "success" });
+        } catch {
+            toaster("复制失败，请检查浏览器剪贴板权限", { type: "error" });
+        }
     };
 
     return (
@@ -182,6 +196,17 @@ function HistoryPage() {
                             <span>清空来源</span>
                         </button>
                     )}
+                    <button
+                        type="button"
+                        className={clsx(
+                            "flex items-center justify-center gap-2 rounded-xl bg-cyan-500/12 px-3 py-2 text-sm text-cyan-800 transition-all hover:bg-cyan-500/20 dark:text-cyan-300",
+                            filtered.length === 0 && "pointer-events-none op-40"
+                        )}
+                        onClick={() => void copyFilteredHistory()}
+                    >
+                        <span className="i-ph:copy-duotone" />
+                        <span>复制结果</span>
+                    </button>
                 </div>
             )}
 
