@@ -14,7 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useRef, useMemo, useState, useEffect } from "react";
-import { rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
+import { rankSourcesForHealthReview, rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
 
 const statusLabelMap: Record<SourceHealthStatus, string> = {
     healthy: "正常",
@@ -129,7 +129,7 @@ function HealthPage() {
     const filteredSources = useMemo(() => {
         if (!data?.sources) return [];
 
-        return data.sources.filter((source) => {
+        const matchedSources = data.sources.filter((source) => {
             const matchStatus = statusFilter === "all" || source.status === statusFilter;
             const normalizedKeyword = keyword.trim().toLowerCase();
             const matchKeyword =
@@ -139,6 +139,8 @@ function HealthPage() {
 
             return matchStatus && matchKeyword;
         });
+
+        return rankSourcesForHealthReview(matchedSources);
     }, [data?.sources, keyword, statusFilter]);
 
     return (

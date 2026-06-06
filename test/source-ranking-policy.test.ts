@@ -6,6 +6,7 @@ import {
     getHomeSourceScore,
     rankActiveSourcesForHome,
     type SourceHealthRankInput,
+    rankSourcesForHealthReview,
     rankFailingSourcesByPriority,
     getFailingSourcePriorityScore,
 } from "../shared/source-ranking-policy";
@@ -74,5 +75,36 @@ describe("source ranking policy", () => {
 
         const ranked = rankFailingSourcesByPriority(sources);
         expect(ranked.map((item) => item.id)).toEqual(["weibo", "v2ex"]);
+    });
+
+    it("ranks health review sources by operational priority", () => {
+        const sources = [
+            createSource({
+                id: "v2ex" as SourceID,
+                status: "healthy",
+                successCount: 10,
+                lastItemCount: 3,
+            }),
+            createSource({
+                id: "jin10" as SourceID,
+                status: "idle",
+            }),
+            createSource({
+                id: "weibo" as SourceID,
+                status: "failing",
+                consecutiveFailures: 2,
+                lastErrorAt: 1_700_000_000_000,
+            }),
+            createSource({
+                id: "ithome" as SourceID,
+                status: "failing",
+                consecutiveFailures: 4,
+                lastErrorAt: 1_700_000_010_000,
+            }),
+        ];
+
+        const ranked = rankSourcesForHealthReview(sources);
+
+        expect(ranked.map((item) => item.id)).toEqual(["ithome", "weibo", "jin10", "v2ex"]);
     });
 });

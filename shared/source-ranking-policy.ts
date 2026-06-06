@@ -55,3 +55,28 @@ export function rankFailingSourcesByPriority<T extends SourceHealthRankInput>(so
         .filter((source) => source.status === "failing")
         .sort((left, right) => getFailingSourcePriorityScore(right) - getFailingSourcePriorityScore(left));
 }
+
+function healthReviewStatusPriority(status: HealthRankStatus) {
+    if (status === "failing") return 3;
+    if (status === "idle") return 2;
+    return 1;
+}
+
+export function rankSourcesForHealthReview<T extends SourceHealthRankInput>(sources: T[]) {
+    return [...sources].sort((left, right) => {
+        const rightStatusPriority = healthReviewStatusPriority(right.status);
+        const leftStatusPriority = healthReviewStatusPriority(left.status);
+
+        if (rightStatusPriority !== leftStatusPriority) return rightStatusPriority - leftStatusPriority;
+
+        if (left.status === "failing" && right.status === "failing") {
+            return getFailingSourcePriorityScore(right) - getFailingSourcePriorityScore(left);
+        }
+
+        const rightScore = getHomeSourceScore(right);
+        const leftScore = getHomeSourceScore(left);
+
+        if (rightScore !== leftScore) return rightScore - leftScore;
+        return (right.lastSuccessAt ?? right.lastErrorAt ?? 0) - (left.lastSuccessAt ?? left.lastErrorAt ?? 0);
+    });
+}
