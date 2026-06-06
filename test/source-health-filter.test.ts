@@ -2,7 +2,7 @@ import type { SourceHealthStatus } from "@shared/source-health-types";
 
 import { it, expect, describe } from "vitest";
 
-import { filterSourceHealthSnapshots } from "../shared/source-health-filter";
+import { hasSourceHealthFilters, filterSourceHealthSnapshots } from "../shared/source-health-filter";
 
 const sources = [
     createSource({ id: "weibo", name: "微博", status: "failing", cacheDegraded: true }),
@@ -42,5 +42,13 @@ describe("filterSourceHealthSnapshots", () => {
             )
         ).toEqual(["weibo"]);
         expect(filterSourceHealthSnapshots(sources, { keyword: "金十", status: "cache-degraded" })).toEqual([]);
+    });
+
+    it("detects active source health filters", () => {
+        expect(hasSourceHealthFilters({})).toBe(false);
+        expect(hasSourceHealthFilters({ keyword: "   ", status: "all" })).toBe(false);
+        expect(hasSourceHealthFilters({ keyword: "微博" })).toBe(true);
+        expect(hasSourceHealthFilters({ status: "failing" })).toBe(true);
+        expect(hasSourceHealthFilters({ status: "cache-degraded" })).toBe(true);
     });
 });

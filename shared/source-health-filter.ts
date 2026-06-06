@@ -14,6 +14,10 @@ export interface SourceHealthFilters {
     status?: SourceHealthFilterStatus;
 }
 
+export function hasSourceHealthFilters(filters: SourceHealthFilters) {
+    return !!filters.keyword?.trim() || (filters.status ?? "all") !== "all";
+}
+
 export function filterSourceHealthSnapshots<T extends SourceHealthFilterItem>(
     sources: T[],
     filters: SourceHealthFilters

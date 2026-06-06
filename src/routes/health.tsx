@@ -15,7 +15,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useRef, useMemo, useState, useEffect } from "react";
 import { rankSourcesForHealthReview, rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
-import { filterSourceHealthSnapshots, type SourceHealthFilterStatus } from "@shared/source-health-filter";
+import {
+    hasSourceHealthFilters,
+    filterSourceHealthSnapshots,
+    type SourceHealthFilterStatus,
+} from "@shared/source-health-filter";
 
 const statusLabelMap: Record<SourceHealthStatus, string> = {
     healthy: "正常",
@@ -134,6 +138,13 @@ function HealthPage() {
         return rankSourcesForHealthReview(matchedSources);
     }, [data?.sources, keyword, statusFilter]);
 
+    const hasActiveFilters = hasSourceHealthFilters({ keyword, status: statusFilter });
+
+    const resetFilters = () => {
+        setKeyword("");
+        setStatusFilter("all");
+    };
+
     return (
         <section className="mx-auto flex max-w-6xl flex-col gap-4 px-1 md:px-4">
             <div className="flex flex-col gap-3 rounded-2xl bg-primary/6 p-4 shadow shadow-primary/10 md:flex-row md:items-center md:justify-between">
@@ -210,15 +221,38 @@ function HealthPage() {
                         </button>
                     ))}
                 </div>
-                <label className="flex items-center gap-2 rounded-full bg-neutral-500/8 px-3 py-1.5 text-sm md:w-72">
-                    <span className="i-ph:magnifying-glass-duotone text-base" />
-                    <input
-                        value={keyword}
-                        onChange={(event) => setKeyword(event.target.value)}
-                        placeholder="搜索数据源名称或 ID"
-                        className="w-full bg-transparent outline-none placeholder:text-neutral-400"
-                    />
-                </label>
+                <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                    <span className="rounded-full bg-neutral-500/8 px-3 py-1.5 text-xs op-70">
+                        显示 {filteredSources.length} / {data?.sources.length ?? 0} 个
+                    </span>
+                    {hasActiveFilters && (
+                        <button
+                            type="button"
+                            className="flex items-center justify-center gap-2 rounded-full bg-neutral-500/8 px-3 py-1.5 text-sm transition-all hover:bg-neutral-500/12"
+                            onClick={resetFilters}
+                        >
+                            <span className="i-ph:arrow-counter-clockwise-duotone" />
+                            <span>重置筛选</span>
+                        </button>
+                    )}
+                    <label className="flex items-center gap-2 rounded-full bg-neutral-500/8 px-3 py-1.5 text-sm md:w-72">
+                        <span className="i-ph:magnifying-glass-duotone text-base" />
+                        <input
+                            value={keyword}
+                            onChange={(event) => setKeyword(event.target.value)}
+                            placeholder="搜索数据源名称或 ID"
+                            className="w-full bg-transparent outline-none placeholder:text-neutral-400"
+                        />
+                        {keyword && (
+                            <button
+                                type="button"
+                                title="清除搜索"
+                                className="i-ph:x-circle-duotone text-base op-50 transition-opacity hover:op-80"
+                                onClick={() => setKeyword("")}
+                            />
+                        )}
+                    </label>
+                </div>
             </div>
 
             {isError && (
