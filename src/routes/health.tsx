@@ -185,11 +185,12 @@ function HealthPage() {
                 </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-4">
+            <div className="grid gap-3 md:grid-cols-5">
                 <SummaryCard label="总数据源" value={data?.total ?? 0} tone="neutral" />
                 <SummaryCard label="正常" value={data?.healthy ?? 0} tone="green" />
                 <SummaryCard label="异常" value={data?.failing ?? 0} tone="red" />
                 <SummaryCard label="未采样" value={data?.idle ?? 0} tone="slate" />
+                <SummaryCard label="缓存降级" value={data?.cacheDegraded ?? 0} tone="amber" />
             </div>
 
             <div className="flex flex-col gap-3 rounded-2xl bg-base/60 p-4 shadow shadow-primary/5 md:flex-row md:items-center md:justify-between">
@@ -310,13 +311,14 @@ function SummaryCard({
 }: {
     label: string;
     value: number;
-    tone: "neutral" | "green" | "red" | "slate";
+    tone: "neutral" | "green" | "red" | "slate" | "amber";
 }) {
     const toneClass = {
         neutral: "bg-primary/6 text-primary-700 dark:text-primary-300",
         green: "bg-green-500/10 text-green-700 dark:text-green-300",
         red: "bg-red-500/10 text-red-700 dark:text-red-300",
         slate: "bg-neutral-500/10 text-neutral-700 dark:text-neutral-300",
+        amber: "bg-amber-500/12 text-amber-700 dark:text-amber-300",
     } satisfies Record<typeof tone, string>;
 
     return (
@@ -388,6 +390,11 @@ function SourceHealthCard({
                     >
                         {statusLabelMap[source.status]}
                     </span>
+                    {source.cacheDegraded && (
+                        <span className="rounded-full bg-amber-500/12 px-2.5 py-1 text-xs text-amber-700 dark:text-amber-300">
+                            缓存降级
+                        </span>
+                    )}
                     <span className="rounded-full bg-neutral-500/8 px-2.5 py-1 text-xs op-70">{severityLabel}</span>
                 </div>
             </div>

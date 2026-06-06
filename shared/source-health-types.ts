@@ -17,6 +17,7 @@ export interface SourceHealthSnapshot {
     successCount: number;
     errorCount: number;
     consecutiveFailures: number;
+    cacheDegraded: boolean;
     lastDurationMs?: number;
     lastSuccessAt?: number;
     lastErrorAt?: number;
@@ -31,5 +32,6 @@ export interface SourceHealthSummary {
     healthy: number;
     failing: number;
     idle: number;
+    cacheDegraded: number;
     sources: SourceHealthSnapshot[];
 }

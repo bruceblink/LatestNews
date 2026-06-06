@@ -1,6 +1,7 @@
 import type { SourceID } from "@shared/types";
 
 import dataSources from "@shared/data-sources";
+import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 
 export type ServerSourceHealthStatus = "idle" | "healthy" | "failing";
 
@@ -19,6 +20,7 @@ export interface ServerSourceHealthSnapshot {
     successCount: number;
     errorCount: number;
     consecutiveFailures: number;
+    cacheDegraded: boolean;
     lastDurationMs?: number;
     lastSuccessAt?: number;
     lastErrorAt?: number;
@@ -43,6 +45,7 @@ function createIdleSnapshot(id: SourceID): ServerSourceHealthSnapshot {
         successCount: 0,
         errorCount: 0,
         consecutiveFailures: 0,
+        cacheDegraded: false,
         recentEvents: [],
     };
 }
@@ -66,6 +69,7 @@ export function recordSourceSuccess(id: SourceID, durationMs: number, itemCount:
     snapshot.status = "healthy";
     snapshot.successCount += 1;
     snapshot.consecutiveFailures = 0;
+    snapshot.cacheDegraded = false;
     snapshot.lastDurationMs = durationMs;
     snapshot.lastSuccessAt = Date.now();
     snapshot.lastItemCount = itemCount;
@@ -84,6 +88,7 @@ export function recordSourceFailure(id: SourceID, durationMs: number, error: unk
     snapshot.status = "failing";
     snapshot.errorCount += 1;
     snapshot.consecutiveFailures += 1;
+    snapshot.cacheDegraded = shouldDegradeSourceToCache(snapshot);
     snapshot.lastDurationMs = durationMs;
     snapshot.lastErrorAt = Date.now();
     snapshot.lastErrorMessage = errorMessage;
@@ -128,6 +133,7 @@ export function getSourceHealthSummary() {
         healthy: sources.filter((source) => source.status === "healthy").length,
         failing: sources.filter((source) => source.status === "failing").length,
         idle: sources.filter((source) => source.status === "idle").length,
+        cacheDegraded: sources.filter((source) => source.cacheDegraded).length,
         sources,
     };
 }
