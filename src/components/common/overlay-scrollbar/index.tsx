@@ -1,19 +1,22 @@
 import "./style.css";
 
-import type { HTMLProps, PropsWithChildren } from "react";
+import type { PropsWithChildren, ComponentPropsWithoutRef } from "react";
 
 import clsx from "clsx";
 import { defu } from "defu";
 import { useSetAtom } from "jotai";
 import { useMount } from "react-use";
 import { goToTopAtom } from "~/atoms";
-import { useRef, useMemo, useEffect, useCallback } from "react";
+import { useRef, useMemo, useEffect, forwardRef, useCallback, useImperativeHandle } from "react";
 
 import { useOverlayScrollbars } from "./useOverlayScrollbars";
 
 import type { UseOverlayScrollbarsParams } from "./useOverlayScrollbars";
 
-type Props = HTMLProps<HTMLDivElement> & UseOverlayScrollbarsParams;
+type Props = ComponentPropsWithoutRef<"div"> &
+    UseOverlayScrollbarsParams & {
+        disabled?: boolean;
+    };
 const defaultScrollbarParams: UseOverlayScrollbarsParams = {
     options: {
         scrollbars: {
@@ -23,16 +26,12 @@ const defaultScrollbarParams: UseOverlayScrollbarsParams = {
     defer: true,
 };
 
-export function OverlayScrollbar({
-    disabled,
-    children,
-    options,
-    events,
-    defer,
-    className,
-    ...props
-}: PropsWithChildren<Props>) {
+export const OverlayScrollbar = forwardRef<HTMLDivElement, PropsWithChildren<Props>>(function OverlayScrollbar(
+    { disabled, children, options, events, defer, className, ...props },
+    forwardedRef
+) {
     const ref = useRef<HTMLDivElement>(null);
+    useImperativeHandle(forwardedRef, () => ref.current!, []);
     const scrollbarParams = useMemo(
         () =>
             defu<UseOverlayScrollbarsParams, Array<UseOverlayScrollbarsParams>>(
@@ -76,13 +75,13 @@ export function OverlayScrollbar({
             <div>{children}</div>
         </div>
     );
-}
+});
 
 export function GlobalOverlayScrollbar({
     children,
     className,
     ...props
-}: PropsWithChildren<HTMLProps<HTMLDivElement>>) {
+}: PropsWithChildren<ComponentPropsWithoutRef<"div">>) {
     const ref = useRef<HTMLDivElement>(null);
     const lastTrigger = useRef(0);
     const timer = useRef<any>(null);

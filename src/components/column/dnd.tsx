@@ -15,7 +15,7 @@ import dataSources from "@shared/data-sources.ts";
 import { goToTopAtom, currentSourcesAtom } from "~/atoms";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useRef, useMemo, useState, useEffect, useCallback } from "react";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { reorderWithEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge";
 
@@ -28,32 +28,45 @@ import type { ItemsProps } from "./card";
 
 const AnimationDuration = 200;
 const WIDTH = 350;
+const MobileCardGap = 24;
 export function Dnd() {
     const [items, setItems] = useAtom(currentSourcesAtom);
     const [parent] = useAutoAnimate({ duration: AnimationDuration });
     const [activeMobileIndex, setActiveMobileIndex] = useState(0);
+    const mobileScrollerRef = useRef<HTMLDivElement>(null);
     const { sourceHealthMap } = useSourceHealthSummary();
     // 查询全部新闻 调用 '/api/s/entire' 接口
     useEntireQuery(items);
     const { width } = useWindowSize();
+    const mobileCardWidth = useMemo(() => (width - 16 > WIDTH ? WIDTH : width - 16), [width]);
     const minWidth = useMemo(() => {
         // double padding = 32
         return Math.min(width - 32, WIDTH);
     }, [width]);
+    const scrollToMobileIndex = useCallback(
+        (index: number) => {
+            const nextIndex = Math.min(items.length - 1, Math.max(0, index));
+            mobileScrollerRef.current?.scrollTo({
+                left: nextIndex * (mobileCardWidth + MobileCardGap),
+                behavior: "smooth",
+            });
+            setActiveMobileIndex(nextIndex);
+        },
+        [items.length, mobileCardWidth]
+    );
 
     if (!items.length) return null;
 
     return (
         <DndWrapper items={items} setItems={setItems} isSingleColumn={isMobile}>
             <OverlayScrollbar
+                ref={mobileScrollerRef}
                 defer
                 className="overflow-x-auto"
                 onScroll={(event) => {
                     if (!isMobile) return;
                     const scrollLeft = event.currentTarget.scrollLeft;
-                    const itemWidth = width - 16 > WIDTH ? WIDTH : width - 16;
-                    const gap = 24;
-                    const nextIndex = Math.round(scrollLeft / (itemWidth + gap));
+                    const nextIndex = Math.round(scrollLeft / (mobileCardWidth + MobileCardGap));
                     setActiveMobileIndex(Math.min(items.length - 1, Math.max(0, nextIndex)));
                 }}
             >
@@ -93,7 +106,7 @@ export function Dnd() {
                                     isMobile && "flex-shrink-0",
                                     isMobile && index === items.length - 1 && "mr-2"
                                 )}
-                                style={isMobile ? { width: `${width - 16 > WIDTH ? WIDTH : width - 16}px` } : undefined}
+                                style={isMobile ? { width: `${mobileCardWidth}px` } : undefined}
                                 transition={{
                                     type: "tween",
                                     duration: AnimationDuration / 1000,
@@ -117,18 +130,28 @@ export function Dnd() {
             {isMobile && (
                 <div className="flex items-center justify-center gap-2">
                     <span className="text-sm text-gray-500 text-center">
-                        左右滑动查看更多 · {activeMobileIndex + 1}/{items.length}
+                        左右滑动或点选来源 · {activeMobileIndex + 1}/{items.length}
                     </span>
-                    <div className="flex gap-1">
-                        {items.map((item, index) => (
-                            <span
-                                key={item}
-                                className={clsx(
-                                    "h-1.5 rounded-full transition-all",
-                                    index === activeMobileIndex ? "w-4 bg-cyan-500" : "w-1.5 bg-zinc-400/45"
-                                )}
-                            />
-                        ))}
+                    <div className="flex gap-1" aria-label="来源跳转">
+                        {items.map((item, index) => {
+                            const isActive = index === activeMobileIndex;
+                            const sourceName = dataSources[item].name;
+
+                            return (
+                                <button
+                                    key={item}
+                                    type="button"
+                                    title={`查看${sourceName}`}
+                                    aria-label={`查看${sourceName}`}
+                                    aria-current={isActive ? "true" : undefined}
+                                    onClick={() => scrollToMobileIndex(index)}
+                                    className={clsx(
+                                        "h-2 rounded-full transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-400/60",
+                                        isActive ? "w-4 bg-cyan-500" : "w-2 bg-zinc-400/45 hover:bg-cyan-400/70"
+                                    )}
+                                />
+                            );
+                        })}
                     </div>
                 </div>
             )}
