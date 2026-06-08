@@ -3,6 +3,7 @@ import type { PrimitiveMetadata } from "@shared/types";
 
 import { apiFetch } from "~/utils";
 import { login, logout } from "~/hooks/useLogin";
+import { isAuthenticationError } from "@shared/auth-error";
 import { mergePrimitiveMetadata } from "@shared/metadata-merge";
 
 const AUTH_SYNC_FEEDBACK_KEY = "auth-sync-feedback";
@@ -14,15 +15,21 @@ export const getJwt = (): string | undefined => {
     return v === null ? undefined : v;
 };
 
+export function createAuthHeaders(): Record<string, string> | undefined {
+    const jwt = getJwt();
+    return jwt ? { Authorization: `Bearer ${jwt}` } : undefined;
+}
+
 /** 统一的身份错误处理 */
 export function handleAuthError(toaster: ReturnType<typeof useToast>, error: unknown) {
-    if (!(typeof error === "object" && error && "statusCode" in error && error.statusCode === 506)) {
-        toaster("身份校验失败，无法同步，请重新登录", {
-            type: "error",
-            action: { label: "登录", onClick: login },
-        });
-        logout();
-    }
+    if (!isAuthenticationError(error)) return false;
+
+    toaster("身份校验失败，无法同步，请重新登录", {
+        type: "error",
+        action: { label: "登录", onClick: login },
+    });
+    void logout();
+    return true;
 }
 
 export function getSyncErrorMessage(error: unknown) {
@@ -59,11 +66,8 @@ export function markPrimitiveMetadataSynced(metadata: PrimitiveMetadata): Primit
 }
 
 export async function downloadMetadata(): Promise<PrimitiveMetadata | undefined> {
-    //const jwt = getJwt();
-    //if (!jwt) return undefined;
-
     const res = await apiFetch<{ data: PrimitiveMetadata["data"]; updatedTime: number }>("/api/sync/me", {
-        //headers: { Authorization: `Bearer ${jwt}` },
+        headers: createAuthHeaders(),
         query: { settingType: "news" },
     });
 
@@ -77,12 +81,9 @@ export async function downloadMetadata(): Promise<PrimitiveMetadata | undefined>
 }
 
 export async function uploadMetadata(metadata: PrimitiveMetadata): Promise<void> {
-    //const jwt = getJwt();
-    //if (!jwt) return;
-
     await apiFetch("/api/sync/me", {
         method: "POST",
-        //headers: { Authorization: `Bearer ${jwt}` },
+        headers: createAuthHeaders(),
         body: { data: metadata.data, settingType: "news" },
     });
 }

@@ -119,8 +119,9 @@ export function Menu() {
             toaster("布局已同步到云端", { type: "success" });
         } catch (error) {
             setSyncStatus((prev) => toErrorStatus(prev, "manual-sync", getSyncErrorMessage(error)));
-            toaster(getSyncErrorMessage(error), { type: "error" });
-            handleAuthError(toaster, error);
+            if (!handleAuthError(toaster, error)) {
+                toaster(getSyncErrorMessage(error), { type: "error" });
+            }
         } finally {
             setSyncing(false);
         }
@@ -150,8 +151,9 @@ export function Menu() {
             toaster("同步已重试并成功", { type: "success" });
         } catch (error) {
             setSyncStatus((prev) => toErrorStatus(prev, "retry-sync", getSyncErrorMessage(error)));
-            toaster(getSyncErrorMessage(error), { type: "error" });
-            handleAuthError(toaster, error);
+            if (!handleAuthError(toaster, error)) {
+                toaster(getSyncErrorMessage(error), { type: "error" });
+            }
         } finally {
             setSyncing(false);
         }
@@ -179,8 +181,9 @@ export function Menu() {
             toaster("已使用云端布局恢复本地配置", { type: "success" });
         } catch (error) {
             setSyncStatus((prev) => toErrorStatus(prev, "restore-from-remote", getSyncErrorMessage(error)));
-            toaster(getSyncErrorMessage(error), { type: "error" });
-            handleAuthError(toaster, error);
+            if (!handleAuthError(toaster, error)) {
+                toaster(getSyncErrorMessage(error), { type: "error" });
+            }
         } finally {
             setSyncing(false);
         }
@@ -203,8 +206,9 @@ export function Menu() {
             toaster("已使用本地布局覆盖云端配置", { type: "success" });
         } catch (error) {
             setSyncStatus((prev) => toErrorStatus(prev, "restore-to-remote", getSyncErrorMessage(error)));
-            toaster(getSyncErrorMessage(error), { type: "error" });
-            handleAuthError(toaster, error);
+            if (!handleAuthError(toaster, error)) {
+                toaster(getSyncErrorMessage(error), { type: "error" });
+            }
         } finally {
             setSyncing(false);
         }

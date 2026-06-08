@@ -55,7 +55,9 @@ export function useSync() {
                 setSyncStatus((prev) => toSuccessStatus(prev, "auto-upload"));
             } catch (err: unknown) {
                 setSyncStatus((prev) => toErrorStatus(prev, "auto-upload", getSyncErrorMessage(err)));
-                handleAuthError(toaster, err);
+                if (!handleAuthError(toaster, err)) {
+                    toaster(getSyncErrorMessage(err), { type: "error" });
+                }
             }
         },
         5000,
@@ -85,7 +87,9 @@ export function useSync() {
                 setSyncStatus((prev) => toSuccessStatus(prev, "login-sync"));
             } catch (err: unknown) {
                 setSyncStatus((prev) => toErrorStatus(prev, "login-sync", getSyncErrorMessage(err)));
-                handleAuthError(toaster, err);
+                if (!handleAuthError(toaster, err)) {
+                    toaster("云端布局同步失败，已继续使用本地布局", { type: "warning" });
+                }
             }
         };
 
