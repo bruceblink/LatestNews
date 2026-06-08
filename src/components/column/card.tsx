@@ -10,7 +10,7 @@ import { useNewsSource } from "~/hooks/useNewsSource";
 import { useRelativeTime } from "~/hooks/useRelativeTime.ts";
 import { CardHeader } from "~/components/column/cardHeader.tsx";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import React, { useRef, useState, useEffect, forwardRef, useCallback, useImperativeHandle } from "react";
+import React, { useRef, useMemo, useState, useEffect, forwardRef, useCallback, useImperativeHandle } from "react";
 
 import { OverlayScrollbar } from "../common/overlay-scrollbar";
 
@@ -277,6 +277,15 @@ function ExtraInfo({ item }: { item: NewsItem }) {
     }
 }
 
+function ReadBadge() {
+    return (
+        <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-zinc-200/75 px-1.5 py-0.5 text-[10px] leading-none text-zinc-500 dark:bg-zinc-800/70 dark:text-zinc-500">
+            <span className="i-ph:check-duotone text-xs" />
+            <span>已读</span>
+        </span>
+    );
+}
+
 function NewsUpdatedTime({ date }: { date: string | number }) {
     const relativeTime = useRelativeTime(date);
     return <>{relativeTime}</>;
@@ -284,7 +293,8 @@ function NewsUpdatedTime({ date }: { date: string | number }) {
 
 function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
     const { width } = useWindowSize();
-    const { addHistory } = useHistory();
+    const { history, addHistory } = useHistory();
+    const readUrls = useMemo(() => new Set(history.map((item) => item.url)), [history]);
     const handleClick = useCallback(
         (item: NewsItem) => {
             addHistory(id, item.id, item.title, item.url);
@@ -293,42 +303,57 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
     );
     return (
         <ol className="flex flex-col gap-2">
-            {items?.map((item, i) => (
-                <a
-                    href={width < 768 ? item.mobileUrl || item.url : item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    key={item.id}
-                    title={item.extra?.hover}
-                    onClick={() => handleClick(item)}
-                    className={clsx(
-                        "flex gap-2 items-center items-stretch relative cursor-pointer [&_*]:cursor-pointer transition-all",
-                        "hover:bg-zinc-300/40 dark:hover:bg-cyan-500/6 rounded-md pr-1 visited:(text-zinc-500 dark:text-zinc-500)"
-                    )}
-                >
-                    <span
+            {items?.map((item, i) => {
+                const isRead = readUrls.has(item.url);
+
+                return (
+                    <a
+                        href={width < 768 ? item.mobileUrl || item.url : item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        key={item.id}
+                        title={item.extra?.hover}
+                        onClick={() => handleClick(item)}
                         className={clsx(
-                            "bg-zinc-200/65 dark:bg-zinc-700/25 text-zinc-700 dark:text-zinc-500 min-w-6 flex justify-center items-center rounded-md text-sm"
+                            "flex gap-2 items-center items-stretch relative cursor-pointer [&_*]:cursor-pointer transition-all",
+                            "hover:bg-zinc-300/40 dark:hover:bg-cyan-500/6 rounded-md pr-1 visited:(text-zinc-500 dark:text-zinc-500)",
+                            isRead && "bg-zinc-100/70 dark:bg-zinc-800/32"
                         )}
                     >
-                        {i + 1}
-                    </span>
-                    {!!item.extra?.diff && <DiffNumber diff={item.extra.diff} />}
-                    <span className="self-start line-height-none">
-                        <span className="mr-2 text-base text-zinc-800 dark:text-zinc-200/90">{item.title}</span>
-                        <span className="text-xs text-zinc-600 dark:text-zinc-500 truncate align-middle">
-                            <ExtraInfo item={item} />
+                        <span
+                            className={clsx(
+                                "bg-zinc-200/65 dark:bg-zinc-700/25 text-zinc-700 dark:text-zinc-500 min-w-6 flex justify-center items-center rounded-md text-sm",
+                                isRead && "text-zinc-500 dark:text-zinc-600"
+                            )}
+                        >
+                            {i + 1}
                         </span>
-                    </span>
-                </a>
-            ))}
+                        {!!item.extra?.diff && <DiffNumber diff={item.extra.diff} />}
+                        <span className="self-start line-height-none">
+                            <span
+                                className={clsx(
+                                    "mr-2 text-base text-zinc-800 dark:text-zinc-200/90",
+                                    isRead && "text-zinc-500 dark:text-zinc-500"
+                                )}
+                            >
+                                {item.title}
+                            </span>
+                            <span className="text-xs text-zinc-600 dark:text-zinc-500 truncate align-middle">
+                                <ExtraInfo item={item} />
+                                {isRead && <ReadBadge />}
+                            </span>
+                        </span>
+                    </a>
+                );
+            })}
         </ol>
     );
 }
 
 function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
     const { width } = useWindowSize();
-    const { addHistory } = useHistory();
+    const { history, addHistory } = useHistory();
+    const readUrls = useMemo(() => new Set(history.map((item) => item.url)), [history]);
     const handleClick = useCallback(
         (item: NewsItem) => {
             addHistory(id, item.id, item.title, item.url);
@@ -337,34 +362,42 @@ function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
     );
     return (
         <ol className="border-s border-zinc-300/70 dark:border-zinc-700/60 flex flex-col ml-1">
-            {items?.map((item) => (
-                <li key={`${item.id}-${item.pubDate || item?.extra?.date || ""}`} className="flex flex-col">
-                    <span className="flex items-center gap-1 text-zinc-700 dark:text-zinc-600 ml--1px">
-                        <span className="">-</span>
-                        <span className="text-xs text-zinc-600 dark:text-zinc-500">
-                            {(item.pubDate || item?.extra?.date) && (
-                                <NewsUpdatedTime date={(item.pubDate || item?.extra?.date)!} />
+            {items?.map((item) => {
+                const isRead = readUrls.has(item.url);
+
+                return (
+                    <li key={`${item.id}-${item.pubDate || item?.extra?.date || ""}`} className="flex flex-col">
+                        <span className="flex items-center gap-1 text-zinc-700 dark:text-zinc-600 ml--1px">
+                            <span className="">-</span>
+                            <span className="text-xs text-zinc-600 dark:text-zinc-500">
+                                {(item.pubDate || item?.extra?.date) && (
+                                    <NewsUpdatedTime date={(item.pubDate || item?.extra?.date)!} />
+                                )}
+                            </span>
+                            <span className="text-xs text-zinc-600 dark:text-zinc-500">
+                                <ExtraInfo item={item} />
+                                {isRead && <ReadBadge />}
+                            </span>
+                        </span>
+                        <a
+                            className={clsx(
+                                "ml-2 px-1 hover:bg-zinc-300/40 dark:hover:bg-cyan-500/6 rounded-md visited:(text-zinc-500 dark:text-zinc-500)",
+                                "cursor-pointer [&_*]:cursor-pointer transition-all",
+                                isRead && "bg-zinc-100/70 dark:bg-zinc-800/32"
                             )}
-                        </span>
-                        <span className="text-xs text-zinc-600 dark:text-zinc-500">
-                            <ExtraInfo item={item} />
-                        </span>
-                    </span>
-                    <a
-                        className={clsx(
-                            "ml-2 px-1 hover:bg-zinc-300/40 dark:hover:bg-cyan-500/6 rounded-md visited:(text-zinc-500 dark:text-zinc-500)",
-                            "cursor-pointer [&_*]:cursor-pointer transition-all"
-                        )}
-                        href={width < 768 ? item.mobileUrl || item.url : item.url}
-                        title={item.extra?.hover}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => handleClick(item)}
-                    >
-                        <span className="text-zinc-800 dark:text-zinc-300/90">{item.title}</span>
-                    </a>
-                </li>
-            ))}
+                            href={width < 768 ? item.mobileUrl || item.url : item.url}
+                            title={item.extra?.hover}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => handleClick(item)}
+                        >
+                            <span className={clsx("text-zinc-800 dark:text-zinc-300/90", isRead && "text-zinc-500")}>
+                                {item.title}
+                            </span>
+                        </a>
+                    </li>
+                );
+            })}
         </ol>
     );
 }
