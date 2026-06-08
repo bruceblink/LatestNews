@@ -5,11 +5,11 @@ FROM node:22-alpine AS builder
 
 WORKDIR /usr/src
 
-COPY . .
 RUN corepack enable
-RUN pnpm install
+COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
+RUN pnpm install --frozen-lockfile
 
-# 再复制源码
 COPY . .
 
 # -------- build-time env --------
