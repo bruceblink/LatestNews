@@ -1,4 +1,4 @@
-import type { OriginSourceID } from "@shared/types.ts";
+import type { NewsItem, OriginSourceID } from "@shared/types.ts";
 import type { RSSHubOption, SourceGetter, SourceOption, RSSHubInfo as RSSHubResponse } from "#/types";
 
 import defu from "defu";
@@ -51,8 +51,7 @@ export function defineRSSHubSource(
         Object.entries(RSSHubOptions).forEach(([key, value]) => {
             url.searchParams.set(key, value.toString());
         });
-        // @ts-ignore
-        const data: RSSHubResponse = await myFetch(url);
+        const data = await myFetch<RSSHubResponse>(url.toString());
         return await Promise.all(
             data.items.map(async (item) => {
                 const hashId = await generateUrlHashId(item.url);
@@ -71,8 +70,7 @@ export function defineRSSHubSource(
 export function proxySource(proxyUrl: string, source: SourceGetter) {
     return process.env.CF_PAGES
         ? defineSource(async () => {
-              const data = await myFetch(proxyUrl);
-              // @ts-ignore
+              const data = await myFetch<{ items: NewsItem[] }>(proxyUrl);
               return data.items;
           })
         : source;

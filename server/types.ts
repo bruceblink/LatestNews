@@ -5,14 +5,22 @@ export interface RSSInfo {
     description: string;
     link: string;
     image: string;
+    category: unknown[];
     updatedTime: string;
     items: RSSItem[];
 }
 export interface RSSItem {
+    [key: string]: unknown;
+    id?: string;
     title: string;
     description: string;
     link: string;
+    author?: string;
     created?: string;
+    category?: unknown[];
+    content?: string;
+    enclosures?: unknown[];
+    media?: Record<string, unknown>;
 }
 
 export interface CacheInfo {
