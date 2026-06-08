@@ -62,13 +62,18 @@ export function NavBar() {
             </Link>
             <button
                 type="button"
+                aria-label="打开搜索"
                 onClick={() => toggle(true)}
                 className={clsx(
-                    "px-3 py-1 rounded-lg text-sm cursor-pointer transition-all",
+                    "flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm cursor-pointer transition-all",
                     "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
                 )}
             >
-                更多
+                <span className="i-ph:magnifying-glass-duotone text-base" />
+                <span>搜索</span>
+                <kbd className="hidden rounded bg-zinc-200/80 px-1.5 py-0.5 text-[10px] leading-none text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500 sm:inline">
+                    Ctrl K
+                </kbd>
             </button>
         </span>
     );
