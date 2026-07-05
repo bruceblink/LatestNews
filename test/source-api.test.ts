@@ -23,6 +23,7 @@ describe("source API contract", () => {
             health: "/s/health",
             insights: "/s/insights",
             sourcesV1: "/v1/sources",
+            sourceBatchV1: "/v1/sources/batch",
             sourceHealthV1: "/v1/health/sources",
         });
     });

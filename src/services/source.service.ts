@@ -5,8 +5,10 @@ import type { SourceHealthSourcesQuery, SourceHealthSourcesResponse } from "@sha
 import type {
     SourceQuery,
     SourceItemsQuery,
+    SourceBatchPayload,
     NewsInsightsPayload,
     SourceItemsResponse,
+    SourceBatchResponse,
     EntireSourcesPayload,
     NewsInsightsResponse,
     EntireSourcesResponse,
@@ -37,6 +39,13 @@ export function fetchEntireSources(sources: SourceID[]): Promise<SourceResponse[
 export function fetchSourceItemsV1(id: SourceID, query?: SourceItemsQuery): Promise<SourceItemsResponse> {
     return myFetch(getSourceItemsPath(id), {
         query,
+    });
+}
+
+export function fetchSourceBatchV1(payload: SourceBatchPayload): Promise<SourceBatchResponse> {
+    return myFetch(sourceApi.sourceBatchV1, {
+        method: "POST",
+        body: payload,
     });
 }
 

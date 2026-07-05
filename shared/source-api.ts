@@ -8,6 +8,7 @@ export const sourceApi = {
     health: "/s/health",
     insights: "/s/insights",
     sourcesV1: "/v1/sources",
+    sourceBatchV1: "/v1/sources/batch",
     sourceHealthV1: "/v1/health/sources",
 } as const;
 
@@ -18,7 +19,16 @@ export interface SourceQuery {
 
 export interface SourceItemsQuery {
     latest?: boolean;
-    limit?: number;
+    limit?: number | string;
+    since?: number | string;
+}
+
+export interface SourceBatchPayload {
+    sources?: string[];
+    source?: string | string[];
+    column?: string | string[];
+    type?: string | string[];
+    limit?: number | string;
     since?: number | string;
 }
 
@@ -51,6 +61,24 @@ export interface SourceApiResponseMeta {
 export interface EntireSourcesResponse {
     data: SourceResponse[];
     meta: SourceApiResponseMeta;
+    errors: SourceApiError[];
+}
+
+export interface SourceBatchResponseMeta extends SourceApiResponseMeta {
+    itemCount: number;
+    unfilteredItemCount: number;
+    filters: {
+        sourceIds: SourceID[];
+        columns: string[];
+        types: string[];
+        since?: number;
+        limit?: number;
+    };
+}
+
+export interface SourceBatchResponse {
+    data: SourceResponse[];
+    meta: SourceBatchResponseMeta;
     errors: SourceApiError[];
 }
 
