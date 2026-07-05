@@ -1,5 +1,5 @@
 import type { SourceID } from "@shared/types";
-import type { TopicEvent, HotNewsItem, WordCloudTerm, SourceActivity } from "@shared/news-insights";
+import type { TopicEvent, HotNewsItem, WordCloudTerm, CategoryShare, SourceActivity } from "@shared/news-insights";
 
 import clsx from "clsx";
 import { useTitle } from "react-use";
@@ -60,6 +60,7 @@ function InsightsPage() {
     const insights = data?.data;
     const maxWordWeight = Math.max(...(insights?.wordCloud.map((item) => item.weight) ?? [0]));
     const maxSourceCount = Math.max(...(insights?.sourceActivity.map((item) => item.itemCount) ?? [0]));
+    const maxCategoryCount = Math.max(...(insights?.categoryShares.map((item) => item.itemCount) ?? [0]));
 
     const handleReadHotItem = (item: HotNewsItem) => {
         addHistory(item.sourceId, item.id, item.title, item.url);
@@ -144,6 +145,10 @@ function InsightsPage() {
 
                     <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
                         <WordCloudPanel items={insights?.wordCloud ?? []} maxWeight={maxWordWeight} />
+                        <CategorySharePanel items={insights?.categoryShares ?? []} maxCount={maxCategoryCount} />
+                    </div>
+
+                    <div className="grid gap-4">
                         <SourceActivityPanel items={insights?.sourceActivity ?? []} maxCount={maxSourceCount} />
                     </div>
 
@@ -276,6 +281,46 @@ function WordCloudPanel({ items, maxWeight }: { items: WordCloudTerm[]; maxWeigh
                     ))
                 ) : (
                     <PanelEmpty label="暂无关键词" />
+                )}
+            </div>
+        </section>
+    );
+}
+
+function CategorySharePanel({ items, maxCount }: { items: CategoryShare[]; maxCount: number }) {
+    return (
+        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+            <PanelTitle icon="i-ph:chart-pie-slice-duotone" title="分类占比" />
+            <div className="mt-4 flex flex-col gap-3">
+                {items.length ? (
+                    items.map((item) => {
+                        const percent = Math.round(item.ratio * 100);
+                        const barWidth = maxCount ? Math.max(6, Math.round((item.itemCount / maxCount) * 100)) : 0;
+
+                        return (
+                            <div key={item.categoryId} className="rounded-xl bg-white/82 p-3 dark:bg-zinc-800/54">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <div className="font-medium text-zinc-800 dark:text-zinc-200">
+                                            {item.categoryName}
+                                        </div>
+                                        <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-500">
+                                            {item.sourceCount} 个来源 · {item.itemCount} 条
+                                        </div>
+                                    </div>
+                                    <div className="text-lg font-bold text-cyan-700 dark:text-cyan-300">{percent}%</div>
+                                </div>
+                                <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-zinc-900/70">
+                                    <div
+                                        className="h-full rounded-full bg-cyan-500"
+                                        style={{ width: `${barWidth}%` }}
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <PanelEmpty label="暂无分类统计" />
                 )}
             </div>
         </section>

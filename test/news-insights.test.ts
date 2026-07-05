@@ -128,4 +128,36 @@ describe("news insights", () => {
             expect.objectContaining({ sourceId: "v2ex", itemCount: 1 }),
         ]);
     });
+
+    it("summarizes category shares by source metadata", () => {
+        const insights = createNewsInsights(
+            [
+                createResponse("weibo" as SourceID, "Weibo", [
+                    createItem("weibo-1", "国内热点更新", "https://news.example.com/china-1", 5),
+                    createItem("weibo-2", "国内热点追踪", "https://news.example.com/china-2", 6),
+                ]),
+                createResponse("v2ex" as SourceID, "V2EX", [
+                    createItem("v2ex-1", "开发者讨论 OpenAI", "https://v2ex.example.com/openai", 8),
+                ]),
+            ],
+            { generatedAt: NOW }
+        );
+
+        expect(insights.categoryShares).toEqual([
+            expect.objectContaining({
+                categoryId: "china",
+                categoryName: "国内",
+                itemCount: 2,
+                sourceCount: 1,
+                ratio: 0.67,
+            }),
+            expect.objectContaining({
+                categoryId: "tech",
+                categoryName: "科技",
+                itemCount: 1,
+                sourceCount: 1,
+                ratio: 0.33,
+            }),
+        ]);
+    });
 });

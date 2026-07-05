@@ -1,4 +1,7 @@
-import type { NewsItem, SourceID, SourceResponse } from "./types";
+import { metadata } from "./metadata";
+import dataSources from "./data-sources";
+
+import type { NewsItem, SourceID, ColumnID, SourceResponse } from "./types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_HOT_LIMIT = 20;
@@ -133,6 +136,15 @@ export interface SourceActivity {
     latestPublishedAt?: number;
 }
 
+export interface CategoryShare {
+    categoryId: ColumnID | "uncategorized";
+    categoryName: string;
+    itemCount: number;
+    sourceCount: number;
+    ratio: number;
+    latestPublishedAt?: number;
+}
+
 export interface NewsInsights {
     generatedAt: number;
     sourceCount: number;
@@ -141,6 +153,7 @@ export interface NewsInsights {
     topicEvents: TopicEvent[];
     wordCloud: WordCloudTerm[];
     sourceActivity: SourceActivity[];
+    categoryShares: CategoryShare[];
 }
 
 interface TopicGroup {
@@ -160,6 +173,7 @@ export function createNewsInsights(responses: SourceResponse[], options: NewsIns
         topicEvents: createTopicEvents(items, { ...options, generatedAt }),
         wordCloud: createWordCloud(items, { ...options, generatedAt }),
         sourceActivity: createSourceActivity(items),
+        categoryShares: createCategoryShares(items),
     };
 }
 
@@ -291,6 +305,41 @@ export function createSourceActivity(items: InsightSourceItem[]): SourceActivity
             (b.latestPublishedAt ?? 0) - (a.latestPublishedAt ?? 0) ||
             a.sourceId.localeCompare(b.sourceId)
     );
+}
+
+export function createCategoryShares(items: InsightSourceItem[]): CategoryShare[] {
+    const total = items.length;
+    const categories = new Map<string, { itemCount: number; latestPublishedAt?: number; sources: Set<SourceID> }>();
+
+    for (const item of items) {
+        const categoryId = getSourceCategoryId(item.sourceId);
+        const current = categories.get(categoryId) ?? {
+            itemCount: 0,
+            latestPublishedAt: undefined,
+            sources: new Set<SourceID>(),
+        };
+
+        current.itemCount += 1;
+        current.latestPublishedAt = maxOptional(current.latestPublishedAt, item.publishedAt);
+        current.sources.add(item.sourceId);
+        categories.set(categoryId, current);
+    }
+
+    return [...categories.entries()]
+        .map(([categoryId, category]) => ({
+            categoryId: categoryId as CategoryShare["categoryId"],
+            categoryName: getCategoryName(categoryId),
+            itemCount: category.itemCount,
+            sourceCount: category.sources.size,
+            ratio: total ? roundScore(category.itemCount / total) : 0,
+            latestPublishedAt: category.latestPublishedAt,
+        }))
+        .sort(
+            (a, b) =>
+                b.itemCount - a.itemCount ||
+                (b.latestPublishedAt ?? 0) - (a.latestPublishedAt ?? 0) ||
+                a.categoryName.localeCompare(b.categoryName)
+        );
 }
 
 export function extractInsightTerms(title: string, options: Pick<NewsInsightOptions, "stopWords"> = {}): string[] {
@@ -521,6 +570,15 @@ function uniqueSourceNames(items: InsightSourceItem[]) {
 
 function addUniqueSource(sources: SourceID[], sourceId: SourceID) {
     return sources.includes(sourceId) ? sources : [...sources, sourceId];
+}
+
+function getSourceCategoryId(sourceId: SourceID): CategoryShare["categoryId"] {
+    return dataSources[sourceId]?.column ?? "uncategorized";
+}
+
+function getCategoryName(categoryId: string) {
+    if (categoryId === "uncategorized") return "未分类";
+    return metadata[categoryId as ColumnID]?.name ?? categoryId;
 }
 
 function maxOptional(current: number | undefined, next: number | undefined) {
