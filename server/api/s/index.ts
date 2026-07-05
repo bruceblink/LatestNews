@@ -6,13 +6,13 @@ import { TTL } from "@shared/consts";
 import { logger } from "#/utils/logger.ts";
 import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
+import { fetchSourceItems } from "#/utils/source-fetch";
+import { resolveSourceId } from "#/utils/resolve-source-id";
 import { getQuery, createError, defineEventHandler } from "h3";
 import { getSourceHealthSnapshot } from "#/utils/source-health";
 import { resolveSourceResponse } from "#/utils/resolve-source-response";
-import { hasSourceGetter, fetchSourceItems } from "#/utils/source-fetch";
 import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 
-const isValidSource = (id?: SourceID) => !!id && !!dataSources[id] && hasSourceGetter(id);
 const sourceQuerySchema = z.object({
     id: z.union([z.string(), z.array(z.string())]).transform((value) => (Array.isArray(value) ? value[0] : value)),
     latest: z
@@ -20,19 +20,6 @@ const sourceQuerySchema = z.object({
         .optional()
         .transform((value) => (Array.isArray(value) ? value[0] : value)),
 });
-
-function resolveSourceId(input: string): SourceID {
-    const initialId = input as SourceID;
-    if (isValidSource(initialId)) return initialId;
-
-    const redirectID = dataSources[input as keyof typeof dataSources]?.redirect;
-    if (redirectID && isValidSource(redirectID)) return redirectID;
-
-    throw createError({
-        statusCode: 400,
-        message: "Invalid source id",
-    });
-}
 
 function isLatestRequest(latest: string | boolean | undefined) {
     return latest !== undefined && latest !== "false" && latest !== false;

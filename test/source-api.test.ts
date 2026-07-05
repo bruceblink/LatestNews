@@ -5,6 +5,7 @@ import { it, expect, describe } from "vitest";
 import {
     sourceApi,
     getSourceCacheKey,
+    getSourceItemsPath,
     createBearerHeaders,
     sourceHealthCacheKey,
     getNewsInsightsCacheKey,
@@ -26,6 +27,7 @@ describe("source API contract", () => {
 
     it("builds stable source cache keys", () => {
         expect(getSourceCacheKey("weibo" as SourceID)).toEqual(["source", "weibo"]);
+        expect(getSourceItemsPath("weibo" as SourceID)).toBe("/v1/sources/weibo/items");
         expect(getEntireSourcesCacheKey(["weibo", "v2ex"] as SourceID[])).toEqual(["entire", ["v2ex", "weibo"]]);
         expect(
             getNewsInsightsCacheKey({

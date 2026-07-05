@@ -1,5 +1,6 @@
 import type { NewsInsights } from "./news-insights";
 import type { SourceID, SourceResponse } from "./types";
+import type { SourceResponseStatus } from "./source-response-status";
 
 export const sourceApi = {
     single: "/s",
@@ -12,6 +13,12 @@ export const sourceApi = {
 export interface SourceQuery {
     id: SourceID;
     latest?: boolean;
+}
+
+export interface SourceItemsQuery {
+    latest?: boolean;
+    limit?: number;
+    since?: number | string;
 }
 
 export interface EntireSourcesPayload {
@@ -46,6 +53,20 @@ export interface EntireSourcesResponse {
     errors: SourceApiError[];
 }
 
+export interface SourceItemsResponse {
+    data: SourceResponse;
+    meta: {
+        generatedAt: number;
+        sourceId: SourceID;
+        status: SourceResponseStatus;
+        itemCount: number;
+        unfilteredItemCount: number;
+        since?: number;
+        limit?: number;
+    };
+    errors: SourceApiError[];
+}
+
 export interface NewsInsightsResponse {
     data: NewsInsights;
     meta: SourceApiResponseMeta;
@@ -58,6 +79,10 @@ export function createBearerHeaders(token: string | null | undefined): Record<st
 
 export function getSourceCacheKey(id: SourceID) {
     return ["source", id] as const;
+}
+
+export function getSourceItemsPath(id: SourceID) {
+    return `${sourceApi.sourcesV1}/${id}/items` as const;
 }
 
 export function getEntireSourcesCacheKey(ids: SourceID[]) {
