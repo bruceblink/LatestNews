@@ -1,6 +1,7 @@
 import { jwtVerify } from "jose";
 import process from "node:process";
 import { logger } from "#/utils/logger";
+import { isPublicApiPath } from "@shared/public-api-path";
 import { getHeader, createError, getRequestURL, defineEventHandler } from "h3";
 
 export default defineEventHandler(async (event) => {
@@ -8,7 +9,7 @@ export default defineEventHandler(async (event) => {
     if (!url.pathname.startsWith("/api")) return;
     if (["JWT_SECRET"].find((k) => !process.env[k])) {
         event.context.disabledLogin = true;
-        if (["/api/s", "/api/proxy", "/api/latest", "/api/mcp"].every((p) => !url.pathname.startsWith(p)))
+        if (!isPublicApiPath(url.pathname))
             throw createError({ statusCode: 506, message: "Server not configured, disable login" });
     } else {
         if (["/api/s", "/api/me"].find((p) => url.pathname.startsWith(p))) {

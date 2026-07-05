@@ -6,6 +6,7 @@ export const sourceApi = {
     entire: "/s/entire",
     health: "/s/health",
     insights: "/s/insights",
+    sourcesV1: "/v1/sources",
 } as const;
 
 export interface SourceQuery {
