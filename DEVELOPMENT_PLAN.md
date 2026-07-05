@@ -31,7 +31,7 @@ External public sources
     -> Source adapters
     -> Fetch / normalize / cache
     -> Source health
-    -> Metadata API / Feed export
+    -> Metadata API / Feed export / Insight summaries
     -> Reader Web / PWA
 ```
 
@@ -60,10 +60,10 @@ External public sources
 ### Phase 1: 数据节点能力
 
 - 新增只读版本化 API：
-  - `GET /api/v1/sources`
-  - `GET /api/v1/sources/:id/items`
-  - `POST /api/v1/sources/batch`
-  - `GET /api/v1/health/sources`
+    - `GET /api/v1/sources`
+    - `GET /api/v1/sources/:id/items`
+    - `POST /api/v1/sources/batch`
+    - `GET /api/v1/health/sources`
 - 返回统一 envelope：`data`、`meta`、`errors`，支持部分成功。
 - 支持筛选参数：source、column、type、since、limit。
 - 提供 JSON Feed/RSS 导出，方便自动化工具和阅读器订阅。
@@ -72,6 +72,9 @@ External public sources
 ### Phase 2: 阅读门面增强
 
 - 建立统一 Feed 页面：合并关注源、热门源和实时源，支持按时间、来源和分类过滤。
+- 增加热点排行：按多源覆盖度、更新时间、来源权重和阅读状态生成可解释的热点列表，缓解数据源过多导致的浏览压力。
+- 增加话题事件追踪：把相近标题、相同 URL 和连续更新聚合成话题，展示时间线、相关来源、首发时间和最新进展。
+- 增加统计洞察视图：展示来源活跃度、分类占比、更新频率、关键词趋势和词云图，帮助用户快速判断今天应该看什么。
 - 增强阅读状态：已读、稍后读、收藏、隐藏。
 - 增加源详情页：源介绍、最近健康、最近更新、最近错误。
 - 优化移动端阅读、横向卡片和 PWA 安装体验。
@@ -113,7 +116,11 @@ External public sources
     - 文件范围：`shared/source-api.ts`、新增 API 文档和契约测试。
     - 验证：`pnpm exec vitest -c vitest.config.ts test/source-api.test.ts`。
 
-6. 文档与配置清理。
+6. Phase 2 洞察模型草案。
+    - 文件范围：新增 `shared/news-insights.ts`、`server/utils/news-insights.ts`、`test/news-insights.test.ts`。
+    - 验证：覆盖热点排行、话题聚合、关键词统计的纯函数测试，运行 `pnpm exec vitest -c vitest.config.ts test/news-insights.test.ts`。
+
+7. 文档与配置清理。
     - 检查文档、示例配置和贡献说明，确保部署路径、环境变量、API 用法和排障流程清晰。
     - 验证：`rg` 搜索敏感关键词，提交前确认密钥、用户信息或环境专用配置不会进入提交内容。
 
