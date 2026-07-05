@@ -23,6 +23,7 @@ describe("source API contract", () => {
             health: "/s/health",
             insights: "/s/insights",
             sourcesV1: "/v1/sources",
+            sourceHealthV1: "/v1/health/sources",
         });
     });
 

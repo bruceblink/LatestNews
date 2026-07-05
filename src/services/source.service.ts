@@ -1,6 +1,7 @@
 import type { SourceID, SourceResponse } from "@shared/types";
 import type { SourceMetadataResponse } from "@shared/source-metadata";
 import type { SourceHealthSummary } from "@shared/source-health-types";
+import type { SourceHealthSourcesQuery, SourceHealthSourcesResponse } from "@shared/source-health-api";
 import type {
     SourceQuery,
     SourceItemsQuery,
@@ -60,6 +61,12 @@ export function fetchNewsInsights(payload: NewsInsightsPayload): Promise<NewsIns
 
 export function fetchSourceHealthSummary(): Promise<SourceHealthSummary> {
     return myFetch(sourceApi.health);
+}
+
+export function fetchSourceHealthSourcesV1(query?: SourceHealthSourcesQuery): Promise<SourceHealthSourcesResponse> {
+    return myFetch(sourceApi.sourceHealthV1, {
+        query,
+    });
 }
 
 export function fetchSourceMetadata(): Promise<SourceMetadataResponse> {
