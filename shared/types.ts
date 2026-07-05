@@ -2,6 +2,7 @@ import type { colors } from "unocss/preset-mini";
 
 import type sources from "./sources.json";
 import type { originSources } from "./pre-sources";
+import type { SourceResponseStatus } from "./source-response-status";
 
 // ---------------------------
 // 基础类型
@@ -95,7 +96,7 @@ export interface NewsItem {
 }
 
 export interface SourceResponse {
-    status: "success" | "cache";
+    status: SourceResponseStatus;
     id: SourceID;
     name?: string;
     updatedTime: number | string;

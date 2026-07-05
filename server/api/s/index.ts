@@ -8,6 +8,7 @@ import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
 import { getQuery, createError, defineEventHandler } from "h3";
 import { getSourceHealthSnapshot } from "#/utils/source-health";
+import { resolveSourceResponse } from "#/utils/resolve-source-response";
 import { hasSourceGetter, fetchSourceItems } from "#/utils/source-fetch";
 import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 
@@ -76,28 +77,29 @@ async function getCacheOrFetch(id: SourceID, latest: boolean, event: H3Event): P
 
     const sourceInterval = dataSources[id].interval ?? TTL;
     const degraded = shouldDegradeToCache(id);
+    const response = await resolveSourceResponse({
+        id,
+        name: dataSources[id].name,
+        cache,
+        latest,
+        canRefresh: Boolean(event.context.disabledLogin || event.context.user),
+        degraded,
+        sourceInterval,
+        now,
+        fetchLatest: () => fetchSourceItems(id),
+        saveCache: async (items) => {
+            if (!cacheTable) return;
 
-    // 1. interval 内直接返回缓存（视为最新）
-    if (cache && now - cache.updated < sourceInterval) {
-        return { status: "success", id, updatedTime: cache.updated, name: dataSources[id].name, items: cache.items };
+            const setCache = cacheTable.set(id, items);
+            if (event.context.waitUntil) event.context.waitUntil(setCache);
+            else await setCache;
+        },
+        onFetchError: (error) => logger.error(`fetch ${id} latest failed, fallback to stale cache`, error),
+    });
+
+    if (response.status === "success" || response.status === "empty") {
+        logger.success(`fetch ${id} latest`);
     }
 
-    // 2. TTL 内，根据 latest、登录状态与健康降级策略判断是否返回缓存
-    if (cache && now - cache.updated < TTL) {
-        if (degraded || !latest || (!event.context.disabledLogin && !event.context.user)) {
-            return { status: "cache", id, name: dataSources[id].name, updatedTime: cache.updated, items: cache.items };
-        }
-    }
-
-    // 3. 缓存不可用或需要刷新，获取最新数据
-    const newData = await fetchSourceItems(id);
-
-    if (cacheTable && newData.length) {
-        const setCache = cacheTable.set(id, newData);
-        if (event.context.waitUntil) event.context.waitUntil(setCache);
-        else await setCache;
-    }
-
-    logger.success(`fetch ${id} latest`);
-    return { status: "success", id, name: dataSources[id].name, updatedTime: now, items: newData };
+    return response;
 }

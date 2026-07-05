@@ -1,5 +1,5 @@
-import type { NewsItem, SourceID } from "@shared/types";
 import type { SourceHealthStatus } from "@shared/source-health-types";
+import type { NewsItem, SourceID, SourceResponse } from "@shared/types";
 
 import clsx from "clsx";
 import { useWindowSize } from "react-use";
@@ -96,6 +96,7 @@ function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
                     ) : (
                         <CardState
                             id={id}
+                            sourceStatus={data?.status}
                             healthStatus={healthStatus}
                             isError={isError}
                             isFetching={isFetching}
@@ -110,12 +111,14 @@ function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
 
 function CardState({
     id,
+    sourceStatus,
     healthStatus,
     isError,
     isFetching,
     error,
 }: {
     id: SourceID;
+    sourceStatus?: SourceResponse["status"];
     healthStatus?: SourceHealthStatus;
     isError: boolean;
     isFetching: boolean;
@@ -123,7 +126,7 @@ function CardState({
 }) {
     const { refresh } = useRefetch();
     const ds = dataSources[id];
-    const message = getCardStateMessage({ healthStatus, isError, isFetching, error });
+    const message = getCardStateMessage({ sourceStatus, healthStatus, isError, isFetching, error });
 
     return (
         <div className="min-h-[360px] flex flex-col items-center justify-center px-5 py-8 text-center">
@@ -143,7 +146,7 @@ function CardState({
             <div className="mt-2 max-w-58 text-xs leading-5 text-zinc-600 dark:text-zinc-500">
                 {message.description}
             </div>
-            {(isError || healthStatus === "failing") && (
+            {(isError || healthStatus === "failing" || sourceStatus === "empty") && (
                 <button
                     type="button"
                     className="mt-5 rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400"
@@ -157,11 +160,13 @@ function CardState({
 }
 
 function getCardStateMessage({
+    sourceStatus,
     healthStatus,
     isError,
     isFetching,
     error,
 }: {
+    sourceStatus?: SourceResponse["status"];
     healthStatus?: SourceHealthStatus;
     isError: boolean;
     isFetching: boolean;
@@ -181,6 +186,15 @@ function getCardStateMessage({
             title: "正在拉取最新内容",
             description: "首次加载可能需要几秒钟，请稍等片刻。",
             icon: "i-ph:spinner-duotone",
+            tone: "info" as const,
+        };
+    }
+
+    if (sourceStatus === "empty") {
+        return {
+            title: "源站暂无有效内容",
+            description: "本次请求成功，但没有返回可展示条目。稍后可以重新检查这个来源。",
+            icon: "i-ph:tray-duotone",
             tone: "info" as const,
         };
     }

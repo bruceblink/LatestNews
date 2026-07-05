@@ -2,6 +2,7 @@ import type { SourceID, SourceResponse } from "@shared/types";
 
 import { TTL } from "@shared/consts";
 import dataSources from "@shared/data-sources";
+import { getCachedSourceResponseStatus, getFetchedSourceResponseStatus } from "@shared/source-response-status";
 
 interface CacheEntry {
     id: SourceID;
@@ -30,11 +31,15 @@ export async function resolveEntireSources({
 
     for (const cache of cacheEntries) {
         cachedResponses.set(cache.id, {
-            status: "cache",
+            status: getCachedSourceResponseStatus({
+                cacheUpdatedAt: cache.updated,
+                now,
+                ttl: TTL,
+            }),
             id: cache.id,
             name: dataSources[cache.id].name,
             items: cache.items,
-            updatedTime: now - cache.updated < (dataSources[cache.id].interval ?? TTL) ? now : cache.updated,
+            updatedTime: cache.updated,
         });
     }
 
@@ -45,11 +50,11 @@ export async function resolveEntireSources({
                 const items = (await fetchMissing(id)).slice(0, 30);
                 if (items.length) await saveCache(id, items);
                 return {
-                    status: "success" as const,
+                    status: getFetchedSourceResponseStatus(items.length),
                     id,
                     name: dataSources[id].name,
                     items,
-                    updatedTime: Date.now(),
+                    updatedTime: now,
                 };
             })
         );

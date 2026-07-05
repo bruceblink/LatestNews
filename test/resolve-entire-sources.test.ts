@@ -4,6 +4,9 @@ import { it, vi, expect, describe } from "vitest";
 
 import { resolveEntireSources } from "../server/utils/resolve-entire-sources";
 
+const NOW = Date.parse("2026-07-05T08:00:00.000Z");
+const TTL = 30 * 60 * 1000;
+
 function createResponseItems(id: SourceID): SourceResponse["items"] {
     return [
         {
@@ -23,7 +26,7 @@ describe("resolveEntireSources", () => {
             {
                 id: "v2ex" as SourceID,
                 items: createResponseItems("v2ex"),
-                updated: Date.now() - 1000,
+                updated: NOW - 1000,
             },
         ];
 
@@ -35,7 +38,7 @@ describe("resolveEntireSources", () => {
             cacheEntries,
             fetchMissing,
             saveCache,
-            now: Date.now(),
+            now: NOW,
         });
 
         expect(result).toHaveLength(2);
@@ -55,7 +58,7 @@ describe("resolveEntireSources", () => {
             {
                 id: "v2ex" as SourceID,
                 items: createResponseItems("v2ex"),
-                updated: Date.now() - 1000,
+                updated: NOW - 1000,
             },
         ];
 
@@ -64,7 +67,7 @@ describe("resolveEntireSources", () => {
             cacheEntries,
             fetchMissing: async (id: SourceID) => createResponseItems(id),
             saveCache: async () => undefined,
-            now: Date.now(),
+            now: NOW,
         });
 
         expect(result.map((item) => item.id)).toEqual(["weibo", "v2ex"]);
@@ -82,7 +85,7 @@ describe("resolveEntireSources", () => {
                 return createResponseItems(id);
             },
             saveCache: async () => undefined,
-            now: Date.now(),
+            now: NOW,
             onFetchError,
         });
 
@@ -90,5 +93,50 @@ describe("resolveEntireSources", () => {
         expect(result[0].id).toBe("v2ex");
         expect(onFetchError).toHaveBeenCalledTimes(1);
         expect(onFetchError).toHaveBeenCalledWith(expect.any(Error), "weibo");
+    });
+
+    it("marks stale cache entries when they exceed the cache TTL", async () => {
+        const result = await resolveEntireSources({
+            sourceIds: ["weibo" as SourceID],
+            cacheEntries: [
+                {
+                    id: "weibo" as SourceID,
+                    items: createResponseItems("weibo" as SourceID),
+                    updated: NOW - TTL - 1,
+                },
+            ],
+            fetchMissing: async (id: SourceID) => createResponseItems(id),
+            saveCache: async () => undefined,
+            now: NOW,
+        });
+
+        expect(result[0]).toMatchObject({
+            id: "weibo",
+            status: "stale-cache",
+            updatedTime: NOW - TTL - 1,
+        });
+    });
+
+    it("returns empty responses for fetched sources without cacheable items", async () => {
+        const saveCache = vi.fn(async () => undefined);
+
+        const result = await resolveEntireSources({
+            sourceIds: ["weibo" as SourceID],
+            cacheEntries: [],
+            fetchMissing: async () => [],
+            saveCache,
+            now: NOW,
+        });
+
+        expect(result).toEqual([
+            {
+                status: "empty",
+                id: "weibo",
+                name: expect.any(String),
+                items: [],
+                updatedTime: NOW,
+            },
+        ]);
+        expect(saveCache).not.toHaveBeenCalled();
     });
 });

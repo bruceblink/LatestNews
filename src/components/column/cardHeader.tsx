@@ -1,4 +1,4 @@
-import type { SourceID } from "@shared/types.ts";
+import type { SourceID, SourceResponse } from "@shared/types.ts";
 import type { SourceHealthStatus } from "@shared/source-health-types";
 
 import clsx from "clsx";
@@ -10,11 +10,10 @@ import { useRelativeTime } from "~/hooks/useRelativeTime";
 
 interface CardHeaderProps {
     id: SourceID;
-    data: any;
+    data?: SourceResponse;
     healthStatus?: SourceHealthStatus;
     isFetching: boolean;
     isError: boolean;
-    updatedTime?: string | number;
     setHandleRef?: (el: HTMLDivElement | null) => void;
 }
 
@@ -24,6 +23,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
     const { isFocused, toggleFocus } = useFocusWith(id);
     const ds = dataSources[id];
     const healthStatusLabel = healthStatus === "failing" ? "异常" : healthStatus === "idle" ? "未采样" : undefined;
+    const sourceStatusLabel = getSourceStatusLabel(data?.status);
 
     return (
         <div className={clsx("flex justify-between mx-2 mt-0 mb-2 items-center")}>
@@ -53,6 +53,16 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                                 )}
                             >
                                 {healthStatusLabel}
+                            </span>
+                        )}
+                        {sourceStatusLabel && (
+                            <span
+                                className={clsx(
+                                    "rounded px-1.5 py-0.5 text-xs",
+                                    getSourceStatusClassName(data?.status)
+                                )}
+                            >
+                                {sourceStatusLabel}
                             </span>
                         )}
                         {ds?.title && (
@@ -111,4 +121,22 @@ function UpdatedTime({ isError, updatedTime }: { updatedTime: any; isError: bool
     if (relativeTime) return `${relativeTime}更新`;
     if (isError) return "获取失败";
     return "加载中...";
+}
+
+function getSourceStatusLabel(status?: SourceResponse["status"]) {
+    if (status === "cache") return "缓存";
+    if (status === "degraded-cache") return "降级缓存";
+    if (status === "stale-cache") return "旧缓存";
+    if (status === "empty") return "空数据";
+    return undefined;
+}
+
+function getSourceStatusClassName(status?: SourceResponse["status"]) {
+    if (status === "degraded-cache" || status === "stale-cache") {
+        return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
+    }
+    if (status === "empty") {
+        return "bg-zinc-200/75 text-zinc-700 dark:bg-zinc-700/35 dark:text-zinc-500";
+    }
+    return "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300";
 }
