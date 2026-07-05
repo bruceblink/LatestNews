@@ -20,4 +20,6 @@ export interface HistoryItem {
 /** 最多保留 200 条历史 */
 export const MAX_HISTORY_SIZE = 200;
 
-export const readingHistoryAtom = atomWithStorage<HistoryItem[]>("reading-history", []);
+export const readingHistoryAtom = atomWithStorage<HistoryItem[]>("reading-history", [], undefined, {
+    getOnInit: true,
+});
