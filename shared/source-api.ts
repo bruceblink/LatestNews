@@ -10,6 +10,8 @@ export const sourceApi = {
     sourcesV1: "/v1/sources",
     sourceBatchV1: "/v1/sources/batch",
     sourceHealthV1: "/v1/health/sources",
+    jsonFeedV1: "/v1/feeds/json",
+    rssFeedV1: "/v1/feeds/rss",
 } as const;
 
 export interface SourceQuery {

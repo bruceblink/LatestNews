@@ -9,6 +9,8 @@ describe("public API path policy", () => {
         expect(isPublicApiPath("/api/v1/sources")).toBe(true);
         expect(isPublicApiPath("/api/v1/sources/batch")).toBe(true);
         expect(isPublicApiPath("/api/v1/health/sources")).toBe(true);
+        expect(isPublicApiPath("/api/v1/feeds/json")).toBe(true);
+        expect(isPublicApiPath("/api/v1/feeds/rss")).toBe(true);
     });
 
     it("keeps user sync endpoints private", () => {
