@@ -60,10 +60,10 @@ External public sources
 ### Phase 1: 数据节点能力
 
 - 新增只读版本化 API：
-    - `GET /api/v1/sources`
-    - `GET /api/v1/sources/:id/items`
-    - `POST /api/v1/sources/batch`
-    - `GET /api/v1/health/sources`
+  - `GET /api/v1/sources`
+  - `GET /api/v1/sources/:id/items`
+  - `POST /api/v1/sources/batch`
+  - `GET /api/v1/health/sources`
 - 返回统一 envelope：`data`、`meta`、`errors`，支持部分成功。
 - 支持筛选参数：source、column、type、since、limit。
 - 提供 JSON Feed/RSS 导出，方便自动化工具和阅读器订阅。
