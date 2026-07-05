@@ -60,6 +60,50 @@ describe("createSourceFetcher", () => {
         expect(onSuccess).toHaveBeenCalledWith("weibo", 0, 30);
     });
 
+    it("filters invalid source items, deduplicates URLs, and backfills stable ids", async () => {
+        const onSuccess = vi.fn();
+        const fetchSourceItems = createSourceFetcher({
+            getItems: async () =>
+                [
+                    {
+                        id: "",
+                        title: "  First title  ",
+                        url: "https://example.com/news/1?utm_source=feed",
+                        pubDate: "2026-07-05T08:00:00.000Z",
+                    },
+                    {
+                        id: "duplicate",
+                        title: "Duplicate title",
+                        url: "https://example.com/news/1",
+                    },
+                    {
+                        id: "missing-title",
+                        title: "",
+                        url: "https://example.com/news/2",
+                    },
+                    {
+                        id: "missing-url",
+                        title: "Missing URL",
+                        url: "",
+                    },
+                ] as NewsItem[],
+            onSuccess,
+            onFailure: vi.fn(),
+            now: () => 1_000,
+        });
+
+        const result = await fetchSourceItems("weibo" as SourceID);
+
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            id: expect.stringMatching(/^weibo:url-/),
+            title: "First title",
+            url: "https://example.com/news/1?utm_source=feed",
+            pubDate: Date.parse("2026-07-05T08:00:00.000Z"),
+        });
+        expect(onSuccess).toHaveBeenCalledWith("weibo", 0, 1);
+    });
+
     it("clears in-flight state after a failed fetch", async () => {
         const onFailure = vi.fn();
         const getItems = vi

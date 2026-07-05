@@ -1,6 +1,7 @@
 import type { NewsItem, SourceID } from "@shared/types";
 
 import { getters } from "#/getters";
+import { normalizeNewsItems } from "@shared/news-item-schema";
 
 import { recordSourceFailure, recordSourceSuccess } from "./source-health";
 
@@ -25,7 +26,7 @@ export function createSourceFetcher({ getItems, onSuccess, onFailure, now = Date
         const startTime = now();
         const request = getItems(id)
             .then((items) => {
-                const normalizedItems = items.slice(0, 30);
+                const normalizedItems = normalizeNewsItems(items, { sourceId: id });
                 onSuccess(id, now() - startTime, normalizedItems.length);
                 return normalizedItems;
             })
