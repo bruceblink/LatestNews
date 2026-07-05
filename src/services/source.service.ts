@@ -1,9 +1,15 @@
 import type { SourceID, SourceResponse } from "@shared/types";
 import type { SourceHealthSummary } from "@shared/source-health-types";
-import type { SourceQuery, NewsInsightsPayload, EntireSourcesPayload, NewsInsightsResponse } from "@shared/source-api";
+import type {
+    SourceQuery,
+    NewsInsightsPayload,
+    EntireSourcesPayload,
+    NewsInsightsResponse,
+    EntireSourcesResponse,
+} from "@shared/source-api";
 
 import { myFetch } from "~/utils";
-import { sourceApi } from "@shared/source-api";
+import { sourceApi, normalizeEntireSourcesResponse } from "@shared/source-api";
 
 export function fetchSource(query: SourceQuery, headers?: Record<string, string>): Promise<SourceResponse> {
     return myFetch(sourceApi.single, {
@@ -13,6 +19,10 @@ export function fetchSource(query: SourceQuery, headers?: Record<string, string>
 }
 
 export function fetchEntireSources(sources: SourceID[]): Promise<SourceResponse[] | undefined> {
+    return fetchEntireSourcesEnvelope(sources).then(normalizeEntireSourcesResponse);
+}
+
+export function fetchEntireSourcesEnvelope(sources: SourceID[]): Promise<EntireSourcesResponse | SourceResponse[]> {
     const body: EntireSourcesPayload = { sources };
 
     return myFetch(sourceApi.entire, {

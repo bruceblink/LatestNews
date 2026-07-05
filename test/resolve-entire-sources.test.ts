@@ -2,7 +2,7 @@ import type { SourceID, SourceResponse } from "@shared/types";
 
 import { it, vi, expect, describe } from "vitest";
 
-import { resolveEntireSources } from "../server/utils/resolve-entire-sources";
+import { resolveEntireSources, resolveEntireSourcesWithDiagnostics } from "../server/utils/resolve-entire-sources";
 
 const NOW = Date.parse("2026-07-05T08:00:00.000Z");
 const TTL = 30 * 60 * 1000;
@@ -138,5 +138,42 @@ describe("resolveEntireSources", () => {
             },
         ]);
         expect(saveCache).not.toHaveBeenCalled();
+    });
+
+    it("returns diagnostics for invalid and failed sources", async () => {
+        const onFetchError = vi.fn();
+
+        const result = await resolveEntireSourcesWithDiagnostics({
+            sourceIds: ["weibo", "v2ex"] as SourceID[],
+            invalidSourceIds: ["missing-source"],
+            cacheEntries: [],
+            fetchMissing: async (id: SourceID) => {
+                if (id === "weibo") throw new Error("fetch failed");
+                return createResponseItems(id);
+            },
+            saveCache: async () => undefined,
+            now: NOW,
+            onFetchError,
+        });
+
+        expect(result.meta).toEqual({
+            generatedAt: NOW,
+            requestedSourceCount: 3,
+            resolvedSourceCount: 1,
+            partial: true,
+            omittedSourceIds: ["weibo"],
+        });
+        expect(result.errors).toEqual([
+            {
+                sourceId: "missing-source",
+                message: "Invalid source id",
+            },
+            {
+                sourceId: "weibo",
+                message: "fetch failed",
+            },
+        ]);
+        expect(result.data.map((item) => item.id)).toEqual(["v2ex"]);
+        expect(onFetchError).toHaveBeenCalledWith(expect.any(Error), "weibo");
     });
 });

@@ -1,4 +1,5 @@
 import type { SourceID, SourceResponse } from "@shared/types";
+import type { SourceApiError, EntireSourcesResponse } from "@shared/source-api";
 
 import { TTL } from "@shared/consts";
 import dataSources from "@shared/data-sources";
@@ -17,6 +18,10 @@ interface ResolveEntireSourcesOptions {
     saveCache: (id: SourceID, items: SourceResponse["items"]) => Promise<void>;
     now: number;
     onFetchError?: (error: unknown, id: SourceID) => void;
+}
+
+interface ResolveEntireSourcesWithDiagnosticsOptions extends ResolveEntireSourcesOptions {
+    invalidSourceIds?: string[];
 }
 
 export async function resolveEntireSources({
@@ -72,4 +77,45 @@ export async function resolveEntireSources({
     return sourceIds
         .map((id) => cachedResponses.get(id))
         .filter((response): response is SourceResponse => Boolean(response));
+}
+
+export async function resolveEntireSourcesWithDiagnostics({
+    invalidSourceIds = [],
+    onFetchError,
+    ...options
+}: ResolveEntireSourcesWithDiagnosticsOptions): Promise<EntireSourcesResponse> {
+    const errors: SourceApiError[] = invalidSourceIds.map((sourceId) => ({
+        sourceId,
+        message: "Invalid source id",
+    }));
+    const data = await resolveEntireSources({
+        ...options,
+        onFetchError: (error, id) => {
+            errors.push({
+                sourceId: id,
+                message: getErrorMessage(error),
+            });
+            onFetchError?.(error, id);
+        },
+    });
+    const resolvedSourceIds = new Set(data.map((response) => response.id));
+    const omittedSourceIds = options.sourceIds.filter((id) => !resolvedSourceIds.has(id));
+
+    return {
+        data,
+        meta: {
+            generatedAt: options.now,
+            requestedSourceCount: options.sourceIds.length + invalidSourceIds.length,
+            resolvedSourceCount: data.length,
+            partial: errors.length > 0 || omittedSourceIds.length > 0,
+            omittedSourceIds,
+        },
+        errors,
+    };
+}
+
+function getErrorMessage(error: unknown) {
+    if (error instanceof Error) return error.message;
+    if (typeof error === "string" && error.trim()) return error;
+    return "Unknown source fetch error";
 }

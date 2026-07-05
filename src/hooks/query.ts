@@ -3,8 +3,9 @@ import type { SourceID, SourceResponse } from "@shared/types";
 import { useCallback } from "react";
 import { cacheSources } from "~/utils/data.ts";
 import { getEntireSourcesCacheKey } from "@shared/source-api";
-import { fetchEntireSources } from "~/services/source.service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { normalizeEntireSourcesResponse } from "@shared/source-api";
+import { fetchEntireSourcesEnvelope } from "~/services/source.service";
 
 export function useUpdateQuery() {
     const queryClient = useQueryClient();
@@ -33,7 +34,11 @@ export function useEntireQuery(items: SourceID[]) {
         queryFn: async ({ queryKey }) => {
             const sources = queryKey[1];
             if (sources.length === 0) return null;
-            const res: SourceResponse[] | undefined = await fetchEntireSources(sources);
+            const response = await fetchEntireSourcesEnvelope(sources);
+            const res: SourceResponse[] | undefined = normalizeEntireSourcesResponse(response);
+            if (!Array.isArray(response) && response.errors.length) {
+                console.warn("Some sources failed to resolve", response.errors);
+            }
             if (res?.length) {
                 const s = [] as SourceID[];
                 res.forEach((v) => {

@@ -8,7 +8,9 @@ import {
     createBearerHeaders,
     sourceHealthCacheKey,
     getNewsInsightsCacheKey,
+    isEntireSourcesResponse,
     getEntireSourcesCacheKey,
+    normalizeEntireSourcesResponse,
 } from "../shared/source-api";
 
 describe("source API contract", () => {
@@ -46,5 +48,30 @@ describe("source API contract", () => {
         expect(createBearerHeaders("token")).toEqual({ Authorization: "Bearer token" });
         expect(createBearerHeaders("")).toBeUndefined();
         expect(createBearerHeaders(null)).toBeUndefined();
+    });
+
+    it("normalizes entire source envelope responses", () => {
+        const item = {
+            status: "success" as const,
+            id: "weibo" as SourceID,
+            updatedTime: 1,
+            items: [],
+        };
+        const envelope = {
+            data: [item],
+            meta: {
+                generatedAt: 1,
+                requestedSourceCount: 1,
+                resolvedSourceCount: 1,
+                partial: false,
+                omittedSourceIds: [],
+            },
+            errors: [],
+        };
+
+        expect(isEntireSourcesResponse(envelope)).toBe(true);
+        expect(normalizeEntireSourcesResponse(envelope)).toEqual([item]);
+        expect(normalizeEntireSourcesResponse([item])).toEqual([item]);
+        expect(normalizeEntireSourcesResponse(undefined)).toBeUndefined();
     });
 });

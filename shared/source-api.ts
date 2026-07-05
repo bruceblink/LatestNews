@@ -1,5 +1,5 @@
-import type { SourceID } from "./types";
 import type { NewsInsights } from "./news-insights";
+import type { SourceID, SourceResponse } from "./types";
 
 export const sourceApi = {
     single: "/s",
@@ -31,15 +31,23 @@ export interface SourceApiError {
     message: string;
 }
 
+export interface SourceApiResponseMeta {
+    generatedAt: number;
+    requestedSourceCount: number;
+    resolvedSourceCount: number;
+    partial: boolean;
+    omittedSourceIds: SourceID[];
+}
+
+export interface EntireSourcesResponse {
+    data: SourceResponse[];
+    meta: SourceApiResponseMeta;
+    errors: SourceApiError[];
+}
+
 export interface NewsInsightsResponse {
     data: NewsInsights;
-    meta: {
-        generatedAt: number;
-        requestedSourceCount: number;
-        resolvedSourceCount: number;
-        partial: boolean;
-        omittedSourceIds: SourceID[];
-    };
+    meta: SourceApiResponseMeta;
     errors: SourceApiError[];
 }
 
@@ -65,6 +73,15 @@ export function getNewsInsightsCacheKey(payload: NewsInsightsPayload) {
         payload.minTopicItems,
         [...(payload.readUrls ?? [])].sort(),
     ] as const;
+}
+
+export function isEntireSourcesResponse(value: unknown): value is EntireSourcesResponse {
+    return Boolean(value && typeof value === "object" && "data" in value && Array.isArray(value.data));
+}
+
+export function normalizeEntireSourcesResponse(response: EntireSourcesResponse | SourceResponse[] | undefined) {
+    if (!response) return undefined;
+    return Array.isArray(response) ? response : response.data;
 }
 
 export const sourceHealthCacheKey = ["source-health"] as const;
