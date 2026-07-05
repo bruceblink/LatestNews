@@ -7,13 +7,14 @@ import type {
 } from "@shared/source-health-types";
 
 import clsx from "clsx";
-import { myFetch } from "~/utils";
 import { useTitle } from "react-use";
 import { useToast } from "~/hooks/useToast";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
+import { sourceHealthCacheKey } from "@shared/source-api";
 import { useRef, useMemo, useState, useEffect } from "react";
+import { fetchSource, fetchSourceHealthSummary } from "~/services/source.service";
 import { rankSourcesForHealthReview, rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
 import {
     hasSourceHealthFilters,
@@ -47,8 +48,8 @@ function HealthPage() {
     const previousFailingIdsRef = useRef<Set<string>>(new Set());
 
     const { data, isFetching, isError, refetch, error } = useQuery<SourceHealthSummary>({
-        queryKey: ["source-health"],
-        queryFn: () => myFetch("/s/health"),
+        queryKey: sourceHealthCacheKey,
+        queryFn: fetchSourceHealthSummary,
         staleTime: 1000 * 30,
         refetchInterval: autoRefreshEnabled ? 1000 * 60 : false,
         retry: false,
@@ -382,12 +383,7 @@ function SourceHealthCard({
     const handleProbe = async () => {
         setProbing(true);
         try {
-            const result = await myFetch<SourceResponse>("/s", {
-                query: {
-                    id: source.id,
-                    latest: true,
-                },
-            });
+            const result = await fetchSource({ id: source.id, latest: true });
 
             setProbeResult(`最近探测成功，返回 ${result.items.length} 条数据`);
             await onProbeSuccess(result);

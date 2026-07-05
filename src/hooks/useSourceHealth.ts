@@ -1,13 +1,14 @@
 import type { SourceHealthSummary } from "@shared/source-health-types";
 
 import { useMemo } from "react";
-import { myFetch } from "~/utils";
 import { useQuery } from "@tanstack/react-query";
+import { sourceHealthCacheKey } from "@shared/source-api";
+import { fetchSourceHealthSummary } from "~/services/source.service";
 
 export function useSourceHealthSummary() {
     const query = useQuery<SourceHealthSummary>({
-        queryKey: ["source-health"],
-        queryFn: () => myFetch("/s/health"),
+        queryKey: sourceHealthCacheKey,
+        queryFn: fetchSourceHealthSummary,
         staleTime: 1000 * 30,
         retry: false,
     });

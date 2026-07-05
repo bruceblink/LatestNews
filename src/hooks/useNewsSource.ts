@@ -1,10 +1,12 @@
+import type { SourceQuery } from "@shared/source-api";
 import type { SourceID, SourceResponse } from "@shared/types";
 
-import { myFetch } from "~/utils";
 import { delay } from "@root/shared/utils";
 import { useQuery } from "@tanstack/react-query";
 import dataSources from "@root/shared/data-sources";
+import { fetchSource } from "~/services/source.service";
 import { getSourceQuerySchedule } from "@shared/source-query-schedule";
+import { getSourceCacheKey, createBearerHeaders } from "@shared/source-api";
 
 import { useSourceHealthSummary } from "./useSourceHealth";
 import { cacheSources, refetchSources } from "../utils/data";
@@ -18,16 +20,15 @@ export function useNewsSource(id: SourceID) {
     const schedule = getSourceQuerySchedule(id, sourceHealth?.status === "failing");
 
     return useQuery<SourceResponse>({
-        queryKey: ["source", id],
+        queryKey: getSourceCacheKey(id),
         queryFn: async () => {
-            let url = `/s?id=${id}`;
-            const headers: Record<string, string> = {};
+            const query: SourceQuery = { id };
+            let headers: Record<string, string> | undefined;
 
             // 强制刷新逻辑
             if (refetchSources.has(id)) {
-                url = `/s?id=${id}&latest`;
-                const jwt = localStorage.getItem("access_token");
-                if (jwt) headers.Authorization = `Bearer ${jwt}`;
+                query.latest = true;
+                headers = createBearerHeaders(localStorage.getItem("access_token"));
                 refetchSources.delete(id);
             } else if (cacheSources.has(id)) {
                 // 使用缓存并延时，配合 UI 动画
@@ -35,7 +36,7 @@ export function useNewsSource(id: SourceID) {
                 return cacheSources.get(id)!;
             }
 
-            const response: SourceResponse = await myFetch(url, { headers });
+            const response = await fetchSource(query, headers);
 
             // diff 逻辑（仅 hottest 类型）
             try {

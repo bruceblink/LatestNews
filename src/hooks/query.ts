@@ -1,8 +1,9 @@
 import type { SourceID, SourceResponse } from "@shared/types";
 
-import { myFetch } from "~/utils";
 import { useCallback } from "react";
 import { cacheSources } from "~/utils/data.ts";
+import { getEntireSourcesCacheKey } from "@shared/source-api";
+import { fetchEntireSources } from "~/services/source.service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useUpdateQuery() {
@@ -28,16 +29,11 @@ export function useEntireQuery(items: SourceID[]) {
     const update = useUpdateQuery();
     useQuery({
         // sort in place
-        queryKey: ["entire", [...items].sort()],
+        queryKey: getEntireSourcesCacheKey(items),
         queryFn: async ({ queryKey }) => {
             const sources = queryKey[1];
             if (sources.length === 0) return null;
-            const res: SourceResponse[] | undefined = await myFetch("/s/entire", {
-                method: "POST",
-                body: {
-                    sources,
-                },
-            });
+            const res: SourceResponse[] | undefined = await fetchEntireSources(sources);
             if (res?.length) {
                 const s = [] as SourceID[];
                 res.forEach((v) => {
