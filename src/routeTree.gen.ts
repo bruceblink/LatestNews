@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as InsightsImport } from './routes/insights'
 import { Route as HistoryImport } from './routes/history'
 import { Route as HealthImport } from './routes/health'
 import { Route as IndexImport } from './routes/index'
@@ -18,6 +19,12 @@ import { Route as CColumnImport } from './routes/c.$column'
 import { Route as AuthCallbackImport } from './routes/auth/callback'
 
 // Create/Update Routes
+
+const InsightsRoute = InsightsImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const HistoryRoute = HistoryImport.update({
   id: '/history',
@@ -74,6 +81,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryImport
       parentRoute: typeof rootRoute
     }
+    '/insights': {
+      id: '/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof InsightsImport
+      parentRoute: typeof rootRoute
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -97,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
   '/history': typeof HistoryRoute
+  '/insights': typeof InsightsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$column': typeof CColumnRoute
 }
@@ -105,6 +120,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
   '/history': typeof HistoryRoute
+  '/insights': typeof InsightsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$column': typeof CColumnRoute
 }
@@ -114,20 +130,34 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
   '/history': typeof HistoryRoute
+  '/insights': typeof InsightsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$column': typeof CColumnRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/health' | '/history' | '/auth/callback' | '/c/$column'
+  fullPaths:
+    | '/'
+    | '/health'
+    | '/history'
+    | '/insights'
+    | '/auth/callback'
+    | '/c/$column'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/health' | '/history' | '/auth/callback' | '/c/$column'
+  to:
+    | '/'
+    | '/health'
+    | '/history'
+    | '/insights'
+    | '/auth/callback'
+    | '/c/$column'
   id:
     | '__root__'
     | '/'
     | '/health'
     | '/history'
+    | '/insights'
     | '/auth/callback'
     | '/c/$column'
   fileRoutesById: FileRoutesById
@@ -137,6 +167,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HealthRoute: typeof HealthRoute
   HistoryRoute: typeof HistoryRoute
+  InsightsRoute: typeof InsightsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   CColumnRoute: typeof CColumnRoute
 }
@@ -145,6 +176,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HealthRoute: HealthRoute,
   HistoryRoute: HistoryRoute,
+  InsightsRoute: InsightsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   CColumnRoute: CColumnRoute,
 }
@@ -162,6 +194,7 @@ export const routeTree = rootRoute
         "/",
         "/health",
         "/history",
+        "/insights",
         "/auth/callback",
         "/c/$column"
       ]
@@ -174,6 +207,9 @@ export const routeTree = rootRoute
     },
     "/history": {
       "filePath": "history.tsx"
+    },
+    "/insights": {
+      "filePath": "insights.tsx"
     },
     "/auth/callback": {
       "filePath": "auth/callback.tsx"

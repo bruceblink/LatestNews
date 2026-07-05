@@ -14,6 +14,8 @@ export function NavBar() {
     const { toggle } = useSearchBar();
     const { history } = useHistory();
     const pathname = useRouterState({ select: (s) => s.location.pathname });
+    const isColumnActive = pathname === "/" || pathname.startsWith("/c/");
+    const isInsightsActive = pathname === "/insights";
     const isHistoryActive = pathname === "/history";
 
     const todayCount = useMemo(() => {
@@ -36,7 +38,7 @@ export function NavBar() {
                     params={{ column: columnId }}
                     className={clsx(
                         "px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
-                        currentId === columnId
+                        isColumnActive && currentId === columnId
                             ? "bg-white/95 dark:bg-zinc-800/85 text-zinc-900 dark:text-zinc-200 border border-zinc-300/85 dark:border-zinc-600/45"
                             : "text-zinc-700 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/75 dark:hover:bg-zinc-800/55"
                     )}
@@ -44,6 +46,18 @@ export function NavBar() {
                     {metadata[columnId].name}
                 </Link>
             ))}
+            <Link
+                to="/insights"
+                className={clsx(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
+                    isInsightsActive
+                        ? "bg-white/95 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 border border-zinc-300/80 dark:border-zinc-600/50"
+                        : "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
+                )}
+            >
+                <span className="i-ph:chart-line-up-duotone text-base" />
+                <span>洞察</span>
+            </Link>
             <Link
                 to="/history"
                 className={clsx(
