@@ -1,18 +1,17 @@
 import type { H3Event } from "h3";
-import type { NewsItem, SourceID, SourceResponse } from "@shared/types";
+import type { SourceID, SourceResponse } from "@shared/types";
 
 import { z } from "zod";
-import { getters } from "#/getters";
 import { TTL } from "@shared/consts";
 import { logger } from "#/utils/logger.ts";
 import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
 import { getQuery, createError, defineEventHandler } from "h3";
+import { getSourceHealthSnapshot } from "#/utils/source-health";
+import { hasSourceGetter, fetchSourceItems } from "#/utils/source-fetch";
 import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
-import { recordSourceFailure, recordSourceSuccess, getSourceHealthSnapshot } from "#/utils/source-health";
 
-const isValidSource = (id?: SourceID) => !!id && !!dataSources[id] && !!getters[id];
-const inflightRequests = new Map<SourceID, Promise<NewsItem[]>>();
+const isValidSource = (id?: SourceID) => !!id && !!dataSources[id] && hasSourceGetter(id);
 const sourceQuerySchema = z.object({
     id: z.union([z.string(), z.array(z.string())]).transform((value) => (Array.isArray(value) ? value[0] : value)),
     latest: z
@@ -41,29 +40,6 @@ function isLatestRequest(latest: string | boolean | undefined) {
 function shouldDegradeToCache(id: SourceID) {
     const health = getSourceHealthSnapshot(id);
     return shouldDegradeSourceToCache(health);
-}
-
-function fetchLatestItems(id: SourceID) {
-    const pending = inflightRequests.get(id);
-    if (pending) return pending;
-
-    const startTime = Date.now();
-    const request = getters[id]()
-        .then((items) => {
-            const normalizedItems = items.slice(0, 30);
-            recordSourceSuccess(id, Date.now() - startTime, normalizedItems.length);
-            return normalizedItems;
-        })
-        .catch((error) => {
-            recordSourceFailure(id, Date.now() - startTime, error);
-            throw error;
-        })
-        .finally(() => {
-            inflightRequests.delete(id);
-        });
-
-    inflightRequests.set(id, request);
-    return request;
 }
 
 export default defineEventHandler(async (event): Promise<SourceResponse> => {
@@ -114,7 +90,7 @@ async function getCacheOrFetch(id: SourceID, latest: boolean, event: H3Event): P
     }
 
     // 3. 缓存不可用或需要刷新，获取最新数据
-    const newData = await fetchLatestItems(id);
+    const newData = await fetchSourceItems(id);
 
     if (cacheTable && newData.length) {
         const setCache = cacheTable.set(id, newData);
