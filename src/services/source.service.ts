@@ -1,6 +1,6 @@
 import type { SourceID, SourceResponse } from "@shared/types";
 import type { SourceHealthSummary } from "@shared/source-health-types";
-import type { SourceQuery, EntireSourcesPayload } from "@shared/source-api";
+import type { SourceQuery, NewsInsightsPayload, EntireSourcesPayload, NewsInsightsResponse } from "@shared/source-api";
 
 import { myFetch } from "~/utils";
 import { sourceApi } from "@shared/source-api";
@@ -18,6 +18,13 @@ export function fetchEntireSources(sources: SourceID[]): Promise<SourceResponse[
     return myFetch(sourceApi.entire, {
         method: "POST",
         body,
+    });
+}
+
+export function fetchNewsInsights(payload: NewsInsightsPayload): Promise<NewsInsightsResponse> {
+    return myFetch(sourceApi.insights, {
+        method: "POST",
+        body: payload,
     });
 }
 

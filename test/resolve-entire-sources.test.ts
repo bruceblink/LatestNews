@@ -89,5 +89,6 @@ describe("resolveEntireSources", () => {
         expect(result).toHaveLength(1);
         expect(result[0].id).toBe("v2ex");
         expect(onFetchError).toHaveBeenCalledTimes(1);
+        expect(onFetchError).toHaveBeenCalledWith(expect.any(Error), "weibo");
     });
 });

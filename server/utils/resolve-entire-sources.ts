@@ -15,7 +15,7 @@ interface ResolveEntireSourcesOptions {
     fetchMissing: (id: SourceID) => Promise<SourceResponse["items"]>;
     saveCache: (id: SourceID, items: SourceResponse["items"]) => Promise<void>;
     now: number;
-    onFetchError?: (error: unknown) => void;
+    onFetchError?: (error: unknown, id: SourceID) => void;
 }
 
 export async function resolveEntireSources({
@@ -54,11 +54,12 @@ export async function resolveEntireSources({
             })
         );
 
-        for (const result of fetched) {
+        for (const [index, result] of fetched.entries()) {
+            const id = missingIds[index];
             if (result.status === "fulfilled") {
                 cachedResponses.set(result.value.id, result.value);
             } else {
-                onFetchError?.(result.reason);
+                onFetchError?.(result.reason, id);
             }
         }
     }
