@@ -12,7 +12,15 @@ import type {
 } from "@shared/source-api";
 
 import { myFetch } from "~/utils";
-import { sourceApi, getSourceItemsPath, normalizeEntireSourcesResponse } from "@shared/source-api";
+import { getOrCreateInFlightRequest } from "@shared/in-flight-request";
+import {
+    sourceApi,
+    getSourceItemsPath,
+    getNewsInsightsRequestKey,
+    normalizeEntireSourcesResponse,
+} from "@shared/source-api";
+
+const inFlightNewsInsights = new Map<string, Promise<NewsInsightsResponse>>();
 
 export function fetchSource(query: SourceQuery, headers?: Record<string, string>): Promise<SourceResponse> {
     return myFetch(sourceApi.single, {
@@ -41,10 +49,13 @@ export function fetchEntireSourcesEnvelope(sources: SourceID[]): Promise<EntireS
 }
 
 export function fetchNewsInsights(payload: NewsInsightsPayload): Promise<NewsInsightsResponse> {
-    return myFetch(sourceApi.insights, {
-        method: "POST",
-        body: payload,
-    });
+    const requestKey = getNewsInsightsRequestKey(payload);
+    return getOrCreateInFlightRequest(inFlightNewsInsights, requestKey, () =>
+        myFetch(sourceApi.insights, {
+            method: "POST",
+            body: payload,
+        })
+    );
 }
 
 export function fetchSourceHealthSummary(): Promise<SourceHealthSummary> {

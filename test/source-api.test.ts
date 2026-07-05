@@ -11,6 +11,7 @@ import {
     getNewsInsightsCacheKey,
     isEntireSourcesResponse,
     getEntireSourcesCacheKey,
+    getNewsInsightsRequestKey,
     normalizeEntireSourcesResponse,
 } from "../shared/source-api";
 
@@ -45,6 +46,20 @@ describe("source API contract", () => {
             ["https://a.example.com", "https://b.example.com"],
         ]);
         expect(sourceHealthCacheKey).toEqual(["source-health"]);
+    });
+
+    it("builds stable insights request keys for equivalent payloads", () => {
+        expect(
+            getNewsInsightsRequestKey({
+                sources: ["weibo", "v2ex"] as SourceID[],
+                readUrls: ["https://b.example.com", "https://a.example.com"],
+            })
+        ).toBe(
+            getNewsInsightsRequestKey({
+                sources: ["v2ex", "weibo"] as SourceID[],
+                readUrls: ["https://a.example.com", "https://b.example.com"],
+            })
+        );
     });
 
     it("builds bearer auth headers only when a token exists", () => {

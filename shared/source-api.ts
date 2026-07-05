@@ -101,6 +101,10 @@ export function getNewsInsightsCacheKey(payload: NewsInsightsPayload) {
     ] as const;
 }
 
+export function getNewsInsightsRequestKey(payload: NewsInsightsPayload) {
+    return JSON.stringify(getNewsInsightsCacheKey(payload));
+}
+
 export function isEntireSourcesResponse(value: unknown): value is EntireSourcesResponse {
     return Boolean(value && typeof value === "object" && "data" in value && Array.isArray(value.data));
 }
