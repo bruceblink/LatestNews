@@ -45,6 +45,7 @@ export interface NewsInsightsPayload {
     wordLimit?: number;
     minTopicItems?: number;
     readUrls?: string[];
+    hiddenUrls?: string[];
 }
 
 export interface UnifiedFeedPayload {
@@ -138,6 +139,7 @@ export function getNewsInsightsCacheKey(payload: NewsInsightsPayload) {
         payload.wordLimit,
         payload.minTopicItems,
         [...(payload.readUrls ?? [])].sort(),
+        [...(payload.hiddenUrls ?? [])].sort(),
     ] as const;
 }
 

@@ -12,8 +12,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
+import { useReadingState } from "~/hooks/useReadingState";
 import { getUnifiedFeedCacheKey } from "@shared/source-api";
 import { fetchUnifiedFeed } from "~/services/source.service";
+import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 import { isUnifiedFeedScope, createUnifiedFeedView, getUnifiedFeedScopeSources } from "@shared/unified-feed";
 
 const scopeOptions: Array<{ id: UnifiedFeedScope; label: string; icon: string }> = [
@@ -52,6 +54,7 @@ function FeedPage() {
     const search = Route.useSearch();
     const focusSources = useAtomValue(focusSourcesAtom);
     const { history, addHistory } = useHistory();
+    const { hiddenUrls } = useReadingState();
     const [scope, setScope] = useState<UnifiedFeedScope>(search.scope ?? (focusSources.length ? "focus" : "hottest"));
     const [keyword, setKeyword] = useState(search.q ?? "");
     const [sourceId, setSourceId] = useState<SourceID | "all">("all");
@@ -89,9 +92,10 @@ function FeedPage() {
                 keyword,
                 sourceId,
                 categoryId,
+                hiddenUrls,
                 limit: 120,
             }),
-        [categoryId, keyword, loadedResponses, sourceId]
+        [categoryId, hiddenUrls, keyword, loadedResponses, sourceId]
     );
     const readUrls = useMemo(() => new Set(history.map((item) => item.url)), [history]);
     const sourceOptions = sourceOptionView.sourceSummaries.slice(0, 80);
@@ -260,22 +264,38 @@ function FeedList({
                         const isRead = readUrls.has(item.url);
 
                         return (
-                            <a
+                            <article
                                 key={item.id}
-                                href={item.mobileUrl ?? item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
                                 className={clsx(
                                     "group rounded-xl border px-3 py-3 transition-all",
                                     isRead
                                         ? "border-zinc-200/75 bg-zinc-100/70 dark:border-zinc-800/70 dark:bg-zinc-800/34"
                                         : "border-zinc-200/85 bg-white/84 hover:border-zinc-300/90 hover:bg-zinc-100/95 dark:border-zinc-700/32 dark:bg-zinc-800/54 dark:hover:border-zinc-600/55 dark:hover:bg-zinc-800/78"
                                 )}
-                                onClick={() => onRead(item)}
                             >
-                                <div className="line-clamp-2 text-sm font-medium leading-5 text-zinc-800 transition-colors group-hover:text-cyan-700 dark:text-zinc-200 dark:group-hover:text-cyan-300">
-                                    {item.title}
-                                    {isRead && <ReadBadge />}
+                                <div className="flex items-start justify-between gap-3">
+                                    <a
+                                        href={item.mobileUrl ?? item.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="min-w-0 flex-1"
+                                        onClick={() => onRead(item)}
+                                    >
+                                        <div className="line-clamp-2 text-sm font-medium leading-5 text-zinc-800 transition-colors group-hover:text-cyan-700 dark:text-zinc-200 dark:group-hover:text-cyan-300">
+                                            {item.title}
+                                            {isRead && <ReadBadge />}
+                                        </div>
+                                    </a>
+                                    <ReadingStateActions
+                                        entry={{
+                                            newsId: item.item.id,
+                                            title: item.title,
+                                            url: item.url,
+                                            sourceId: item.sourceId,
+                                            sourceName: item.sourceName,
+                                        }}
+                                        className="shrink-0"
+                                    />
                                 </div>
                                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                                     <span>{item.sourceName}</span>
@@ -284,7 +304,7 @@ function FeedList({
                                         <RelativeTimeLabel time={(item.publishedAt ?? item.responseUpdatedTime)!} />
                                     )}
                                 </div>
-                            </a>
+                            </article>
                         );
                     })
                 ) : (

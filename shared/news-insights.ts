@@ -56,6 +56,7 @@ export interface NewsInsightOptions {
     minTopicItems?: number;
     sourceWeights?: Partial<Record<SourceID, number>>;
     readUrls?: Iterable<string>;
+    hiddenUrls?: Iterable<string>;
     stopWords?: Iterable<string>;
 }
 
@@ -184,6 +185,7 @@ export function collectInsightItems(
     const generatedAt = options.generatedAt ?? Date.now();
     const sourceWeights = options.sourceWeights ?? {};
     const readUrls = new Set(Array.from(options.readUrls ?? [], normalizeNewsUrl));
+    const hiddenUrls = new Set(Array.from(options.hiddenUrls ?? [], normalizeNewsUrl));
     const items: InsightSourceItem[] = [];
 
     for (const response of responses) {
@@ -196,6 +198,8 @@ export function collectInsightItems(
             if (!title || !url) continue;
 
             const canonicalUrl = normalizeNewsUrl(url);
+            if (hiddenUrls.has(canonicalUrl)) continue;
+
             const publishedAt = parseNewsTime(item.pubDate ?? item.extra?.date ?? responseUpdatedTime);
             const terms = extractInsightTerms(title, options);
             const fallbackId = `${response.id}:${canonicalUrl || title}:${items.length}`;

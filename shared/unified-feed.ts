@@ -1,5 +1,6 @@
 import { metadata } from "./metadata";
 import dataSources from "./data-sources";
+import { normalizeReadingStateUrl } from "./reading-state";
 import { parseSourceItemsSince, normalizeSourceItemsLimit } from "./source-items";
 
 import type { ColumnID, NewsItem, SourceID, SourceResponse } from "./types";
@@ -15,6 +16,7 @@ export interface UnifiedFeedFilters {
     categoryId?: UnifiedFeedCategoryID | "all";
     since?: number | string;
     limit?: number | string;
+    hiddenUrls?: Iterable<string>;
 }
 
 export interface NormalizedUnifiedFeedFilters {
@@ -23,6 +25,7 @@ export interface NormalizedUnifiedFeedFilters {
     categoryId?: UnifiedFeedCategoryID;
     since?: number;
     limit?: number;
+    hiddenUrls?: string[];
 }
 
 export interface UnifiedFeedItem {
@@ -159,6 +162,7 @@ export function normalizeUnifiedFeedFilters(filters: UnifiedFeedFilters): Normal
             : undefined;
     const since = parseSourceItemsSince(filters.since);
     const limit = normalizeSourceItemsLimit(filters.limit, 300);
+    const hiddenUrls = Array.from(filters.hiddenUrls ?? [], normalizeReadingStateUrl).filter(Boolean);
 
     return {
         ...(keyword && { keyword }),
@@ -166,6 +170,7 @@ export function normalizeUnifiedFeedFilters(filters: UnifiedFeedFilters): Normal
         ...(categoryId && { categoryId }),
         ...(since && { since }),
         ...(limit && { limit }),
+        ...(hiddenUrls.length && { hiddenUrls }),
     };
 }
 
@@ -174,11 +179,13 @@ export function filterUnifiedFeedItems(
     filters: NormalizedUnifiedFeedFilters
 ): UnifiedFeedItem[] {
     const keyword = filters.keyword?.toLowerCase();
+    const hiddenUrls = filters.hiddenUrls?.length ? new Set(filters.hiddenUrls) : undefined;
 
     return items.filter((item) => {
         if (filters.sourceId && item.sourceId !== filters.sourceId) return false;
         if (filters.categoryId && item.categoryId !== filters.categoryId) return false;
         if (filters.since && (item.publishedAt ?? item.responseUpdatedTime ?? 0) < filters.since) return false;
+        if (hiddenUrls?.has(normalizeReadingStateUrl(item.url))) return false;
         if (!keyword) return true;
 
         return [item.title, item.sourceName, item.sourceId, item.categoryName]

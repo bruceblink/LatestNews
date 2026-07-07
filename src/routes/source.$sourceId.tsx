@@ -9,9 +9,11 @@ import { useFocusWith } from "~/hooks/useFocus";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
+import { useReadingState } from "~/hooks/useReadingState";
 import { createUnifiedFeedView } from "@shared/unified-feed";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
+import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 import { fetchUnifiedFeed, fetchSourceItemsV1, fetchSourceMetadata } from "~/services/source.service";
 import { sourceMetadataCacheKey, getUnifiedFeedCacheKey, getSourceItemsV1CacheKey } from "@shared/source-api";
 
@@ -23,6 +25,7 @@ function SourceDetailPage() {
     const { sourceId } = Route.useParams();
     const id = sourceId as SourceID;
     const { history, addHistory } = useHistory();
+    const { hiddenUrls, isHiddenUrl } = useReadingState();
     const { sourceHealthMap } = useSourceHealthSummary();
     const { isFocused, toggleFocus } = useFocusWith(id);
     const health = sourceHealthMap.get(id);
@@ -70,11 +73,16 @@ function SourceDetailPage() {
     const relatedFeed = useMemo(
         () =>
             createUnifiedFeedView(relatedFeedQuery.data?.data ?? [], {
+                hiddenUrls,
                 limit: 6,
             }),
-        [relatedFeedQuery.data?.data]
+        [hiddenUrls, relatedFeedQuery.data?.data]
     );
     const readUrls = useMemo(() => new Set(history.map((item) => item.url)), [history]);
+    const visibleItems = useMemo(
+        () => itemsQuery.data?.data.items.filter((item) => !isHiddenUrl(item.url)) ?? [],
+        [isHiddenUrl, itemsQuery.data?.data.items]
+    );
 
     if (metadataQuery.isLoading) {
         return (
@@ -214,33 +222,49 @@ function SourceDetailPage() {
                                 加载失败{itemsQuery.error instanceof Error ? `：${itemsQuery.error.message}` : ""}
                             </div>
                         )}
-                        {itemsQuery.data?.data.items.length ? (
-                            itemsQuery.data.data.items.map((item) => {
+                        {visibleItems.length ? (
+                            visibleItems.map((item) => {
                                 const isRead = readUrls.has(item.url);
                                 return (
-                                    <a
+                                    <article
                                         key={item.id}
-                                        href={item.mobileUrl ?? item.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
                                         className={clsx(
                                             "group rounded-xl border px-3 py-3 transition-all",
                                             isRead
                                                 ? "border-zinc-200/75 bg-zinc-100/70 dark:border-zinc-800/70 dark:bg-zinc-800/34"
                                                 : "border-zinc-200/85 bg-white/84 hover:border-zinc-300/90 hover:bg-zinc-100/95 dark:border-zinc-700/32 dark:bg-zinc-800/54 dark:hover:border-zinc-600/55 dark:hover:bg-zinc-800/78"
                                         )}
-                                        onClick={() => addHistory(id, item.id, item.title, item.url)}
                                     >
-                                        <div className="line-clamp-2 text-sm font-medium leading-5 text-zinc-800 transition-colors group-hover:text-cyan-700 dark:text-zinc-200 dark:group-hover:text-cyan-300">
-                                            {item.title}
-                                            {isRead && <ReadBadge />}
+                                        <div className="flex items-start justify-between gap-3">
+                                            <a
+                                                href={item.mobileUrl ?? item.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="min-w-0 flex-1"
+                                                onClick={() => addHistory(id, item.id, item.title, item.url)}
+                                            >
+                                                <div className="line-clamp-2 text-sm font-medium leading-5 text-zinc-800 transition-colors group-hover:text-cyan-700 dark:text-zinc-200 dark:group-hover:text-cyan-300">
+                                                    {item.title}
+                                                    {isRead && <ReadBadge />}
+                                                </div>
+                                            </a>
+                                            <ReadingStateActions
+                                                entry={{
+                                                    newsId: item.id,
+                                                    title: item.title,
+                                                    url: item.url,
+                                                    sourceId: id,
+                                                    sourceName: metadataItem.name,
+                                                }}
+                                                className="shrink-0"
+                                            />
                                         </div>
                                         {(item.pubDate ?? item.extra?.date) && (
                                             <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-500">
                                                 <RelativeTimeLabel time={(item.pubDate ?? item.extra?.date)!} />
                                             </div>
                                         )}
-                                    </a>
+                                    </article>
                                 );
                             })
                         ) : (

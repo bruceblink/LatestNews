@@ -37,6 +37,7 @@ describe("resolveNewsInsights", () => {
             insightOptions: {
                 hotLimit: 1,
                 wordLimit: 5,
+                hiddenUrls: ["https://example.com/weibo/gpt5"],
             },
         });
 
@@ -49,7 +50,9 @@ describe("resolveNewsInsights", () => {
         });
         expect(result.errors).toEqual([]);
         expect(result.data.generatedAt).toBe(NOW);
+        expect(result.data.itemCount).toBe(1);
         expect(result.data.hotRankings).toHaveLength(1);
+        expect(result.data.hotRankings[0].sourceId).toBe("v2ex");
         expect(fetchMissing).toHaveBeenCalledWith("v2ex");
         expect(saveCache).toHaveBeenCalledWith("v2ex", expect.any(Array));
     });

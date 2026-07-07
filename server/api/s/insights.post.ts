@@ -17,6 +17,7 @@ const newsInsightsSchema = z.object({
     wordLimit: insightLimitSchema,
     minTopicItems: z.number().int().min(1).max(20).optional(),
     readUrls: z.array(z.string()).max(500).optional(),
+    hiddenUrls: z.array(z.string()).max(500).optional(),
 });
 
 export default defineEventHandler(async (event): Promise<NewsInsightsResponse> => {
@@ -71,5 +72,6 @@ function createInsightOptions(payload: Omit<NewsInsightsPayload, "sources">) {
         wordLimit: payload.wordLimit,
         minTopicItems: payload.minTopicItems,
         readUrls: payload.readUrls,
+        hiddenUrls: payload.hiddenUrls,
     };
 }

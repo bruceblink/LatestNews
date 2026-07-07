@@ -42,6 +42,7 @@ describe("source API contract", () => {
                 sources: ["weibo", "v2ex"] as SourceID[],
                 hotLimit: 10,
                 readUrls: ["https://b.example.com", "https://a.example.com"],
+                hiddenUrls: ["https://hidden-b.example.com", "https://hidden-a.example.com"],
             })
         ).toEqual([
             "news-insights",
@@ -51,6 +52,7 @@ describe("source API contract", () => {
             undefined,
             undefined,
             ["https://a.example.com", "https://b.example.com"],
+            ["https://hidden-a.example.com", "https://hidden-b.example.com"],
         ]);
         expect(getUnifiedFeedCacheKey({ sources: ["weibo", "ithome"] as SourceID[], since: 1 })).toEqual([
             "unified-feed",
@@ -73,11 +75,13 @@ describe("source API contract", () => {
             getNewsInsightsRequestKey({
                 sources: ["weibo", "v2ex"] as SourceID[],
                 readUrls: ["https://b.example.com", "https://a.example.com"],
+                hiddenUrls: ["https://hidden-b.example.com", "https://hidden-a.example.com"],
             })
         ).toBe(
             getNewsInsightsRequestKey({
                 sources: ["v2ex", "weibo"] as SourceID[],
                 readUrls: ["https://a.example.com", "https://b.example.com"],
+                hiddenUrls: ["https://hidden-a.example.com", "https://hidden-b.example.com"],
             })
         );
     });

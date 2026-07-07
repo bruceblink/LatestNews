@@ -129,6 +129,24 @@ describe("news insights", () => {
         ]);
     });
 
+    it("omits hidden URLs from rankings and summaries", () => {
+        const insights = createNewsInsights(
+            [
+                createResponse("weibo" as SourceID, "Weibo", [
+                    createItem("weibo-gpt", "OpenAI 发布 GPT-5 模型", "https://news.example.com/gpt5", 30),
+                    createItem("weibo-chip", "AI芯片需求激增", "https://news.example.com/chips", 1),
+                ]),
+            ],
+            {
+                generatedAt: NOW,
+                hiddenUrls: ["https://news.example.com/chips?utm_source=reader"],
+            }
+        );
+
+        expect(insights.itemCount).toBe(1);
+        expect(insights.hotRankings.map((item) => item.url)).toEqual(["https://news.example.com/gpt5"]);
+    });
+
     it("summarizes category shares by source metadata", () => {
         const insights = createNewsInsights(
             [

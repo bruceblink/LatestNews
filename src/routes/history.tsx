@@ -9,6 +9,8 @@ import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
+import { useReadingState } from "~/hooks/useReadingState";
+import { getReadingStateList } from "@shared/reading-state";
 import { formatReadingHistoryExport } from "@shared/history-export";
 import { filterReadingHistory, hasReadingHistoryFilters } from "@shared/history-filter";
 
@@ -62,9 +64,11 @@ function HistoryItem({
 function HistoryPage() {
     useTitle(`${import.meta.env.VITE_APP_TITLE} | 阅读历史`);
     const { history, clearHistory, clearSourceHistory, removeHistory } = useHistory();
+    const { readingState, removeState } = useReadingState();
     const toaster = useToast();
     const [keyword, setKeyword] = useState("");
     const [sourceFilter, setSourceFilter] = useState<SourceID | "">("");
+    const [stateTab, setStateTab] = useState<"history" | "later" | "favorites">("history");
 
     const sourceOptions = useMemo(() => {
         const map = new Map<string, { count: number; name: string }>();
@@ -130,6 +134,9 @@ function HistoryPage() {
         }
     };
 
+    const stateItems =
+        stateTab === "history" ? [] : getReadingStateList(readingState, stateTab === "later" ? "later" : "favorite");
+
     return (
         <section className="mx-auto flex max-w-4xl flex-col gap-4 px-1 md:px-4">
             <div className="flex flex-col gap-3 rounded-2xl bg-zinc-50/90 dark:bg-zinc-900/68 border border-zinc-200/88 dark:border-zinc-700/32 p-4 md:flex-row md:items-center md:justify-between">
@@ -158,7 +165,25 @@ function HistoryPage() {
                 </div>
             </div>
 
-            {history.length > 0 && (
+            <div className="flex flex-wrap gap-2 rounded-2xl border border-zinc-200/90 bg-white/78 p-2 dark:border-zinc-700/40 dark:bg-zinc-900/70">
+                <TabButton
+                    active={stateTab === "history"}
+                    label={`已读 ${history.length}`}
+                    onClick={() => setStateTab("history")}
+                />
+                <TabButton
+                    active={stateTab === "later"}
+                    label={`稍后读 ${readingState.later.length}`}
+                    onClick={() => setStateTab("later")}
+                />
+                <TabButton
+                    active={stateTab === "favorites"}
+                    label={`收藏 ${readingState.favorites.length}`}
+                    onClick={() => setStateTab("favorites")}
+                />
+            </div>
+
+            {stateTab === "history" && history.length > 0 && (
                 <div className="flex flex-col gap-3 rounded-2xl bg-white/78 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/40 p-3 md:flex-row md:items-center">
                     <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-zinc-50/80 dark:bg-zinc-950/30 border border-zinc-200/80 dark:border-zinc-700/35 px-3 py-2">
                         <span className="i-ph:magnifying-glass-duotone text-lg op-50" />
@@ -223,7 +248,7 @@ function HistoryPage() {
                 </div>
             )}
 
-            {filtered.length > 0 ? (
+            {stateTab === "history" && filtered.length > 0 ? (
                 <div className="flex flex-col gap-5">
                     {groups.map(([label, items]) => (
                         <div key={label}>
@@ -245,11 +270,90 @@ function HistoryPage() {
                         </div>
                     ))}
                 </div>
+            ) : stateTab !== "history" && stateItems.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                    {stateItems.map((item) => (
+                        <SavedReadingItem
+                            key={`${item.url}-${item.updatedAt}`}
+                            title={item.title}
+                            url={item.url}
+                            sourceName={item.sourceName}
+                            updatedAt={item.updatedAt}
+                            onRemove={() => removeState(stateTab === "later" ? "later" : "favorite", item.url)}
+                        />
+                    ))}
+                </div>
             ) : (
                 <div className="rounded-2xl bg-white/68 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-700/30 p-10 text-center text-sm text-zinc-600 dark:text-zinc-500">
-                    {history.length === 0 ? "还没有阅读记录，点击任意新闻即可自动记录" : "没有匹配的记录"}
+                    {getEmptyLabel(stateTab, history.length)}
                 </div>
             )}
         </section>
     );
+}
+
+function TabButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            className={clsx(
+                "rounded-xl px-3 py-2 text-sm transition-all",
+                active
+                    ? "bg-cyan-500/16 text-cyan-800 dark:text-cyan-300"
+                    : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-800/70"
+            )}
+            onClick={onClick}
+        >
+            {label}
+        </button>
+    );
+}
+
+function SavedReadingItem({
+    title,
+    url,
+    sourceName,
+    updatedAt,
+    onRemove,
+}: {
+    title: string;
+    url: string;
+    sourceName: string;
+    updatedAt: number;
+    onRemove: () => void;
+}) {
+    const relativeTime = useRelativeTime(updatedAt);
+
+    return (
+        <div className="group flex items-start justify-between gap-3 rounded-xl bg-white/82 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/30 px-4 py-3 transition-all hover:border-zinc-300/80 dark:hover:border-zinc-600/50 hover:bg-zinc-100/95 dark:hover:bg-zinc-800/60">
+            <div className="min-w-0 flex-1">
+                <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-cyan-300 transition-colors visited:text-zinc-600 dark:visited:text-zinc-500"
+                >
+                    {title}
+                </a>
+                <div className="mt-1.5 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
+                    <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-0.5 text-zinc-700 dark:text-zinc-400">
+                        {sourceName}
+                    </span>
+                    <span>{relativeTime ?? "刚刚"}</span>
+                </div>
+            </div>
+            <button
+                type="button"
+                title="移除此条记录"
+                className="mt-0.5 shrink-0 i-ph:x-duotone op-0 group-hover:op-40 hover:op-80! transition-opacity btn text-base"
+                onClick={onRemove}
+            />
+        </div>
+    );
+}
+
+function getEmptyLabel(tab: "history" | "later" | "favorites", historyLength: number) {
+    if (tab === "later") return "还没有稍后读内容";
+    if (tab === "favorites") return "还没有收藏内容";
+    return historyLength === 0 ? "还没有阅读记录，点击任意新闻即可自动记录" : "没有匹配的记录";
 }

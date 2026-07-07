@@ -7,9 +7,11 @@ import { useHistory } from "~/hooks/useHistory";
 import { useRefetch } from "~/hooks/useRefetch";
 import dataSources from "@shared/data-sources.ts";
 import { useNewsSource } from "~/hooks/useNewsSource";
+import { useReadingState } from "~/hooks/useReadingState";
 import { useRelativeTime } from "~/hooks/useRelativeTime.ts";
 import { CardHeader } from "~/components/column/cardHeader.tsx";
 import { motion, useInView, AnimatePresence } from "framer-motion";
+import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 import React, { useRef, useMemo, useState, useEffect, forwardRef, useCallback, useImperativeHandle } from "react";
 
 import { OverlayScrollbar } from "../common/overlay-scrollbar";
@@ -308,7 +310,10 @@ function NewsUpdatedTime({ date }: { date: string | number }) {
 function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
     const { width } = useWindowSize();
     const { history, addHistory } = useHistory();
+    const { isHiddenUrl } = useReadingState();
     const readUrls = useMemo(() => new Set(history.map((item) => item.url)), [history]);
+    const sourceName = dataSources[id]?.name ?? id;
+    const visibleItems = useMemo(() => items.filter((item) => !isHiddenUrl(item.url)), [isHiddenUrl, items]);
     const handleClick = useCallback(
         (item: NewsItem) => {
             addHistory(id, item.id, item.title, item.url);
@@ -317,19 +322,15 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
     );
     return (
         <ol className="flex flex-col gap-2">
-            {items?.map((item, i) => {
+            {visibleItems?.map((item, i) => {
                 const isRead = readUrls.has(item.url);
 
                 return (
-                    <a
-                        href={width < 768 ? item.mobileUrl || item.url : item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <li
                         key={item.id}
                         title={item.extra?.hover}
-                        onClick={() => handleClick(item)}
                         className={clsx(
-                            "flex gap-2 items-center items-stretch relative cursor-pointer [&_*]:cursor-pointer transition-all",
+                            "flex gap-2 items-center items-stretch relative cursor-default transition-all",
                             "hover:bg-zinc-300/40 dark:hover:bg-cyan-500/6 rounded-md pr-1 visited:(text-zinc-500 dark:text-zinc-500)",
                             isRead && "bg-zinc-100/70 dark:bg-zinc-800/32"
                         )}
@@ -343,7 +344,13 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
                             {i + 1}
                         </span>
                         {!!item.extra?.diff && <DiffNumber diff={item.extra.diff} />}
-                        <span className="self-start line-height-none">
+                        <a
+                            href={width < 768 ? item.mobileUrl || item.url : item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="min-w-0 flex-1 self-start line-height-none"
+                            onClick={() => handleClick(item)}
+                        >
                             <span
                                 className={clsx(
                                     "mr-2 text-base text-zinc-800 dark:text-zinc-200/90",
@@ -356,8 +363,18 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
                                 <ExtraInfo item={item} />
                                 {isRead && <ReadBadge />}
                             </span>
-                        </span>
-                    </a>
+                        </a>
+                        <ReadingStateActions
+                            entry={{
+                                newsId: item.id,
+                                title: item.title,
+                                url: item.url,
+                                sourceId: id,
+                                sourceName,
+                            }}
+                            className="ml-auto self-center"
+                        />
+                    </li>
                 );
             })}
         </ol>
@@ -367,7 +384,10 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
 function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
     const { width } = useWindowSize();
     const { history, addHistory } = useHistory();
+    const { isHiddenUrl } = useReadingState();
     const readUrls = useMemo(() => new Set(history.map((item) => item.url)), [history]);
+    const sourceName = dataSources[id]?.name ?? id;
+    const visibleItems = useMemo(() => items.filter((item) => !isHiddenUrl(item.url)), [isHiddenUrl, items]);
     const handleClick = useCallback(
         (item: NewsItem) => {
             addHistory(id, item.id, item.title, item.url);
@@ -376,7 +396,7 @@ function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
     );
     return (
         <ol className="border-s border-zinc-300/70 dark:border-zinc-700/60 flex flex-col ml-1">
-            {items?.map((item) => {
+            {visibleItems?.map((item) => {
                 const isRead = readUrls.has(item.url);
 
                 return (
@@ -409,6 +429,17 @@ function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
                                 {item.title}
                             </span>
                         </a>
+                        <div className="ml-2 mt-1">
+                            <ReadingStateActions
+                                entry={{
+                                    newsId: item.id,
+                                    title: item.title,
+                                    url: item.url,
+                                    sourceId: id,
+                                    sourceName,
+                                }}
+                            />
+                        </div>
                     </li>
                 );
             })}

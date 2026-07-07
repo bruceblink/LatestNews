@@ -75,6 +75,7 @@ describe("unified feed helpers", () => {
             {
                 keyword: " AI ",
                 categoryId: "tech",
+                hiddenUrls: ["https://example.com/tech-ai"],
                 since: NOW - 5 * 60 * 1000,
                 limit: 1,
             }
@@ -82,26 +83,16 @@ describe("unified feed helpers", () => {
 
         expect(normalizeUnifiedFeedFilters({ sourceId: "missing-source" as SourceID })).toEqual({});
         expect(view.totalItemCount).toBe(3);
-        expect(view.filteredItemCount).toBe(1);
-        expect(view.items.map((item) => item.id)).toEqual(["ithome:tech-ai"]);
+        expect(view.filteredItemCount).toBe(0);
+        expect(view.items.map((item) => item.id)).toEqual([]);
         expect(view.activeFilters).toMatchObject({
             keyword: "AI",
             categoryId: "tech",
             since: NOW - 5 * 60 * 1000,
             limit: 1,
+            hiddenUrls: ["https://example.com/tech-ai"],
         });
-        expect(view.sourceSummaries).toEqual([
-            expect.objectContaining({
-                sourceId: "ithome",
-                itemCount: 1,
-            }),
-        ]);
-        expect(view.categorySummaries).toEqual([
-            expect.objectContaining({
-                categoryId: "tech",
-                itemCount: 1,
-                sourceCount: 1,
-            }),
-        ]);
+        expect(view.sourceSummaries).toEqual([]);
+        expect(view.categorySummaries).toEqual([]);
     });
 });

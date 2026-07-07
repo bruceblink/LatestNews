@@ -10,10 +10,12 @@ import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
+import { useReadingState } from "~/hooks/useReadingState";
 import { getNewsInsightsCacheKey } from "@shared/source-api";
 import { fetchNewsInsights } from "~/services/source.service";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
+import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 
 type InsightScope = "focus" | "hottest" | "realtime" | "broad";
 
@@ -33,6 +35,7 @@ function InsightsPage() {
 
     const focusSources = useAtomValue(focusSourcesAtom);
     const { history, addHistory } = useHistory();
+    const { hiddenUrls } = useReadingState();
     const [scope, setScope] = useState<InsightScope>(focusSources.length ? "focus" : "hottest");
 
     const sources = useMemo(() => getScopeSources(scope, focusSources), [focusSources, scope]);
@@ -45,8 +48,9 @@ function InsightsPage() {
             wordLimit: 28,
             minTopicItems: 2,
             readUrls,
+            hiddenUrls,
         }),
-        [readUrls, sources]
+        [hiddenUrls, readUrls, sources]
     );
 
     const { data, isFetching, isError, error, refetch } = useQuery({
@@ -175,29 +179,42 @@ function HotRankingPanel({ items, onRead }: { items: HotNewsItem[]; onRead: (ite
             <div className="mt-4 flex flex-col gap-2">
                 {items.length ? (
                     items.map((item) => (
-                        <a
+                        <article
                             key={item.id}
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
                             className="group flex gap-3 rounded-xl border border-zinc-200/85 bg-white/82 px-3 py-3 transition-all hover:border-zinc-300/90 hover:bg-zinc-100/95 dark:border-zinc-700/32 dark:bg-zinc-800/54 dark:hover:border-zinc-600/55 dark:hover:bg-zinc-800/78"
-                            onClick={() => onRead(item)}
                         >
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/12 text-sm font-bold text-cyan-700 dark:text-cyan-300">
                                 {item.rank}
                             </span>
-                            <span className="min-w-0 flex-1">
-                                <span className="line-clamp-2 text-sm font-medium leading-5 text-zinc-800 transition-colors group-hover:text-cyan-700 dark:text-zinc-200 dark:group-hover:text-cyan-300">
-                                    {item.title}
-                                </span>
-                                <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
+                            <div className="min-w-0 flex-1">
+                                <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => onRead(item)}
+                                >
+                                    <span className="line-clamp-2 text-sm font-medium leading-5 text-zinc-800 transition-colors group-hover:text-cyan-700 dark:text-zinc-200 dark:group-hover:text-cyan-300">
+                                        {item.title}
+                                    </span>
+                                </a>
+                                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                                     <span>{item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId}</span>
                                     <span>{item.sources.length} 源覆盖</span>
                                     <span>分数 {item.score}</span>
                                     {item.publishedAt && <RelativeTimeLabel time={item.publishedAt} />}
-                                </span>
-                            </span>
-                        </a>
+                                </div>
+                            </div>
+                            <ReadingStateActions
+                                entry={{
+                                    newsId: item.id,
+                                    title: item.title,
+                                    url: item.url,
+                                    sourceId: item.sourceId,
+                                    sourceName: item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId,
+                                }}
+                                className="shrink-0"
+                            />
+                        </article>
                     ))
                 ) : (
                     <PanelEmpty label="暂无热点" />
@@ -238,17 +255,34 @@ function TopicPanel({ topics, onRead }: { topics: TopicEvent[]; onRead: (item: T
                             </div>
                             <div className="mt-3 flex flex-col gap-1.5">
                                 {topic.items.slice(0, 3).map((item) => (
-                                    <a
+                                    <div
                                         key={item.id}
-                                        href={item.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="line-clamp-1 rounded-lg bg-zinc-100/75 px-2 py-1.5 text-xs text-zinc-700 transition-all hover:bg-zinc-200/80 dark:bg-zinc-900/45 dark:text-zinc-400 dark:hover:bg-zinc-700/55"
-                                        onClick={() => onRead(item)}
+                                        className="flex items-center gap-2 rounded-lg bg-zinc-100/75 px-2 py-1.5 dark:bg-zinc-900/45"
                                     >
-                                        {item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId} ·{" "}
-                                        {item.title}
-                                    </a>
+                                        <a
+                                            href={item.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="line-clamp-1 min-w-0 flex-1 text-xs text-zinc-700 transition-all hover:text-cyan-700 dark:text-zinc-400 dark:hover:text-cyan-300"
+                                            onClick={() => onRead(item)}
+                                        >
+                                            {item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId} ·{" "}
+                                            {item.title}
+                                        </a>
+                                        <ReadingStateActions
+                                            entry={{
+                                                newsId: item.id,
+                                                title: item.title,
+                                                url: item.url,
+                                                sourceId: item.sourceId,
+                                                sourceName:
+                                                    item.sourceName ??
+                                                    dataSources[item.sourceId]?.name ??
+                                                    item.sourceId,
+                                            }}
+                                            className="shrink-0"
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         </article>
