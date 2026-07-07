@@ -8,6 +8,7 @@ import {
     getSourceItemsPath,
     createBearerHeaders,
     sourceHealthCacheKey,
+    getUnifiedFeedCacheKey,
     getNewsInsightsCacheKey,
     isEntireSourcesResponse,
     getEntireSourcesCacheKey,
@@ -48,6 +49,11 @@ describe("source API contract", () => {
             undefined,
             undefined,
             ["https://a.example.com", "https://b.example.com"],
+        ]);
+        expect(getUnifiedFeedCacheKey({ sources: ["weibo", "ithome"] as SourceID[], since: 1 })).toEqual([
+            "unified-feed",
+            ["ithome", "weibo"],
+            1,
         ]);
         expect(sourceHealthCacheKey).toEqual(["source-health"]);
     });

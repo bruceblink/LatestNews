@@ -14,6 +14,7 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as InsightsImport } from './routes/insights'
 import { Route as HistoryImport } from './routes/history'
 import { Route as HealthImport } from './routes/health'
+import { Route as FeedImport } from './routes/feed'
 import { Route as IndexImport } from './routes/index'
 import { Route as CColumnImport } from './routes/c.$column'
 import { Route as AuthCallbackImport } from './routes/auth/callback'
@@ -35,6 +36,12 @@ const HistoryRoute = HistoryImport.update({
 const HealthRoute = HealthImport.update({
   id: '/health',
   path: '/health',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const FeedRoute = FeedImport.update({
+  id: '/feed',
+  path: '/feed',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -65,6 +72,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedImport
       parentRoute: typeof rootRoute
     }
     '/health': {
@@ -109,6 +123,7 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/feed': typeof FeedRoute
   '/health': typeof HealthRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
@@ -118,6 +133,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/feed': typeof FeedRoute
   '/health': typeof HealthRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
@@ -128,6 +144,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/feed': typeof FeedRoute
   '/health': typeof HealthRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
@@ -139,6 +156,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/feed'
     | '/health'
     | '/history'
     | '/insights'
@@ -147,6 +165,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/feed'
     | '/health'
     | '/history'
     | '/insights'
@@ -155,6 +174,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/feed'
     | '/health'
     | '/history'
     | '/insights'
@@ -165,6 +185,7 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FeedRoute: typeof FeedRoute
   HealthRoute: typeof HealthRoute
   HistoryRoute: typeof HistoryRoute
   InsightsRoute: typeof InsightsRoute
@@ -174,6 +195,7 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FeedRoute: FeedRoute,
   HealthRoute: HealthRoute,
   HistoryRoute: HistoryRoute,
   InsightsRoute: InsightsRoute,
@@ -192,6 +214,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/feed",
         "/health",
         "/history",
         "/insights",
@@ -201,6 +224,9 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/feed": {
+      "filePath": "feed.tsx"
     },
     "/health": {
       "filePath": "health.tsx"

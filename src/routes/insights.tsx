@@ -6,14 +6,14 @@ import { useTitle } from "react-use";
 import { useAtomValue } from "jotai";
 import { useMemo, useState } from "react";
 import { focusSourcesAtom } from "~/atoms";
-import { metadata } from "@shared/metadata";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { getNewsInsightsCacheKey } from "@shared/source-api";
 import { fetchNewsInsights } from "~/services/source.service";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
 
 type InsightScope = "focus" | "hottest" | "realtime" | "broad";
 
@@ -268,16 +268,18 @@ function WordCloudPanel({ items, maxWeight }: { items: WordCloudTerm[]; maxWeigh
             <div className="mt-4 flex min-h-48 flex-wrap content-start gap-2">
                 {items.length ? (
                     items.map((item) => (
-                        <span
+                        <Link
                             key={item.term}
+                            to="/feed"
+                            search={{ q: item.term, scope: "broad" }}
                             className={clsx(
-                                "rounded-full border px-3 py-1.5 font-medium",
+                                "rounded-full border px-3 py-1.5 font-medium transition-all hover:-translate-y-0.5 hover:border-cyan-500/35 hover:bg-cyan-500/12",
                                 getWordClass(item.weight, maxWeight)
                             )}
                             title={`${item.count} 次 · ${item.sources.length} 个来源`}
                         >
                             {item.term}
-                        </span>
+                        </Link>
                     ))
                 ) : (
                     <PanelEmpty label="暂无关键词" />
@@ -420,22 +422,7 @@ function RelativeTimeLabel({ time }: { time: number }) {
 }
 
 function getScopeSources(scope: InsightScope, focusSources: SourceID[]) {
-    if (scope === "focus") return focusSources;
-    if (scope === "hottest") return metadata.hottest.sources.slice(0, 30);
-    if (scope === "realtime") return metadata.realtime.sources.slice(0, 30);
-
-    return uniqueSources([
-        ...metadata.hottest.sources.slice(0, 10),
-        ...metadata.realtime.sources.slice(0, 10),
-        ...metadata.tech.sources.slice(0, 8),
-        ...metadata.finance.sources.slice(0, 8),
-        ...metadata.china.sources.slice(0, 4),
-        ...metadata.world.sources.slice(0, 4),
-    ]);
-}
-
-function uniqueSources(sources: SourceID[]) {
-    return Array.from(new Set(sources));
+    return getUnifiedFeedScopeSources(scope, focusSources, scope === "focus" ? 100 : 30);
 }
 
 function getWordClass(weight: number, maxWeight: number) {

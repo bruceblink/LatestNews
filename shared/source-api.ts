@@ -47,6 +47,11 @@ export interface NewsInsightsPayload {
     readUrls?: string[];
 }
 
+export interface UnifiedFeedPayload {
+    sources: SourceID[];
+    since?: number | string;
+}
+
 export interface SourceApiError {
     sourceId?: string;
     message: string;
@@ -134,6 +139,10 @@ export function getNewsInsightsCacheKey(payload: NewsInsightsPayload) {
 
 export function getNewsInsightsRequestKey(payload: NewsInsightsPayload) {
     return JSON.stringify(getNewsInsightsCacheKey(payload));
+}
+
+export function getUnifiedFeedCacheKey(payload: UnifiedFeedPayload) {
+    return ["unified-feed", [...payload.sources].sort(), payload.since] as const;
 }
 
 export function isEntireSourcesResponse(value: unknown): value is EntireSourcesResponse {

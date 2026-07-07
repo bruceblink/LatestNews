@@ -6,6 +6,7 @@ import type {
     SourceQuery,
     SourceItemsQuery,
     SourceBatchPayload,
+    UnifiedFeedPayload,
     NewsInsightsPayload,
     SourceItemsResponse,
     SourceBatchResponse,
@@ -46,6 +47,13 @@ export function fetchSourceBatchV1(payload: SourceBatchPayload): Promise<SourceB
     return myFetch(sourceApi.sourceBatchV1, {
         method: "POST",
         body: payload,
+    });
+}
+
+export function fetchUnifiedFeed(payload: UnifiedFeedPayload): Promise<SourceBatchResponse> {
+    return fetchSourceBatchV1({
+        sources: payload.sources,
+        ...(payload.since && { since: payload.since }),
     });
 }
 

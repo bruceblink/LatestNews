@@ -15,6 +15,7 @@ export function NavBar() {
     const { history } = useHistory();
     const pathname = useRouterState({ select: (s) => s.location.pathname });
     const isColumnActive = pathname === "/" || pathname.startsWith("/c/");
+    const isFeedActive = pathname === "/feed";
     const isInsightsActive = pathname === "/insights";
     const isHistoryActive = pathname === "/history";
 
@@ -46,6 +47,19 @@ export function NavBar() {
                     {metadata[columnId].name}
                 </Link>
             ))}
+            <Link
+                to="/feed"
+                search={{ q: undefined, scope: undefined }}
+                className={clsx(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
+                    isFeedActive
+                        ? "bg-white/95 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 border border-zinc-300/80 dark:border-zinc-600/50"
+                        : "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
+                )}
+            >
+                <span className="i-ph:newspaper-duotone text-base" />
+                <span>Feed</span>
+            </Link>
             <Link
                 to="/insights"
                 className={clsx(
