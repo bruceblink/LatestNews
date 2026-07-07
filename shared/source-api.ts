@@ -15,11 +15,13 @@ export const sourceApi = {
 } as const;
 
 export interface SourceQuery {
+    clearCache?: boolean;
     id: SourceID;
     latest?: boolean;
 }
 
 export interface SourceItemsQuery {
+    clearCache?: boolean;
     latest?: boolean;
     limit?: number | string;
     since?: number | string;
@@ -123,7 +125,7 @@ export function getSourceItemsPath(id: SourceID) {
 }
 
 export function getSourceItemsV1CacheKey(id: SourceID, query: SourceItemsQuery = {}) {
-    return ["source-items-v1", id, query.latest, query.since, query.limit] as const;
+    return ["source-items-v1", id, query.latest, query.clearCache, query.since, query.limit] as const;
 }
 
 export function getEntireSourcesCacheKey(ids: SourceID[]) {

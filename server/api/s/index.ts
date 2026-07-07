@@ -10,10 +10,15 @@ import { fetchSourceItems } from "#/utils/source-fetch";
 import { resolveSourceId } from "#/utils/resolve-source-id";
 import { getQuery, createError, defineEventHandler } from "h3";
 import { getSourceHealthSnapshot } from "#/utils/source-health";
+import { isSourceItemsClearCacheRequest } from "@shared/source-items";
 import { resolveSourceResponse } from "#/utils/resolve-source-response";
 import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 
 const sourceQuerySchema = z.object({
+    clearCache: z
+        .union([z.string(), z.array(z.string()), z.boolean()])
+        .optional()
+        .transform((value) => (Array.isArray(value) ? value[0] : value)),
     id: z.union([z.string(), z.array(z.string())]).transform((value) => (Array.isArray(value) ? value[0] : value)),
     latest: z
         .union([z.string(), z.array(z.string()), z.boolean()])
@@ -41,9 +46,10 @@ export default defineEventHandler(async (event): Promise<SourceResponse> => {
         }
 
         const latest = isLatestRequest(parsedQuery.data.latest);
+        const clearCache = isSourceItemsClearCacheRequest(parsedQuery.data.clearCache);
         const id = resolveSourceId(parsedQuery.data.id);
 
-        return await getCacheOrFetch(id, latest, event);
+        return await getCacheOrFetch(id, latest, clearCache, event);
     } catch (e: unknown) {
         logger.error(e);
         if (e && typeof e === "object" && "statusCode" in e) throw e;
@@ -57,10 +63,22 @@ export default defineEventHandler(async (event): Promise<SourceResponse> => {
 /**
  * 尝试获取缓存，如果缓存不可用则获取最新数据并更新缓存
  */
-async function getCacheOrFetch(id: SourceID, latest: boolean, event: H3Event): Promise<SourceResponse> {
+async function getCacheOrFetch(
+    id: SourceID,
+    latest: boolean,
+    clearCache: boolean,
+    event: H3Event
+): Promise<SourceResponse> {
     const cacheTable = await getCacheTable();
     const now = Date.now();
-    const cache = cacheTable ? await cacheTable.get(id) : undefined;
+    const canRefresh = Boolean(event.context.disabledLogin || event.context.user);
+    const canClearCache = clearCache && canRefresh;
+    let cache = cacheTable ? await cacheTable.get(id) : undefined;
+
+    if (canClearCache && cacheTable) {
+        await cacheTable.delete(id);
+        cache = undefined;
+    }
 
     const sourceInterval = dataSources[id].interval ?? TTL;
     const degraded = shouldDegradeToCache(id);
@@ -69,8 +87,9 @@ async function getCacheOrFetch(id: SourceID, latest: boolean, event: H3Event): P
         name: dataSources[id].name,
         cache,
         latest,
-        canRefresh: Boolean(event.context.disabledLogin || event.context.user),
+        canRefresh,
         degraded,
+        clearCache: canClearCache,
         sourceInterval,
         now,
         fetchLatest: () => fetchSourceItems(id),

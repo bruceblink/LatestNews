@@ -2,7 +2,12 @@ import type { NewsItem } from "@shared/types";
 
 import { it, expect, describe } from "vitest";
 
-import { filterSourceItems, parseSourceItemsSince, normalizeSourceItemsLimit } from "../shared/source-items";
+import {
+    filterSourceItems,
+    parseSourceItemsSince,
+    normalizeSourceItemsLimit,
+    isSourceItemsClearCacheRequest,
+} from "../shared/source-items";
 
 const NOW = Date.parse("2026-07-05T08:00:00.000Z");
 
@@ -39,5 +44,13 @@ describe("source items helpers", () => {
         ];
 
         expect(filterSourceItems(items, { since: NOW, limit: 2 }).map((item) => item.id)).toEqual(["new", "undated"]);
+    });
+
+    it("normalizes clear cache requests", () => {
+        expect(isSourceItemsClearCacheRequest(true)).toBe(true);
+        expect(isSourceItemsClearCacheRequest("true")).toBe(true);
+        expect(isSourceItemsClearCacheRequest("false")).toBe(false);
+        expect(isSourceItemsClearCacheRequest(false)).toBe(false);
+        expect(isSourceItemsClearCacheRequest(undefined)).toBe(false);
     });
 });

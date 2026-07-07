@@ -3,15 +3,15 @@ import type { SourceMetadataItem } from "@shared/source-metadata";
 import type { SourceHealthSnapshot } from "@shared/source-health-types";
 
 import clsx from "clsx";
-import { useMemo } from "react";
 import { useTitle } from "react-use";
+import { useMemo, useState } from "react";
 import { useFocusWith } from "~/hooks/useFocus";
 import { useHistory } from "~/hooks/useHistory";
-import { useQuery } from "@tanstack/react-query";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useReadingState } from "~/hooks/useReadingState";
 import { createUnifiedFeedView } from "@shared/unified-feed";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 import { fetchUnifiedFeed, fetchSourceItemsV1, fetchSourceMetadata } from "~/services/source.service";
@@ -24,10 +24,12 @@ export const Route = createFileRoute("/source/$sourceId")({
 function SourceDetailPage() {
     const { sourceId } = Route.useParams();
     const id = sourceId as SourceID;
+    const queryClient = useQueryClient();
     const { history, addHistory } = useHistory();
     const { hiddenUrls, isHiddenUrl } = useReadingState();
     const { sourceHealthMap } = useSourceHealthSummary();
     const { isFocused, toggleFocus } = useFocusWith(id);
+    const [isClearingCache, setIsClearingCache] = useState(false);
     const health = sourceHealthMap.get(id);
 
     const metadataQuery = useQuery({
@@ -43,8 +45,9 @@ function SourceDetailPage() {
 
     useTitle(`${import.meta.env.VITE_APP_TITLE} | ${metadataItem?.name ?? sourceId}`);
 
+    const sourceItemsQueryKey = useMemo(() => getSourceItemsV1CacheKey(id, { limit: 20 }), [id]);
     const itemsQuery = useQuery({
-        queryKey: getSourceItemsV1CacheKey(id, { limit: 20 }),
+        queryKey: sourceItemsQueryKey,
         queryFn: () => fetchSourceItemsV1(id, { limit: 20 }),
         enabled: Boolean(metadataItem && !metadataItem.disabled),
         staleTime: 1000 * 60 * 2,
@@ -83,6 +86,15 @@ function SourceDetailPage() {
         () => itemsQuery.data?.data.items.filter((item) => !isHiddenUrl(item.url)) ?? [],
         [isHiddenUrl, itemsQuery.data?.data.items]
     );
+    const handleClearCacheRefresh = async () => {
+        setIsClearingCache(true);
+        try {
+            const response = await fetchSourceItemsV1(id, { limit: 20, latest: true, clearCache: true });
+            queryClient.setQueryData(sourceItemsQueryKey, response);
+        } finally {
+            setIsClearingCache(false);
+        }
+    };
 
     if (metadataQuery.isLoading) {
         return (
@@ -197,6 +209,18 @@ function SourceDetailPage() {
                                 )}
                             />
                             <span>{itemsQuery.isFetching ? "刷新中" : "刷新"}</span>
+                        </button>
+                        <button
+                            type="button"
+                            className="inline-flex items-center gap-2 rounded-full bg-amber-500/12 px-3 py-1.5 text-sm text-amber-800 transition-all hover:bg-amber-500/18 dark:text-amber-300"
+                            onClick={() => void handleClearCacheRefresh()}
+                        >
+                            <span
+                                className={clsx(
+                                    isClearingCache ? "i-ph:spinner-gap-duotone animate-spin" : "i-ph:trash-duotone"
+                                )}
+                            />
+                            <span>{isClearingCache ? "清理中" : "清缓存刷新"}</span>
                         </button>
                     </div>
                 </div>

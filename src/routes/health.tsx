@@ -383,9 +383,9 @@ function SourceHealthCard({
     const handleProbe = async () => {
         setProbing(true);
         try {
-            const result = await fetchSource({ id: source.id, latest: true });
+            const result = await fetchSource({ id: source.id, latest: true, clearCache: true });
 
-            setProbeResult(`最近探测成功，返回 ${result.items.length} 条数据`);
+            setProbeResult(`已清理缓存并探测成功，返回 ${result.items.length} 条数据`);
             await onProbeSuccess(result);
         } catch (error) {
             const message = error instanceof Error ? error.message : "探测失败，请稍后重试";
@@ -451,10 +451,10 @@ function SourceHealthCard({
                     <span
                         className={clsx(
                             "mr-1 inline-block align-middle",
-                            probing ? "i-ph:spinner-gap-duotone animate-spin" : "i-ph:radar-duotone"
+                            probing ? "i-ph:spinner-gap-duotone animate-spin" : "i-ph:trash-duotone"
                         )}
                     />
-                    <span>{probing ? "探测中" : "探测最新"}</span>
+                    <span>{probing ? "清理中" : "清缓存探测"}</span>
                 </button>
                 <button
                     type="button"

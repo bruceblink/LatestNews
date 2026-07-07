@@ -65,7 +65,16 @@ describe("source API contract", () => {
             "source-items-v1",
             "weibo",
             undefined,
+            undefined,
             1,
+            20,
+        ]);
+        expect(getSourceItemsV1CacheKey("weibo" as SourceID, { clearCache: true, limit: 20 })).toEqual([
+            "source-items-v1",
+            "weibo",
+            undefined,
+            true,
+            undefined,
             20,
         ]);
     });

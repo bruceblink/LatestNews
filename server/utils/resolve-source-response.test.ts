@@ -92,6 +92,29 @@ describe("resolveSourceResponse", () => {
         expect(saveCache).toHaveBeenCalledWith(items);
     });
 
+    it("ignores existing cache when clear cache is requested", async () => {
+        const items = createItems("weibo" as SourceID);
+
+        const result = await resolveSourceResponse({
+            id: "weibo" as SourceID,
+            cache: {
+                items: createItems("weibo" as SourceID),
+                updated: NOW - 1_000,
+            },
+            latest: true,
+            canRefresh: true,
+            clearCache: true,
+            degraded: false,
+            sourceInterval: INTERVAL,
+            now: NOW,
+            ttl: TTL,
+            fetchLatest: async () => items,
+        });
+
+        expect(result.status).toBe("success");
+        expect(result.updatedTime).toBe(NOW);
+    });
+
     it("returns empty when fetch succeeds with no items and no cache exists", async () => {
         const saveCache = vi.fn(async () => undefined);
 

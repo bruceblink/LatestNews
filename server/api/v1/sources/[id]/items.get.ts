@@ -13,9 +13,18 @@ import { getSourceHealthSnapshot } from "#/utils/source-health";
 import { resolveSourceResponse } from "#/utils/resolve-source-response";
 import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 import { getQuery, createError, getRouterParam, defineEventHandler } from "h3";
-import { filterSourceItems, parseSourceItemsSince, normalizeSourceItemsLimit } from "@shared/source-items";
+import {
+    filterSourceItems,
+    parseSourceItemsSince,
+    normalizeSourceItemsLimit,
+    isSourceItemsClearCacheRequest,
+} from "@shared/source-items";
 
 const sourceItemsQuerySchema = z.object({
+    clearCache: z
+        .union([z.string(), z.array(z.string()), z.boolean()])
+        .optional()
+        .transform((value) => (Array.isArray(value) ? value[0] : value)),
     latest: z
         .union([z.string(), z.array(z.string()), z.boolean()])
         .optional()
@@ -67,7 +76,15 @@ async function getSourceItemsResponse(
 ): Promise<SourceItemsResponse> {
     const now = Date.now();
     const cacheTable = await getCacheTable();
-    const cache = cacheTable ? await cacheTable.get(id) : undefined;
+    const canRefresh = Boolean(event.context.disabledLogin || event.context.user);
+    const clearCache = isSourceItemsClearCacheRequest(query.clearCache) && canRefresh;
+    let cache = cacheTable ? await cacheTable.get(id) : undefined;
+
+    if (clearCache && cacheTable) {
+        await cacheTable.delete(id);
+        cache = undefined;
+    }
+
     const sourceInterval = dataSources[id].interval ?? TTL;
     const degraded = shouldDegradeSourceToCache(getSourceHealthSnapshot(id));
     const response = await resolveSourceResponse({
@@ -75,8 +92,9 @@ async function getSourceItemsResponse(
         name: dataSources[id].name,
         cache,
         latest: isLatestRequest(query.latest),
-        canRefresh: Boolean(event.context.disabledLogin || event.context.user),
+        canRefresh,
         degraded,
+        clearCache,
         sourceInterval,
         now,
         fetchLatest: () => fetchSourceItems(id),

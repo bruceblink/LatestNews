@@ -5,6 +5,10 @@ export interface SourceItemsFilterOptions {
     limit?: number;
 }
 
+export function isSourceItemsClearCacheRequest(value: string | boolean | undefined) {
+    return value !== undefined && value !== "false" && value !== false;
+}
+
 export function filterSourceItems(items: NewsItem[], { since, limit }: SourceItemsFilterOptions = {}) {
     const filtered = since
         ? items.filter((item) => getItemTime(item) === undefined || getItemTime(item)! >= since)

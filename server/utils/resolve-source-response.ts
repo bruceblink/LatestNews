@@ -19,6 +19,7 @@ interface ResolveSourceResponseOptions {
     latest: boolean;
     canRefresh: boolean;
     degraded: boolean;
+    clearCache?: boolean;
     sourceInterval: number;
     now: number;
     ttl?: number;
@@ -34,6 +35,7 @@ export async function resolveSourceResponse({
     latest,
     canRefresh,
     degraded,
+    clearCache = false,
     sourceInterval,
     now,
     ttl = TTL,
@@ -41,6 +43,10 @@ export async function resolveSourceResponse({
     saveCache,
     onFetchError,
 }: ResolveSourceResponseOptions): Promise<SourceResponse> {
+    if (clearCache && cache) {
+        cache = undefined;
+    }
+
     if (
         cache &&
         shouldReturnCachedSourceResponse({
