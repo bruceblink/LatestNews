@@ -121,6 +121,10 @@ export function getSourceItemsPath(id: SourceID) {
     return `${sourceApi.sourcesV1}/${id}/items` as const;
 }
 
+export function getSourceItemsV1CacheKey(id: SourceID, query: SourceItemsQuery = {}) {
+    return ["source-items-v1", id, query.latest, query.since, query.limit] as const;
+}
+
 export function getEntireSourcesCacheKey(ids: SourceID[]) {
     return ["entire", [...ids].sort()] as const;
 }
@@ -155,3 +159,4 @@ export function normalizeEntireSourcesResponse(response: EntireSourcesResponse |
 }
 
 export const sourceHealthCacheKey = ["source-health"] as const;
+export const sourceMetadataCacheKey = ["source-metadata"] as const;

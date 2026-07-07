@@ -2,6 +2,7 @@ import type { SourceID, SourceResponse } from "@shared/types.ts";
 import type { SourceHealthStatus } from "@shared/source-health-types";
 
 import clsx from "clsx";
+import { Link } from "@tanstack/react-router";
 import { useRefetch } from "~/hooks/useRefetch";
 import { useLoginState } from "~/hooks/useLogin";
 import dataSources from "@shared/data-sources.ts";
@@ -40,9 +41,14 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 />
                 <span className="flex flex-col">
                     <span className="flex items-center gap-2">
-                        <span className="text-base font-semibold text-zinc-800 dark:text-zinc-200/90" title={ds.desc}>
+                        <Link
+                            to="/source/$sourceId"
+                            params={{ sourceId: id }}
+                            className="text-base font-semibold text-zinc-800 transition-colors hover:text-cyan-700 dark:text-zinc-200/90 dark:hover:text-cyan-300"
+                            title={ds.desc}
+                        >
                             {ds.name}
-                        </span>
+                        </Link>
                         {healthStatusLabel && (
                             <span
                                 className={clsx(

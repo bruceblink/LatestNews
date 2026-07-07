@@ -10,10 +10,10 @@ import clsx from "clsx";
 import { useTitle } from "react-use";
 import { useToast } from "~/hooks/useToast";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { sourceHealthCacheKey } from "@shared/source-api";
 import { useRef, useMemo, useState, useEffect } from "react";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { fetchSource, fetchSourceHealthSummary } from "~/services/source.service";
 import { rankSourcesForHealthReview, rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
 import {
@@ -400,7 +400,15 @@ function SourceHealthCard({
         <article className="rounded-2xl bg-base/70 p-4 shadow shadow-primary/8 backdrop-blur-sm">
             <div className="flex items-start justify-between gap-3">
                 <div>
-                    <h2 className="m-0 text-lg font-semibold">{source.name}</h2>
+                    <h2 className="m-0 text-lg font-semibold">
+                        <Link
+                            to="/source/$sourceId"
+                            params={{ sourceId: source.id }}
+                            className="transition-colors hover:text-cyan-700 dark:hover:text-cyan-300"
+                        >
+                            {source.name}
+                        </Link>
+                    </h2>
                     <div className="mt-1 text-xs op-55">{source.id}</div>
                 </div>
                 <div className="flex flex-col items-end gap-2">

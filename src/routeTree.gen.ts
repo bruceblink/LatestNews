@@ -16,6 +16,7 @@ import { Route as HistoryImport } from './routes/history'
 import { Route as HealthImport } from './routes/health'
 import { Route as FeedImport } from './routes/feed'
 import { Route as IndexImport } from './routes/index'
+import { Route as SourceSourceIdImport } from './routes/source.$sourceId'
 import { Route as CColumnImport } from './routes/c.$column'
 import { Route as AuthCallbackImport } from './routes/auth/callback'
 
@@ -48,6 +49,12 @@ const FeedRoute = FeedImport.update({
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SourceSourceIdRoute = SourceSourceIdImport.update({
+  id: '/source/$sourceId',
+  path: '/source/$sourceId',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -116,6 +123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CColumnImport
       parentRoute: typeof rootRoute
     }
+    '/source/$sourceId': {
+      id: '/source/$sourceId'
+      path: '/source/$sourceId'
+      fullPath: '/source/$sourceId'
+      preLoaderRoute: typeof SourceSourceIdImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -129,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/insights': typeof InsightsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$column': typeof CColumnRoute
+  '/source/$sourceId': typeof SourceSourceIdRoute
 }
 
 export interface FileRoutesByTo {
@@ -139,6 +154,7 @@ export interface FileRoutesByTo {
   '/insights': typeof InsightsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$column': typeof CColumnRoute
+  '/source/$sourceId': typeof SourceSourceIdRoute
 }
 
 export interface FileRoutesById {
@@ -150,6 +166,7 @@ export interface FileRoutesById {
   '/insights': typeof InsightsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$column': typeof CColumnRoute
+  '/source/$sourceId': typeof SourceSourceIdRoute
 }
 
 export interface FileRouteTypes {
@@ -162,6 +179,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/auth/callback'
     | '/c/$column'
+    | '/source/$sourceId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -171,6 +189,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/auth/callback'
     | '/c/$column'
+    | '/source/$sourceId'
   id:
     | '__root__'
     | '/'
@@ -180,6 +199,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/auth/callback'
     | '/c/$column'
+    | '/source/$sourceId'
   fileRoutesById: FileRoutesById
 }
 
@@ -191,6 +211,7 @@ export interface RootRouteChildren {
   InsightsRoute: typeof InsightsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   CColumnRoute: typeof CColumnRoute
+  SourceSourceIdRoute: typeof SourceSourceIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -201,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   InsightsRoute: InsightsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   CColumnRoute: CColumnRoute,
+  SourceSourceIdRoute: SourceSourceIdRoute,
 }
 
 export const routeTree = rootRoute
@@ -219,7 +241,8 @@ export const routeTree = rootRoute
         "/history",
         "/insights",
         "/auth/callback",
-        "/c/$column"
+        "/c/$column",
+        "/source/$sourceId"
       ]
     },
     "/": {
@@ -242,6 +265,9 @@ export const routeTree = rootRoute
     },
     "/c/$column": {
       "filePath": "c.$column.tsx"
+    },
+    "/source/$sourceId": {
+      "filePath": "source.$sourceId.tsx"
     }
   }
 }
