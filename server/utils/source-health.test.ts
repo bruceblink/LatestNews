@@ -33,4 +33,19 @@ describe("source health cache degradation", () => {
 
         expect(getSourceHealthSnapshot(sourceId).cacheDegraded).toBe(false);
     });
+
+    it("retains only the most recent health events in memory", () => {
+        const eventSourceId = "ithome" as SourceID;
+
+        for (let index = 0; index < 25; index += 1) {
+            recordSourceSuccess(eventSourceId, index, index);
+        }
+
+        const snapshot = getSourceHealthSnapshot(eventSourceId);
+        expect(snapshot.recentEvents).toHaveLength(20);
+        expect(snapshot.recentEvents[0]).toMatchObject({
+            durationMs: 24,
+            itemCount: 24,
+        });
+    });
 });

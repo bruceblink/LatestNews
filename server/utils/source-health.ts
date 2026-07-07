@@ -1,7 +1,9 @@
 import type { SourceID } from "@shared/types";
 
+import { logger } from "#/utils/logger";
 import dataSources from "@shared/data-sources";
 import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
+import { getSourceHealthEventsTable } from "#/database/source-health-events";
 
 export type ServerSourceHealthStatus = "idle" | "healthy" | "failing";
 
@@ -32,6 +34,7 @@ export interface ServerSourceHealthSnapshot {
 type MutableSourceHealthSnapshot = ServerSourceHealthSnapshot;
 
 const sourceHealthMap = new Map<SourceID, MutableSourceHealthSnapshot>();
+const RECENT_EVENT_LIMIT = 20;
 
 function getSourceMeta(id: SourceID) {
     return dataSources[id];
@@ -51,7 +54,7 @@ function createIdleSnapshot(id: SourceID): ServerSourceHealthSnapshot {
 }
 
 function pushRecentEvent(snapshot: MutableSourceHealthSnapshot, event: ServerSourceHealthEvent) {
-    snapshot.recentEvents = [event, ...snapshot.recentEvents].slice(0, 5);
+    snapshot.recentEvents = [event, ...snapshot.recentEvents].slice(0, RECENT_EVENT_LIMIT);
 }
 
 function getOrCreateSnapshot(id: SourceID): MutableSourceHealthSnapshot {
@@ -80,6 +83,7 @@ export function recordSourceSuccess(id: SourceID, durationMs: number, itemCount:
         durationMs,
         itemCount,
     });
+    persistSourceHealthEvent(id, snapshot.recentEvents[0]);
 }
 
 export function recordSourceFailure(id: SourceID, durationMs: number, error: unknown) {
@@ -98,6 +102,7 @@ export function recordSourceFailure(id: SourceID, durationMs: number, error: unk
         durationMs,
         errorMessage,
     });
+    persistSourceHealthEvent(id, snapshot.recentEvents[0]);
 }
 
 export function getSourceHealthSnapshot(id: SourceID): ServerSourceHealthSnapshot {
@@ -136,4 +141,10 @@ export function getSourceHealthSummary() {
         cacheDegraded: sources.filter((source) => source.cacheDegraded).length,
         sources,
     };
+}
+
+function persistSourceHealthEvent(id: SourceID, event: ServerSourceHealthEvent) {
+    void getSourceHealthEventsTable()
+        .then((table) => table?.append(id, event, RECENT_EVENT_LIMIT))
+        .catch((error) => logger.warn(`persist ${id} source health event failed`, error));
 }
