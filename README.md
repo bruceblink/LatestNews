@@ -24,6 +24,7 @@ LatestNews 是一个以中文资讯聚合为核心的实时阅读应用，提供
 - GitHub 登录后自动同步用户布局配置
 - 支持手动同步、同步状态提示和失败重试
 - 提供数据源健康页，可查看异常源、错误信息和单源探测结果
+- 提供 v1 只读 API、节点清单、JSON Feed/RSS 和诊断导出，便于外部工具接入
 - 支持安装为 PWA，并提供离线与更新反馈
 - 支持缓存、限频抓取与登录用户强制刷新
 
@@ -61,6 +62,9 @@ VITE_API_URL=http://localhost:8000
 JWT_SECRET=
 ENABLE_CACHE=true
 INIT_TABLE=true
+LATESTNEWS_NODE_ID=
+LATESTNEWS_UPSTREAM_ENDPOINT=
+LATESTNEWS_DOWNSTREAM_ENDPOINT=
 PRODUCTHUNT_API_TOKEN=
 ```
 
@@ -71,8 +75,17 @@ PRODUCTHUNT_API_TOKEN=
 - `JWT_SECRET`：与登录服务保持一致的 JWT 密钥
 - `ENABLE_CACHE`：是否启用服务端缓存
 - `INIT_TABLE`：首次初始化数据库时设置为 `true`
+- `LATESTNEWS_NODE_ID`：可选的节点标识，用于 `/api/v1/node`
+- `LATESTNEWS_UPSTREAM_ENDPOINT`：可选的上游节点地址，用于节点清单
+- `LATESTNEWS_DOWNSTREAM_ENDPOINT`：可选的下游接入地址，用于节点清单
 
 如果未配置 `VITE_API_URL` 和 `JWT_SECRET`，应用仍可运行，但不会显示登录与同步能力。
+
+## API 与外部接入
+
+LatestNews 提供面向自动化工具、订阅器和下游采集节点的只读 v1 API。建议外部系统先请求 `/api/v1/node` 获取节点标识、版本、公开端点、数据源清单和健康摘要。
+
+详细接口、筛选参数和诊断导出说明见 [API v1 文档](./docs/api-v1.md)。
 
 ## 部署
 
@@ -116,6 +129,7 @@ docker compose -f docker-compose.yml up -d
 - [src](./src)：前端页面、组件、状态和 hooks
 - [server](./server)：Nitro API、抓取逻辑、数据库与中间件
 - [shared](./shared)：前后端共享常量、类型和数据源定义
+- [docs](./docs)：API、部署和外部接入文档
 - [scripts](./scripts)：资源预处理和数据源辅助脚本
 - [public](./public)：静态资源、图标和 PWA 相关文件
 
