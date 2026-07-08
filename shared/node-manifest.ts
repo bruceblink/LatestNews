@@ -6,6 +6,7 @@ import type { SourceHealthSummary } from "./source-health-types";
 
 export interface NodeManifestEndpointMap {
     node: string;
+    openApi: string;
     sources: string;
     sourceItems: string;
     sourceBatch: string;
@@ -108,6 +109,7 @@ export function createNodeManifestResponse(options: CreateNodeManifestOptions): 
 function createEndpointMap(): NodeManifestEndpointMap {
     return {
         node: withApiPrefix(sourceApi.nodeV1),
+        openApi: withApiPrefix(sourceApi.openApiV1),
         sources: withApiPrefix(sourceApi.sourcesV1),
         sourceItems: `${withApiPrefix(sourceApi.sourcesV1)}/{id}/items`,
         sourceBatch: withApiPrefix(sourceApi.sourceBatchV1),

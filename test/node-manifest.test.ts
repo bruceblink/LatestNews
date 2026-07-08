@@ -44,6 +44,7 @@ describe("node manifest", () => {
         });
         expect(response.data.endpoints).toEqual({
             node: "/api/v1/node",
+            openApi: "/api/v1/openapi.json",
             sources: "/api/v1/sources",
             sourceItems: "/api/v1/sources/{id}/items",
             sourceBatch: "/api/v1/sources/batch",

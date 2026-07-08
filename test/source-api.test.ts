@@ -27,6 +27,7 @@ describe("source API contract", () => {
             health: "/s/health",
             insights: "/s/insights",
             nodeV1: "/v1/node",
+            openApiV1: "/v1/openapi.json",
             sourcesV1: "/v1/sources",
             sourceBatchV1: "/v1/sources/batch",
             sourceHealthV1: "/v1/health/sources",

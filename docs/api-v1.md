@@ -25,9 +25,10 @@ Most v1 endpoints return a stable envelope:
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/api/v1/node` | Node identity, version, endpoint map, source catalog, and health counters. |
+| `GET` | `/api/v1/openapi.json` | Machine-readable OpenAPI 3.1 contract for public v1 endpoints. |
 | `GET` | `/api/v1/health/deployment` | Deployment readiness across app, cache, and source-health state. |
 
-`/api/v1/node` is the preferred first call for external systems. It includes the current endpoint map, source and column lists, health summary, and optional connection hints.
+`/api/v1/node` is the preferred first call for external systems. It includes the current endpoint map, source and column lists, health summary, and optional connection hints. Use `/api/v1/openapi.json` when an integration needs a machine-readable contract.
 
 Optional environment variables:
 

@@ -83,7 +83,7 @@ PRODUCTHUNT_API_TOKEN=
 
 ## API 与外部接入
 
-LatestNews 提供面向自动化工具、订阅器和下游采集节点的只读 v1 API。建议外部系统先请求 `/api/v1/node` 获取节点标识、版本、公开端点、数据源清单和健康摘要。
+LatestNews 提供面向自动化工具、订阅器和下游采集节点的只读 v1 API。建议外部系统先请求 `/api/v1/node` 获取节点标识、版本、公开端点、数据源清单和健康摘要；如需机器可读契约，可请求 `/api/v1/openapi.json`。
 
 详细接口、筛选参数和诊断导出说明见 [API v1 文档](./docs/api-v1.md)。
 
