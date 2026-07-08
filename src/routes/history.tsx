@@ -1,4 +1,5 @@
 import type { SourceID } from "@shared/types";
+import type { ReadingStateKind } from "@shared/reading-state";
 
 import clsx from "clsx";
 import { useTitle } from "react-use";
@@ -68,7 +69,7 @@ function HistoryPage() {
     const toaster = useToast();
     const [keyword, setKeyword] = useState("");
     const [sourceFilter, setSourceFilter] = useState<SourceID | "">("");
-    const [stateTab, setStateTab] = useState<"history" | "later" | "favorites">("history");
+    const [stateTab, setStateTab] = useState<HistoryTab>("history");
 
     const sourceOptions = useMemo(() => {
         const map = new Map<string, { count: number; name: string }>();
@@ -134,8 +135,8 @@ function HistoryPage() {
         }
     };
 
-    const stateItems =
-        stateTab === "history" ? [] : getReadingStateList(readingState, stateTab === "later" ? "later" : "favorite");
+    const stateKind = getHistoryTabReadingKind(stateTab);
+    const stateItems = stateKind ? getReadingStateList(readingState, stateKind) : [];
 
     return (
         <section className="mx-auto flex max-w-4xl flex-col gap-4 px-1 md:px-4">
@@ -180,6 +181,11 @@ function HistoryPage() {
                     active={stateTab === "favorites"}
                     label={`收藏 ${readingState.favorites.length}`}
                     onClick={() => setStateTab("favorites")}
+                />
+                <TabButton
+                    active={stateTab === "hidden"}
+                    label={`隐藏 ${readingState.hidden.length}`}
+                    onClick={() => setStateTab("hidden")}
                 />
             </div>
 
@@ -279,7 +285,10 @@ function HistoryPage() {
                             url={item.url}
                             sourceName={item.sourceName}
                             updatedAt={item.updatedAt}
-                            onRemove={() => removeState(stateTab === "later" ? "later" : "favorite", item.url)}
+                            removeTitle={stateTab === "hidden" ? "取消隐藏" : "移除此条记录"}
+                            onRemove={() => {
+                                if (stateKind) removeState(stateKind, item.url);
+                            }}
                         />
                     ))}
                 </div>
@@ -309,17 +318,21 @@ function TabButton({ active, label, onClick }: { active: boolean; label: string;
     );
 }
 
+type HistoryTab = "history" | "later" | "favorites" | "hidden";
+
 function SavedReadingItem({
     title,
     url,
     sourceName,
     updatedAt,
+    removeTitle = "移除此条记录",
     onRemove,
 }: {
     title: string;
     url: string;
     sourceName: string;
     updatedAt: number;
+    removeTitle?: string;
     onRemove: () => void;
 }) {
     const relativeTime = useRelativeTime(updatedAt);
@@ -344,7 +357,7 @@ function SavedReadingItem({
             </div>
             <button
                 type="button"
-                title="移除此条记录"
+                title={removeTitle}
                 className="mt-0.5 shrink-0 i-ph:x-duotone op-0 group-hover:op-40 hover:op-80! transition-opacity btn text-base"
                 onClick={onRemove}
             />
@@ -352,8 +365,16 @@ function SavedReadingItem({
     );
 }
 
-function getEmptyLabel(tab: "history" | "later" | "favorites", historyLength: number) {
+function getHistoryTabReadingKind(tab: HistoryTab): ReadingStateKind | undefined {
+    if (tab === "later") return "later";
+    if (tab === "favorites") return "favorite";
+    if (tab === "hidden") return "hidden";
+    return undefined;
+}
+
+function getEmptyLabel(tab: HistoryTab, historyLength: number) {
     if (tab === "later") return "还没有稍后读内容";
     if (tab === "favorites") return "还没有收藏内容";
+    if (tab === "hidden") return "还没有隐藏内容";
     return historyLength === 0 ? "还没有阅读记录，点击任意新闻即可自动记录" : "没有匹配的记录";
 }
