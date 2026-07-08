@@ -5,6 +5,7 @@ import { it, expect, describe } from "vitest";
 import {
     formatSourceHealthDiagnostics,
     createSourceHealthDiagnosticFilename,
+    createSourceHealthDiagnosticsResponse,
 } from "../shared/source-health-diagnostics";
 
 const UPDATED_AT = Date.parse("2026-07-08T12:00:00.000Z");
@@ -114,5 +115,22 @@ describe("source health diagnostics", () => {
         expect(createSourceHealthDiagnosticFilename(summary)).toBe(
             "latestnews-source-health-2026-07-08T12-00-00-000Z.txt"
         );
+    });
+
+    it("wraps diagnostics in a versioned API response envelope", () => {
+        const response = createSourceHealthDiagnosticsResponse(summary, {
+            formatTime: (time) => `time:${time}`,
+        });
+
+        expect(response.data.filename).toBe("latestnews-source-health-2026-07-08T12-00-00-000Z.txt");
+        expect(response.data.contentType).toBe("text/plain;charset=utf-8");
+        expect(response.data.report).toContain("LatestNews 数据源诊断报告");
+        expect(response.meta).toEqual({
+            generatedAt: UPDATED_AT,
+            sourceCount: 4,
+            failingCount: 2,
+            cacheDegradedCount: 1,
+        });
+        expect(response.errors).toEqual([]);
     });
 });

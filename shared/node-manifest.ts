@@ -10,6 +10,7 @@ export interface NodeManifestEndpointMap {
     sourceItems: string;
     sourceBatch: string;
     sourceHealth: string;
+    sourceHealthDiagnostics: string;
     deploymentHealth: string;
     jsonFeed: string;
     rssFeed: string;
@@ -111,6 +112,7 @@ function createEndpointMap(): NodeManifestEndpointMap {
         sourceItems: `${withApiPrefix(sourceApi.sourcesV1)}/{id}/items`,
         sourceBatch: withApiPrefix(sourceApi.sourceBatchV1),
         sourceHealth: withApiPrefix(sourceApi.sourceHealthV1),
+        sourceHealthDiagnostics: withApiPrefix(sourceApi.sourceHealthDiagnosticsV1),
         deploymentHealth: withApiPrefix(sourceApi.deploymentHealthV1),
         jsonFeed: withApiPrefix(sourceApi.jsonFeedV1),
         rssFeed: withApiPrefix(sourceApi.rssFeedV1),

@@ -1,5 +1,6 @@
 import { rankFailingSourcesByPriority } from "./source-ranking-policy";
 
+import type { SourceApiError } from "./source-api";
 import type { SourceHealthEvent, SourceHealthSummary, SourceHealthSnapshot } from "./source-health-types";
 
 export interface SourceHealthDiagnosticOptions {
@@ -9,6 +10,21 @@ export interface SourceHealthDiagnosticOptions {
     maxIdleSources?: number;
     maxHealthySamples?: number;
     maxRecentEvents?: number;
+}
+
+export interface SourceHealthDiagnosticsResponse {
+    data: {
+        filename: string;
+        contentType: "text/plain;charset=utf-8";
+        report: string;
+    };
+    meta: {
+        generatedAt: number;
+        sourceCount: number;
+        failingCount: number;
+        cacheDegradedCount: number;
+    };
+    errors: SourceApiError[];
 }
 
 const DEFAULT_MAX_FAILING_SOURCES = 10;
@@ -63,6 +79,26 @@ export function formatSourceHealthDiagnostics(
 export function createSourceHealthDiagnosticFilename(summary: SourceHealthSummary) {
     const timestamp = new Date(summary.updatedAt).toISOString().replace(/[:.]/g, "-");
     return `latestnews-source-health-${timestamp}.txt`;
+}
+
+export function createSourceHealthDiagnosticsResponse(
+    summary: SourceHealthSummary,
+    options: SourceHealthDiagnosticOptions = {}
+): SourceHealthDiagnosticsResponse {
+    return {
+        data: {
+            filename: createSourceHealthDiagnosticFilename(summary),
+            contentType: "text/plain;charset=utf-8",
+            report: formatSourceHealthDiagnostics(summary, options),
+        },
+        meta: {
+            generatedAt: summary.updatedAt,
+            sourceCount: summary.total,
+            failingCount: summary.failing,
+            cacheDegradedCount: summary.cacheDegraded,
+        },
+        errors: [],
+    };
 }
 
 function formatFailingSection(

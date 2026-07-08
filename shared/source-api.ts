@@ -12,6 +12,7 @@ export const sourceApi = {
     sourceBatchV1: "/v1/sources/batch",
     sourceHealthV1: "/v1/health/sources",
     deploymentHealthV1: "/v1/health/deployment",
+    sourceHealthDiagnosticsV1: "/v1/health/diagnostics",
     jsonFeedV1: "/v1/feeds/json",
     rssFeedV1: "/v1/feeds/rss",
 } as const;

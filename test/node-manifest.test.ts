@@ -48,6 +48,7 @@ describe("node manifest", () => {
             sourceItems: "/api/v1/sources/{id}/items",
             sourceBatch: "/api/v1/sources/batch",
             sourceHealth: "/api/v1/health/sources",
+            sourceHealthDiagnostics: "/api/v1/health/diagnostics",
             deploymentHealth: "/api/v1/health/deployment",
             jsonFeed: "/api/v1/feeds/json",
             rssFeed: "/api/v1/feeds/rss",
