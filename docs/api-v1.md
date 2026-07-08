@@ -49,8 +49,11 @@ curl https://news.example.com/api/v1/node
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/api/v1/sources` | Source and column metadata without item payloads. |
+| `GET` | `/api/v1/sources/{id}` | Metadata for one source, including canonical redirect information. |
 | `GET` | `/api/v1/sources/{id}/items` | Items for a single source. |
 | `POST` | `/api/v1/sources/batch` | Items for multiple sources, columns, or source types. |
+
+Single-source metadata keeps item payloads out of discovery responses. If `{id}` is a redirect alias, `meta.canonicalSourceId` points to the source used by item endpoints and `meta.redirected` is `true`.
 
 Single-source query parameters:
 

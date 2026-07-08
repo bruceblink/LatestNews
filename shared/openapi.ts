@@ -38,6 +38,14 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                     responses: okJsonResponse("Source metadata envelope"),
                 },
             },
+            [`${withApiPrefix(sourceApi.sourcesV1)}/{id}`]: {
+                get: {
+                    summary: "Get source metadata",
+                    tags: ["Sources"],
+                    parameters: [pathParameter("id", "Source ID")],
+                    responses: okJsonResponse("Source metadata item envelope"),
+                },
+            },
             [`${withApiPrefix(sourceApi.sourcesV1)}/{id}/items`]: {
                 get: {
                     summary: "Get source items",

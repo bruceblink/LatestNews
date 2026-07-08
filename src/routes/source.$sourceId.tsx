@@ -14,8 +14,18 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
-import { fetchUnifiedFeed, fetchSourceItemsV1, fetchSourceMetadata } from "~/services/source.service";
-import { sourceMetadataCacheKey, getUnifiedFeedCacheKey, getSourceItemsV1CacheKey } from "@shared/source-api";
+import {
+    fetchUnifiedFeed,
+    fetchSourceItemsV1,
+    fetchSourceMetadata,
+    fetchSourceMetadataItem,
+} from "~/services/source.service";
+import {
+    sourceMetadataCacheKey,
+    getUnifiedFeedCacheKey,
+    getSourceItemsV1CacheKey,
+    getSourceMetadataItemCacheKey,
+} from "@shared/source-api";
 
 export const Route = createFileRoute("/source/$sourceId")({
     component: SourceDetailPage,
@@ -23,25 +33,30 @@ export const Route = createFileRoute("/source/$sourceId")({
 
 function SourceDetailPage() {
     const { sourceId } = Route.useParams();
-    const id = sourceId as SourceID;
+    const requestedId = sourceId as SourceID;
     const queryClient = useQueryClient();
     const { history, addHistory } = useHistory();
     const { hiddenUrls, isHiddenUrl } = useReadingState();
-    const { sourceHealthMap } = useSourceHealthSummary();
-    const { isFocused, toggleFocus } = useFocusWith(id);
     const [isClearingCache, setIsClearingCache] = useState(false);
-    const health = sourceHealthMap.get(id);
 
-    const metadataQuery = useQuery({
-        queryKey: sourceMetadataCacheKey,
-        queryFn: fetchSourceMetadata,
+    const metadataItemQuery = useQuery({
+        queryKey: getSourceMetadataItemCacheKey(requestedId),
+        queryFn: () => fetchSourceMetadataItem(requestedId),
         staleTime: 1000 * 60 * 10,
         retry: false,
     });
-    const metadataItem = useMemo(
-        () => metadataQuery.data?.data.sources.find((source) => source.id === id),
-        [id, metadataQuery.data?.data.sources]
-    );
+    const metadataItem = metadataItemQuery.data?.data;
+    const id = metadataItemQuery.data?.meta.canonicalSourceId ?? requestedId;
+    const { sourceHealthMap } = useSourceHealthSummary();
+    const { isFocused, toggleFocus } = useFocusWith(id);
+    const health = sourceHealthMap.get(id);
+    const metadataQuery = useQuery({
+        queryKey: sourceMetadataCacheKey,
+        queryFn: fetchSourceMetadata,
+        enabled: Boolean(metadataItem?.column),
+        staleTime: 1000 * 60 * 10,
+        retry: false,
+    });
 
     useTitle(`${import.meta.env.VITE_APP_TITLE} | ${metadataItem?.name ?? sourceId}`);
 
@@ -96,7 +111,7 @@ function SourceDetailPage() {
         }
     };
 
-    if (metadataQuery.isLoading) {
+    if (metadataItemQuery.isLoading) {
         return (
             <section className="mx-auto max-w-5xl px-1 md:px-4">
                 <PanelEmpty label="正在加载来源详情" />

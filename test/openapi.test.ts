@@ -19,6 +19,7 @@ describe("OpenAPI document", () => {
                 "/api/v1/node",
                 "/api/v1/openapi.json",
                 "/api/v1/sources",
+                "/api/v1/sources/{id}",
                 "/api/v1/sources/{id}/items",
                 "/api/v1/sources/batch",
                 "/api/v1/health/sources",

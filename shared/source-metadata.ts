@@ -43,9 +43,26 @@ export interface SourceMetadataResponse {
     };
 }
 
+export interface SourceMetadataItemResponse {
+    data: SourceMetadataItem;
+    meta: {
+        generatedAt: number;
+        sourceId: SourceID;
+        canonicalSourceId: SourceID;
+        redirected: boolean;
+    };
+    errors: [];
+}
+
 interface CreateSourceMetadataOptions {
     generatedAt?: number;
     includeRedirects?: boolean;
+}
+
+interface CreateSourceMetadataItemResponseOptions {
+    canonicalSourceId?: SourceID;
+    generatedAt?: number;
+    sourceId: SourceID;
 }
 
 export function createSourceMetadataResponse(options: CreateSourceMetadataOptions = {}): SourceMetadataResponse {
@@ -75,6 +92,36 @@ export function createSourceMetadataItems({
         .filter(([, source]) => includeRedirects || !source.redirect)
         .map(([id, source]) => createSourceMetadataItem(id, source))
         .sort((left, right) => left.name.localeCompare(right.name) || left.id.localeCompare(right.id));
+}
+
+export function createSourceMetadataItemResponse({
+    canonicalSourceId,
+    generatedAt,
+    sourceId,
+}: CreateSourceMetadataItemResponseOptions): SourceMetadataItemResponse | undefined {
+    const resolvedSourceId = canonicalSourceId ?? resolveSourceMetadataId(sourceId);
+    if (!resolvedSourceId) return undefined;
+
+    const source = dataSources[resolvedSourceId];
+    if (!source) return undefined;
+
+    return {
+        data: createSourceMetadataItem(resolvedSourceId, source),
+        meta: {
+            generatedAt: generatedAt ?? Date.now(),
+            sourceId,
+            canonicalSourceId: resolvedSourceId,
+            redirected: sourceId !== resolvedSourceId,
+        },
+        errors: [],
+    };
+}
+
+function resolveSourceMetadataId(sourceId: SourceID): SourceID | undefined {
+    const source = dataSources[sourceId];
+    if (!source) return undefined;
+
+    return source.redirect ?? sourceId;
 }
 
 function createSourceMetadataItem(id: SourceID, source: Source): SourceMetadataItem {

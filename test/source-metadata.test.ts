@@ -1,7 +1,7 @@
 import { it, expect, describe } from "vitest";
 
 import dataSources from "../shared/data-sources";
-import { createSourceMetadataResponse } from "../shared/source-metadata";
+import { createSourceMetadataResponse, createSourceMetadataItemResponse } from "../shared/source-metadata";
 
 describe("source metadata", () => {
     it("returns non-redirected source metadata by default", () => {
@@ -48,5 +48,27 @@ describe("source metadata", () => {
             disabled: false,
         });
         expect(weibo).not.toHaveProperty("items");
+    });
+
+    it("creates a single source metadata envelope with canonical redirect metadata", () => {
+        const response = createSourceMetadataItemResponse({
+            sourceId: "v2ex" as const,
+            generatedAt: 1,
+        });
+
+        expect(response).toMatchObject({
+            data: {
+                id: "v2ex-share",
+                name: expect.any(String),
+            },
+            meta: {
+                generatedAt: 1,
+                sourceId: "v2ex",
+                canonicalSourceId: "v2ex-share",
+                redirected: true,
+            },
+            errors: [],
+        });
+        expect(response?.data).not.toHaveProperty("items");
     });
 });

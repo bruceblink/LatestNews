@@ -8,6 +8,7 @@ import {
     getSourceItemsPath,
     createBearerHeaders,
     sourceHealthCacheKey,
+    getSourceMetadataPath,
     sourceMetadataCacheKey,
     getUnifiedFeedCacheKey,
     getNewsInsightsCacheKey,
@@ -16,6 +17,7 @@ import {
     getSourceItemsV1CacheKey,
     getEntireSourcesCacheKey,
     getNewsInsightsRequestKey,
+    getSourceMetadataItemCacheKey,
     normalizeEntireSourcesResponse,
 } from "../shared/source-api";
 
@@ -40,6 +42,8 @@ describe("source API contract", () => {
 
     it("builds stable source cache keys", () => {
         expect(getSourceCacheKey("weibo" as SourceID)).toEqual(["source", "weibo"]);
+        expect(getSourceMetadataPath("weibo" as SourceID)).toBe("/v1/sources/weibo");
+        expect(getSourceMetadataItemCacheKey("weibo" as SourceID)).toEqual(["source-metadata-item", "weibo"]);
         expect(getSourceItemsPath("weibo" as SourceID)).toBe("/v1/sources/weibo/items");
         expect(getEntireSourcesCacheKey(["weibo", "v2ex"] as SourceID[])).toEqual(["entire", ["v2ex", "weibo"]]);
         expect(

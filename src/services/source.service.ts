@@ -1,6 +1,6 @@
 import type { SourceID, SourceResponse } from "@shared/types";
-import type { SourceMetadataResponse } from "@shared/source-metadata";
 import type { SourceHealthSummary } from "@shared/source-health-types";
+import type { SourceMetadataResponse, SourceMetadataItemResponse } from "@shared/source-metadata";
 import type { SourceHealthSourcesQuery, SourceHealthSourcesResponse } from "@shared/source-health-api";
 import type {
     SourceQuery,
@@ -20,6 +20,7 @@ import { getOrCreateInFlightRequest } from "@shared/in-flight-request";
 import {
     sourceApi,
     getSourceItemsPath,
+    getSourceMetadataPath,
     getNewsInsightsRequestKey,
     normalizeEntireSourcesResponse,
 } from "@shared/source-api";
@@ -88,4 +89,8 @@ export function fetchSourceHealthSourcesV1(query?: SourceHealthSourcesQuery): Pr
 
 export function fetchSourceMetadata(): Promise<SourceMetadataResponse> {
     return myFetch(sourceApi.sourcesV1);
+}
+
+export function fetchSourceMetadataItem(id: SourceID): Promise<SourceMetadataItemResponse> {
+    return myFetch(getSourceMetadataPath(id));
 }

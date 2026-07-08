@@ -128,6 +128,14 @@ export function getSourceItemsPath(id: SourceID) {
     return `${sourceApi.sourcesV1}/${id}/items` as const;
 }
 
+export function getSourceMetadataPath(id: SourceID) {
+    return `${sourceApi.sourcesV1}/${id}` as const;
+}
+
+export function getSourceMetadataItemCacheKey(id: SourceID) {
+    return ["source-metadata-item", id] as const;
+}
+
 export function getSourceItemsV1CacheKey(id: SourceID, query: SourceItemsQuery = {}) {
     return ["source-items-v1", id, query.latest, query.clearCache, query.since, query.limit] as const;
 }
