@@ -12,6 +12,7 @@ import {
     getUnifiedFeedCacheKey,
     getNewsInsightsCacheKey,
     isEntireSourcesResponse,
+    deploymentHealthCacheKey,
     getSourceItemsV1CacheKey,
     getEntireSourcesCacheKey,
     getNewsInsightsRequestKey,
@@ -28,6 +29,7 @@ describe("source API contract", () => {
             sourcesV1: "/v1/sources",
             sourceBatchV1: "/v1/sources/batch",
             sourceHealthV1: "/v1/health/sources",
+            deploymentHealthV1: "/v1/health/deployment",
             jsonFeedV1: "/v1/feeds/json",
             rssFeedV1: "/v1/feeds/rss",
         });
@@ -61,6 +63,7 @@ describe("source API contract", () => {
         ]);
         expect(sourceHealthCacheKey).toEqual(["source-health"]);
         expect(sourceMetadataCacheKey).toEqual(["source-metadata"]);
+        expect(deploymentHealthCacheKey).toEqual(["deployment-health"]);
         expect(getSourceItemsV1CacheKey("weibo" as SourceID, { limit: 20, since: 1 })).toEqual([
             "source-items-v1",
             "weibo",
