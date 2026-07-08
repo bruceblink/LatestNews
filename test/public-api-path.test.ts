@@ -6,6 +6,7 @@ describe("public API path policy", () => {
     it("allows read-only source endpoints when login is disabled", () => {
         expect(isPublicApiPath("/api/s")).toBe(true);
         expect(isPublicApiPath("/api/s/entire")).toBe(true);
+        expect(isPublicApiPath("/api/v1/node")).toBe(true);
         expect(isPublicApiPath("/api/v1/sources")).toBe(true);
         expect(isPublicApiPath("/api/v1/sources/batch")).toBe(true);
         expect(isPublicApiPath("/api/v1/health/sources")).toBe(true);

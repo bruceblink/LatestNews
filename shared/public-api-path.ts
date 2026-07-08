@@ -1,5 +1,6 @@
 export const publicApiPathPrefixes = [
     "/api/s",
+    "/api/v1/node",
     "/api/v1/sources",
     "/api/v1/sources/batch",
     "/api/v1/health",

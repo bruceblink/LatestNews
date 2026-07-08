@@ -7,6 +7,7 @@ export const sourceApi = {
     entire: "/s/entire",
     health: "/s/health",
     insights: "/s/insights",
+    nodeV1: "/v1/node",
     sourcesV1: "/v1/sources",
     sourceBatchV1: "/v1/sources/batch",
     sourceHealthV1: "/v1/health/sources",
