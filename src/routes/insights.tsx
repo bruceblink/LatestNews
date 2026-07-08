@@ -1,4 +1,5 @@
 import type { SourceID } from "@shared/types";
+import type { UnifiedFeedScope } from "@shared/unified-feed";
 import type { TopicEvent, HotNewsItem, WordCloudTerm, CategoryShare, SourceActivity } from "@shared/news-insights";
 
 import clsx from "clsx";
@@ -17,7 +18,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 
-type InsightScope = "focus" | "hottest" | "realtime" | "broad";
+type InsightScope = UnifiedFeedScope;
 
 const scopeOptions: Array<{ id: InsightScope; label: string; icon: string }> = [
     { id: "focus", label: "关注", icon: "i-ph:star-duotone" },
@@ -143,17 +144,25 @@ function InsightsPage() {
                     </div>
 
                     <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-                        <HotRankingPanel items={insights?.hotRankings ?? []} onRead={handleReadHotItem} />
-                        <TopicPanel topics={insights?.topicEvents ?? []} onRead={handleReadTopicItem} />
+                        <HotRankingPanel items={insights?.hotRankings ?? []} scope={scope} onRead={handleReadHotItem} />
+                        <TopicPanel topics={insights?.topicEvents ?? []} scope={scope} onRead={handleReadTopicItem} />
                     </div>
 
                     <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-                        <WordCloudPanel items={insights?.wordCloud ?? []} maxWeight={maxWordWeight} />
-                        <CategorySharePanel items={insights?.categoryShares ?? []} maxCount={maxCategoryCount} />
+                        <WordCloudPanel items={insights?.wordCloud ?? []} maxWeight={maxWordWeight} scope={scope} />
+                        <CategorySharePanel
+                            items={insights?.categoryShares ?? []}
+                            maxCount={maxCategoryCount}
+                            scope={scope}
+                        />
                     </div>
 
                     <div className="grid gap-4">
-                        <SourceActivityPanel items={insights?.sourceActivity ?? []} maxCount={maxSourceCount} />
+                        <SourceActivityPanel
+                            items={insights?.sourceActivity ?? []}
+                            maxCount={maxSourceCount}
+                            scope={scope}
+                        />
                     </div>
 
                     {!!data?.errors.length && (
@@ -172,7 +181,15 @@ function InsightsPage() {
     );
 }
 
-function HotRankingPanel({ items, onRead }: { items: HotNewsItem[]; onRead: (item: HotNewsItem) => void }) {
+function HotRankingPanel({
+    items,
+    scope,
+    onRead,
+}: {
+    items: HotNewsItem[];
+    scope: InsightScope;
+    onRead: (item: HotNewsItem) => void;
+}) {
     return (
         <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
             <PanelTitle icon="i-ph:fire-duotone" title="热点排行" />
@@ -202,6 +219,7 @@ function HotRankingPanel({ items, onRead }: { items: HotNewsItem[]; onRead: (ite
                                     <span>{item.sources.length} 源覆盖</span>
                                     <span>分数 {item.score}</span>
                                     {item.publishedAt && <RelativeTimeLabel time={item.publishedAt} />}
+                                    <FeedFilterLink q={item.keywords[0] ?? item.title} scope={scope} label="相关" />
                                 </div>
                             </div>
                             <ReadingStateActions
@@ -224,7 +242,15 @@ function HotRankingPanel({ items, onRead }: { items: HotNewsItem[]; onRead: (ite
     );
 }
 
-function TopicPanel({ topics, onRead }: { topics: TopicEvent[]; onRead: (item: TopicEvent["items"][number]) => void }) {
+function TopicPanel({
+    topics,
+    scope,
+    onRead,
+}: {
+    topics: TopicEvent[];
+    scope: InsightScope;
+    onRead: (item: TopicEvent["items"][number]) => void;
+}) {
     return (
         <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
             <PanelTitle icon="i-ph:git-branch-duotone" title="话题事件" />
@@ -235,8 +261,11 @@ function TopicPanel({ topics, onRead }: { topics: TopicEvent[]; onRead: (item: T
                             key={topic.id}
                             className="rounded-xl border border-zinc-200/85 bg-white/82 p-3 dark:border-zinc-700/32 dark:bg-zinc-800/54"
                         >
-                            <div className="line-clamp-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                                {topic.title}
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="line-clamp-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                                    {topic.title}
+                                </div>
+                                <FeedFilterLink q={getTopicFeedKeyword(topic)} scope={scope} label="追踪" />
                             </div>
                             <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                                 <span>{topic.itemCount} 条动态</span>
@@ -245,12 +274,14 @@ function TopicPanel({ topics, onRead }: { topics: TopicEvent[]; onRead: (item: T
                             </div>
                             <div className="mt-3 flex flex-wrap gap-1.5">
                                 {topic.keywords.slice(0, 5).map((keyword) => (
-                                    <span
+                                    <Link
                                         key={keyword}
+                                        to="/feed"
+                                        search={{ q: keyword, scope, since: "all" }}
                                         className="rounded-full bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-700 dark:text-cyan-300"
                                     >
                                         {keyword}
-                                    </span>
+                                    </Link>
                                 ))}
                             </div>
                             <div className="mt-3 flex flex-col gap-1.5">
@@ -295,7 +326,15 @@ function TopicPanel({ topics, onRead }: { topics: TopicEvent[]; onRead: (item: T
     );
 }
 
-function WordCloudPanel({ items, maxWeight }: { items: WordCloudTerm[]; maxWeight: number }) {
+function WordCloudPanel({
+    items,
+    maxWeight,
+    scope,
+}: {
+    items: WordCloudTerm[];
+    maxWeight: number;
+    scope: InsightScope;
+}) {
     return (
         <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
             <PanelTitle icon="i-ph:cloud-duotone" title="词云图" />
@@ -305,7 +344,7 @@ function WordCloudPanel({ items, maxWeight }: { items: WordCloudTerm[]; maxWeigh
                         <Link
                             key={item.term}
                             to="/feed"
-                            search={{ q: item.term, scope: "broad" }}
+                            search={{ q: item.term, scope, since: "all" }}
                             className={clsx(
                                 "rounded-full border px-3 py-1.5 font-medium transition-all hover:-translate-y-0.5 hover:border-cyan-500/35 hover:bg-cyan-500/12",
                                 getWordClass(item.weight, maxWeight)
@@ -323,7 +362,15 @@ function WordCloudPanel({ items, maxWeight }: { items: WordCloudTerm[]; maxWeigh
     );
 }
 
-function CategorySharePanel({ items, maxCount }: { items: CategoryShare[]; maxCount: number }) {
+function CategorySharePanel({
+    items,
+    maxCount,
+    scope,
+}: {
+    items: CategoryShare[];
+    maxCount: number;
+    scope: InsightScope;
+}) {
     return (
         <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
             <PanelTitle icon="i-ph:chart-pie-slice-duotone" title="分类占比" />
@@ -337,9 +384,13 @@ function CategorySharePanel({ items, maxCount }: { items: CategoryShare[]; maxCo
                             <div key={item.categoryId} className="rounded-xl bg-white/82 p-3 dark:bg-zinc-800/54">
                                 <div className="flex items-center justify-between gap-3">
                                     <div>
-                                        <div className="font-medium text-zinc-800 dark:text-zinc-200">
+                                        <Link
+                                            to="/feed"
+                                            search={{ category: item.categoryId, scope, since: "all" }}
+                                            className="font-medium text-zinc-800 transition-colors hover:text-cyan-700 dark:text-zinc-200 dark:hover:text-cyan-300"
+                                        >
                                             {item.categoryName}
-                                        </div>
+                                        </Link>
                                         <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-500">
                                             {item.sourceCount} 个来源 · {item.itemCount} 条
                                         </div>
@@ -363,7 +414,15 @@ function CategorySharePanel({ items, maxCount }: { items: CategoryShare[]; maxCo
     );
 }
 
-function SourceActivityPanel({ items, maxCount }: { items: SourceActivity[]; maxCount: number }) {
+function SourceActivityPanel({
+    items,
+    maxCount,
+    scope,
+}: {
+    items: SourceActivity[];
+    maxCount: number;
+    scope: InsightScope;
+}) {
     return (
         <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
             <PanelTitle icon="i-ph:chart-bar-duotone" title="来源活跃度" />
@@ -377,9 +436,13 @@ function SourceActivityPanel({ items, maxCount }: { items: SourceActivity[]; max
                                 key={item.sourceId}
                                 className="grid gap-2 md:grid-cols-[120px_1fr_48px] md:items-center"
                             >
-                                <div className="truncate text-sm text-zinc-700 dark:text-zinc-300">
+                                <Link
+                                    to="/feed"
+                                    search={{ scope, since: "all", source: item.sourceId }}
+                                    className="truncate text-sm text-zinc-700 transition-colors hover:text-cyan-700 dark:text-zinc-300 dark:hover:text-cyan-300"
+                                >
                                     {item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId}
-                                </div>
+                                </Link>
                                 <div className="h-2 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-zinc-800">
                                     <div className="h-full rounded-full bg-cyan-500" style={{ width: `${percent}%` }} />
                                 </div>
@@ -394,6 +457,19 @@ function SourceActivityPanel({ items, maxCount }: { items: SourceActivity[]; max
                 )}
             </div>
         </section>
+    );
+}
+
+function FeedFilterLink({ q, scope, label }: { q: string; scope: InsightScope; label: string }) {
+    return (
+        <Link
+            to="/feed"
+            search={{ q, scope, since: "all" }}
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-700 transition-all hover:bg-cyan-500/18 dark:text-cyan-300"
+        >
+            <span className="i-ph:funnel-duotone" />
+            <span>{label}</span>
+        </Link>
     );
 }
 
@@ -457,6 +533,10 @@ function RelativeTimeLabel({ time }: { time: number }) {
 
 function getScopeSources(scope: InsightScope, focusSources: SourceID[]) {
     return getUnifiedFeedScopeSources(scope, focusSources, scope === "focus" ? 100 : 30);
+}
+
+function getTopicFeedKeyword(topic: TopicEvent) {
+    return topic.keywords[0] ?? topic.title;
 }
 
 function getWordClass(weight: number, maxWeight: number) {

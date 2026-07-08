@@ -7,6 +7,7 @@ import {
     createUnifiedFeedView,
     collectUnifiedFeedItems,
     getUnifiedFeedScopeSources,
+    normalizeUnifiedFeedSearch,
     normalizeUnifiedFeedFilters,
 } from "../shared/unified-feed";
 
@@ -94,5 +95,33 @@ describe("unified feed helpers", () => {
         });
         expect(view.sourceSummaries).toEqual([]);
         expect(view.categorySummaries).toEqual([]);
+    });
+
+    it("normalizes deep-link search params for feed filters", () => {
+        expect(
+            normalizeUnifiedFeedSearch({
+                q: " AI ",
+                scope: "broad",
+                source: "weibo",
+                category: "china",
+                since: "3d",
+            })
+        ).toEqual({
+            q: "AI",
+            scope: "broad",
+            source: "weibo",
+            category: "china",
+            since: "3d",
+        });
+
+        expect(
+            normalizeUnifiedFeedSearch({
+                q: " ",
+                scope: "missing",
+                source: "missing-source",
+                category: "missing",
+                since: "30d",
+            })
+        ).toEqual({});
     });
 });

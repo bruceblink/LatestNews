@@ -6,9 +6,19 @@ import { parseSourceItemsSince, normalizeSourceItemsLimit } from "./source-items
 import type { ColumnID, NewsItem, SourceID, SourceResponse } from "./types";
 
 export const unifiedFeedScopeIds = ["focus", "hottest", "realtime", "broad"] as const;
+export const unifiedFeedSinceIds = ["all", "24h", "3d", "7d"] as const;
 
 export type UnifiedFeedScope = (typeof unifiedFeedScopeIds)[number];
+export type UnifiedFeedSince = (typeof unifiedFeedSinceIds)[number];
 export type UnifiedFeedCategoryID = ColumnID | "uncategorized";
+
+export interface UnifiedFeedSearch {
+    q?: string;
+    scope?: UnifiedFeedScope;
+    source?: SourceID;
+    category?: UnifiedFeedCategoryID;
+    since?: UnifiedFeedSince;
+}
 
 export interface UnifiedFeedFilters {
     keyword?: string;
@@ -69,6 +79,27 @@ export interface UnifiedFeedView {
 
 export function isUnifiedFeedScope(value: unknown): value is UnifiedFeedScope {
     return typeof value === "string" && unifiedFeedScopeIds.includes(value as UnifiedFeedScope);
+}
+
+export function isUnifiedFeedSince(value: unknown): value is UnifiedFeedSince {
+    return typeof value === "string" && unifiedFeedSinceIds.includes(value as UnifiedFeedSince);
+}
+
+export function normalizeUnifiedFeedSearch(search: Record<string, unknown>): UnifiedFeedSearch {
+    const q = typeof search.q === "string" ? search.q.trim() : "";
+    const scope = isUnifiedFeedScope(search.scope) ? search.scope : undefined;
+    const source = typeof search.source === "string" && isSelectableSourceId(search.source) ? search.source : undefined;
+    const category =
+        typeof search.category === "string" && isUnifiedFeedCategory(search.category) ? search.category : undefined;
+    const since = isUnifiedFeedSince(search.since) ? search.since : undefined;
+
+    return {
+        ...(q && { q }),
+        ...(scope && { scope }),
+        ...(source && { source }),
+        ...(category && { category }),
+        ...(since && { since }),
+    };
 }
 
 export function getUnifiedFeedScopeSources(scope: UnifiedFeedScope, focusSources: SourceID[], limit = 100): SourceID[] {

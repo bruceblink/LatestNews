@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { SourceID } from "@shared/types";
 import type { OfflineFeedSnapshot } from "@shared/offline-feed-snapshot";
-import type { UnifiedFeedItem, UnifiedFeedScope, UnifiedFeedCategoryID } from "@shared/unified-feed";
+import type { UnifiedFeedItem, UnifiedFeedScope, UnifiedFeedSince, UnifiedFeedCategoryID } from "@shared/unified-feed";
 
 import clsx from "clsx";
 import { useTitle } from "react-use";
@@ -18,7 +18,7 @@ import { getUnifiedFeedCacheKey } from "@shared/source-api";
 import { fetchUnifiedFeed } from "~/services/source.service";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 import { readOfflineFeedSnapshot, saveOfflineFeedSnapshot } from "~/services/offline-feed-snapshot.service";
-import { isUnifiedFeedScope, createUnifiedFeedView, getUnifiedFeedScopeSources } from "@shared/unified-feed";
+import { createUnifiedFeedView, normalizeUnifiedFeedSearch, getUnifiedFeedScopeSources } from "@shared/unified-feed";
 
 const scopeOptions: Array<{ id: UnifiedFeedScope; label: string; icon: string }> = [
     { id: "focus", label: "关注", icon: "i-ph:star-duotone" },
@@ -27,12 +27,12 @@ const scopeOptions: Array<{ id: UnifiedFeedScope; label: string; icon: string }>
     { id: "broad", label: "综合", icon: "i-ph:circles-three-plus-duotone" },
 ];
 
-const sinceOptions = [
+const sinceOptions: Array<{ label: string; value: UnifiedFeedSince }> = [
     { label: "不限", value: "all" },
     { label: "24小时", value: "24h" },
     { label: "3天", value: "3d" },
     { label: "7天", value: "7d" },
-] as const;
+];
 
 const categoryOptions: Array<{ id: UnifiedFeedCategoryID | "all"; label: string }> = [
     { id: "all", label: "全部分类" },
@@ -44,10 +44,7 @@ const categoryOptions: Array<{ id: UnifiedFeedCategoryID | "all"; label: string 
 
 export const Route = createFileRoute("/feed")({
     component: FeedPage,
-    validateSearch: (search: Record<string, unknown>) => ({
-        q: typeof search.q === "string" ? search.q : undefined,
-        scope: isUnifiedFeedScope(search.scope) ? search.scope : undefined,
-    }),
+    validateSearch: normalizeUnifiedFeedSearch,
 });
 
 function FeedPage() {
@@ -59,15 +56,18 @@ function FeedPage() {
     const { hiddenUrls } = useReadingState();
     const [scope, setScope] = useState<UnifiedFeedScope>(search.scope ?? (focusSources.length ? "focus" : "hottest"));
     const [keyword, setKeyword] = useState(search.q ?? "");
-    const [sourceId, setSourceId] = useState<SourceID | "all">("all");
-    const [categoryId, setCategoryId] = useState<UnifiedFeedCategoryID | "all">("all");
-    const [since, setSince] = useState<(typeof sinceOptions)[number]["value"]>("24h");
+    const [sourceId, setSourceId] = useState<SourceID | "all">(search.source ?? "all");
+    const [categoryId, setCategoryId] = useState<UnifiedFeedCategoryID | "all">(search.category ?? "all");
+    const [since, setSince] = useState<UnifiedFeedSince>(search.since ?? "24h");
     const [offlineSnapshot, setOfflineSnapshot] = useState<OfflineFeedSnapshot>();
 
     useEffect(() => {
         setKeyword(search.q ?? "");
         if (search.scope) setScope(search.scope);
-    }, [search.q, search.scope]);
+        setSourceId(search.source ?? "all");
+        setCategoryId(search.category ?? "all");
+        setSince(search.since ?? "24h");
+    }, [search.category, search.q, search.scope, search.since, search.source]);
 
     const sources = useMemo(() => getUnifiedFeedScopeSources(scope, focusSources), [focusSources, scope]);
     const sinceValue = useMemo(() => getSinceValue(since), [since]);
@@ -121,7 +121,9 @@ function FeedPage() {
     );
     const readUrls = useMemo(() => new Set(history.map((item) => item.url)), [history]);
     const sourceOptions = sourceOptionView.sourceSummaries.slice(0, 80);
-    const hasActiveFilters = Boolean(feedView.activeFilters.keyword || sourceId !== "all" || categoryId !== "all");
+    const hasActiveFilters = Boolean(
+        feedView.activeFilters.keyword || sourceId !== "all" || categoryId !== "all" || since !== "24h"
+    );
 
     const handleRead = (item: UnifiedFeedItem) => {
         addHistory(item.sourceId, item.item.id, item.title, item.url);
@@ -131,6 +133,7 @@ function FeedPage() {
         setKeyword("");
         setSourceId("all");
         setCategoryId("all");
+        setSince("24h");
     };
 
     return (
@@ -220,7 +223,7 @@ function FeedPage() {
                     </select>
                     <select
                         value={since}
-                        onChange={(event) => setSince(event.currentTarget.value as typeof since)}
+                        onChange={(event) => setSince(event.currentTarget.value as UnifiedFeedSince)}
                         className="h-10 rounded-xl border border-zinc-200/90 bg-white/86 px-3 text-sm outline-none focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
                     >
                         {sinceOptions.map((option) => (
@@ -505,7 +508,7 @@ function EmptyState() {
     );
 }
 
-function getSinceValue(value: (typeof sinceOptions)[number]["value"]) {
+function getSinceValue(value: UnifiedFeedSince) {
     const now = Date.now();
     if (value === "24h") return now - 24 * 60 * 60 * 1000;
     if (value === "3d") return now - 3 * 24 * 60 * 60 * 1000;

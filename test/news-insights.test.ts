@@ -72,6 +72,7 @@ describe("news insights", () => {
             },
         });
         expect(insights.hotRankings[0].sources).toEqual(expect.arrayContaining(["weibo", "v2ex"]));
+        expect(insights.hotRankings[0].keywords).toEqual(expect.arrayContaining(["openai", "gpt-5"]));
         expect(insights.hotRankings[0].score).toBeGreaterThan(insights.hotRankings[1].score);
     });
 

@@ -97,6 +97,7 @@ export interface HotNewsItem {
     sources: SourceID[];
     sourceNames: string[];
     itemCount: number;
+    keywords: string[];
     signals: HotNewsSignals;
 }
 
@@ -480,6 +481,7 @@ function createHotNewsItem(group: TopicGroup, generatedAt: number): HotNewsItem 
         sources,
         sourceNames,
         itemCount: group.items.length,
+        keywords: topTerms(group.items, 4),
         signals,
     };
 }
