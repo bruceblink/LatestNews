@@ -16,6 +16,7 @@ import { useRef, useMemo, useState, useEffect } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { fetchSource, fetchSourceHealthSummary } from "~/services/source.service";
 import { rankSourcesForHealthReview, rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
+import { formatSourceHealthDiagnostics, createSourceHealthDiagnosticFilename } from "@shared/source-health-diagnostics";
 import {
     hasSourceHealthFilters,
     filterSourceHealthSnapshots,
@@ -132,6 +133,33 @@ function HealthPage() {
         }
     };
 
+    const copyHealthDiagnostics = async () => {
+        if (!data) return;
+
+        try {
+            await navigator.clipboard.writeText(createDiagnosticReport(data));
+            toaster("完整诊断报告已复制", { type: "success" });
+        } catch {
+            toaster("复制失败，请检查浏览器剪贴板权限", { type: "error" });
+        }
+    };
+
+    const downloadHealthDiagnostics = () => {
+        if (!data) return;
+
+        const blob = new Blob([createDiagnosticReport(data)], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = createSourceHealthDiagnosticFilename(data);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        toaster("诊断报告已导出", { type: "success" });
+    };
+
     const filteredSources = useMemo(() => {
         if (!data?.sources) return [];
 
@@ -155,7 +183,25 @@ function HealthPage() {
                         查看各数据源最近一次抓取状态、连续失败次数和响应耗时，便于后续治理抓取质量。
                     </p>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
+                <div className="flex flex-wrap items-center justify-start gap-2 text-sm md:justify-end">
+                    <button
+                        type="button"
+                        className="flex items-center gap-2 rounded-full bg-base/80 px-3 py-1.5 shadow shadow-primary/10 transition-all enabled:hover:bg-base disabled:cursor-not-allowed disabled:op-45"
+                        disabled={!data}
+                        onClick={() => void copyHealthDiagnostics()}
+                    >
+                        <span className="i-ph:clipboard-text-duotone" />
+                        <span>复制报告</span>
+                    </button>
+                    <button
+                        type="button"
+                        className="flex items-center gap-2 rounded-full bg-base/80 px-3 py-1.5 shadow shadow-primary/10 transition-all enabled:hover:bg-base disabled:cursor-not-allowed disabled:op-45"
+                        disabled={!data}
+                        onClick={downloadHealthDiagnostics}
+                    >
+                        <span className="i-ph:download-simple-duotone" />
+                        <span>导出诊断</span>
+                    </button>
                     <button
                         type="button"
                         className={clsx(
@@ -556,4 +602,10 @@ function MetricItem({ label, value }: { label: string; value: string }) {
             <div className="mt-1 font-medium">{value}</div>
         </div>
     );
+}
+
+function createDiagnosticReport(summary: SourceHealthSummary) {
+    return formatSourceHealthDiagnostics(summary, {
+        formatTime: (time) => new Date(time).toLocaleString("zh-CN"),
+    });
 }
