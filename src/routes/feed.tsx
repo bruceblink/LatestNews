@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { SourceID } from "@shared/types";
+import type { OfflineFeedSnapshot } from "@shared/offline-feed-snapshot";
 import type { UnifiedFeedItem, UnifiedFeedScope, UnifiedFeedCategoryID } from "@shared/unified-feed";
 
 import clsx from "clsx";
@@ -16,6 +17,7 @@ import { useReadingState } from "~/hooks/useReadingState";
 import { getUnifiedFeedCacheKey } from "@shared/source-api";
 import { fetchUnifiedFeed } from "~/services/source.service";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
+import { readOfflineFeedSnapshot, saveOfflineFeedSnapshot } from "~/services/offline-feed-snapshot.service";
 import { isUnifiedFeedScope, createUnifiedFeedView, getUnifiedFeedScopeSources } from "@shared/unified-feed";
 
 const scopeOptions: Array<{ id: UnifiedFeedScope; label: string; icon: string }> = [
@@ -60,6 +62,7 @@ function FeedPage() {
     const [sourceId, setSourceId] = useState<SourceID | "all">("all");
     const [categoryId, setCategoryId] = useState<UnifiedFeedCategoryID | "all">("all");
     const [since, setSince] = useState<(typeof sinceOptions)[number]["value"]>("24h");
+    const [offlineSnapshot, setOfflineSnapshot] = useState<OfflineFeedSnapshot>();
 
     useEffect(() => {
         setKeyword(search.q ?? "");
@@ -75,6 +78,14 @@ function FeedPage() {
         }),
         [sinceValue, sources]
     );
+    const offlineSnapshotPayload = useMemo(
+        () => ({
+            scope,
+            since,
+            sources,
+        }),
+        [scope, since, sources]
+    );
 
     const { data, isFetching, isError, error, refetch } = useQuery({
         queryKey: getUnifiedFeedCacheKey(payload),
@@ -84,7 +95,18 @@ function FeedPage() {
         retry: false,
     });
 
-    const loadedResponses = useMemo(() => data?.data ?? [], [data?.data]);
+    useEffect(() => {
+        setOfflineSnapshot(readOfflineFeedSnapshot(offlineSnapshotPayload));
+    }, [offlineSnapshotPayload]);
+
+    useEffect(() => {
+        if (!data) return;
+        setOfflineSnapshot(saveOfflineFeedSnapshot(offlineSnapshotPayload, data));
+    }, [data, offlineSnapshotPayload]);
+
+    const isOfflineSnapshotActive = !data && Boolean(offlineSnapshot);
+    const activeResponse = data ?? offlineSnapshot?.response;
+    const loadedResponses = useMemo(() => activeResponse?.data ?? [], [activeResponse]);
     const sourceOptionView = useMemo(() => createUnifiedFeedView(loadedResponses), [loadedResponses]);
     const feedView = useMemo(
         () =>
@@ -120,10 +142,17 @@ function FeedPage() {
                         <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                             <SignalPill icon="i-ph:database-duotone" label={`${sources.length} 个来源`} />
                             <SignalPill icon="i-ph:newspaper-duotone" label={`${feedView.filteredItemCount} 条内容`} />
-                            {data?.meta.partial && (
+                            {activeResponse?.meta.partial && (
                                 <SignalPill icon="i-ph:warning-circle-duotone" label="部分来源未返回" tone="warning" />
                             )}
-                            <SignalPill icon="i-ph:clock-clockwise-duotone" label={isFetching ? "更新中" : "已就绪"} />
+                            {isOfflineSnapshotActive && offlineSnapshot ? (
+                                <SnapshotSignalPill savedAt={offlineSnapshot.savedAt} />
+                            ) : (
+                                <SignalPill
+                                    icon="i-ph:clock-clockwise-duotone"
+                                    label={isFetching ? "更新中" : "已就绪"}
+                                />
+                            )}
                         </div>
                     </div>
                     <div className="flex flex-col gap-2 md:items-end">
@@ -211,7 +240,9 @@ function FeedPage() {
                 </div>
             </div>
 
-            {isError && (
+            {isOfflineSnapshotActive && offlineSnapshot && <OfflineSnapshotNotice savedAt={offlineSnapshot.savedAt} />}
+
+            {isError && !isOfflineSnapshotActive && (
                 <div className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
                     Feed 加载失败{error instanceof Error ? `：${error.message}` : ""}
                 </div>
@@ -233,9 +264,9 @@ function FeedPage() {
                 </div>
             )}
 
-            {!!data?.errors.length && (
+            {!!activeResponse?.errors.length && (
                 <div className="rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
-                    {data.errors.slice(0, 3).map((item) => (
+                    {activeResponse.errors.slice(0, 3).map((item) => (
                         <div key={`${item.sourceId ?? "source"}-${item.message}`}>
                             {item.sourceId ? `${item.sourceId}: ` : ""}
                             {item.message}
@@ -425,6 +456,22 @@ function SignalPill({ icon, label, tone = "neutral" }: { icon: string; label: st
             <span className={icon} />
             <span>{label}</span>
         </span>
+    );
+}
+
+function SnapshotSignalPill({ savedAt }: { savedAt: number }) {
+    const relativeTime = useRelativeTime(savedAt);
+
+    return <SignalPill icon="i-ph:hard-drives-duotone" label={`${relativeTime ?? "刚刚"}的快照`} tone="warning" />;
+}
+
+function OfflineSnapshotNotice({ savedAt }: { savedAt: number }) {
+    const relativeTime = useRelativeTime(savedAt);
+
+    return (
+        <div className="rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
+            当前展示{relativeTime ?? "刚刚"}保存的 Feed 快照，网络恢复后会自动切回最新内容。
+        </div>
     );
 }
 
