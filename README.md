@@ -89,6 +89,8 @@ LatestNews 提供面向自动化工具、订阅器和下游采集节点的只读
 
 ## 部署
 
+更完整的部署路径、环境变量、健康检查和排障说明见 [部署运维文档](./docs/deployment.md)。
+
 ### Cloudflare Pages
 
 - 构建命令：`pnpm run build`

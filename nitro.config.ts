@@ -57,7 +57,7 @@ if (process.env.VERCEL) {
         default: {
             connector: "cloudflare-d1",
             options: {
-                bindingName: "NEWSNOW_DB",
+                bindingName: "LATESTNEWS_DB",
             },
         },
     };
