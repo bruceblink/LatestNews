@@ -1,6 +1,6 @@
 import type { SourceID } from "@shared/types";
 import type { SourceMetadataItem } from "@shared/source-metadata";
-import type { SourceHealthSnapshot } from "@shared/source-health-types";
+import type { SourceHealthEvent, SourceHealthSnapshot } from "@shared/source-health-types";
 
 import clsx from "clsx";
 import { useTitle } from "react-use";
@@ -363,7 +363,62 @@ function HealthPanel({ health }: { health?: SourceHealthSnapshot }) {
                     {health.lastErrorMessage}
                 </div>
             )}
+            <HealthEventList events={health?.recentEvents ?? []} />
         </section>
+    );
+}
+
+function HealthEventList({ events }: { events: SourceHealthEvent[] }) {
+    return (
+        <div className="mt-4 border-t border-zinc-200/80 pt-3 dark:border-zinc-700/38">
+            <div className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">最近健康事件</div>
+            {events.length ? (
+                <div className="flex flex-col gap-2">
+                    {events.slice(0, 5).map((event, index) => (
+                        <HealthEventItem key={`${event.occurredAt}-${event.status}-${index}`} event={event} />
+                    ))}
+                </div>
+            ) : (
+                <div className="rounded-xl bg-white/74 px-3 py-2 text-xs text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-500">
+                    暂无事件记录
+                </div>
+            )}
+        </div>
+    );
+}
+
+function HealthEventItem({ event }: { event: SourceHealthEvent }) {
+    const label = event.status === "healthy" ? "成功" : "失败";
+    const occurredAt = new Date(event.occurredAt).toLocaleString("zh-CN", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+    return (
+        <div className="rounded-xl bg-white/74 px-3 py-2 dark:bg-zinc-800/50">
+            <div className="flex items-center justify-between gap-2 text-xs">
+                <span
+                    className={clsx(
+                        "rounded-full px-2 py-0.5 font-medium",
+                        event.status === "healthy"
+                            ? "bg-green-500/10 text-green-700 dark:text-green-300"
+                            : "bg-red-500/10 text-red-700 dark:text-red-300"
+                    )}
+                >
+                    {label}
+                </span>
+                <span className="text-zinc-500 dark:text-zinc-500">{occurredAt}</span>
+            </div>
+            <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-500">
+                耗时 {event.durationMs} ms
+                {event.itemCount !== undefined ? ` · 返回 ${event.itemCount} 条` : ""}
+            </div>
+            {event.errorMessage && (
+                <div className="mt-1 line-clamp-2 text-xs text-red-700 dark:text-red-300">{event.errorMessage}</div>
+            )}
+        </div>
     );
 }
 
