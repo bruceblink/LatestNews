@@ -28,6 +28,10 @@ export class Cache {
         logger.success("init cache table");
     }
 
+    async check() {
+        await this.db.prepare("SELECT id FROM cache LIMIT 1").get();
+    }
+
     async set(key: string, value: NewsItem[]) {
         const now = Date.now();
         await this.db
@@ -105,6 +109,7 @@ export async function getCacheTable() {
 
             const cacheTable = new Cache(useDatabase());
             if (process.env.INIT_TABLE !== "false") await cacheTable.init();
+            else await cacheTable.check();
             return cacheTable;
         } catch (e) {
             cacheTablePromise = undefined;
