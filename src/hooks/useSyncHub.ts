@@ -1,6 +1,6 @@
 import { useAtom } from "jotai";
-import { useRef, useEffect } from "react";
 import { colorSchemeAtom } from "~/hooks/useDark";
+import { useRef, useState, useEffect } from "react";
 import { readingHistoryAtom } from "~/atoms/historyAtom";
 import { readingStateAtom } from "~/atoms/readingStateAtom";
 import { preprocessMetadata, primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom";
@@ -21,11 +21,12 @@ export function useSyncHub() {
     const [readingState, setReadingState] = useAtom(readingStateAtom);
     const [metadata, setMetadata] = useAtom(primitiveMetadataAtom);
     const [colorScheme, setColorScheme] = useAtom(colorSchemeAtom);
-    const loaded = useRef(false);
+    const loading = useRef(false);
+    const [ready, setReady] = useState(false);
 
     useEffect(() => {
-        if (!isSyncHubConfigured() || loaded.current) return;
-        loaded.current = true;
+        if (!isSyncHubConfigured() || loading.current || ready) return;
+        loading.current = true;
         void Promise.all([downloadReadingHistory(), downloadFavorites(), downloadPreferences()])
             .then(([remoteHistory, remoteState, remotePreferences]) => {
                 if (Array.isArray(remoteHistory)) setHistory(remoteHistory);
@@ -40,33 +41,34 @@ export function useSyncHub() {
                         setMetadata(preprocessMetadata(remotePreferences.metadata));
                     }
                 }
+                setReady(true);
             })
             .catch(() => {
-                loaded.current = false;
+                loading.current = false;
             });
-    }, [setColorScheme, setHistory, setMetadata, setReadingState]);
+    }, [ready, setColorScheme, setHistory, setMetadata, setReadingState]);
 
     useEffect(() => {
-        if (!loaded.current || !isSyncHubConfigured()) return undefined;
+        if (!ready || !isSyncHubConfigured()) return undefined;
         const timer = setTimeout(() => {
             void uploadReadingHistory(history).catch(() => undefined);
         }, debounceMs);
         return () => clearTimeout(timer);
-    }, [history]);
+    }, [history, ready]);
 
     useEffect(() => {
-        if (!loaded.current || !isSyncHubConfigured()) return undefined;
+        if (!ready || !isSyncHubConfigured()) return undefined;
         const timer = setTimeout(() => {
             void uploadFavorites(readingState.favorites).catch(() => undefined);
         }, debounceMs);
         return () => clearTimeout(timer);
-    }, [readingState]);
+    }, [readingState, ready]);
 
     useEffect(() => {
-        if (!loaded.current || !isSyncHubConfigured()) return undefined;
+        if (!ready || !isSyncHubConfigured()) return undefined;
         const timer = setTimeout(() => {
             void uploadPreferences({ colorScheme, metadata }).catch(() => undefined);
         }, debounceMs);
         return () => clearTimeout(timer);
-    }, [colorScheme, metadata]);
+    }, [colorScheme, metadata, ready]);
 }
