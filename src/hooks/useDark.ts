@@ -5,7 +5,7 @@ import { atomWithStorage } from "jotai/utils";
 
 export declare type ColorScheme = "dark" | "light" | "auto";
 
-const colorSchemeAtom = atomWithStorage("color-scheme", "dark");
+export const colorSchemeAtom = atomWithStorage<ColorScheme>("color-scheme", "dark");
 
 export function useDark() {
     const [colorScheme, setColorScheme] = useAtom(colorSchemeAtom);

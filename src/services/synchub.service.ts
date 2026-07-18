@@ -1,5 +1,12 @@
+import type { ColorScheme } from "~/hooks/useDark";
 import type { HistoryItem } from "~/atoms/historyAtom";
+import type { PrimitiveMetadata } from "@shared/types";
 import type { ReadingState } from "@shared/reading-state";
+
+export interface UserPreferences {
+    colorScheme: ColorScheme;
+    metadata: PrimitiveMetadata;
+}
 
 export interface SyncHubConfig {
     endpoint: string;
@@ -37,7 +44,9 @@ export function isSyncHubConfigured(config = getSyncHubConfig()) {
     return /^https?:\/\//i.test(config.endpoint) && config.apiKey.startsWith("shk_");
 }
 
-async function request<T>(collection: "reading-history" | "favorites", init?: RequestInit): Promise<T | null> {
+type Collection = "reading-history" | "favorites" | "preferences";
+
+async function request<T>(collection: Collection, init?: RequestInit): Promise<T | null> {
     const config = getSyncHubConfig();
     if (!isSyncHubConfigured(config)) return null;
     const response = await fetch(`${config.endpoint}/api/v1/metadata/latestnews/${collection}`, {
@@ -55,3 +64,6 @@ export const uploadReadingHistory = (history: HistoryItem[]) =>
 export const downloadFavorites = () => request<ReadingState["favorites"]>("favorites");
 export const uploadFavorites = (favorites: ReadingState["favorites"]) =>
     request("favorites", { method: "PUT", body: JSON.stringify({ payload: favorites }) });
+export const downloadPreferences = () => request<UserPreferences>("preferences");
+export const uploadPreferences = (preferences: UserPreferences) =>
+    request("preferences", { method: "PUT", body: JSON.stringify({ payload: preferences }) });
