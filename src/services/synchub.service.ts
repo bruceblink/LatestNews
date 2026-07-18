@@ -52,6 +52,6 @@ async function request<T>(collection: "reading-history" | "favorites", init?: Re
 export const downloadReadingHistory = () => request<HistoryItem[]>("reading-history");
 export const uploadReadingHistory = (history: HistoryItem[]) =>
     request("reading-history", { method: "PUT", body: JSON.stringify({ payload: history }) });
-export const downloadFavorites = () => request<ReadingState>("favorites");
-export const uploadFavorites = (state: ReadingState) =>
-    request("favorites", { method: "PUT", body: JSON.stringify({ payload: state }) });
+export const downloadFavorites = () => request<ReadingState["favorites"]>("favorites");
+export const uploadFavorites = (favorites: ReadingState["favorites"]) =>
+    request("favorites", { method: "PUT", body: JSON.stringify({ payload: favorites }) });

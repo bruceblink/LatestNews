@@ -2,7 +2,6 @@ import { useAtom } from "jotai";
 import { useRef, useEffect } from "react";
 import { readingHistoryAtom } from "~/atoms/historyAtom";
 import { readingStateAtom } from "~/atoms/readingStateAtom";
-import { normalizeReadingState } from "@shared/reading-state";
 import {
     uploadFavorites,
     downloadFavorites,
@@ -24,7 +23,9 @@ export function useSyncHub() {
         void Promise.all([downloadReadingHistory(), downloadFavorites()])
             .then(([remoteHistory, remoteState]) => {
                 if (Array.isArray(remoteHistory)) setHistory(remoteHistory);
-                if (remoteState) setReadingState(normalizeReadingState(remoteState));
+                if (Array.isArray(remoteState)) {
+                    setReadingState((current) => ({ ...current, favorites: remoteState }));
+                }
             })
             .catch(() => {
                 loaded.current = false;
@@ -42,7 +43,7 @@ export function useSyncHub() {
     useEffect(() => {
         if (!loaded.current || !isSyncHubConfigured()) return undefined;
         const timer = setTimeout(() => {
-            void uploadFavorites(readingState).catch(() => undefined);
+            void uploadFavorites(readingState.favorites).catch(() => undefined);
         }, debounceMs);
         return () => clearTimeout(timer);
     }, [readingState]);
