@@ -14,6 +14,7 @@ import { useReadingState } from "~/hooks/useReadingState";
 import { getReadingStateList } from "@shared/reading-state";
 import { formatReadingHistoryExport } from "@shared/history-export";
 import { filterReadingHistory, hasReadingHistoryFilters } from "@shared/history-filter";
+import { getSyncHubConfig, saveSyncHubConfig, clearSyncHubConfig } from "~/services/synchub.service";
 
 export const Route = createFileRoute("/history")({
     component: HistoryPage,
@@ -70,6 +71,8 @@ function HistoryPage() {
     const [keyword, setKeyword] = useState("");
     const [sourceFilter, setSourceFilter] = useState<SourceID | "">("");
     const [stateTab, setStateTab] = useState<HistoryTab>("history");
+    const [syncHubEndpoint, setSyncHubEndpoint] = useState(() => getSyncHubConfig().endpoint);
+    const [syncHubApiKey, setSyncHubApiKey] = useState(() => getSyncHubConfig().apiKey);
 
     const sourceOptions = useMemo(() => {
         const map = new Map<string, { count: number; name: string }>();
@@ -165,6 +168,43 @@ function HistoryPage() {
                     </button>
                 </div>
             </div>
+
+            <section className="grid gap-2 rounded-2xl border border-zinc-200/90 bg-white/78 p-3 dark:border-zinc-700/40 dark:bg-zinc-900/70 md:grid-cols-[1fr_1fr_auto_auto]">
+                <input
+                    value={syncHubEndpoint}
+                    onChange={(event) => setSyncHubEndpoint(event.target.value)}
+                    placeholder="SyncHub 服务地址"
+                    className="min-w-0 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-cyan-500 dark:border-zinc-700 dark:bg-zinc-800"
+                />
+                <input
+                    value={syncHubApiKey}
+                    onChange={(event) => setSyncHubApiKey(event.target.value)}
+                    placeholder="LatestNews API Key (shk_...)"
+                    className="min-w-0 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-cyan-500 dark:border-zinc-700 dark:bg-zinc-800"
+                />
+                <button
+                    type="button"
+                    onClick={() => {
+                        saveSyncHubConfig({ endpoint: syncHubEndpoint, apiKey: syncHubApiKey });
+                        window.location.reload();
+                    }}
+                    className="rounded-xl bg-cyan-500 px-3 py-2 text-sm font-medium text-zinc-900"
+                >
+                    保存同步
+                </button>
+                {(syncHubEndpoint || syncHubApiKey) && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            clearSyncHubConfig();
+                            window.location.reload();
+                        }}
+                        className="rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700"
+                    >
+                        移除
+                    </button>
+                )}
+            </section>
 
             <div className="flex flex-wrap gap-2 rounded-2xl border border-zinc-200/90 bg-white/78 p-2 dark:border-zinc-700/40 dark:bg-zinc-900/70">
                 <TabButton

@@ -10,6 +10,7 @@ import { Header } from "~/components/header";
 import { Footer } from "~/components/footer";
 import { isMobile } from "react-device-detect";
 import { Toast } from "~/components/common/toast";
+import { useSyncHub } from "~/hooks/useSyncHub.ts";
 import { useOnReload } from "~/hooks/useOnReload.ts";
 import { SearchBar } from "~/components/common/search-bar";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
@@ -31,6 +32,7 @@ function NotFoundComponent() {
 function RootComponent() {
     useOnReload();
     useSync();
+    useSyncHub();
     const pwa = usePWA();
     return (
         <>
