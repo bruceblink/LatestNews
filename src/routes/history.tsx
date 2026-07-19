@@ -13,6 +13,7 @@ import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useReadingState } from "~/hooks/useReadingState";
 import { getReadingStateList } from "@shared/reading-state";
 import { formatReadingHistoryExport } from "@shared/history-export";
+import { verifyLatestNewsSyncHubConnection } from "@shared/synchub-contract";
 import { filterReadingHistory, hasReadingHistoryFilters } from "@shared/history-filter";
 import {
     getSyncHubConfig,
@@ -78,6 +79,7 @@ function HistoryPage() {
     const [stateTab, setStateTab] = useState<HistoryTab>("history");
     const [syncHubEndpoint, setSyncHubEndpoint] = useState(() => getSyncHubConfig().endpoint);
     const [syncHubApiKey, setSyncHubApiKey] = useState(() => getSyncHubConfig().apiKey);
+    const [syncHubChecking, setSyncHubChecking] = useState(false);
 
     const sourceOptions = useMemo(() => {
         const map = new Map<string, { count: number; name: string }>();
@@ -182,6 +184,7 @@ function HistoryPage() {
                     className="min-w-0 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-cyan-500 dark:border-zinc-700 dark:bg-zinc-800"
                 />
                 <input
+                    type="password"
                     value={syncHubApiKey}
                     onChange={(event) => setSyncHubApiKey(event.target.value)}
                     placeholder="LatestNews API Key (shk_...)"
@@ -189,13 +192,20 @@ function HistoryPage() {
                 />
                 <button
                     type="button"
+                    disabled={syncHubChecking}
                     onClick={() => {
-                        saveSyncHubConfig({ endpoint: syncHubEndpoint, apiKey: syncHubApiKey });
-                        window.location.reload();
+                        setSyncHubChecking(true);
+                        void verifyLatestNewsSyncHubConnection(syncHubEndpoint, syncHubApiKey).then((result) => {
+                            setSyncHubChecking(false);
+                            toaster(result.message, { type: result.ok ? "success" : "error" });
+                            if (!result.ok) return;
+                            saveSyncHubConfig({ endpoint: syncHubEndpoint, apiKey: syncHubApiKey });
+                            window.location.reload();
+                        });
                     }}
-                    className="rounded-xl bg-cyan-500 px-3 py-2 text-sm font-medium text-zinc-900"
+                    className="rounded-xl bg-cyan-500 px-3 py-2 text-sm font-medium text-zinc-900 disabled:cursor-wait disabled:opacity-60"
                 >
-                    保存同步
+                    {syncHubChecking ? "正在验证" : "验证并保存"}
                 </button>
                 {(syncHubEndpoint !== defaultSyncHubEndpoint || syncHubApiKey) && (
                     <button
