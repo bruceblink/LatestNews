@@ -27,6 +27,7 @@ LatestNews 是一个以中文资讯聚合为核心的实时阅读应用，提供
 - 提供 v1 只读 API、节点清单、JSON Feed/RSS 和诊断导出，便于外部工具接入
 - 支持安装为 PWA，并提供离线与更新反馈
 - 支持缓存、限频抓取与登录用户强制刷新
+- 支持通过 `https://sync.likanug.app` 和 LatestNews API Key 同步阅读历史、收藏与偏好，也可覆盖服务地址接入自建 SyncHub
 
 ## 技术栈
 

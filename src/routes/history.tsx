@@ -14,7 +14,12 @@ import { useReadingState } from "~/hooks/useReadingState";
 import { getReadingStateList } from "@shared/reading-state";
 import { formatReadingHistoryExport } from "@shared/history-export";
 import { filterReadingHistory, hasReadingHistoryFilters } from "@shared/history-filter";
-import { getSyncHubConfig, saveSyncHubConfig, clearSyncHubConfig } from "~/services/synchub.service";
+import {
+    getSyncHubConfig,
+    saveSyncHubConfig,
+    clearSyncHubConfig,
+    defaultSyncHubEndpoint,
+} from "~/services/synchub.service";
 
 export const Route = createFileRoute("/history")({
     component: HistoryPage,
@@ -173,7 +178,7 @@ function HistoryPage() {
                 <input
                     value={syncHubEndpoint}
                     onChange={(event) => setSyncHubEndpoint(event.target.value)}
-                    placeholder="SyncHub 服务地址"
+                    placeholder={defaultSyncHubEndpoint}
                     className="min-w-0 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-cyan-500 dark:border-zinc-700 dark:bg-zinc-800"
                 />
                 <input
@@ -192,11 +197,13 @@ function HistoryPage() {
                 >
                     保存同步
                 </button>
-                {(syncHubEndpoint || syncHubApiKey) && (
+                {(syncHubEndpoint !== defaultSyncHubEndpoint || syncHubApiKey) && (
                     <button
                         type="button"
                         onClick={() => {
                             clearSyncHubConfig();
+                            setSyncHubEndpoint(defaultSyncHubEndpoint);
+                            setSyncHubApiKey("");
                             window.location.reload();
                         }}
                         className="rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700"
