@@ -14,7 +14,7 @@
 - Feed 离线快照、PWA 更新反馈和网络恢复反馈。
 - 版本化离线阅读快照契约：历史、收藏和关注源均有 URL 规范化、数量上限、过期与损坏数据保护。
 
-当前功能基线为 `842616a`，后续开发从 R3-B 的页面与存储接入开始，不重复建设已经完成的 Phase 0/1 能力。
+当前功能基线为 `9954a35`，后续开发从 R3-C 的页面接入开始，不重复建设已经完成的 Phase 0/1 能力。
 
 ## 交付顺序
 
@@ -196,7 +196,7 @@ interface KeywordTrend {
 
 ### R3 PWA 离线阅读扩展
 
-状态：R3-A 已完成；R3-B 和 R3-C 待执行。
+状态：R3-A、R3-B 已完成；R3-C 待执行。
 
 目标：将离线能力从 Feed 快照扩展到最近阅读、收藏和关注源。
 
@@ -219,11 +219,11 @@ interface KeywordTrend {
 执行顺序：
 
 1. `R3-A` 已完成：在 `shared/offline-reading-state.ts` 定义 `OfflineReadingSnapshot`，版本固定为 `1`。历史按规范化 URL 去重且最多 200 条，收藏最多 300 条，关注源最多 100 个；快照分为 `fresh`、`stale`、`invalid` 三种状态。未知版本、损坏结构和超过 60 秒的未来时间均安全忽略。相关单测覆盖规范化、确定性排序、上限、迁移与过期状态，已运行 `pnpm check`。
-2. `R3-B` 新增 `src/services/offline-reading-state.service.ts`，只负责浏览器存储读写，不直接修改 atom：
-   - 存储键独立于 Feed 快照；读操作必须捕获 JSON/Storage 异常，并通过 R3-A 迁移函数丢弃无效数据。
-   - 服务返回快照和状态，而非仅返回数据，使页面可以区分“无快照”“可用快照”“过期快照”。
-   - 在线时由 `readingHistoryAtom`、`readingStateAtom` 与 `focusSourcesAtom` 写入最新快照；离线或接口失败时只读取快照，不能把快照反写到 SyncHub 上传队列。
-   - 先为正常读写、Storage 配额异常、损坏 JSON、过期快照和无浏览器环境补服务层测试。
+2. `R3-B` 已完成：新增 `src/services/offline-reading-state.service.ts`，只负责浏览器存储读写，不直接修改 atom：
+   - 使用独立存储键；读操作捕获 JSON/Storage 异常，并通过 R3-A 迁移函数丢弃无效数据。
+   - `readOfflineReadingSnapshot` 返回 `missing`、`fresh`、`stale` 或 `invalid`；损坏和未知版本不会作为页面数据返回。
+   - 服务通过 `globalThis` 受控访问浏览器存储，因此 Node 侧的测试配置和无存储环境都会安全退化，不依赖 `window` 全局。
+   - 定向测试覆盖正常读写与规范化、过期快照、损坏 JSON、未知版本、配额/访问异常和无浏览器环境；已通过定向 Vitest 与 `pnpm typecheck`。
 3. `R3-C` 在 `src/routes/history.tsx` 和关注源入口接入服务层：
    - 仅当在线数据不可用且快照可用时显示快照；在线数据恢复后立即以当前 atom 数据刷新快照。
    - 用统一但紧凑的状态提示展示保存时间；过期快照明确显示“可能不是最新内容”，不伪装成在线状态。
@@ -267,7 +267,7 @@ interface KeywordTrend {
 | --- | --- | --- | --- |
 | M1 洞察闭环 | R1-A 至 R1-C | 已完成 | 趋势、权重和排序原因可在 `/insights` 查看 |
 | M2 同步可靠性 | R2-A1、R2-A2、R2-B | M1 | 本地/远端合并无数据丢失，失败可见且可重试 |
-| M3 离线阅读 | R3-A、R3-B | M2 | 离线可打开历史、收藏、关注源和最后 Feed 快照 |
+| M3 离线阅读 | R3-A 至 R3-C | M2 | 离线可打开历史、收藏、关注源和最后 Feed 快照 |
 | M4 节点联邦 | R4-A 至 R4-D | M2、M3 | 受控上游接入和鉴权下游均通过故障与安全测试 |
 
 ## 每个切片的交付门槛
@@ -281,4 +281,4 @@ interface KeywordTrend {
 
 ## 下一步
 
-下一次开发执行 R3-B：先实现离线阅读快照的浏览器存储服务和异常保护，不接页面或 Service Worker。先补服务层单测，通过 `pnpm typecheck` 与定向 Vitest 后，以 `feat: persist offline reading snapshots` 单独提交。
+下一次开发执行 R3-C：接入历史与关注源页面，在在线状态变化时保存当前 atom 快照；只有在线数据不可用时才使用 `fresh` 或 `stale` 快照。先补路由/状态选择纯函数测试，再进行页面与 Service Worker 离线冒烟，以 `feat: show offline reading snapshots` 单独提交。
