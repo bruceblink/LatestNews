@@ -111,6 +111,7 @@ export default [
             "**/*.json",
             "node_modules/*",
             "dist/*",
+            ".wrangler/",
             "imports.app.d.ts",
             "generated/*",
             "server/glob.d.ts",

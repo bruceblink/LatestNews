@@ -79,6 +79,16 @@ R4-B 的上游客户端只能运行在服务端。节点地址只可来自运行
 4. 依据清单中受支持的只读端点请求源元数据、健康或条目。
 5. 将远端错误映射为本地联邦诊断，不让其覆盖本地缓存、Feed 或健康数据。
 
+## R4-B Runtime Surface
+
+R4-B 提供 `GET /api/v1/federation/upstream` 作为本节点的只读诊断入口。它没有 endpoint、token 或目标路径参数，只读取部署环境中的 `LATESTNEWS_UPSTREAM_ENDPOINT`、可选 `LATESTNEWS_FEDERATION_UPSTREAM_TOKEN` 和本地开发专用的 `LATESTNEWS_FEDERATION_ALLOW_HTTP=true`。
+
+- 未配置上游时，接口返回 `data: null`、`configured: false` 和空错误列表；不会创建任何外部请求。
+- 读取成功后，接口返回已验证的远端清单与远端节点 ID。远端的端点只能是同 origin 的相对只读 API 路径。
+- 配置错误、无效清单、协议不兼容、超时和不可用分别映射为本文定义的机器可读错误码及 400、502、426、504、503 状态。
+- Node server 使用已验证的 DNS 地址作为连接 lookup，避免验证完成后再次进行可被重绑定的 DNS 查询。Cloudflare Pages 没有等价的连接固定器时必须安全失败，不能降级为未校验的直接 fetch。
+- 该诊断接口不参与 Feed、健康或缓存的本地结果计算；上游故障不会使本节点公开 v1 API 变为空数据。
+
 ## Timeout, Retry, And Circuit Policy
 
 R4-B 使用以下总预算，具体实现可以更短，不能更长：
@@ -140,7 +150,7 @@ Public current v1 endpoints remain public according to their deployment setting.
 | Slice | Implementation boundary | Required evidence |
 | --- | --- | --- |
 | R4-A | This contract only. | `git diff --check`; existing `/api/v1/node` and OpenAPI tests remain green. |
-| R4-B | Server-side read-only upstream client plus URL policy. | Fixtures for valid manifest, missing endpoint, incompatible version, private/loopback address, DNS-rebound result, timeout, non-JSON and 5xx; `pnpm typecheck`; local API probe. |
+| R4-B | Server-side read-only upstream client plus URL policy. | Fixtures for valid manifest, missing endpoint, incompatible version, private/loopback address, DNS-rebound result, timeout, non-JSON and 5xx; `pnpm typecheck`; Node-server local API probe. |
 | R4-C | Per-origin circuit breaker and degraded health summary. | Deterministic timer tests for opening, half-open probe, recovery and local-data fallback. |
 | R4-D | Downstream auth, scope checks, audit fields and rate limits. | Auth missing/invalid/rotated key tests, scope-denial tests, rate-limit tests and secret-redaction review. |
 

@@ -31,6 +31,13 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                     responses: okJsonResponse("OpenAPI document"),
                 },
             },
+            "/api/v1/federation/upstream": {
+                get: {
+                    summary: "Get the deployment-configured upstream node manifest",
+                    tags: ["Node Federation"],
+                    responses: okJsonResponse("Upstream node manifest envelope"),
+                },
+            },
             [withApiPrefix(sourceApi.sourcesV1)]: {
                 get: {
                     summary: "List source metadata",
