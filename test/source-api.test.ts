@@ -60,9 +60,18 @@ describe("source API contract", () => {
             undefined,
             undefined,
             undefined,
+            undefined,
+            undefined,
             ["https://a.example.com", "https://b.example.com"],
             ["https://hidden-a.example.com", "https://hidden-b.example.com"],
         ]);
+        expect(
+            getNewsInsightsCacheKey({
+                sources: ["weibo"] as SourceID[],
+                trendLimit: 8,
+                trendWindow: "7d",
+            })
+        ).toEqual(["news-insights", ["weibo"], undefined, undefined, undefined, 8, "7d", undefined, [], []]);
         expect(getUnifiedFeedCacheKey({ sources: ["weibo", "ithome"] as SourceID[], since: 1 })).toEqual([
             "unified-feed",
             ["ithome", "weibo"],

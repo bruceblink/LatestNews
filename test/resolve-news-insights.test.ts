@@ -37,6 +37,8 @@ describe("resolveNewsInsights", () => {
             insightOptions: {
                 hotLimit: 1,
                 wordLimit: 5,
+                trendLimit: 1,
+                trendWindow: "7d",
                 hiddenUrls: ["https://example.com/weibo/gpt5"],
             },
         });
@@ -52,6 +54,8 @@ describe("resolveNewsInsights", () => {
         expect(result.data.generatedAt).toBe(NOW);
         expect(result.data.itemCount).toBe(1);
         expect(result.data.hotRankings).toHaveLength(1);
+        expect(result.data.keywordTrends).toHaveLength(1);
+        expect(result.data.updateFrequency.reduce((total, bucket) => total + bucket.itemCount, 0)).toBe(1);
         expect(result.data.hotRankings[0].sourceId).toBe("v2ex");
         expect(fetchMissing).toHaveBeenCalledWith("v2ex");
         expect(saveCache).toHaveBeenCalledWith("v2ex", expect.any(Array));

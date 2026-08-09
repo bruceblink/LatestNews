@@ -130,6 +130,33 @@ describe("news insights", () => {
         ]);
     });
 
+    it("builds deterministic update frequency and keyword trends", () => {
+        const generatedAt = NOW + 30 * 60 * 1000;
+        const insights = createNewsInsights(
+            [
+                createResponse("weibo" as SourceID, "Weibo", [
+                    createItem("weibo-openai-now", "OpenAI 发布新模型", "https://news.example.com/openai-now", 30),
+                    createItem("weibo-openai-old", "OpenAI 旧模型回顾", "https://news.example.com/openai-old", 300),
+                    {
+                        id: "weibo-undated",
+                        title: "OpenAI 无发布时间条目",
+                        url: "https://news.example.com/openai-undated",
+                    },
+                ]),
+                createResponse("v2ex" as SourceID, "V2EX", [
+                    createItem("v2ex-openai", "OpenAI 社区讨论", "https://v2ex.example.com/openai", 90),
+                ]),
+            ],
+            { generatedAt, trendLimit: 1, trendWindow: "24h" }
+        );
+
+        const openai = insights.keywordTrends[0];
+        expect(openai).toMatchObject({ term: "openai", totalCount: 3, sourceCount: 2 });
+        expect(openai.buckets.filter((bucket) => bucket.itemCount > 0)).toHaveLength(2);
+        expect(insights.updateFrequency.reduce((total, bucket) => total + bucket.itemCount, 0)).toBe(3);
+        expect(insights.updateFrequency.every((bucket) => bucket.endAt > bucket.startAt)).toBe(true);
+    });
+
     it("omits hidden URLs from rankings and summaries", () => {
         const insights = createNewsInsights(
             [

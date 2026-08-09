@@ -1,6 +1,6 @@
-import type { NewsInsights } from "./news-insights";
 import type { SourceID, SourceResponse } from "./types";
 import type { SourceResponseStatus } from "./source-response-status";
+import type { NewsInsights, InsightTrendWindow } from "./news-insights";
 
 export const sourceApi = {
     single: "/s",
@@ -49,6 +49,8 @@ export interface NewsInsightsPayload {
     hotLimit?: number;
     topicLimit?: number;
     wordLimit?: number;
+    trendLimit?: number;
+    trendWindow?: InsightTrendWindow;
     minTopicItems?: number;
     readUrls?: string[];
     hiddenUrls?: string[];
@@ -151,6 +153,8 @@ export function getNewsInsightsCacheKey(payload: NewsInsightsPayload) {
         payload.hotLimit,
         payload.topicLimit,
         payload.wordLimit,
+        payload.trendLimit,
+        payload.trendWindow,
         payload.minTopicItems,
         [...(payload.readUrls ?? [])].sort(),
         [...(payload.hiddenUrls ?? [])].sort(),

@@ -7,7 +7,18 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_HOT_LIMIT = 20;
 const DEFAULT_TOPIC_LIMIT = 20;
 const DEFAULT_WORD_LIMIT = 40;
+const DEFAULT_TREND_LIMIT = 12;
 const DEFAULT_MIN_TOPIC_ITEMS = 2;
+const TREND_WINDOW_CONFIG = {
+    "24h": {
+        durationMs: DAY_MS,
+        bucketMs: 4 * 60 * 60 * 1000,
+    },
+    "7d": {
+        durationMs: 7 * DAY_MS,
+        bucketMs: DAY_MS,
+    },
+} as const;
 const TRACKING_QUERY_PATTERN = /^(utm_|spm$|from$|ref$|source$|share$|fbclid$|gclid$|igshid$|yclid$)/i;
 
 const DEFAULT_STOP_WORDS = new Set([
@@ -53,12 +64,16 @@ export interface NewsInsightOptions {
     hotLimit?: number;
     topicLimit?: number;
     wordLimit?: number;
+    trendLimit?: number;
+    trendWindow?: InsightTrendWindow;
     minTopicItems?: number;
     sourceWeights?: Partial<Record<SourceID, number>>;
     readUrls?: Iterable<string>;
     hiddenUrls?: Iterable<string>;
     stopWords?: Iterable<string>;
 }
+
+export type InsightTrendWindow = keyof typeof TREND_WINDOW_CONFIG;
 
 export interface InsightSourceItem {
     id: string;
@@ -147,6 +162,21 @@ export interface CategoryShare {
     latestPublishedAt?: number;
 }
 
+export interface InsightTimeBucket {
+    startAt: number;
+    endAt: number;
+    itemCount: number;
+    sourceCount: number;
+}
+
+export interface KeywordTrend {
+    term: string;
+    totalCount: number;
+    sourceCount: number;
+    latestPublishedAt?: number;
+    buckets: InsightTimeBucket[];
+}
+
 export interface NewsInsights {
     generatedAt: number;
     sourceCount: number;
@@ -156,11 +186,28 @@ export interface NewsInsights {
     wordCloud: WordCloudTerm[];
     sourceActivity: SourceActivity[];
     categoryShares: CategoryShare[];
+    updateFrequency: InsightTimeBucket[];
+    keywordTrends: KeywordTrend[];
 }
 
 interface TopicGroup {
     id: string;
     items: InsightSourceItem[];
+}
+
+interface MutableInsightTimeBucket {
+    startAt: number;
+    endAt: number;
+    itemCount: number;
+    sourceIds: Set<SourceID>;
+}
+
+interface MutableKeywordTrend {
+    term: string;
+    totalCount: number;
+    latestPublishedAt?: number;
+    sourceIds: Set<SourceID>;
+    buckets: Map<number, { itemCount: number; sourceIds: Set<SourceID> }>;
 }
 
 export function createNewsInsights(responses: SourceResponse[], options: NewsInsightOptions = {}): NewsInsights {
@@ -176,6 +223,8 @@ export function createNewsInsights(responses: SourceResponse[], options: NewsIns
         wordCloud: createWordCloud(items, { ...options, generatedAt }),
         sourceActivity: createSourceActivity(items),
         categoryShares: createCategoryShares(items),
+        updateFrequency: createUpdateFrequency(items, { ...options, generatedAt }),
+        keywordTrends: createKeywordTrends(items, { ...options, generatedAt }),
     };
 }
 
@@ -201,7 +250,7 @@ export function collectInsightItems(
             const canonicalUrl = normalizeNewsUrl(url);
             if (hiddenUrls.has(canonicalUrl)) continue;
 
-            const publishedAt = parseNewsTime(item.pubDate ?? item.extra?.date ?? responseUpdatedTime);
+            const publishedAt = parseNewsTime(item.pubDate ?? item.extra?.date);
             const terms = extractInsightTerms(title, options);
             const fallbackId = `${response.id}:${canonicalUrl || title}:${items.length}`;
 
@@ -345,6 +394,101 @@ export function createCategoryShares(items: InsightSourceItem[]): CategoryShare[
                 (b.latestPublishedAt ?? 0) - (a.latestPublishedAt ?? 0) ||
                 a.categoryName.localeCompare(b.categoryName)
         );
+}
+
+/** Builds deterministic time buckets for items with a valid publication timestamp. */
+export function createUpdateFrequency(
+    items: InsightSourceItem[],
+    options: Pick<NewsInsightOptions, "generatedAt" | "trendWindow"> = {}
+): InsightTimeBucket[] {
+    const generatedAt = options.generatedAt ?? Date.now();
+    const config = TREND_WINDOW_CONFIG[options.trendWindow ?? "24h"];
+    const firstBucketStart = Math.floor((generatedAt - config.durationMs) / config.bucketMs) * config.bucketMs;
+    const lastBucketStart = Math.floor(generatedAt / config.bucketMs) * config.bucketMs;
+    const buckets = createEmptyBuckets(firstBucketStart, lastBucketStart, config.bucketMs);
+
+    for (const item of items) {
+        const publishedAt = item.publishedAt;
+        if (publishedAt === undefined || publishedAt < generatedAt - config.durationMs || publishedAt > generatedAt) {
+            continue;
+        }
+
+        const bucketIndex = getBucketIndex(buckets, publishedAt);
+        if (bucketIndex === -1) continue;
+
+        const bucket = buckets[bucketIndex];
+        bucket.itemCount += 1;
+        bucket.sourceIds.add(item.sourceId);
+    }
+
+    return buckets.map(toInsightTimeBucket);
+}
+
+/** Aggregates top keywords into the same deterministic buckets used by update frequency. */
+export function createKeywordTrends(
+    items: InsightSourceItem[],
+    options: Pick<NewsInsightOptions, "generatedAt" | "trendLimit" | "trendWindow"> = {}
+): KeywordTrend[] {
+    const generatedAt = options.generatedAt ?? Date.now();
+    const config = TREND_WINDOW_CONFIG[options.trendWindow ?? "24h"];
+    const firstBucketStart = Math.floor((generatedAt - config.durationMs) / config.bucketMs) * config.bucketMs;
+    const lastBucketStart = Math.floor(generatedAt / config.bucketMs) * config.bucketMs;
+    const buckets = createEmptyBuckets(firstBucketStart, lastBucketStart, config.bucketMs);
+    const trends = new Map<string, MutableKeywordTrend>();
+
+    for (const item of items) {
+        const publishedAt = item.publishedAt;
+        if (publishedAt === undefined || publishedAt < generatedAt - config.durationMs || publishedAt > generatedAt) {
+            continue;
+        }
+
+        const bucketIndex = getBucketIndex(buckets, publishedAt);
+        if (bucketIndex === -1) continue;
+
+        for (const term of new Set(item.terms)) {
+            const current = trends.get(term) ?? {
+                term,
+                totalCount: 0,
+                latestPublishedAt: undefined,
+                sourceIds: new Set<SourceID>(),
+                buckets: new Map(),
+            };
+            const bucket = current.buckets.get(bucketIndex) ?? {
+                itemCount: 0,
+                sourceIds: new Set<SourceID>(),
+            };
+
+            current.totalCount += 1;
+            current.sourceIds.add(item.sourceId);
+            current.latestPublishedAt = maxOptional(current.latestPublishedAt, publishedAt);
+            bucket.itemCount += 1;
+            bucket.sourceIds.add(item.sourceId);
+            current.buckets.set(bucketIndex, bucket);
+            trends.set(term, current);
+        }
+    }
+
+    return [...trends.values()]
+        .sort(
+            (a, b) =>
+                b.totalCount - a.totalCount ||
+                b.sourceIds.size - a.sourceIds.size ||
+                (b.latestPublishedAt ?? 0) - (a.latestPublishedAt ?? 0) ||
+                a.term.localeCompare(b.term)
+        )
+        .slice(0, options.trendLimit ?? DEFAULT_TREND_LIMIT)
+        .map(({ sourceIds, buckets: trendBuckets, ...trend }) => ({
+            ...trend,
+            sourceCount: sourceIds.size,
+            buckets: buckets.map((bucket, index) => {
+                const trendBucket = trendBuckets.get(index);
+                return {
+                    ...toInsightTimeBucket(bucket),
+                    itemCount: trendBucket?.itemCount ?? 0,
+                    sourceCount: trendBucket?.sourceIds.size ?? 0,
+                };
+            }),
+        }));
 }
 
 export function extractInsightTerms(title: string, options: Pick<NewsInsightOptions, "stopWords"> = {}): string[] {
@@ -596,6 +740,31 @@ function maxOptional(current: number | undefined, next: number | undefined) {
 function maxDefined(values: Array<number | undefined>) {
     const definedValues = values.filter((value): value is number => typeof value === "number");
     return definedValues.length ? Math.max(...definedValues) : undefined;
+}
+
+function createEmptyBuckets(firstBucketStart: number, lastBucketStart: number, bucketMs: number) {
+    const buckets: MutableInsightTimeBucket[] = [];
+    for (let startAt = firstBucketStart; startAt <= lastBucketStart; startAt += bucketMs) {
+        buckets.push({
+            startAt,
+            endAt: startAt + bucketMs,
+            itemCount: 0,
+            sourceIds: new Set<SourceID>(),
+        });
+    }
+    return buckets;
+}
+
+function getBucketIndex(buckets: MutableInsightTimeBucket[], publishedAt: number) {
+    const index = buckets.findIndex((bucket) => publishedAt >= bucket.startAt && publishedAt < bucket.endAt);
+    return index;
+}
+
+function toInsightTimeBucket({ sourceIds, ...bucket }: MutableInsightTimeBucket): InsightTimeBucket {
+    return {
+        ...bucket,
+        sourceCount: sourceIds.size,
+    };
 }
 
 function average(values: number[]) {
