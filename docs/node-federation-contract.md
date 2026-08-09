@@ -89,6 +89,16 @@ R4-B 提供 `GET /api/v1/federation/upstream` 作为本节点的只读诊断入�
 - Node server 使用已验证的 DNS 地址作为连接 lookup，避免验证完成后再次进行可被重绑定的 DNS 查询。Cloudflare Pages 没有等价的连接固定器时必须安全失败，不能降级为未校验的直接 fetch。
 - 该诊断接口不参与 Feed、健康或缓存的本地结果计算；上游故障不会使本节点公开 v1 API 变为空数据。
 
+## R4-C Runtime Surface
+
+R4-C 在同一 `GET /api/v1/federation/upstream` 诊断响应中补充本节点可用的健康摘要，而不把远端失败伪装成空本地数据：
+
+- `meta.localHealth` 始终包含本节点来源的更新时间、总数、正常、异常、未采样和缓存降级计数；它不包含远端来源条目。
+- `meta.upstream.status` 为 `not_configured`、`healthy` 或 `degraded`，并包含可序列化的熔断快照：`closed`、`open` 或 `half_open`、连续失败数和可用时的下一次探测时间。
+- 熔断器按已规范化的上游 origin 保存在当前服务进程内。连续 3 次**终态可重试**失败后打开 30 秒；到期后仅一个请求可以作为半开探测，成功后关闭，失败后重新打开。
+- 连接失败和超时会在总请求内进行一次带抖动的指数退避重试。收到了 HTTP 响应后的 4xx/5xx、重定向和无效清单不会在同一次请求内重试；可重试的终态错误仍会进入熔断器计数。
+- 熔断打开时接口返回 `federation_circuit_open`、503 和本地健康摘要，不再解析 DNS 或发起远端请求。Feed、来源和本地健康接口仍完全独立。
+
 ## Timeout, Retry, And Circuit Policy
 
 R4-B 使用以下总预算，具体实现可以更短，不能更长：
@@ -151,7 +161,7 @@ Public current v1 endpoints remain public according to their deployment setting.
 | --- | --- | --- |
 | R4-A | This contract only. | `git diff --check`; existing `/api/v1/node` and OpenAPI tests remain green. |
 | R4-B | Server-side read-only upstream client plus URL policy. | Fixtures for valid manifest, missing endpoint, incompatible version, private/loopback address, DNS-rebound result, timeout, non-JSON and 5xx; `pnpm typecheck`; Node-server local API probe. |
-| R4-C | Per-origin circuit breaker and degraded health summary. | Deterministic timer tests for opening, half-open probe, recovery and local-data fallback. |
+| R4-C | Per-origin circuit breaker and degraded health summary. 已完成。 | Deterministic timer tests for opening, half-open probe, recovery and local-data fallback. |
 | R4-D | Downstream auth, scope checks, audit fields and rate limits. | Auth missing/invalid/rotated key tests, scope-denial tests, rate-limit tests and secret-redaction review. |
 
 No slice may modify existing `/api/v1/node` fields incompatibly. Any new network path must have focused tests before it is connected to Feed or public v1 responses.

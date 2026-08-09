@@ -1,10 +1,16 @@
 import type {
     FederationErrorCode,
+    UpstreamCircuitSnapshot,
     ParsedUpstreamNodeManifest,
     ValidatedUpstreamNodeEndpoint,
 } from "@shared/upstream-node-federation";
 
 import process from "node:process";
+import {
+    type UpstreamCircuitPermit,
+    type UpstreamCircuitBreaker,
+    createUpstreamCircuitBreaker,
+} from "#/utils/upstream-circuit-breaker";
 import {
     isPublicInternetAddress,
     parseUpstreamNodeManifest,
@@ -14,11 +20,16 @@ import {
 
 const MANIFEST_TIMEOUT_MS = 3_000;
 const RETRY_DELAY_MS = 250;
+const MAX_RETRY_DELAY_MS = 1_000;
 const SUPPORTED_FEDERATION_PROTOCOL_MAJOR = 1;
+const upstreamCircuitBreaker = createUpstreamCircuitBreaker();
 
 type UpstreamFetch = (input: string, init: RequestInit) => Promise<Response>;
 type HostnameResolver = (hostname: string) => Promise<string[]>;
 type Wait = (milliseconds: number) => Promise<void>;
+type Clock = () => number;
+
+type HostnameResolution = { kind: "success"; addresses: string[] } | { kind: "failure" } | { kind: "timeout" };
 
 interface NodeHttpResponse {
     headers: Record<string, string | string[] | number | undefined>;
@@ -52,8 +63,11 @@ interface NodeHttpRequestModule {
 
 export interface FetchUpstreamNodeManifestOptions {
     allowHttp?: boolean;
+    circuitBreaker?: UpstreamCircuitBreaker;
     endpoint: string;
     fetcher?: UpstreamFetch;
+    now?: Clock;
+    random?: () => number;
     resolveHostname?: HostnameResolver;
     retryDelay?: Wait;
     timeoutMs?: number;
@@ -64,12 +78,14 @@ export type UpstreamNodeManifestResult =
     | {
           ok: true;
           attempts: number;
+          circuit?: UpstreamCircuitSnapshot;
           endpoint: ValidatedUpstreamNodeEndpoint;
           manifest: ParsedUpstreamNodeManifest;
       }
     | {
           ok: false;
           attempts: number;
+          circuit?: UpstreamCircuitSnapshot;
           code: FederationErrorCode;
           message: string;
           retriable: boolean;
@@ -85,47 +101,76 @@ export async function fetchUpstreamNodeManifest(
     const endpoint = validateUpstreamNodeEndpoint(options.endpoint, { allowHttp: options.allowHttp });
     if (!endpoint) return endpointFailure("Configured upstream endpoint is not an allowed public origin.");
 
-    const resolveHostname = options.resolveHostname ?? resolvePublicHostname;
-    let resolvedAddresses: string[];
-    try {
-        resolvedAddresses = await resolveHostname(endpoint.hostname);
-    } catch {
-        return unavailableFailure(0, "Configured upstream hostname could not be resolved.");
-    }
+    const circuitBreaker = options.circuitBreaker ?? upstreamCircuitBreaker;
+    const access = circuitBreaker.acquire(endpoint.origin);
+    if (!access.allowed) return circuitOpenFailure(access.circuit);
+    const complete = (result: UpstreamNodeManifestResult) =>
+        completeCircuitRequest(result, circuitBreaker, access.permit);
 
-    if (!resolvedAddresses.length || resolvedAddresses.some((address) => !isPublicInternetAddress(address))) {
-        return endpointFailure("Configured upstream hostname resolved to a non-public address.");
-    }
+    const now = options.now ?? Date.now;
+    const timeoutMs = Math.min(Math.max(options.timeoutMs ?? MANIFEST_TIMEOUT_MS, 1), MANIFEST_TIMEOUT_MS);
+    const deadlineAt = now() + timeoutMs;
+    const resolveHostname = options.resolveHostname ?? resolvePublicHostname;
+    const hostnameResolution = await resolveHostnameWithinBudget(
+        resolveHostname,
+        endpoint.hostname,
+        getRemainingTimeout(deadlineAt, now)
+    );
+    if (hostnameResolution.kind === "timeout")
+        return complete(timeoutFailure(0, "Configured upstream hostname did not resolve before the request deadline."));
+    if (hostnameResolution.kind === "failure")
+        return complete(unavailableFailure(0, "Configured upstream hostname could not be resolved."));
+    const resolvedAddresses = hostnameResolution.addresses;
+
+    if (!resolvedAddresses.length)
+        return complete(unavailableFailure(0, "Configured upstream hostname returned no addresses."));
+    if (resolvedAddresses.some((address) => !isPublicInternetAddress(address)))
+        return complete(endpointFailure("Configured upstream hostname resolved to a non-public address."));
 
     const fetcher = options.fetcher ?? createPinnedNodeFetch(resolvedAddresses[0]);
     const retryDelay = options.retryDelay ?? wait;
-    const timeoutMs = Math.min(Math.max(options.timeoutMs ?? MANIFEST_TIMEOUT_MS, 1), MANIFEST_TIMEOUT_MS);
 
     for (let attempt = 1; attempt <= 2; attempt += 1) {
-        const response = await requestManifest(fetcher, endpoint, options.token, timeoutMs);
+        const remainingTimeoutMs = getRemainingTimeout(deadlineAt, now);
+        if (remainingTimeoutMs <= 0)
+            return complete(timeoutFailure(attempt - 1, "Upstream node did not respond before the request deadline."));
+        const response = await requestManifest(fetcher, endpoint, options.token, remainingTimeoutMs);
         if (response.ok) {
             const manifest = parseUpstreamNodeManifest(response.value);
-            if (!manifest) return manifestFailure(attempt, "Upstream node returned an invalid manifest.");
+            if (!manifest) return complete(manifestFailure(attempt, "Upstream node returned an invalid manifest."));
 
             const protocolMajor = getFederationProtocolMajor(manifest.federation);
             if (protocolMajor !== undefined && protocolMajor !== SUPPORTED_FEDERATION_PROTOCOL_MAJOR) {
-                return {
+                return complete({
                     ok: false,
                     attempts: attempt,
                     code: "federation_protocol_unsupported",
                     message: "Upstream node uses an unsupported federation protocol version.",
                     retriable: false,
-                };
+                });
             }
 
-            return { ok: true, attempts: attempt, endpoint, manifest };
+            return complete({ ok: true, attempts: attempt, endpoint, manifest });
         }
 
-        if (!response.shouldRetry || attempt === 2) return response.failure(attempt);
-        await retryDelay(RETRY_DELAY_MS);
+        if (!response.shouldRetry || attempt === 2) return complete(response.failure(attempt));
+        const delayMs = getFederationRetryDelay(attempt - 1, options.random);
+        if (delayMs >= getRemainingTimeout(deadlineAt, now))
+            return complete(timeoutFailure(attempt, "Upstream node did not respond before the request deadline."));
+        await retryDelay(delayMs);
     }
 
-    return unavailableFailure(2, "Upstream node request could not be completed.");
+    return complete(unavailableFailure(2, "Upstream node request could not be completed."));
+}
+
+/**
+ * Calculates a bounded, jittered retry delay for read-only federation requests.
+ * The first retry is centered on 250ms and later retry indexes double until the 1s ceiling.
+ */
+export function getFederationRetryDelay(retryIndex: number, random: () => number = Math.random) {
+    const normalizedRandom = Math.min(1, Math.max(0, random()));
+    const exponentialDelay = Math.min(RETRY_DELAY_MS * 2 ** Math.max(0, retryIndex), MAX_RETRY_DELAY_MS);
+    return Math.min(MAX_RETRY_DELAY_MS, Math.floor(exponentialDelay * (0.5 + normalizedRandom)));
 }
 
 /**
@@ -144,6 +189,34 @@ export function fetchConfiguredUpstreamNodeManifest(
         allowHttp: process.env.LATESTNEWS_FEDERATION_ALLOW_HTTP === "true",
         token: process.env.LATESTNEWS_FEDERATION_UPSTREAM_TOKEN,
     });
+}
+
+/** Resolves DNS within the same wall-clock budget as the manifest request and handles late resolver failures. */
+async function resolveHostnameWithinBudget(
+    resolveHostname: HostnameResolver,
+    hostname: string,
+    timeoutMs: number
+): Promise<HostnameResolution> {
+    if (timeoutMs <= 0) return { kind: "timeout" };
+
+    let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<HostnameResolution>((resolve) => {
+        timeoutTimer = setTimeout(() => resolve({ kind: "timeout" }), timeoutMs);
+    });
+    const resolution: Promise<HostnameResolution> = resolveHostname(hostname).then(
+        (addresses): HostnameResolution => ({ kind: "success", addresses }),
+        (): HostnameResolution => ({ kind: "failure" })
+    );
+
+    try {
+        return await Promise.race([resolution, timeout]);
+    } finally {
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+    }
+}
+
+function getRemainingTimeout(deadlineAt: number, now: Clock) {
+    return Math.max(0, deadlineAt - now());
 }
 
 async function requestManifest(
@@ -224,18 +297,45 @@ function unavailableFailure(attempts: number, message: string): UpstreamNodeMani
     return { ok: false, attempts, code: "federation_upstream_unavailable", message, retriable: true };
 }
 
+function circuitOpenFailure(circuit: UpstreamCircuitSnapshot): UpstreamNodeManifestResult {
+    return {
+        ok: false,
+        attempts: 0,
+        circuit,
+        code: "federation_circuit_open",
+        message: "Upstream node is temporarily quarantined after repeated transient failures.",
+        retriable: true,
+    };
+}
+
+/** Records one terminal public request so retry attempts do not inflate the circuit failure counter. */
+function completeCircuitRequest(
+    result: UpstreamNodeManifestResult,
+    circuitBreaker: UpstreamCircuitBreaker,
+    permit: UpstreamCircuitPermit
+): UpstreamNodeManifestResult {
+    const circuit = result.ok
+        ? circuitBreaker.recordSuccess(permit)
+        : circuitBreaker.recordFailure(permit, result.retriable);
+    return { ...result, circuit };
+}
+
 function manifestFailureFactory(message: string) {
     return (attempts: number) => manifestFailure(attempts, message);
 }
 
 function timeoutFailureFactory(message: string) {
-    return (attempts: number): UpstreamNodeManifestResult => ({
+    return (attempts: number): UpstreamNodeManifestResult => timeoutFailure(attempts, message);
+}
+
+function timeoutFailure(attempts: number, message: string): UpstreamNodeManifestResult {
+    return {
         ok: false,
         attempts,
         code: "federation_upstream_timeout",
         message,
         retriable: true,
-    });
+    };
 }
 
 function unavailableFailureFactory(message: string) {

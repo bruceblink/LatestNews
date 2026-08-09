@@ -33,7 +33,7 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
             },
             "/api/v1/federation/upstream": {
                 get: {
-                    summary: "Get the deployment-configured upstream node manifest",
+                    summary: "Get upstream federation diagnostics with local health fallback",
                     tags: ["Node Federation"],
                     responses: okJsonResponse("Upstream node manifest envelope"),
                 },

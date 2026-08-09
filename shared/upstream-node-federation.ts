@@ -1,4 +1,5 @@
 import type { NodeManifestResponse } from "./node-manifest";
+import type { SourceHealthSummary } from "./source-health-types";
 
 export const upstreamNodeManifestPath = "/api/v1/node";
 
@@ -8,6 +9,7 @@ export const federationErrorCodes = [
     "federation_protocol_unsupported",
     "federation_upstream_timeout",
     "federation_upstream_unavailable",
+    "federation_circuit_open",
 ] as const;
 
 export type FederationErrorCode = (typeof federationErrorCodes)[number];
@@ -34,6 +36,27 @@ export interface FederationApiError {
     retriable: boolean;
 }
 
+export type UpstreamCircuitState = "closed" | "open" | "half_open";
+
+export interface UpstreamCircuitSnapshot {
+    state: UpstreamCircuitState;
+    consecutiveFailures: number;
+    lastFailureAt?: number;
+    lastSuccessAt?: number;
+    openedAt?: number;
+    nextProbeAt?: number;
+}
+
+export type LocalSourceHealthSummary = Pick<
+    SourceHealthSummary,
+    "updatedAt" | "total" | "healthy" | "failing" | "idle" | "cacheDegraded"
+>;
+
+export interface UpstreamFederationHealth {
+    status: "not_configured" | "healthy" | "degraded";
+    circuit: UpstreamCircuitSnapshot;
+}
+
 export interface UpstreamNodeManifestApiResponse {
     data: NodeManifestResponse["data"] | null;
     errors: FederationApiError[];
@@ -41,8 +64,15 @@ export interface UpstreamNodeManifestApiResponse {
         attempts: number;
         configured: boolean;
         generatedAt: number;
+        localHealth: LocalSourceHealthSummary;
+        upstream: UpstreamFederationHealth;
         upstreamNodeId?: string;
     };
+}
+
+/** Creates a fresh, serializable circuit snapshot when no upstream request has run yet. */
+export function createClosedUpstreamCircuitSnapshot(): UpstreamCircuitSnapshot {
+    return { state: "closed", consecutiveFailures: 0 };
 }
 
 export interface UpstreamNodeEndpointPolicy {

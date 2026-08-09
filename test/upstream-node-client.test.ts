@@ -1,11 +1,16 @@
 import { it, vi, expect, describe } from "vitest";
 
-import { fetchUpstreamNodeManifest, fetchConfiguredUpstreamNodeManifest } from "../server/utils/upstream-node-client";
+import { createUpstreamCircuitBreaker } from "../server/utils/upstream-circuit-breaker";
 import {
     isPublicInternetAddress,
     parseUpstreamNodeManifest,
     validateUpstreamNodeEndpoint,
 } from "../shared/upstream-node-federation";
+import {
+    getFederationRetryDelay,
+    fetchUpstreamNodeManifest,
+    fetchConfiguredUpstreamNodeManifest,
+} from "../server/utils/upstream-node-client";
 
 function createManifest(overrides: Record<string, unknown> = {}) {
     return {
@@ -190,6 +195,7 @@ describe("upstream node manifest client", () => {
         const result = await fetchUpstreamNodeManifest({
             endpoint: "https://news.example.com",
             fetcher,
+            random: () => 0.5,
             resolveHostname: async () => ["1.1.1.1"],
             retryDelay,
         });
@@ -197,6 +203,40 @@ describe("upstream node manifest client", () => {
         expect(result).toMatchObject({ ok: true, attempts: 2 });
         expect(fetcher).toHaveBeenCalledTimes(2);
         expect(retryDelay).toHaveBeenCalledWith(250);
+    });
+
+    it("quarantines an origin after three terminal transient failures without counting retry attempts twice", async () => {
+        let now = 1_000;
+        const circuitBreaker = createUpstreamCircuitBreaker({ now: () => now });
+        const fetcher = vi.fn(async () => Promise.reject(new Error("reset")));
+        const options = {
+            endpoint: "https://news.example.com",
+            circuitBreaker,
+            fetcher,
+            random: () => 0.5,
+            resolveHostname: async () => ["1.1.1.1"],
+            retryDelay: async () => undefined,
+        };
+
+        for (let failure = 0; failure < 3; failure += 1) {
+            const result = await fetchUpstreamNodeManifest(options);
+            expect(result).toMatchObject({
+                ok: false,
+                attempts: 2,
+                code: "federation_upstream_unavailable",
+                circuit: { state: failure === 2 ? "open" : "closed", consecutiveFailures: failure + 1 },
+            });
+            now += 1;
+        }
+
+        const blocked = await fetchUpstreamNodeManifest(options);
+        expect(blocked).toMatchObject({
+            ok: false,
+            attempts: 0,
+            code: "federation_circuit_open",
+            circuit: { state: "open", consecutiveFailures: 3, nextProbeAt: 31_002 },
+        });
+        expect(fetcher).toHaveBeenCalledTimes(6);
     });
 
     it("reports timeout and incompatible protocol errors using federation codes", async () => {
@@ -224,8 +264,32 @@ describe("upstream node manifest client", () => {
             resolveHostname,
         });
 
-        expect(timeout).toMatchObject({ ok: false, attempts: 2, code: "federation_upstream_timeout", retriable: true });
+        expect(timeout).toMatchObject({ ok: false, code: "federation_upstream_timeout", retriable: true });
         expect(incompatible).toMatchObject({ ok: false, code: "federation_protocol_unsupported", retriable: false });
+    });
+
+    it("uses one shared deadline for DNS resolution and the manifest request", async () => {
+        vi.useFakeTimers();
+        try {
+            const fetcher = vi.fn();
+            const pending = fetchUpstreamNodeManifest({
+                endpoint: "https://news.example.com",
+                fetcher,
+                resolveHostname: async () => new Promise<string[]>(() => undefined),
+                timeoutMs: 100,
+            });
+
+            const assertion = expect(pending).resolves.toMatchObject({
+                ok: false,
+                attempts: 0,
+                code: "federation_upstream_timeout",
+            });
+            await vi.advanceTimersByTimeAsync(100);
+            await assertion;
+            expect(fetcher).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it("only reads the upstream endpoint and bearer token from deployment environment variables", async () => {
@@ -254,6 +318,16 @@ describe("upstream node manifest client", () => {
             if (previousToken === undefined) delete process.env.LATESTNEWS_FEDERATION_UPSTREAM_TOKEN;
             else process.env.LATESTNEWS_FEDERATION_UPSTREAM_TOKEN = previousToken;
         }
+    });
+});
+
+describe("federation retry delay", () => {
+    it("uses bounded exponential backoff with deterministic jitter", () => {
+        expect(getFederationRetryDelay(0, () => 0.5)).toBe(250);
+        expect(getFederationRetryDelay(1, () => 0.5)).toBe(500);
+        expect(getFederationRetryDelay(4, () => 0.5)).toBe(1_000);
+        expect(getFederationRetryDelay(0, () => 0)).toBe(125);
+        expect(getFederationRetryDelay(0, () => 1)).toBe(375);
     });
 });
 
