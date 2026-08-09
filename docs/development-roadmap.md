@@ -127,7 +127,7 @@ interface KeywordTrend {
 
 ### R2-A SyncHub 双端数据合并
 
-状态：下一阶段，拆为两个独立提交。
+状态：R2-A1 已完成（2026-08-09），R2-A2 待执行。
 
 目标：避免远端初始化或后台上传覆盖本地尚未同步的数据。
 
@@ -136,6 +136,7 @@ interface KeywordTrend {
 - 新增或扩展 `shared/synchub-merge.ts`
 - `src/hooks/useSyncHub.ts`
 - `src/services/synchub.service.ts`
+- `test/synchub-merge.test.ts`
 - `test/synchub-service.test.ts`
 
 冲突规则：
@@ -148,7 +149,7 @@ interface KeywordTrend {
 
 执行顺序：
 
-1. `R2-A1` 新增纯函数合并契约，覆盖空远端、空本地、重复 URL、时间冲突、旧版偏好和数量上限。
+1. `R2-A1` 已完成：新增纯函数合并契约，覆盖空远端、空本地、重复 URL、时间冲突、旧版偏好和数量上限。
 2. `R2-A2` 接入 `useSyncHub`：下载前保留本地快照，合并后更新 atom，并只上传一次合并结果让双端收敛。
 3. 任一集合下载失败时保留本地数据；成功的集合仍可合并，失败集合不得被空值覆盖。
 4. 初始化未完成前不触发防抖上传，避免把旧内存状态写回远端。
@@ -264,4 +265,4 @@ interface KeywordTrend {
 
 ## 下一步
 
-下一次开发执行 R2-A1：只实现 SyncHub 纯函数合并契约和测试，不改 React Hook 或网络请求；测试通过后以 `feat: add synchub merge policy` 单独提交。
+下一次开发执行 R2-A2：接入 `useSyncHub` 的本地/远端合并与单次收敛上传，保留部分失败数据并补齐 Hook 桩测试；通过后以 `fix: merge local and remote sync state` 单独提交。
