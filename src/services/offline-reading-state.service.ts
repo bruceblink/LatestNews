@@ -68,12 +68,30 @@ export function readOfflineReadingSnapshot(now = Date.now()): OfflineReadingSnap
     }
 }
 
-/** Returns browser storage only when this code runs in a browser and storage access succeeds. */
+/** Checks whether a primary browser-storage key exists before the offline backup is used as a fallback. */
+export function hasBrowserStorageValue(key: string) {
+    const storage = getLocalStorage();
+    if (!storage) return false;
+
+    try {
+        return storage.getItem(key) !== null;
+    } catch {
+        return false;
+    }
+}
+
+/** Reads the browser's connectivity hint without assuming that a DOM exists during tests or rendering. */
+export function isBrowserOffline() {
+    const browser = globalThis as typeof globalThis & { navigator?: { onLine?: boolean } };
+    return browser.navigator?.onLine === false;
+}
+
 interface BrowserStorage {
     getItem(key: string): string | null;
     setItem(key: string, value: string): void;
 }
 
+/** Returns browser storage only when this code runs in a browser and storage access succeeds. */
 function getLocalStorage(): BrowserStorage | undefined {
     const browser = globalThis as typeof globalThis & { localStorage?: BrowserStorage };
 

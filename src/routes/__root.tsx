@@ -4,7 +4,6 @@ import "virtual:uno.css";
 import type { QueryClient } from "@tanstack/react-query";
 
 import clsx from "clsx";
-import { usePWA } from "~/hooks/usePWA.ts";
 import { useSync } from "~/hooks/useSync.ts";
 import { Header } from "~/components/header";
 import { Footer } from "~/components/footer";
@@ -13,10 +12,12 @@ import { Toast } from "~/components/common/toast";
 import { useSyncHub } from "~/hooks/useSyncHub.ts";
 import { useOnReload } from "~/hooks/useOnReload.ts";
 import { SearchBar } from "~/components/common/search-bar";
+import { usePWA, PWAStatusContext } from "~/hooks/usePWA.ts";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { GlobalOverlayScrollbar } from "~/components/common/overlay-scrollbar";
 import { Outlet, Navigate, createRootRouteWithContext } from "@tanstack/react-router";
+import { OfflineReadingSnapshotContext, usePersistOfflineReadingSnapshot } from "~/hooks/useOfflineReadingSnapshot.ts";
 
 export const Route = createRootRouteWithContext<{
     queryClient: QueryClient;
@@ -32,57 +33,63 @@ function NotFoundComponent() {
 function RootComponent() {
     useOnReload();
     useSync();
-    useSyncHub();
+    const syncHub = useSyncHub();
     const pwa = usePWA();
+    const offlineReadingSnapshot = usePersistOfflineReadingSnapshot({
+        isInitialSyncComplete: syncHub.isInitialSyncComplete,
+        isOffline: pwa.isOffline,
+    });
     return (
-        <>
-            <GlobalOverlayScrollbar
-                className={clsx([!isMobile && "px-4", "h-full overflow-x-auto", "md:(px-10)", "lg:(px-24)"])}
-            >
-                <header
-                    className={clsx([
-                        "grid items-center py-3 px-5",
-                        "lg:(py-4)",
-                        "sticky top-0 z-10",
-                        "backdrop-blur-xl bg-zinc-50/92 dark:bg-[#0a0e1a]/82",
-                        "border-b border-zinc-200/80 dark:border-zinc-700/30",
-                    ])}
-                    style={{
-                        gridTemplateColumns: "50px auto 50px",
-                    }}
+        <PWAStatusContext.Provider value={pwa}>
+            <OfflineReadingSnapshotContext.Provider value={offlineReadingSnapshot}>
+                <GlobalOverlayScrollbar
+                    className={clsx([!isMobile && "px-4", "h-full overflow-x-auto", "md:(px-10)", "lg:(px-24)"])}
                 >
-                    <Header />
-                </header>
-                <PwaStatusBanner
-                    isOffline={pwa.isOffline}
-                    needRefresh={pwa.needRefresh}
-                    offlineReady={pwa.offlineReady}
-                    justRecovered={pwa.justRecovered}
-                    onUpdate={pwa.applyUpdate}
-                />
-                <main
-                    className={clsx([
-                        "mt-2",
-                        "min-h-[calc(100vh-180px)]",
-                        "md:(min-h-[calc(100vh-175px)])",
-                        "lg:(min-h-[calc(100vh-194px)])",
-                    ])}
-                >
-                    <Outlet />
-                </main>
-                <footer className="py-6 flex flex-col items-center justify-center text-sm text-rose-900/45 dark:text-cyan-500/40 font-mono border-t border-rose-900/10 dark:border-cyan-500/8">
-                    <Footer />
-                </footer>
-            </GlobalOverlayScrollbar>
-            <Toast />
-            <SearchBar />
-            {import.meta.env.DEV && (
-                <>
-                    <ReactQueryDevtools buttonPosition="bottom-left" />
-                    <TanStackRouterDevtools position="bottom-right" />
-                </>
-            )}
-        </>
+                    <header
+                        className={clsx([
+                            "grid items-center py-3 px-5",
+                            "lg:(py-4)",
+                            "sticky top-0 z-10",
+                            "backdrop-blur-xl bg-zinc-50/92 dark:bg-[#0a0e1a]/82",
+                            "border-b border-zinc-200/80 dark:border-zinc-700/30",
+                        ])}
+                        style={{
+                            gridTemplateColumns: "50px auto 50px",
+                        }}
+                    >
+                        <Header />
+                    </header>
+                    <PwaStatusBanner
+                        isOffline={pwa.isOffline}
+                        needRefresh={pwa.needRefresh}
+                        offlineReady={pwa.offlineReady}
+                        justRecovered={pwa.justRecovered}
+                        onUpdate={pwa.applyUpdate}
+                    />
+                    <main
+                        className={clsx([
+                            "mt-2",
+                            "min-h-[calc(100vh-180px)]",
+                            "md:(min-h-[calc(100vh-175px)])",
+                            "lg:(min-h-[calc(100vh-194px)])",
+                        ])}
+                    >
+                        <Outlet />
+                    </main>
+                    <footer className="py-6 flex flex-col items-center justify-center text-sm text-rose-900/45 dark:text-cyan-500/40 font-mono border-t border-rose-900/10 dark:border-cyan-500/8">
+                        <Footer />
+                    </footer>
+                </GlobalOverlayScrollbar>
+                <Toast />
+                <SearchBar />
+                {import.meta.env.DEV && (
+                    <>
+                        <ReactQueryDevtools buttonPosition="bottom-left" />
+                        <TanStackRouterDevtools position="bottom-right" />
+                    </>
+                )}
+            </OfflineReadingSnapshotContext.Provider>
+        </PWAStatusContext.Provider>
     );
 }
 

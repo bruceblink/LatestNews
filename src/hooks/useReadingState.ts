@@ -1,4 +1,4 @@
-import type { ReadingStateKind, ReadingStateItemInput } from "@shared/reading-state";
+import type { ReadingState, ReadingStateKind, ReadingStateItemInput } from "@shared/reading-state";
 
 import { useAtom } from "jotai";
 import { useMemo, useCallback } from "react";
@@ -49,6 +49,14 @@ export function useReadingState() {
 
     const hiddenUrls = useMemo(() => readingState.hidden.map((item) => item.url), [readingState.hidden]);
 
+    /** Replaces state after an explicit user action, keeping all lists normalized before persistence. */
+    const replaceReadingState = useCallback(
+        (nextState: ReadingState) => {
+            setRawState(normalizeReadingState(nextState));
+        },
+        [setRawState]
+    );
+
     return {
         readingState,
         hiddenUrls,
@@ -56,6 +64,7 @@ export function useReadingState() {
         toggleFavorite: (entry: ReadingStateItemInput) => toggleState("favorite", entry),
         toggleHidden: (entry: ReadingStateItemInput) => toggleState("hidden", entry),
         removeState,
+        replaceReadingState,
         isLaterUrl: (url: string) => hasState("later", url),
         isFavoriteUrl: (url: string) => hasState("favorite", url),
         isHiddenUrl,

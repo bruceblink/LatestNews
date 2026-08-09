@@ -6,6 +6,7 @@ import { useTitle } from "react-use";
 import { useMemo, useState } from "react";
 import { getDateLabel } from "~/utils/date";
 import { useToast } from "~/hooks/useToast";
+import { usePWAStatus } from "~/hooks/usePWA";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { createFileRoute } from "@tanstack/react-router";
@@ -14,6 +15,9 @@ import { useReadingState } from "~/hooks/useReadingState";
 import { getReadingStateList } from "@shared/reading-state";
 import { formatReadingHistoryExport } from "@shared/history-export";
 import { verifyLatestNewsSyncHubConnection } from "@shared/synchub-contract";
+import { shouldUseOfflineReadingSnapshot } from "@shared/offline-reading-state";
+import { hasBrowserStorageValue } from "~/services/offline-reading-state.service";
+import { useOfflineReadingSnapshotStatus } from "~/hooks/useOfflineReadingSnapshot";
 import { filterReadingHistory, hasReadingHistoryFilters } from "@shared/history-filter";
 import {
     getSyncHubConfig,
@@ -71,8 +75,10 @@ function HistoryItem({
 
 function HistoryPage() {
     useTitle(`${import.meta.env.VITE_APP_TITLE} | 阅读历史`);
-    const { history, clearHistory, clearSourceHistory, removeHistory } = useHistory();
-    const { readingState, removeState } = useReadingState();
+    const { history, clearHistory, clearSourceHistory, removeHistory, replaceHistory } = useHistory();
+    const { readingState, removeState, replaceReadingState } = useReadingState();
+    const { isOffline } = usePWAStatus();
+    const offlineSnapshot = useOfflineReadingSnapshotStatus();
     const toaster = useToast();
     const [keyword, setKeyword] = useState("");
     const [sourceFilter, setSourceFilter] = useState<SourceID | "">("");
@@ -81,9 +87,28 @@ function HistoryPage() {
     const [syncHubApiKey, setSyncHubApiKey] = useState(() => getSyncHubConfig().apiKey);
     const [syncHubChecking, setSyncHubChecking] = useState(false);
 
+    const useHistorySnapshot = shouldUseOfflineReadingSnapshot({
+        isOffline,
+        hasPersistedLiveValue: hasBrowserStorageValue("reading-history"),
+        snapshotState: offlineSnapshot.state,
+    });
+    const useFavoritesSnapshot = shouldUseOfflineReadingSnapshot({
+        isOffline,
+        hasPersistedLiveValue: hasBrowserStorageValue("reading-state"),
+        snapshotState: offlineSnapshot.state,
+    });
+    const activeHistory = useHistorySnapshot ? (offlineSnapshot.snapshot?.history ?? history) : history;
+    const activeReadingState = useMemo(
+        () =>
+            useFavoritesSnapshot && offlineSnapshot.snapshot
+                ? { ...readingState, favorites: offlineSnapshot.snapshot.favorites }
+                : readingState,
+        [offlineSnapshot.snapshot, readingState, useFavoritesSnapshot]
+    );
+
     const sourceOptions = useMemo(() => {
         const map = new Map<string, { count: number; name: string }>();
-        for (const item of history) {
+        for (const item of activeHistory) {
             const current = map.get(item.sourceId) ?? {
                 count: 0,
                 name: dataSources[item.sourceId]?.name ?? item.sourceName,
@@ -94,13 +119,13 @@ function HistoryPage() {
         return Array.from(map.entries())
             .map(([id, item]) => ({ id, ...item }))
             .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-    }, [history]);
+    }, [activeHistory]);
 
     const hasActiveFilters = hasReadingHistoryFilters({ keyword, sourceId: sourceFilter });
 
     const filtered = useMemo(
-        () => filterReadingHistory(history, { keyword, sourceId: sourceFilter }),
-        [history, keyword, sourceFilter]
+        () => filterReadingHistory(activeHistory, { keyword, sourceId: sourceFilter }),
+        [activeHistory, keyword, sourceFilter]
     );
 
     const groups = useMemo(() => {
@@ -115,8 +140,12 @@ function HistoryPage() {
     }, [filtered]);
 
     const handleClearAll = () => {
-        if (history.length === 0) return;
-        if (!window.confirm(`确认清空全部 ${history.length} 条阅读历史？`)) return;
+        if (activeHistory.length === 0) return;
+        if (!window.confirm(`确认清空全部 ${activeHistory.length} 条阅读历史？`)) return;
+        if (useHistorySnapshot) {
+            replaceHistory([]);
+            return;
+        }
         clearHistory();
     };
 
@@ -125,7 +154,11 @@ function HistoryPage() {
     const handleClearSource = () => {
         if (!sourceFilter || !selectedSource) return;
         if (!window.confirm(`确认清空「${selectedSource.name}」的 ${selectedSource.count} 条阅读历史？`)) return;
-        clearSourceHistory(sourceFilter);
+        if (useHistorySnapshot) {
+            replaceHistory(activeHistory.filter((item) => item.sourceId !== sourceFilter));
+        } else {
+            clearSourceHistory(sourceFilter);
+        }
         setSourceFilter("");
     };
 
@@ -146,7 +179,7 @@ function HistoryPage() {
     };
 
     const stateKind = getHistoryTabReadingKind(stateTab);
-    const stateItems = stateKind ? getReadingStateList(readingState, stateKind) : [];
+    const stateItems = stateKind ? getReadingStateList(activeReadingState, stateKind) : [];
 
     return (
         <section className="mx-auto flex max-w-4xl flex-col gap-4 px-1 md:px-4">
@@ -159,14 +192,14 @@ function HistoryPage() {
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                     <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/90 dark:border-zinc-700/50 px-3 py-1 text-zinc-700 dark:text-zinc-300">
-                        共 {history.length} 条
+                        共 {activeHistory.length} 条
                     </span>
                     <button
                         type="button"
                         className={clsx(
                             "flex items-center gap-2 rounded-full px-3 py-1.5 transition-all",
                             "bg-red-500/8 text-red-700 dark:text-red-300 hover:bg-red-500/14",
-                            history.length === 0 && "op-40 pointer-events-none"
+                            activeHistory.length === 0 && "op-40 pointer-events-none"
                         )}
                         onClick={handleClearAll}
                     >
@@ -175,6 +208,13 @@ function HistoryPage() {
                     </button>
                 </div>
             </div>
+
+            {isOffline && (useHistorySnapshot || useFavoritesSnapshot) && offlineSnapshot.snapshot && (
+                <OfflineReadingSnapshotNotice
+                    savedAt={offlineSnapshot.snapshot.savedAt}
+                    state={offlineSnapshot.state}
+                />
+            )}
 
             <section className="grid gap-2 rounded-2xl border border-zinc-200/90 bg-white/78 p-3 dark:border-zinc-700/40 dark:bg-zinc-900/70 md:grid-cols-[1fr_1fr_auto_auto]">
                 <input
@@ -226,27 +266,27 @@ function HistoryPage() {
             <div className="flex flex-wrap gap-2 rounded-2xl border border-zinc-200/90 bg-white/78 p-2 dark:border-zinc-700/40 dark:bg-zinc-900/70">
                 <TabButton
                     active={stateTab === "history"}
-                    label={`已读 ${history.length}`}
+                    label={`已读 ${activeHistory.length}`}
                     onClick={() => setStateTab("history")}
                 />
                 <TabButton
                     active={stateTab === "later"}
-                    label={`稍后读 ${readingState.later.length}`}
+                    label={`稍后读 ${activeReadingState.later.length}`}
                     onClick={() => setStateTab("later")}
                 />
                 <TabButton
                     active={stateTab === "favorites"}
-                    label={`收藏 ${readingState.favorites.length}`}
+                    label={`收藏 ${activeReadingState.favorites.length}`}
                     onClick={() => setStateTab("favorites")}
                 />
                 <TabButton
                     active={stateTab === "hidden"}
-                    label={`隐藏 ${readingState.hidden.length}`}
+                    label={`隐藏 ${activeReadingState.hidden.length}`}
                     onClick={() => setStateTab("hidden")}
                 />
             </div>
 
-            {stateTab === "history" && history.length > 0 && (
+            {stateTab === "history" && activeHistory.length > 0 && (
                 <div className="flex flex-col gap-3 rounded-2xl bg-white/78 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/40 p-3 md:flex-row md:items-center">
                     <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-zinc-50/80 dark:bg-zinc-950/30 border border-zinc-200/80 dark:border-zinc-700/35 px-3 py-2">
                         <span className="i-ph:magnifying-glass-duotone text-lg op-50" />
@@ -326,7 +366,15 @@ function HistoryPage() {
                                         url={item.url}
                                         sourceName={item.sourceName}
                                         readAt={item.readAt}
-                                        onRemove={() => removeHistory(item.url)}
+                                        onRemove={() => {
+                                            if (useHistorySnapshot) {
+                                                replaceHistory(
+                                                    activeHistory.filter((historyItem) => historyItem.url !== item.url)
+                                                );
+                                                return;
+                                            }
+                                            removeHistory(item.url);
+                                        }}
                                     />
                                 ))}
                             </div>
@@ -344,16 +392,49 @@ function HistoryPage() {
                             updatedAt={item.updatedAt}
                             removeTitle={stateTab === "hidden" ? "取消隐藏" : "移除此条记录"}
                             onRemove={() => {
-                                if (stateKind) removeState(stateKind, item.url);
+                                if (!stateKind) return;
+                                if (useFavoritesSnapshot && stateKind === "favorite") {
+                                    replaceReadingState({
+                                        ...readingState,
+                                        favorites: activeReadingState.favorites.filter(
+                                            (favorite) => favorite.url !== item.url
+                                        ),
+                                    });
+                                    return;
+                                }
+                                removeState(stateKind, item.url);
                             }}
                         />
                     ))}
                 </div>
             ) : (
                 <div className="rounded-2xl bg-white/68 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-700/30 p-10 text-center text-sm text-zinc-600 dark:text-zinc-500">
-                    {getEmptyLabel(stateTab, history.length)}
+                    {getEmptyLabel(stateTab, activeHistory.length)}
                 </div>
             )}
+        </section>
+    );
+}
+
+function OfflineReadingSnapshotNotice({
+    savedAt,
+    state,
+}: {
+    savedAt: number;
+    state: "fresh" | "stale" | "invalid" | "missing";
+}) {
+    const isStale = state === "stale";
+
+    return (
+        <section className="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/8 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+            <span className="mt-0.5 i-ph:archive-duotone text-lg" />
+            <div>
+                <div className="font-semibold">正在使用离线阅读快照</div>
+                <div className="mt-1 text-xs op-80">
+                    保存于 {new Date(savedAt).toLocaleString("zh-CN")}
+                    {isStale ? "，内容可能不是最新版本。" : "，恢复网络后会继续使用当前本地数据。"}
+                </div>
+            </div>
         </section>
     );
 }

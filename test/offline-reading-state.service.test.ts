@@ -13,8 +13,12 @@ describe("offline reading snapshot storage", () => {
     it("stores a normalized snapshot separately from feed snapshots", async () => {
         const localStorage = createLocalStorage();
         vi.stubGlobal("localStorage", localStorage);
-        const { OFFLINE_READING_SNAPSHOT_STORAGE_KEY, readOfflineReadingSnapshot, saveOfflineReadingSnapshot } =
-            await loadService();
+        const {
+            OFFLINE_READING_SNAPSHOT_STORAGE_KEY,
+            hasBrowserStorageValue,
+            readOfflineReadingSnapshot,
+            saveOfflineReadingSnapshot,
+        } = await loadService();
 
         const saved = saveOfflineReadingSnapshot(
             {
@@ -49,12 +53,14 @@ describe("offline reading snapshot storage", () => {
         });
         expect(localStorage.setItem).toHaveBeenCalledWith(OFFLINE_READING_SNAPSHOT_STORAGE_KEY, expect.any(String));
         expect(readOfflineReadingSnapshot(NOW)).toEqual({ state: "fresh", snapshot: saved });
+        expect(hasBrowserStorageValue(OFFLINE_READING_SNAPSHOT_STORAGE_KEY)).toBe(true);
     });
 
     it("returns stale snapshots so the page can label them instead of hiding them", async () => {
         const localStorage = createLocalStorage();
         vi.stubGlobal("localStorage", localStorage);
-        const { readOfflineReadingSnapshot, saveOfflineReadingSnapshot } = await loadService();
+        const { hasBrowserStorageValue, isBrowserOffline, readOfflineReadingSnapshot, saveOfflineReadingSnapshot } =
+            await loadService();
 
         saveOfflineReadingSnapshot({ history: [], favorites: [], focusSources: ["weibo"] as SourceID[] }, NOW);
 
@@ -62,6 +68,10 @@ describe("offline reading snapshot storage", () => {
             state: "stale",
             snapshot: expect.objectContaining({ savedAt: NOW }),
         });
+        expect(hasBrowserStorageValue("reading-history")).toBe(false);
+        expect(isBrowserOffline()).toBe(false);
+        vi.stubGlobal("navigator", { onLine: false });
+        expect(isBrowserOffline()).toBe(true);
     });
 
     it("ignores corrupted and unknown-version records without throwing", async () => {
@@ -77,9 +87,10 @@ describe("offline reading snapshot storage", () => {
     });
 
     it("handles unavailable browser storage without changing reading state", async () => {
-        const { readOfflineReadingSnapshot, saveOfflineReadingSnapshot } = await loadService();
+        const { hasBrowserStorageValue, readOfflineReadingSnapshot, saveOfflineReadingSnapshot } = await loadService();
         expect(saveOfflineReadingSnapshot({ history: [], favorites: [], focusSources: [] }, NOW)).toBeUndefined();
         expect(readOfflineReadingSnapshot(NOW)).toEqual({ state: "missing" });
+        expect(hasBrowserStorageValue("reading-history")).toBe(false);
 
         const localStorage = {
             getItem: vi.fn(() => {
@@ -98,6 +109,8 @@ describe("offline reading snapshot storage", () => {
 
 interface OfflineReadingSnapshotStorageService {
     OFFLINE_READING_SNAPSHOT_STORAGE_KEY: string;
+    hasBrowserStorageValue(key: string): boolean;
+    isBrowserOffline(): boolean;
     readOfflineReadingSnapshot(now?: number): unknown;
     saveOfflineReadingSnapshot(input: OfflineReadingSnapshotInput, savedAt?: number): unknown;
 }

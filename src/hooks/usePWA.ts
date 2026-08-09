@@ -2,7 +2,7 @@ import { myFetch } from "~/utils";
 import { delay } from "@shared/utils.ts";
 import { Version, PROJECT_URL } from "@shared/consts";
 import { useRegisterSW } from "virtual:pwa-register/react";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useContext, useCallback, createContext } from "react";
 
 import { useToast } from "./useToast";
 
@@ -12,6 +12,13 @@ export interface PWAState {
     offlineReady: boolean;
     justRecovered: boolean;
     applyUpdate: () => Promise<void>;
+}
+
+export const PWAStatusContext = createContext<Pick<PWAState, "isOffline">>({ isOffline: false });
+
+/** Gives route components the root PWA connectivity state without registering a second service worker. */
+export function usePWAStatus() {
+    return useContext(PWAStatusContext);
 }
 
 export function usePWA() {

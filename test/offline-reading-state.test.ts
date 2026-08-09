@@ -8,6 +8,7 @@ import {
     migrateOfflineReadingSnapshot,
     getOfflineReadingSnapshotState,
     normalizeOfflineReadingHistory,
+    shouldUseOfflineReadingSnapshot,
     normalizeOfflineReadingFocusSources,
 } from "../shared/offline-reading-state";
 
@@ -122,5 +123,43 @@ describe("offline reading snapshot", () => {
         expect(migrateOfflineReadingSnapshot(snapshot)).toEqual(snapshot);
         expect(migrateOfflineReadingSnapshot({ ...snapshot, version: 0 })).toBeUndefined();
         expect(migrateOfflineReadingSnapshot({ ...snapshot, history: "damaged" })).toBeUndefined();
+    });
+
+    it("uses a fresh or stale snapshot only when offline primary storage is unavailable", () => {
+        expect(
+            shouldUseOfflineReadingSnapshot({
+                isOffline: true,
+                hasPersistedLiveValue: false,
+                snapshotState: "fresh",
+            })
+        ).toBe(true);
+        expect(
+            shouldUseOfflineReadingSnapshot({
+                isOffline: true,
+                hasPersistedLiveValue: false,
+                snapshotState: "stale",
+            })
+        ).toBe(true);
+        expect(
+            shouldUseOfflineReadingSnapshot({
+                isOffline: false,
+                hasPersistedLiveValue: false,
+                snapshotState: "fresh",
+            })
+        ).toBe(false);
+        expect(
+            shouldUseOfflineReadingSnapshot({
+                isOffline: true,
+                hasPersistedLiveValue: true,
+                snapshotState: "fresh",
+            })
+        ).toBe(false);
+        expect(
+            shouldUseOfflineReadingSnapshot({
+                isOffline: true,
+                hasPersistedLiveValue: false,
+                snapshotState: "invalid",
+            })
+        ).toBe(false);
     });
 });

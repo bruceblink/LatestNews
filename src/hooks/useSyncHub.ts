@@ -216,4 +216,6 @@ export function useSyncHub() {
         },
         []
     );
+
+    return { isInitialSyncComplete: ready || !isSyncHubConfigured() };
 }

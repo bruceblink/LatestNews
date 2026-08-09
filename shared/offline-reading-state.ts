@@ -31,6 +31,12 @@ export interface OfflineReadingSnapshot extends OfflineReadingSnapshotInput {
 
 export type OfflineReadingSnapshotState = "fresh" | "stale" | "invalid";
 
+export interface OfflineReadingSnapshotFallbackOptions {
+    isOffline: boolean;
+    hasPersistedLiveValue: boolean;
+    snapshotState: OfflineReadingSnapshotState | "missing";
+}
+
 /** Creates a bounded, normalized snapshot that is safe to persist in browser storage. */
 export function createOfflineReadingSnapshot(
     input: OfflineReadingSnapshotInput,
@@ -95,6 +101,15 @@ export function isFreshOfflineReadingSnapshot(
     maxAgeMs = DEFAULT_OFFLINE_READING_SNAPSHOT_MAX_AGE_MS
 ) {
     return getOfflineReadingSnapshotState(snapshot, now, maxAgeMs) === "fresh";
+}
+
+/** Chooses the backup only while offline and only when the primary persisted value is unavailable. */
+export function shouldUseOfflineReadingSnapshot({
+    isOffline,
+    hasPersistedLiveValue,
+    snapshotState,
+}: OfflineReadingSnapshotFallbackOptions) {
+    return isOffline && !hasPersistedLiveValue && (snapshotState === "fresh" || snapshotState === "stale");
 }
 
 /** Normalizes history with the same URL identity rule used by saved reading state. */

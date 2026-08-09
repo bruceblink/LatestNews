@@ -7,6 +7,9 @@ import { metadata } from "@shared/metadata.ts";
 import dataSources from "@shared/data-sources.ts";
 import { verifyPrimitiveMetadata } from "@shared/verify.ts";
 import { objectEntries, objectFromEntries } from "@shared/type.util.ts";
+import { shouldUseOfflineReadingSnapshot } from "@shared/offline-reading-state";
+
+import { isBrowserOffline, readOfflineReadingSnapshot } from "../services/offline-reading-state.service";
 
 import type { Update } from "./types";
 
@@ -54,8 +57,8 @@ function createPrimitiveMetadataAtom(
     preprocess: (stored: PrimitiveMetadata) => PrimitiveMetadata
 ): PrimitiveAtom<PrimitiveMetadata> {
     const getInitialValue = (): PrimitiveMetadata => {
-        const item = localStorage.getItem(key);
         try {
+            const item = localStorage.getItem(key);
             if (item) {
                 const stored = JSON.parse(item) as PrimitiveMetadata;
                 verifyPrimitiveMetadata(stored);
@@ -65,7 +68,26 @@ function createPrimitiveMetadataAtom(
                 });
             }
         } catch {}
-        return initialValue;
+
+        const snapshotResult = readOfflineReadingSnapshot();
+        if (
+            !shouldUseOfflineReadingSnapshot({
+                isOffline: isBrowserOffline(),
+                hasPersistedLiveValue: false,
+                snapshotState: snapshotResult.state,
+            })
+        ) {
+            return initialValue;
+        }
+
+        /** Rehydrates only the personal focus column; all built-in columns still use their normal defaults. */
+        return preprocess({
+            ...initialValue,
+            data: {
+                ...initialValue.data,
+                focus: snapshotResult.snapshot?.focusSources ?? [],
+            },
+        });
     };
 
     const baseAtom = atom(getInitialValue());

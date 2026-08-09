@@ -47,5 +47,13 @@ export function useHistory() {
         [setHistory]
     );
 
-    return { history, addHistory, clearHistory, clearSourceHistory, removeHistory };
+    /** Replaces local history with a validated fallback before a user edits an offline snapshot. */
+    const replaceHistory = useCallback(
+        (items: HistoryItem[]) => {
+            setHistory(items);
+        },
+        [setHistory]
+    );
+
+    return { history, addHistory, clearHistory, clearSourceHistory, removeHistory, replaceHistory };
 }
