@@ -1,5 +1,6 @@
 import type { SourceID } from "@shared/types";
 import type { UnifiedFeedScope } from "@shared/unified-feed";
+import type { SourceHealthSummary } from "@shared/source-health-types";
 import type { TopicEvent, HotNewsItem, WordCloudTerm, CategoryShare, SourceActivity } from "@shared/news-insights";
 
 import clsx from "clsx";
@@ -15,6 +16,7 @@ import { useReadingState } from "~/hooks/useReadingState";
 import { getNewsInsightsCacheKey } from "@shared/source-api";
 import { fetchNewsInsights } from "~/services/source.service";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
 import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 
@@ -61,6 +63,7 @@ function InsightsPage() {
         staleTime: 1000 * 60 * 3,
         retry: false,
     });
+    const { data: healthSummary, isFetching: isHealthFetching, isError: isHealthError } = useSourceHealthSummary();
 
     const insights = data?.data;
     const maxWordWeight = Math.max(...(insights?.wordCloud.map((item) => item.weight) ?? [0]));
@@ -143,6 +146,8 @@ function InsightsPage() {
                         <MetricCard label="关键词" value={insights?.wordCloud.length ?? 0} icon="i-ph:cloud-duotone" />
                     </div>
 
+                    <SourceHealthOverview data={healthSummary} isFetching={isHealthFetching} isError={isHealthError} />
+
                     <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
                         <HotRankingPanel items={insights?.hotRankings ?? []} scope={scope} onRead={handleReadHotItem} />
                         <TopicPanel topics={insights?.topicEvents ?? []} scope={scope} onRead={handleReadTopicItem} />
@@ -178,6 +183,124 @@ function InsightsPage() {
                 </>
             )}
         </section>
+    );
+}
+
+/**
+ * Shows the source-health counters that help readers judge whether insight coverage is trustworthy.
+ * It keeps the summary compact while linking operational follow-up to the full health page.
+ */
+function SourceHealthOverview({
+    data,
+    isFetching,
+    isError,
+}: {
+    data: SourceHealthSummary | undefined;
+    isFetching: boolean;
+    isError: boolean;
+}) {
+    const attentionSourceCount = (data?.sources ?? []).filter(
+        (source) => source.status === "failing" || source.cacheDegraded
+    ).length;
+    const attentionSources = (data?.sources ?? [])
+        .filter((source) => source.status === "failing" || source.cacheDegraded)
+        .sort((left, right) => {
+            const statusWeight = (status: SourceHealthSummary["sources"][number]["status"]) =>
+                status === "failing" ? 2 : 1;
+            return (
+                statusWeight(right.status) - statusWeight(left.status) ||
+                right.consecutiveFailures - left.consecutiveFailures
+            );
+        })
+        .slice(0, 4);
+
+    return (
+        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <PanelTitle icon="i-ph:heartbeat-duotone" title="来源健康概览" />
+                <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
+                    {isFetching && <span className="i-ph:spinner-gap-duotone animate-spin text-cyan-600" />}
+                    <Link
+                        to="/health"
+                        className="inline-flex items-center gap-1 rounded-full bg-cyan-500/10 px-2.5 py-1 text-cyan-700 transition-colors hover:bg-cyan-500/18 dark:text-cyan-300"
+                    >
+                        <span>查看健康详情</span>
+                        <span className="i-ph:arrow-up-right-duotone" />
+                    </Link>
+                </div>
+            </div>
+
+            {isError ? (
+                <div className="mt-4 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                    暂时无法读取来源健康状态，请前往健康页重试。
+                </div>
+            ) : data ? (
+                <>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-5">
+                        <HealthMetric label="总数据源" value={data.total} tone="neutral" />
+                        <HealthMetric label="正常" value={data.healthy} tone="green" />
+                        <HealthMetric label="异常" value={data.failing} tone="red" />
+                        <HealthMetric label="未采样" value={data.idle} tone="slate" />
+                        <HealthMetric label="缓存降级" value={data.cacheDegraded} tone="amber" />
+                    </div>
+
+                    {attentionSources.length > 0 && (
+                        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                            <span className="text-zinc-600 dark:text-zinc-500">需要关注：</span>
+                            {attentionSources.map((source) => (
+                                <Link
+                                    key={source.id}
+                                    to="/health"
+                                    className={clsx(
+                                        "rounded-full border px-2.5 py-1 transition-colors hover:border-cyan-500/40 hover:text-cyan-700 dark:hover:text-cyan-300",
+                                        source.status === "failing"
+                                            ? "border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300"
+                                            : "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                                    )}
+                                >
+                                    {source.name}
+                                </Link>
+                            ))}
+                            {attentionSources.length < attentionSourceCount && (
+                                <Link to="/health" className="text-cyan-700 dark:text-cyan-300">
+                                    查看全部
+                                </Link>
+                            )}
+                        </div>
+                    )}
+                </>
+            ) : (
+                <div className="mt-4 rounded-xl bg-zinc-100/70 px-3 py-2 text-sm text-zinc-600 dark:bg-zinc-800/45 dark:text-zinc-500">
+                    正在加载来源健康状态…
+                </div>
+            )}
+        </section>
+    );
+}
+
+/** Renders one compact health counter with a color that matches its operational meaning. */
+function HealthMetric({
+    label,
+    value,
+    tone,
+}: {
+    label: string;
+    value: number;
+    tone: "neutral" | "green" | "red" | "slate" | "amber";
+}) {
+    const toneClass = {
+        neutral: "bg-zinc-100/80 text-zinc-700 dark:bg-zinc-800/65 dark:text-zinc-300",
+        green: "bg-green-500/10 text-green-700 dark:text-green-300",
+        red: "bg-red-500/10 text-red-700 dark:text-red-300",
+        slate: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
+        amber: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+    }[tone];
+
+    return (
+        <div className={clsx("rounded-xl px-3 py-2", toneClass)}>
+            <div className="text-xs op-75">{label}</div>
+            <div className="mt-1 text-xl font-bold">{value}</div>
+        </div>
     );
 }
 
