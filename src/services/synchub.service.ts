@@ -1,7 +1,6 @@
-import type { ColorScheme } from "~/hooks/useDark";
 import type { HistoryItem } from "~/atoms/historyAtom";
-import type { PrimitiveMetadata } from "@shared/types";
 import type { ReadingState } from "@shared/reading-state";
+import type { SyncHubPreferences } from "@shared/synchub-merge";
 import type { LatestNewsSyncHubCollection } from "@shared/synchub-contract";
 
 import {
@@ -13,10 +12,7 @@ import {
 
 export { defaultSyncHubEndpoint } from "@shared/synchub-contract";
 
-export interface UserPreferences {
-    colorScheme: ColorScheme;
-    metadata: PrimitiveMetadata;
-}
+export type UserPreferences = SyncHubPreferences;
 
 export interface SyncHubConfig {
     endpoint: string;

@@ -14,6 +14,30 @@ export interface SyncHubPreferences {
     updatedAt?: number;
 }
 
+export interface SyncHubBootstrapState<
+    THistory extends UrlRecord & { readAt: number },
+    TFavorite extends UrlRecord & { updatedAt: number },
+> {
+    history: THistory[];
+    favorites: TFavorite[];
+    preferences: SyncHubPreferences;
+}
+
+export interface SyncHubBootstrapRemoteState<
+    THistory extends UrlRecord & { readAt: number },
+    TFavorite extends UrlRecord & { updatedAt: number },
+> {
+    history?: THistory[] | null;
+    favorites?: TFavorite[] | null;
+    preferences?: Partial<SyncHubPreferences> | null;
+}
+
+export interface SyncHubBootstrapAvailability {
+    history: boolean;
+    favorites: boolean;
+    preferences: boolean;
+}
+
 interface UrlRecord {
     url: string;
 }
@@ -59,6 +83,34 @@ export function mergeSyncHubPreferences(
         colorScheme,
         metadata,
         ...(updatedAt !== undefined && { updatedAt }),
+    };
+}
+
+/**
+ * Applies only fulfilled remote collections and reports which collections may be uploaded.
+ * A failed collection stays local, while a fulfilled empty document can initialize the remote side.
+ */
+export function mergeSyncHubBootstrapState<
+    THistory extends UrlRecord & { readAt: number },
+    TFavorite extends UrlRecord & { updatedAt: number },
+>(
+    local: SyncHubBootstrapState<THistory, TFavorite>,
+    remote: SyncHubBootstrapRemoteState<THistory, TFavorite>,
+    availability: SyncHubBootstrapAvailability
+) {
+    return {
+        state: {
+            history: availability.history
+                ? mergeSyncHubReadingHistory(local.history, remote.history ?? undefined)
+                : local.history,
+            favorites: availability.favorites
+                ? mergeSyncHubFavorites(local.favorites, remote.favorites ?? undefined)
+                : local.favorites,
+            preferences: availability.preferences
+                ? (mergeSyncHubPreferences(local.preferences, remote.preferences ?? undefined) ?? local.preferences)
+                : local.preferences,
+        },
+        upload: availability,
     };
 }
 

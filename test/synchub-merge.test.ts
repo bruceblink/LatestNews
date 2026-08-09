@@ -6,6 +6,7 @@ import {
     mergeSyncHubFavorites,
     mergeSyncHubPreferences,
     type SyncHubPreferences,
+    mergeSyncHubBootstrapState,
     mergeSyncHubReadingHistory,
 } from "../shared/synchub-merge";
 
@@ -80,6 +81,33 @@ describe("SyncHub merge policy", () => {
             { url: "https://example.com/b", updatedAt: 20, title: "Local B" },
             { url: "https://example.com/c", updatedAt: 15, title: "Remote C" },
         ]);
+    });
+
+    it("keeps failed collections local while allowing fulfilled collections to converge", () => {
+        const local = {
+            history: [{ url: "https://example.com/local", readAt: 10 }],
+            favorites: [{ url: "https://example.com/favorite", updatedAt: 10 }],
+            preferences: {
+                colorScheme: "dark" as const,
+                metadata: createMetadata(10),
+                updatedAt: 100,
+            },
+        };
+
+        const merged = mergeSyncHubBootstrapState(
+            local,
+            {
+                history: null,
+                favorites: [{ url: "https://example.com/remote", updatedAt: 20 }],
+                preferences: { colorScheme: "light", metadata: createMetadata(20), updatedAt: 200 },
+            },
+            { history: true, favorites: false, preferences: true }
+        );
+
+        expect(merged.state.history).toEqual(local.history);
+        expect(merged.state.favorites).toEqual(local.favorites);
+        expect(merged.state.preferences).toMatchObject({ colorScheme: "light", updatedAt: 200 });
+        expect(merged.upload).toEqual({ history: true, favorites: false, preferences: true });
     });
 
     it("chooses newer metadata and preference timestamps independently", () => {
