@@ -538,6 +538,19 @@ function HotRankingPanel({
                                     {item.publishedAt && <RelativeTimeLabel time={item.publishedAt} />}
                                     <FeedFilterLink q={item.keywords[0] ?? item.title} scope={scope} label="相关" />
                                 </div>
+                                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-600 dark:text-zinc-500">
+                                    <span className="rounded-md bg-zinc-100/85 px-2 py-1 dark:bg-zinc-900/55">
+                                        {item.signals.rankingReason}
+                                    </span>
+                                    {item.signals.categoryDistribution.map((category) => (
+                                        <span
+                                            key={category.categoryId}
+                                            className="rounded-md bg-cyan-500/8 px-2 py-1 text-cyan-800 dark:text-cyan-300"
+                                        >
+                                            {category.categoryName} {category.itemCount} 条 / {category.sourceCount} 源
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                             <ReadingStateActions
                                 entry={{

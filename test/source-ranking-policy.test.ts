@@ -4,7 +4,10 @@ import { it, expect, describe } from "vitest";
 
 import {
     getHomeSourceScore,
+    getInsightSourceWeight,
     rankActiveSourcesForHome,
+    getInsightCategoryWeight,
+    formatInsightRankingReason,
     type SourceHealthRankInput,
     rankSourcesForHealthReview,
     rankFailingSourcesByPriority,
@@ -106,5 +109,24 @@ describe("source ranking policy", () => {
         const ranked = rankSourcesForHealthReview(sources);
 
         expect(ranked.map((item) => item.id)).toEqual(["ithome", "weibo", "jin10", "v2ex"]);
+    });
+
+    it("derives insight weights from stable source and category metadata", () => {
+        expect(getInsightSourceWeight("weibo" as SourceID)).toBe(1.1);
+        expect(getInsightSourceWeight("v2ex" as SourceID)).toBe(1);
+        expect(getInsightCategoryWeight("finance")).toBe(1.05);
+        expect(getInsightCategoryWeight("uncategorized")).toBe(0.95);
+    });
+
+    it("formats deterministic ranking reasons from numeric signals", () => {
+        expect(
+            formatInsightRankingReason({
+                sourceCoverage: 2,
+                recencyScore: 0.8,
+                sourceWeight: 1.05,
+                categoryWeight: 1,
+                readPenalty: 20,
+            })
+        ).toBe("2 个来源覆盖 · 近期更新 · 来源权重 1.05 · 分类权重 1.00 · 已读降权");
     });
 });

@@ -69,11 +69,42 @@ describe("news insights", () => {
             signals: {
                 sourceCoverage: 2,
                 duplicateCount: 2,
+                sourceWeight: 1.1,
+                categoryWeight: 1,
             },
         });
+        expect(insights.hotRankings[0].signals.categoryDistribution).toEqual([
+            { categoryId: "china", categoryName: "国内", itemCount: 1, sourceCount: 1 },
+            { categoryId: "tech", categoryName: "科技", itemCount: 1, sourceCount: 1 },
+        ]);
+        expect(insights.hotRankings[0].signals.rankingReason).toBe(
+            "2 个来源覆盖 · 近期更新 · 来源权重 1.10 · 分类权重 1.00 · 未读优先"
+        );
         expect(insights.hotRankings[0].sources).toEqual(expect.arrayContaining(["weibo", "v2ex"]));
         expect(insights.hotRankings[0].keywords).toEqual(expect.arrayContaining(["openai", "gpt-5"]));
         expect(insights.hotRankings[0].score).toBeGreaterThan(insights.hotRankings[1].score);
+    });
+
+    it("applies category weights to otherwise equivalent hot items", () => {
+        const insights = createNewsInsights(
+            [
+                createResponse("weibo" as SourceID, "Weibo", [
+                    createItem("weibo-life", "民生消费观察", "https://news.example.com/life", 5),
+                ]),
+                createResponse("v2ex" as SourceID, "V2EX", [
+                    createItem("v2ex-tech", "开发框架升级", "https://news.example.com/framework", 5),
+                ]),
+            ],
+            {
+                generatedAt: NOW,
+                sourceWeights: { weibo: 1, v2ex: 1 },
+                categoryWeights: { china: 0.5, tech: 2 },
+            }
+        );
+
+        expect(insights.hotRankings.map((item) => item.sourceId)).toEqual(["v2ex", "weibo"]);
+        expect(insights.hotRankings[0].signals.categoryWeight).toBe(2);
+        expect(insights.hotRankings[1].signals.categoryWeight).toBe(0.5);
     });
 
     it("groups related topic events by URL or overlapping title terms", () => {

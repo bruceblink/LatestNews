@@ -1,5 +1,11 @@
 import { metadata } from "./metadata";
 import dataSources from "./data-sources";
+import {
+    getInsightSourceWeight,
+    type InsightCategoryID,
+    getInsightCategoryWeight,
+    formatInsightRankingReason,
+} from "./source-ranking-policy";
 
 import type { NewsItem, SourceID, ColumnID, SourceResponse } from "./types";
 
@@ -68,6 +74,7 @@ export interface NewsInsightOptions {
     trendWindow?: InsightTrendWindow;
     minTopicItems?: number;
     sourceWeights?: Partial<Record<SourceID, number>>;
+    categoryWeights?: Partial<Record<InsightCategoryID, number>>;
     readUrls?: Iterable<string>;
     hiddenUrls?: Iterable<string>;
     stopWords?: Iterable<string>;
@@ -87,6 +94,9 @@ export interface InsightSourceItem {
     canonicalUrl: string;
     terms: string[];
     sourceWeight: number;
+    categoryId: InsightCategoryID;
+    categoryName: string;
+    categoryWeight: number;
     isRead: boolean;
     item: NewsItem;
 }
@@ -96,7 +106,17 @@ export interface HotNewsSignals {
     duplicateCount: number;
     recencyScore: number;
     sourceWeight: number;
+    categoryWeight: number;
     readPenalty: number;
+    categoryDistribution: HotNewsCategorySignal[];
+    rankingReason: string;
+}
+
+export interface HotNewsCategorySignal {
+    categoryId: InsightCategoryID;
+    categoryName: string;
+    itemCount: number;
+    sourceCount: number;
 }
 
 export interface HotNewsItem {
@@ -240,7 +260,7 @@ export function collectInsightItems(
 
     for (const response of responses) {
         const responseUpdatedTime = parseNewsTime(response.updatedTime);
-        const sourceWeight = Math.max(0, sourceWeights[response.id] ?? 1);
+        const sourceWeight = Math.max(0, sourceWeights[response.id] ?? getInsightSourceWeight(response.id));
 
         for (const item of response.items) {
             const title = item.title?.trim();
@@ -252,6 +272,7 @@ export function collectInsightItems(
 
             const publishedAt = parseNewsTime(item.pubDate ?? item.extra?.date);
             const terms = extractInsightTerms(title, options);
+            const categoryId = getSourceCategoryId(response.id);
             const fallbackId = `${response.id}:${canonicalUrl || title}:${items.length}`;
 
             items.push({
@@ -266,6 +287,12 @@ export function collectInsightItems(
                 canonicalUrl,
                 terms,
                 sourceWeight,
+                categoryId,
+                categoryName: getCategoryName(categoryId),
+                categoryWeight: Math.max(
+                    0,
+                    options.categoryWeights?.[categoryId] ?? getInsightCategoryWeight(categoryId)
+                ),
                 isRead: readUrls.has(canonicalUrl),
                 item,
             });
@@ -596,19 +623,31 @@ function createHotNewsItem(group: TopicGroup, generatedAt: number): HotNewsItem 
     const latestPublishedAt = maxDefined(group.items.map((item) => item.publishedAt ?? item.responseUpdatedTime));
     const recencyScore = getRecencyScore(latestPublishedAt, generatedAt);
     const sourceWeight = average(group.items.map((item) => item.sourceWeight));
+    const categoryDistribution = createHotNewsCategoryDistribution(group.items);
+    const categoryWeight = average(group.items.map((item) => item.categoryWeight));
     const readPenalty = group.items.every((item) => item.isRead) ? 20 : 0;
     const signals: HotNewsSignals = {
         sourceCoverage: sources.length,
         duplicateCount: group.items.length,
         recencyScore,
         sourceWeight: roundScore(sourceWeight),
+        categoryWeight: roundScore(categoryWeight),
         readPenalty,
+        categoryDistribution,
+        rankingReason: formatInsightRankingReason({
+            sourceCoverage: sources.length,
+            recencyScore,
+            sourceWeight: roundScore(sourceWeight),
+            categoryWeight: roundScore(categoryWeight),
+            readPenalty,
+        }),
     };
     const score = roundScore(
         signals.sourceCoverage * 40 +
             Math.log1p(signals.duplicateCount) * 20 +
             recencyScore * 30 +
-            sourceWeight * 10 -
+            sourceWeight * 10 +
+            categoryWeight * 10 -
             readPenalty
     );
 
@@ -628,6 +667,39 @@ function createHotNewsItem(group: TopicGroup, generatedAt: number): HotNewsItem 
         keywords: topTerms(group.items, 4),
         signals,
     };
+}
+
+/** Summarizes the category mix behind one grouped hot item for ranking explanations. */
+function createHotNewsCategoryDistribution(items: InsightSourceItem[]): HotNewsCategorySignal[] {
+    const categories = new Map<
+        InsightCategoryID,
+        { categoryName: string; itemCount: number; sources: Set<SourceID> }
+    >();
+
+    for (const item of items) {
+        const current = categories.get(item.categoryId) ?? {
+            categoryName: item.categoryName,
+            itemCount: 0,
+            sources: new Set<SourceID>(),
+        };
+        current.itemCount += 1;
+        current.sources.add(item.sourceId);
+        categories.set(item.categoryId, current);
+    }
+
+    return [...categories.entries()]
+        .map(([categoryId, category]) => ({
+            categoryId,
+            categoryName: category.categoryName,
+            itemCount: category.itemCount,
+            sourceCount: category.sources.size,
+        }))
+        .sort(
+            (left, right) =>
+                right.itemCount - left.itemCount ||
+                right.sourceCount - left.sourceCount ||
+                left.categoryName.localeCompare(right.categoryName)
+        );
 }
 
 function createTopicEvent(group: TopicGroup): TopicEvent {
