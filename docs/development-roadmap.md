@@ -12,8 +12,9 @@
 - 来源健康事件持久化、手动探测、缓存刷新、部署健康检查和 `/insights` 健康概览。
 - 本地阅读历史、稍后读、收藏、隐藏，以及 GitHub 布局同步和 SyncHub 阅读数据同步。
 - Feed 离线快照、PWA 更新反馈和网络恢复反馈。
+- 版本化离线阅读快照契约：历史、收藏和关注源均有 URL 规范化、数量上限、过期与损坏数据保护。
 
-当前主线提交为 `131fff9`，后续开发从洞察趋势模型开始，不重复建设已经完成的 Phase 0/1 能力。
+当前功能基线为 `842616a`，后续开发从 R3-B 的页面与存储接入开始，不重复建设已经完成的 Phase 0/1 能力。
 
 ## 交付顺序
 
@@ -195,11 +196,11 @@ interface KeywordTrend {
 
 ### R3 PWA 离线阅读扩展
 
-状态：依赖 R2-B，拆为数据契约和页面接入两个提交。
+状态：R3-A 已完成；R3-B 和 R3-C 待执行。
 
 目标：将离线能力从 Feed 快照扩展到最近阅读、收藏和关注源。
 
-文件范围：
+阶段文件范围：
 
 - `shared/offline-reading-state.ts`
 - `src/services/offline-reading-state.service.ts`
@@ -217,11 +218,20 @@ interface KeywordTrend {
 
 执行顺序：
 
-1. `R3-A` 定义 `OfflineReadingSnapshot`、迁移/过期策略和每类数据上限，复用阅读状态 URL 规范化规则。
-2. `R3-B` 接入历史、收藏和关注源页面；在线/离线切换只改变数据来源提示，不改变阅读操作入口。
-3. 使用 Service Worker 离线模式验证应用壳、历史、收藏和最后一次 Feed 快照均可打开。
+1. `R3-A` 已完成：在 `shared/offline-reading-state.ts` 定义 `OfflineReadingSnapshot`，版本固定为 `1`。历史按规范化 URL 去重且最多 200 条，收藏最多 300 条，关注源最多 100 个；快照分为 `fresh`、`stale`、`invalid` 三种状态。未知版本、损坏结构和超过 60 秒的未来时间均安全忽略。相关单测覆盖规范化、确定性排序、上限、迁移与过期状态，已运行 `pnpm check`。
+2. `R3-B` 新增 `src/services/offline-reading-state.service.ts`，只负责浏览器存储读写，不直接修改 atom：
+   - 存储键独立于 Feed 快照；读操作必须捕获 JSON/Storage 异常，并通过 R3-A 迁移函数丢弃无效数据。
+   - 服务返回快照和状态，而非仅返回数据，使页面可以区分“无快照”“可用快照”“过期快照”。
+   - 在线时由 `readingHistoryAtom`、`readingStateAtom` 与 `focusSourcesAtom` 写入最新快照；离线或接口失败时只读取快照，不能把快照反写到 SyncHub 上传队列。
+   - 先为正常读写、Storage 配额异常、损坏 JSON、过期快照和无浏览器环境补服务层测试。
+3. `R3-C` 在 `src/routes/history.tsx` 和关注源入口接入服务层：
+   - 仅当在线数据不可用且快照可用时显示快照；在线数据恢复后立即以当前 atom 数据刷新快照。
+   - 用统一但紧凑的状态提示展示保存时间；过期快照明确显示“可能不是最新内容”，不伪装成在线状态。
+   - 本地的收藏、稍后读、隐藏和关注操作保持可用；这些操作更新当前 atom，并在下一次可写时更新离线快照。
+   - 窄屏下提示不能遮挡历史筛选、状态标签或阅读操作按钮。
+4. R3 收尾使用 Service Worker 的离线模式验证应用壳、`/history`、收藏标签、关注源和最后一次 Feed 快照；依次模拟首次离线、已有快照离线、过期快照、恢复网络和 SyncHub 合并后刷新。若浏览器自动化无法接入，至少保留 API/页面 HTTP 探针，并把真实离线浏览器验收列为部署前人工项。
 
-提交：`feat: add offline reading snapshot policy`、`feat: extend offline reading snapshots`
+提交边界：`feat: add offline reading snapshot policy`（已完成）、`feat: persist offline reading snapshots`（R3-B）、`feat: show offline reading snapshots`（R3-C）。每项完成后运行对应 Vitest 与 `pnpm typecheck`；R3 收尾追加 `pnpm check` 和 `pnpm build`。
 
 ### R4 外部节点接入
 
@@ -271,4 +281,4 @@ interface KeywordTrend {
 
 ## 下一步
 
-下一次开发执行 R3-A：先定义离线阅读快照的共享契约、迁移和过期策略，不接入页面或 Service Worker；通过后以 `feat: add offline reading snapshot policy` 单独提交。
+下一次开发执行 R3-B：先实现离线阅读快照的浏览器存储服务和异常保护，不接页面或 Service Worker。先补服务层单测，通过 `pnpm typecheck` 与定向 Vitest 后，以 `feat: persist offline reading snapshots` 单独提交。
