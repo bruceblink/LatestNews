@@ -164,7 +164,7 @@ interface KeywordTrend {
 
 ### R2-B SyncHub 后台状态
 
-状态：下一阶段，依赖已完成的 R2-A。
+状态：已完成（2026-08-09）。
 
 目标：让后台上传失败可见、可重试，不再静默丢失。
 
@@ -178,12 +178,18 @@ interface KeywordTrend {
 
 状态至少包括：`idle`、`pending`、`syncing`、`success`、`error`。每次上传记录待同步集合、最后尝试时间和可重试动作；新的本地变更到来时，错误状态回到 `pending`。错误信息经过共享脱敏函数，只展示用户可理解的信息，不展示 API Key、请求头或响应原文中的敏感字段。
 
+实现结果：
+
+- 独立持久化 SyncHub 状态，不与登录后的布局同步状态混用。
+- 共享上传队列把连续修改合并为一批；失败集合保留到重试，新修改在上传中到达时进入下一批。
+- 错误文本映射为安全提示，菜单展示状态、待处理数量和失败后的重试入口。
+
 验收：
 
 - 覆盖防抖排队、连续修改只上传最后状态、部分集合失败、重试成功和卸载清理计时器。
 - 菜单在窄屏下仍能展示状态、时间和重试按钮，不阻塞本地阅读功能。
-- `pnpm exec vitest -c vitest.config.ts test/synchub-status.test.ts test/synchub-service.test.ts`
-- `pnpm typecheck`，本地检查配置、断网、恢复网络三条路径。
+- `pnpm exec vitest -c vitest.config.ts test/synchub-status.test.ts test/synchub-upload-queue.test.ts test/synchub-service.test.ts`
+- `pnpm typecheck`、`pnpm check` 和本地 `/history` 页面 HTTP 冒烟通过；真实 SyncHub 凭据配置、断网和恢复网络的手动验收留待部署环境执行。
 
 提交：`feat: surface synchub background status`
 
@@ -265,4 +271,4 @@ interface KeywordTrend {
 
 ## 下一步
 
-下一次开发执行 R2-B：新增独立的 SyncHub 后台状态模型，让上传失败可见、可重试，并补齐敏感错误信息脱敏测试；通过后以 `feat: surface synchub background status` 单独提交。
+下一次开发执行 R3-A：先定义离线阅读快照的共享契约、迁移和过期策略，不接入页面或 Service Worker；通过后以 `feat: add offline reading snapshot policy` 单独提交。
