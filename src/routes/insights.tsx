@@ -1,7 +1,16 @@
 import type { SourceID } from "@shared/types";
 import type { UnifiedFeedScope } from "@shared/unified-feed";
 import type { SourceHealthSummary } from "@shared/source-health-types";
-import type { TopicEvent, HotNewsItem, WordCloudTerm, CategoryShare, SourceActivity } from "@shared/news-insights";
+import type {
+    TopicEvent,
+    HotNewsItem,
+    KeywordTrend,
+    WordCloudTerm,
+    CategoryShare,
+    SourceActivity,
+    InsightTimeBucket,
+    InsightTrendWindow,
+} from "@shared/news-insights";
 
 import clsx from "clsx";
 import { useTitle } from "react-use";
@@ -40,6 +49,7 @@ function InsightsPage() {
     const { history, addHistory } = useHistory();
     const { hiddenUrls } = useReadingState();
     const [scope, setScope] = useState<InsightScope>(focusSources.length ? "focus" : "hottest");
+    const [trendWindow, setTrendWindow] = useState<InsightTrendWindow>("24h");
 
     const sources = useMemo(() => getScopeSources(scope, focusSources), [focusSources, scope]);
     const readUrls = useMemo(() => history.map((item) => item.url), [history]);
@@ -49,11 +59,13 @@ function InsightsPage() {
             hotLimit: 12,
             topicLimit: 8,
             wordLimit: 28,
+            trendLimit: 10,
+            trendWindow,
             minTopicItems: 2,
             readUrls,
             hiddenUrls,
         }),
-        [hiddenUrls, readUrls, sources]
+        [hiddenUrls, readUrls, sources, trendWindow]
     );
 
     const { data, isFetching, isError, error, refetch } = useQuery({
@@ -147,6 +159,21 @@ function InsightsPage() {
                     </div>
 
                     <SourceHealthOverview data={healthSummary} isFetching={isHealthFetching} isError={isHealthError} />
+
+                    <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                        <UpdateFrequencyPanel
+                            buckets={insights?.updateFrequency ?? []}
+                            loading={isFetching && !insights}
+                            trendWindow={trendWindow}
+                            onTrendWindowChange={setTrendWindow}
+                        />
+                        <KeywordTrendPanel
+                            items={insights?.keywordTrends ?? []}
+                            loading={isFetching && !insights}
+                            scope={scope}
+                            trendWindow={trendWindow}
+                        />
+                    </div>
 
                     <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
                         <HotRankingPanel items={insights?.hotRankings ?? []} scope={scope} onRead={handleReadHotItem} />
@@ -301,6 +328,173 @@ function HealthMetric({
             <div className="text-xs op-75">{label}</div>
             <div className="mt-1 text-xl font-bold">{value}</div>
         </div>
+    );
+}
+
+/** Displays UTC-aligned publication buckets and controls the shared trend window. */
+function UpdateFrequencyPanel({
+    buckets,
+    loading,
+    trendWindow,
+    onTrendWindowChange,
+}: {
+    buckets: InsightTimeBucket[];
+    loading: boolean;
+    trendWindow: InsightTrendWindow;
+    onTrendWindowChange: (window: InsightTrendWindow) => void;
+}) {
+    const maxCount = Math.max(...buckets.map((bucket) => bucket.itemCount), 0);
+    const totalCount = buckets.reduce((total, bucket) => total + bucket.itemCount, 0);
+
+    return (
+        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <PanelTitle icon="i-ph:chart-line-up-duotone" title="更新频率" />
+                <div className="flex rounded-lg bg-zinc-200/75 p-0.5 dark:bg-zinc-800/75" aria-label="趋势时间范围">
+                    {(
+                        [
+                            ["24h", "24 小时"],
+                            ["7d", "7 天"],
+                        ] as const
+                    ).map(([value, label]) => (
+                        <button
+                            key={value}
+                            type="button"
+                            className={clsx(
+                                "rounded-md px-2.5 py-1 text-xs transition-colors",
+                                trendWindow === value
+                                    ? "bg-white font-medium text-zinc-800 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                                    : "text-zinc-600 hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300"
+                            )}
+                            onClick={() => onTrendWindowChange(value)}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {loading ? (
+                <PanelEmpty label="趋势加载中" />
+            ) : totalCount > 0 ? (
+                <div className="mt-4 overflow-x-auto pb-1">
+                    <div
+                        className="grid h-48 min-w-560px items-end gap-2"
+                        style={{ gridTemplateColumns: `repeat(${buckets.length}, minmax(56px, 1fr))` }}
+                    >
+                        {buckets.map((bucket) => {
+                            const barHeight =
+                                bucket.itemCount && maxCount
+                                    ? Math.max(8, Math.round((bucket.itemCount / maxCount) * 128))
+                                    : 0;
+
+                            return (
+                                <div
+                                    key={bucket.startAt}
+                                    className="grid h-full grid-rows-[20px_1fr_20px] items-end text-center"
+                                    title={`${bucket.itemCount} 条 · ${bucket.sourceCount} 个来源`}
+                                >
+                                    <span className="text-xs text-zinc-600 dark:text-zinc-500">
+                                        {bucket.itemCount || ""}
+                                    </span>
+                                    <div className="flex h-full items-end justify-center">
+                                        <div
+                                            className="w-7 rounded-t-md bg-cyan-500/75 transition-[height] dark:bg-cyan-400/65"
+                                            style={{ height: `${barHeight}px` }}
+                                        />
+                                    </div>
+                                    <span className="truncate text-[11px] text-zinc-600 dark:text-zinc-500">
+                                        {formatTrendBucketLabel(bucket.startAt, trendWindow)}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-500">
+                        共 {totalCount} 条具有发布时间的内容 · 时间桶按 UTC 对齐
+                    </div>
+                </div>
+            ) : (
+                <div className="mt-4">
+                    <PanelEmpty label="当前时间范围内暂无可统计的发布时间" />
+                </div>
+            )}
+        </section>
+    );
+}
+
+/** Lists the strongest keyword trends and links each term to the matching Feed time range. */
+function KeywordTrendPanel({
+    items,
+    loading,
+    scope,
+    trendWindow,
+}: {
+    items: KeywordTrend[];
+    loading: boolean;
+    scope: InsightScope;
+    trendWindow: InsightTrendWindow;
+}) {
+    const maxCount = Math.max(...items.flatMap((item) => item.buckets.map((bucket) => bucket.itemCount)), 0);
+
+    return (
+        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+            <PanelTitle icon="i-ph:trend-up-duotone" title="关键词趋势" />
+            <div className="mt-4 flex flex-col gap-2">
+                {loading ? (
+                    <PanelEmpty label="关键词趋势加载中" />
+                ) : items.length ? (
+                    items.map((item) => (
+                        <div
+                            key={item.term}
+                            className="grid gap-2 rounded-xl border border-zinc-200/80 bg-white/82 px-3 py-2.5 dark:border-zinc-700/35 dark:bg-zinc-800/54 md:grid-cols-[minmax(110px,0.8fr)_1.4fr_auto] md:items-center"
+                        >
+                            <div className="min-w-0">
+                                <Link
+                                    to="/feed"
+                                    search={{ q: item.term, scope, since: trendWindow }}
+                                    className="block truncate text-sm font-medium text-zinc-800 transition-colors hover:text-cyan-700 dark:text-zinc-200 dark:hover:text-cyan-300"
+                                >
+                                    {item.term}
+                                </Link>
+                                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-500">
+                                    {item.totalCount} 次 · {item.sourceCount} 个来源
+                                </div>
+                            </div>
+                            <div
+                                className="grid h-8 min-w-0 items-end gap-1"
+                                style={{ gridTemplateColumns: `repeat(${item.buckets.length}, minmax(4px, 1fr))` }}
+                                title={item.buckets.map((bucket) => bucket.itemCount).join(" / ")}
+                            >
+                                {item.buckets.map((bucket) => {
+                                    const barHeight =
+                                        bucket.itemCount && maxCount
+                                            ? Math.max(3, Math.round((bucket.itemCount / maxCount) * 28))
+                                            : 0;
+                                    return (
+                                        <span
+                                            key={bucket.startAt}
+                                            className="block min-w-1 rounded-sm bg-blue-500/65 dark:bg-blue-400/60"
+                                            style={{ height: `${barHeight}px` }}
+                                        />
+                                    );
+                                })}
+                            </div>
+                            <Link
+                                to="/feed"
+                                search={{ q: item.term, scope, since: trendWindow }}
+                                className="inline-flex items-center justify-self-start gap-1 rounded-full bg-cyan-500/10 px-2 py-1 text-xs text-cyan-700 transition-colors hover:bg-cyan-500/18 dark:text-cyan-300 md:justify-self-end"
+                            >
+                                <span>查看</span>
+                                <span className="i-ph:arrow-right-duotone" />
+                            </Link>
+                        </div>
+                    ))
+                ) : (
+                    <PanelEmpty label="当前时间范围内暂无关键词趋势" />
+                )}
+            </div>
+        </section>
     );
 }
 
@@ -671,4 +865,13 @@ function getWordClass(weight: number, maxWeight: number) {
         return "border-blue-500/18 bg-blue-500/12 text-sm text-blue-700 dark:text-blue-300";
     }
     return "border-zinc-200/90 bg-white/82 text-xs text-zinc-700 dark:border-zinc-700/40 dark:bg-zinc-800/62 dark:text-zinc-400";
+}
+
+/** Formats fixed UTC bucket boundaries consistently across browser time zones. */
+function formatTrendBucketLabel(startAt: number, trendWindow: InsightTrendWindow) {
+    const date = new Date(startAt);
+    if (trendWindow === "7d") {
+        return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
+    }
+    return `${String(date.getUTCHours()).padStart(2, "0")}:00`;
 }
