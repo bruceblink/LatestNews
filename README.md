@@ -132,7 +132,7 @@ docker compose -f docker-compose.yml up -d
 - [src](./src)：前端页面、组件、状态和 hooks
 - [server](./server)：Nitro API、抓取逻辑、数据库与中间件
 - [shared](./shared)：前后端共享常量、类型和数据源定义
-- [docs](./docs)：API、部署和外部接入文档
+- [docs](./docs)：开发路线、API、部署和外部接入文档
 - [scripts](./scripts)：资源预处理和数据源辅助脚本
 - [public](./public)：静态资源、图标和 PWA 相关文件
 
