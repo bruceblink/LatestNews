@@ -1,6 +1,6 @@
 # LatestNews Node Federation Contract
 
-状态：R4-A 设计基线。本文定义后续节点联邦的协议边界；不新增运行时接口，不改变现有 `/api/v1/node` 的响应，也不启用任何远端请求。
+状态：R4-A 至 R4-D 已实现。本文定义 LatestNews 节点联邦的协议边界、上游诊断和受控下游读取接口。
 
 ## 目标与边界
 
@@ -114,6 +114,33 @@ R4-B 使用以下总预算，具体实现可以更短，不能更长：
 - R4-C 的熔断器按上游 origin 维护：连续 3 次可重试失败后打开 30 秒；半开状态只允许一个探测请求；成功探测关闭熔断器。
 - 熔断器打开或上游失败时返回本节点可用数据和本地健康摘要；联邦字段必须标记为降级，不能把远端空响应当作本地空结果。
 
+## R4-D Downstream Authentication
+
+`GET /api/v1/federation/downstream/node` 是第一个受控下游读取接口。它返回当前节点清单的本地数据，但不改变原有公开的 `GET /api/v1/node`。
+
+- 下游必须发送 `Authorization: Bearer lnf_<key-id>_<secret>` 和 `X-LatestNews-Node-Id`。`lnf_` 是联邦专用命名空间；`shk_` SyncHub key 会被拒绝。
+- 部署只配置 `LATESTNEWS_FEDERATION_DOWNSTREAM_KEYS` JSON 数组中的 SHA-256 verifier，绝不保存或记录 raw bearer token。例如：
+
+```json
+[
+  {
+    "id": "partner-a-2026-08",
+    "verifier": "sha256:<64 lowercase hex characters>",
+    "nodeIds": ["partner-a"],
+    "scopes": ["node:read"],
+    "expiresAt": 1790000000000
+  }
+]
+```
+
+- 记录必须具有唯一 key ID、非空 node allow-list 和显式 scopes。任何格式错误、未知 scope、重复 ID 或无效 verifier 都会使整个配置安全失效。
+- 轮换时先并存旧、新 verifier；确认下游已切换后移除旧记录，或添加 `revokedAt` 立即禁止旧 key。密钥永远不会出现在响应、审计事件或日志中。
+- 该路由要求 `node:read` scope。成功响应的 `meta` 中包含 `requestId`、已认证 node ID、key ID、已授予 scopes 和限流余额；认证失败不回显这些认证字段。
+- 每个已认证 key/node 组合按固定窗口限流；无效请求共享匿名限流桶，无法耗尽已认证节点的预算。`LATESTNEWS_FEDERATION_RATE_LIMIT` 可配置每分钟额度，默认 60，范围 1 至 1000。
+- 接受、拒绝和限流事件以无 secret 的结构化事件写入日志并保留 200 条进程内诊断记录：仅包括 request ID、key ID、node ID、route、scope、结果、原因、时间与耗时。它们不会跨进程重启持久化。
+- 为兼容现有未配置 JWT 的部署，通用登录中间件会把该路径放行到联邦处理器；路由本身仍始终验证联邦 bearer，不能视为公开 API。
+- 配置了至少一条有效下游 key 时，公开节点清单在可选 `data.federation` 中声明 `protocolVersion: "1.0"`、`downstream-node-manifest` capability 和 `authentication.downstream: "bearer"`。
+
 ## Error Envelope And Diagnostics
 
 未来联邦专用接口使用本项目既有的 `data`、`meta`、`errors` 外层结构，并在 `errors` 项中增加机器可读字段：
@@ -152,7 +179,7 @@ Public current v1 endpoints remain public according to their deployment setting.
 
 - R4-B upstream reads are unauthenticated by default. If an operator configures a private upstream, use a dedicated server-side federation bearer token and an explicit node allow-list.
 - SyncHub keys (`shk_...`) are only for SyncHub collections and are never valid federation credentials.
-- R4-D introduces a dedicated downstream bearer credential namespace, per-node scopes and key identifiers for audit. It must store only a non-reversible key verifier, support rotation and emit an audit event for accepted and rejected requests.
+- R4-D 使用专用下游 bearer namespace、per-node scopes 和审计 key ID。配置只保存非可逆 verifier，支持双 key 轮换，并对接受、拒绝和限流请求发出脱敏审计事件。
 - Browser clients never receive federation credentials. They continue to call this node's normal public or deployment-protected API.
 
 ## Delivery Sequence And Test Matrix
@@ -162,6 +189,6 @@ Public current v1 endpoints remain public according to their deployment setting.
 | R4-A | This contract only. | `git diff --check`; existing `/api/v1/node` and OpenAPI tests remain green. |
 | R4-B | Server-side read-only upstream client plus URL policy. | Fixtures for valid manifest, missing endpoint, incompatible version, private/loopback address, DNS-rebound result, timeout, non-JSON and 5xx; `pnpm typecheck`; Node-server local API probe. |
 | R4-C | Per-origin circuit breaker and degraded health summary. 已完成。 | Deterministic timer tests for opening, half-open probe, recovery and local-data fallback. |
-| R4-D | Downstream auth, scope checks, audit fields and rate limits. | Auth missing/invalid/rotated key tests, scope-denial tests, rate-limit tests and secret-redaction review. |
+| R4-D | Downstream auth, scope checks, audit fields and rate limits. 已完成。 | Auth missing/invalid/rotated key tests, scope-denial tests, rate-limit tests, secret-redaction review and Node-server HTTP probe. |
 
 No slice may modify existing `/api/v1/node` fields incompatibly. Any new network path must have focused tests before it is connected to Feed or public v1 responses.

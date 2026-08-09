@@ -16,6 +16,15 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
             description:
                 "Read-oriented LatestNews API for source metadata, source items, feed export, and diagnostics.",
         },
+        components: {
+            securitySchemes: {
+                FederationBearer: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "lnf_<key-id>_<secret>",
+                },
+            },
+        },
         paths: {
             [withApiPrefix(sourceApi.nodeV1)]: {
                 get: {
@@ -36,6 +45,28 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                     summary: "Get upstream federation diagnostics with local health fallback",
                     tags: ["Node Federation"],
                     responses: okJsonResponse("Upstream node manifest envelope"),
+                },
+            },
+            "/api/v1/federation/downstream/node": {
+                get: {
+                    summary: "Get the local node manifest for an authenticated downstream node",
+                    tags: ["Node Federation"],
+                    security: [{ FederationBearer: [] }],
+                    parameters: [
+                        {
+                            name: "X-LatestNews-Node-Id",
+                            in: "header",
+                            required: true,
+                            schema: { type: "string" },
+                            description: "Allow-listed downstream node identifier",
+                        },
+                    ],
+                    responses: {
+                        ...okJsonResponse("Authenticated downstream node manifest envelope"),
+                        401: errorResponse("Federation credential required"),
+                        403: errorResponse("Federation credential denied"),
+                        429: errorResponse("Federation rate limit exceeded"),
+                    },
                 },
             },
             [withApiPrefix(sourceApi.sourcesV1)]: {
@@ -177,6 +208,17 @@ function okJsonResponse(description: string) {
                 "application/json": {
                     schema: envelopeSchema(),
                 },
+            },
+        },
+    };
+}
+
+function errorResponse(description: string) {
+    return {
+        description,
+        content: {
+            "application/json": {
+                schema: envelopeSchema(),
             },
         },
     };

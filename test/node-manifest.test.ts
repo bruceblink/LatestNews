@@ -28,6 +28,11 @@ describe("node manifest", () => {
             appName: "latestnews",
             appVersion: "0.5.2",
             downstreamEndpoint: " https://downstream.example.com ",
+            federation: {
+                protocolVersion: "1.0",
+                capabilities: ["downstream-node-manifest"],
+                authentication: { downstream: "bearer" },
+            },
             generatedAt: NOW,
             healthSummary: createHealthSummary(),
             homepage: "https://news.example.com",
@@ -58,6 +63,11 @@ describe("node manifest", () => {
         expect(response.data.connections).toEqual({
             upstreamEndpoint: "https://upstream.example.com",
             downstreamEndpoint: "https://downstream.example.com",
+        });
+        expect(response.data.federation).toEqual({
+            protocolVersion: "1.0",
+            capabilities: ["downstream-node-manifest"],
+            authentication: { downstream: "bearer" },
         });
         expect(response.data.summary.sourceCount).toBe(sourceMetadata.meta.sourceCount);
         expect(response.data.health).toEqual({

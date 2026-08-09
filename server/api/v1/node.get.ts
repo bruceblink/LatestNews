@@ -1,30 +1,14 @@
 import type { NodeManifestResponse } from "@shared/node-manifest";
 
-import process from "node:process";
 import { logger } from "#/utils/logger";
 import { createError, defineEventHandler } from "h3";
-import { Version, APP_NAME, HOME_PAGE } from "@shared/consts";
-import { getSourceHealthSummary } from "#/utils/source-health";
-import { createNodeManifestResponse } from "@shared/node-manifest";
-import { createSourceMetadataResponse } from "@shared/source-metadata";
+import { createLocalNodeManifestResponse } from "#/utils/local-node-manifest";
 
 export default defineEventHandler((): NodeManifestResponse => {
     try {
         const generatedAt = Date.now();
 
-        return createNodeManifestResponse({
-            appName: APP_NAME,
-            appVersion: Version,
-            downstreamEndpoint: process.env.LATESTNEWS_DOWNSTREAM_ENDPOINT,
-            generatedAt,
-            healthSummary: getSourceHealthSummary(),
-            homepage: HOME_PAGE,
-            nodeId: process.env.LATESTNEWS_NODE_ID,
-            sourceMetadata: createSourceMetadataResponse({
-                generatedAt,
-            }),
-            upstreamEndpoint: process.env.LATESTNEWS_UPSTREAM_ENDPOINT,
-        });
+        return createLocalNodeManifestResponse(generatedAt);
     } catch (error) {
         logger.error(error);
         throw createError({

@@ -332,7 +332,7 @@ describe("federation retry delay", () => {
 });
 
 describe("upstream node manifest parsing", () => {
-    it("requires same-origin source and health API paths", () => {
+    it("requires same-origin source and health API paths while accepting a declared downstream bearer capability", () => {
         const invalid = createManifest({
             data: {
                 ...createManifest().data,
@@ -343,7 +343,21 @@ describe("upstream node manifest parsing", () => {
             },
         });
 
+        const federated = createManifest({
+            data: {
+                ...createManifest().data,
+                federation: {
+                    protocolVersion: "1.0",
+                    capabilities: ["downstream-node-manifest"],
+                    authentication: { downstream: "bearer" },
+                },
+            },
+        });
+
         expect(parseUpstreamNodeManifest(createManifest())).toBeDefined();
+        expect(parseUpstreamNodeManifest(federated)).toMatchObject({
+            federation: { authentication: { downstream: "bearer" } },
+        });
         expect(parseUpstreamNodeManifest(invalid)).toBeUndefined();
     });
 });

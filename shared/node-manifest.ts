@@ -23,6 +23,14 @@ export interface NodeManifestConnectionConfig {
     downstreamEndpoint?: string;
 }
 
+export interface NodeManifestFederationCapability {
+    authentication?: {
+        downstream: "bearer";
+    };
+    capabilities: string[];
+    protocolVersion: string;
+}
+
 export interface NodeManifestResponse {
     data: {
         node: {
@@ -33,6 +41,7 @@ export interface NodeManifestResponse {
         };
         apiBasePath: "/api";
         endpoints: NodeManifestEndpointMap;
+        federation?: NodeManifestFederationCapability;
         connections: NodeManifestConnectionConfig;
         sources: SourceMetadataResponse["data"]["sources"];
         columns: SourceMetadataResponse["data"]["columns"];
@@ -61,6 +70,7 @@ export interface CreateNodeManifestOptions {
     appName: string;
     appVersion: string;
     generatedAt: number;
+    federation?: NodeManifestFederationCapability;
     healthSummary: SourceHealthSummary;
     sourceMetadata: SourceMetadataResponse;
     downstreamEndpoint?: string;
@@ -82,6 +92,7 @@ export function createNodeManifestResponse(options: CreateNodeManifestOptions): 
             },
             apiBasePath: API_BASE_PATH,
             endpoints: createEndpointMap(),
+            ...(options.federation && { federation: options.federation }),
             connections: createConnectionConfig(options),
             sources: options.sourceMetadata.data.sources,
             columns: options.sourceMetadata.data.columns,

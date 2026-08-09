@@ -10,6 +10,9 @@ export const federationErrorCodes = [
     "federation_upstream_timeout",
     "federation_upstream_unavailable",
     "federation_circuit_open",
+    "federation_auth_required",
+    "federation_access_denied",
+    "federation_rate_limited",
 ] as const;
 
 export type FederationErrorCode = (typeof federationErrorCodes)[number];
@@ -21,6 +24,9 @@ export interface ValidatedUpstreamNodeEndpoint {
 }
 
 export interface FederationCapabilityManifest {
+    authentication?: {
+        downstream?: "bearer";
+    };
     protocolVersion?: string;
     capabilities?: string[];
 }
@@ -270,8 +276,20 @@ function parseFederationCapability(value: unknown): FederationCapabilityManifest
         return undefined;
     }
 
+    const authentication = parseFederationAuthentication(value.authentication);
+    if (value.authentication !== undefined && !authentication) return undefined;
+
     return {
+        ...(authentication && { authentication }),
         ...(typeof value.protocolVersion === "string" && { protocolVersion: value.protocolVersion }),
         ...(Array.isArray(value.capabilities) && { capabilities: [...value.capabilities] }),
+    };
+}
+
+function parseFederationAuthentication(value: unknown) {
+    if (!isRecord(value)) return undefined;
+    if (value.downstream !== undefined && value.downstream !== "bearer") return undefined;
+    return {
+        ...(value.downstream === "bearer" && { downstream: "bearer" as const }),
     };
 }

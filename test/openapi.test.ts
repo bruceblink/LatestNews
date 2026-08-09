@@ -19,6 +19,7 @@ describe("OpenAPI document", () => {
                 "/api/v1/node",
                 "/api/v1/openapi.json",
                 "/api/v1/federation/upstream",
+                "/api/v1/federation/downstream/node",
                 "/api/v1/sources",
                 "/api/v1/sources/{id}",
                 "/api/v1/sources/{id}/items",
@@ -30,6 +31,13 @@ describe("OpenAPI document", () => {
                 "/api/v1/feeds/rss",
             ])
         );
+        expect(document.paths["/api/v1/federation/downstream/node"].get).toMatchObject({
+            security: [{ FederationBearer: [] }],
+        });
+        expect(document.components.securitySchemes.FederationBearer).toMatchObject({
+            type: "http",
+            scheme: "bearer",
+        });
         const sourceItemsPath = document.paths["/api/v1/sources/{id}/items"];
 
         expect(sourceItemsPath).toMatchObject({

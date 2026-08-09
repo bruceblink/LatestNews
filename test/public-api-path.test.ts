@@ -9,6 +9,7 @@ describe("public API path policy", () => {
         expect(isPublicApiPath("/api/v1/node")).toBe(true);
         expect(isPublicApiPath("/api/v1/openapi.json")).toBe(true);
         expect(isPublicApiPath("/api/v1/federation/upstream")).toBe(true);
+        expect(isPublicApiPath("/api/v1/federation/downstream/node")).toBe(true);
         expect(isPublicApiPath("/api/v1/sources")).toBe(true);
         expect(isPublicApiPath("/api/v1/sources/weibo")).toBe(true);
         expect(isPublicApiPath("/api/v1/sources/batch")).toBe(true);

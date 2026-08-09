@@ -14,7 +14,7 @@
 - Feed 离线快照、PWA 更新反馈和网络恢复反馈。
 - 版本化离线阅读快照契约：历史、收藏和关注源均有 URL 规范化、数量上限、过期与损坏数据保护。
 
-当前功能基线已完成 R3 的代码/构建验证和 R4-A 至 R4-C 的服务端实现。部署环境的 Service Worker 离线切换仍是 M3 发布前人工验收项；当前自动化浏览器无法访问本机预览地址，因此不能把 Worker 产物检查误记为真实离线验收。
+当前功能基线已完成 R3 的代码/构建验证和 R4-A 至 R4-D 的服务端实现。部署环境的 Service Worker 离线切换仍是 M3 发布前人工验收项；当前自动化浏览器无法访问本机预览地址，因此不能把 Worker 产物检查误记为真实离线验收。
 
 ## 交付顺序
 
@@ -234,7 +234,7 @@ interface KeywordTrend {
 
 ### R4 外部节点接入
 
-状态：R4-A、R4-B、R4-C 已完成；R3 的部署前离线验收仍在发布清单中。
+状态：R4-A、R4-B、R4-C、R4-D 已完成；R3 的部署前离线验收仍在发布清单中。
 
 目标：在内部模型稳定后，才实现上游/下游节点的实际连接能力。
 
@@ -253,7 +253,11 @@ interface KeywordTrend {
 3. `R4-C` 已完成：上游客户端按已规范化 origin 维护进程内熔断器。每个终态可重试请求只计为一次失败，连续 3 次失败后打开 30 秒；到期后只允许一个半开探测，探测成功关闭，失败重新打开。连接失败的重试改为带抖动的指数退避（250ms 起、1s 上限），并保持现有单次重试预算。
    - `GET /api/v1/federation/upstream` 的 `meta` 新增 `localHealth` 与 `upstream` 状态/熔断快照。上游失败或熔断时远端 `data` 仍为 `null`，但本节点来源健康摘要始终返回且明确标记为 `degraded`，不会把远端空结果当作本地空数据。
    - 定向测试覆盖打开、半开并发隔离、成功恢复、半开失败重开、终态失败计数、退避上限和本地健康降级回退。
-4. `R4-D` 最后实现下游接入鉴权、审计字段和速率限制，不与 SyncHub API Key 混用。
+4. `R4-D` 已完成：新增 `GET /api/v1/federation/downstream/node`，它始终要求专用 `lnf_` bearer 与 `X-LatestNews-Node-Id`，只返回本地节点清单。既有 `/api/v1/node` 保持公开兼容，不修改其原字段。
+   - `LATESTNEWS_FEDERATION_DOWNSTREAM_KEYS` 只接收 SHA-256 verifier、唯一 key ID、node allow-list、scopes 和可选过期/撤销时间；配置存在任意无效记录时整体安全拒绝。多 key 并存支持轮换，`shk_` key 与其他 namespace 都不会被接受。
+   - `node:read` scope 被明确校验。响应和 headers 提供 request ID、rate-limit 额度/剩余/重置时间；已认证响应额外提供 key ID、node ID 与 granted scopes，认证失败不会回显这些字段。
+   - 限流按已认证 key/node 组合划分；未认证请求使用匿名桶，不能通过伪造 node ID 消耗有效节点预算。所有接受、拒绝、限流均输出脱敏审计事件，审计载荷不含 token、verifier 或 Authorization header。
+   - 节点清单仅在存在有效下游配置时声明 `downstream-node-manifest` bearer capability。OpenAPI 同时描述 bearer scheme、必需 node header 与 401/403/429 响应。
 
 验收：
 
@@ -261,7 +265,7 @@ interface KeywordTrend {
 - `/api/v1/node` 保持向后兼容；上游不可用时本地 `/api/v1/sources` 与 Feed 仍可用。
 - 每个实现提交运行对应 Vitest、`pnpm typecheck` 和本地 API 探针；阶段结束运行 `pnpm check`。
 
-提交边界：`docs: define node federation contract`、`feat: add upstream node client`、`feat: add node circuit breaker`、`feat: authenticate downstream nodes`。
+提交边界：`docs: define node federation contract`、`feat: add upstream node client`、`feat: add federation circuit breaker`、`feat: authenticate downstream nodes`。
 
 ## 后续里程碑
 
@@ -270,7 +274,7 @@ interface KeywordTrend {
 | M1 洞察闭环 | R1-A 至 R1-C | 已完成 | 趋势、权重和排序原因可在 `/insights` 查看 |
 | M2 同步可靠性 | R2-A1、R2-A2、R2-B | M1 | 本地/远端合并无数据丢失，失败可见且可重试 |
 | M3 离线阅读 | R3-A 至 R3-C | M2 | 实现与构建验证完成；部署前 Service Worker 离线切换验收通过 |
-| M4 节点联邦 | R4-A 至 R4-D | M2、M3 | 受控上游接入和鉴权下游均通过故障与安全测试 |
+| M4 节点联邦 | R4-A 至 R4-D | M2、M3 | 代码、构建、故障/安全测试和本地 API 探针通过；部署前执行 key 轮换与审计接收验收 |
 
 ## 每个切片的交付门槛
 
@@ -283,4 +287,4 @@ interface KeywordTrend {
 
 ## 下一步
 
-下一次开发优先完成 R3 部署前离线验收（需要允许切换网络状态的已注册 Service Worker 环境）；服务端开发继续进入 R4-D：为下游联邦接入实现独立凭据、node scope/allow-list、审计字段和速率限制，并完成密钥脱敏审查。
+下一次开发优先完成 M3 部署前离线验收（需要允许切换网络状态的已注册 Service Worker 环境），随后做 M4 部署验收：使用真实 `lnf_` 凭据验证下游成功、缺失/错误凭据拒绝、allow-list 与 scope 拒绝、双 key 轮换、旧 key 撤销、限流响应和脱敏审计事件接收。两项均通过后再安排发布版本与回滚演练。
