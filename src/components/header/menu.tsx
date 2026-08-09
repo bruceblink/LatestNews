@@ -10,8 +10,11 @@ import { useAtom, useSetAtom, useAtomValue } from "jotai";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { login, logout, useLoginState } from "~/hooks/useLogin";
 import { metadataSyncStatusAtom } from "~/atoms/syncStatusAtom";
+import { isSyncHubConfigured } from "~/services/synchub.service";
+import { syncHubStatusAtom, syncHubRetryRequestAtom } from "~/atoms/syncHubStatusAtom";
 import { toErrorStatus, toSuccessStatus, toSyncingStatus } from "@shared/metadata-sync-flow";
 import { primitiveMetadataAtom, createDefaultPrimitiveMetadata } from "~/atoms/primitiveMetadataAtom";
+import { getSyncHubStatusTone, getSyncHubStatusLabel, getSyncHubStatusDescription } from "@shared/synchub-status";
 import {
     getSyncStatusTone,
     getSyncStatusLabel,
@@ -49,8 +52,13 @@ export function Menu() {
     const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
     const syncStatus = useAtomValue(metadataSyncStatusAtom);
     const setSyncStatus = useSetAtom(metadataSyncStatusAtom);
+    const syncHubStatus = useAtomValue(syncHubStatusAtom);
+    const requestSyncHubRetry = useSetAtom(syncHubRetryRequestAtom);
+    const syncHubConfigured = isSyncHubConfigured();
     const lastSynced = useRelativeTime(syncStatus.lastSyncedAt ?? "");
     const lastAttempt = useRelativeTime(syncStatus.lastAttemptAt ?? "");
+    const syncHubLastSynced = useRelativeTime(syncHubStatus.lastSyncedAt ?? "");
+    const syncHubLastAttempt = useRelativeTime(syncHubStatus.lastAttemptAt ?? "");
 
     const hasPendingSyncChanges = loggedIn && primitiveMetadata.action === "manual";
 
@@ -226,6 +234,13 @@ export function Menu() {
         lastAttempt,
     });
     const syncTransitionSourceLabel = getSyncTransitionSourceLabel(syncStatus.lastTransitionSource);
+    const syncHubStatusLabel = getSyncHubStatusLabel(syncHubStatus.phase);
+    const syncHubStatusTone = getSyncHubStatusTone(syncHubStatus.phase);
+    const syncHubStatusDescription = getSyncHubStatusDescription({
+        status: syncHubStatus,
+        lastAttempt: syncHubLastAttempt ?? undefined,
+        lastSynced: syncHubLastSynced ?? undefined,
+    });
 
     return (
         <span className="relative" onMouseEnter={() => show(true)} onMouseLeave={() => show(false)}>
@@ -327,6 +342,30 @@ export function Menu() {
                                         {syncStatus.phase === "error" && syncStatus.lastErrorMessage && (
                                             <div className="mt-2 rounded-lg bg-red-500/8 px-2.5 py-1.5 text-red-600 dark:text-red-300">
                                                 {syncStatus.lastErrorMessage}
+                                            </div>
+                                        )}
+                                    </div>
+                                </li>
+                            )}
+                            {syncHubConfigured && syncHubStatus.phase === "error" && (
+                                <li onClick={() => requestSyncHubRetry((current) => current + 1)}>
+                                    <span className="i-ph:arrows-clockwise-duotone inline-block" />
+                                    <span>重试 SyncHub</span>
+                                </li>
+                            )}
+                            {syncHubConfigured && (
+                                <li className="block! cursor-default! p-0! [&_*]:cursor-default! hover:bg-transparent!">
+                                    <div className="mt-1 rounded-xl bg-neutral-500/6 px-3 py-2 text-xs leading-5">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="font-medium op-70">SyncHub 后台同步</span>
+                                            <span className={clsx("rounded-full px-2 py-0.5", syncHubStatusTone)}>
+                                                {syncHubStatusLabel}
+                                            </span>
+                                        </div>
+                                        <div className="mt-2 op-75">{syncHubStatusDescription}</div>
+                                        {syncHubStatus.pendingCollections.length > 0 && (
+                                            <div className="mt-1 op-60">
+                                                待处理 {syncHubStatus.pendingCollections.length} 类数据
                                             </div>
                                         )}
                                     </div>
