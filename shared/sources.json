@@ -51,23 +51,6 @@
     "home": "https://coolapk.com",
     "title": "今日最热"
   },
-  "mktnews": {
-    "name": "MKTNews",
-    "interval": 120000,
-    "color": "indigo",
-    "column": "finance",
-    "home": "https://mktnews.net",
-    "title": "快讯",
-    "redirect": "mktnews-flash"
-  },
-  "mktnews-flash": {
-    "name": "MKTNews",
-    "interval": 120000,
-    "color": "indigo",
-    "column": "finance",
-    "home": "https://mktnews.net",
-    "title": "快讯"
-  },
   "wallstreetcn": {
     "name": "华尔街见闻",
     "interval": 300000,
@@ -533,7 +516,6 @@
     "interval": 600000,
     "color": "green",
     "type": "hottest",
-    "desc": "数据抓取受限，内容可能无法正常加载",
     "column": "china",
     "home": "https://www.freebuf.com/",
     "title": "网络安全"

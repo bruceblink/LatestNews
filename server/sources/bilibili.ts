@@ -1,42 +1,52 @@
+import type { NewsItem } from "@shared/types";
+
 import dayjs from "dayjs/esm";
 import { myFetch } from "#/utils/fetch";
 import { proxyPicture } from "#/utils/proxy";
 import { defineSource, generateUrlHashId } from "#/utils/source";
 
-interface WapRes {
+interface HotSearchRes {
     code: number;
-    exp_str: string;
-    list: {
-        hot_id: number;
-        keyword: string;
-        show_name: string;
-        score: number;
-        word_type: number;
-        goto_type: number;
-        goto_value: string;
-        icon: string;
-        live_id: any[];
-        call_reason: number;
-        heat_layer: string;
-        pos: number;
-        id: number;
-        status: string;
-        name_type: string;
-        resource_id: number;
-        set_gray: number;
-        card_values: any[];
-        heat_score: number;
-        stat_datas: {
-            etime: string;
-            stime: string;
-            is_commercial: string;
-        };
-    }[];
-    top_list: any[];
-    hotword_egg_info: string;
-    seid: string;
-    timestamp: number;
-    total_count: number;
+    message: string;
+    data: {
+        list: {
+            keyword: string;
+            show_name: string;
+            icon: string;
+        }[];
+    };
+}
+
+export const BILIBILI_HOT_SEARCH_URL = "https://app.bilibili.com/x/v2/search/trending/ranking?limit=30";
+
+/** Converts Bilibili's official trending response into normalized news items. */
+export async function mapBilibiliHotSearchResponse(res: HotSearchRes): Promise<NewsItem[]> {
+    return await Promise.all(
+        res.data.list.map(async (item) => {
+            const fullUrl = `https://search.bilibili.com/all?keyword=${encodeURIComponent(item.keyword)}`;
+            const hashId = await generateUrlHashId(fullUrl);
+            return {
+                id: hashId,
+                title: item.show_name,
+                url: fullUrl,
+                extra: {
+                    icon: item.icon && proxyPicture(item.icon),
+                },
+            };
+        })
+    );
+}
+
+/** Fetches Bilibili hot searches from the JSON API that accepts server-side requests. */
+export async function fetchBilibiliHotSearchItems(fetcher: typeof myFetch = myFetch): Promise<NewsItem[]> {
+    const response = await fetcher<HotSearchRes>(BILIBILI_HOT_SEARCH_URL, {
+        headers: {
+            "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            Referer: "https://www.bilibili.com/",
+        },
+    });
+    return mapBilibiliHotSearchResponse(response);
 }
 
 // Interface for Bilibili Hot Video response
@@ -93,31 +103,7 @@ interface HotVideoRes {
     };
 }
 
-const hotSearch = defineSource(async () => {
-    const url = "https://s.search.bilibili.com/main/hotword?limit=30";
-    //const res: WapRes = await myFetch(url);
-    const res: WapRes = await myFetch(url, {
-        headers: {
-            "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-            Referer: "https://www.bilibili.com/",
-        },
-    });
-    return await Promise.all(
-        res.list.map(async (k) => {
-            const fulUrl = `https://search.bilibili.com/all?keyword=${encodeURIComponent(k.keyword)}`;
-            const hashId = await generateUrlHashId(fulUrl);
-            return {
-                id: hashId,
-                title: k.show_name,
-                url: fulUrl,
-                extra: {
-                    icon: k.icon && proxyPicture(k.icon),
-                },
-            };
-        })
-    );
-});
+const hotSearch = defineSource(fetchBilibiliHotSearchItems);
 
 const hotVideo = defineSource(async () => {
     const url = "https://api.bilibili.com/x/web-interface/popular";

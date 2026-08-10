@@ -10,11 +10,31 @@
 - v1 源元信息、源条目、批量查询、健康、诊断、节点清单、OpenAPI 和 JSON Feed/RSS。
 - 统一 Feed、热点排行、话题聚合、词云、分类占比、来源活跃度和洞察到 Feed 的筛选联动。
 - 来源健康事件持久化、手动探测、缓存刷新、部署健康检查和 `/insights` 健康概览。
+- 已知爬虫源可用性修复：RSS 强制文本解析、Bilibili/知乎备用接口、FreeBuf RSS、Sputnik 直连和失效 MKTNews 源隔离。
 - 本地阅读历史、稍后读、收藏、隐藏，以及 GitHub 布局同步和 SyncHub 阅读数据同步。
 - Feed 离线快照、PWA 更新反馈和网络恢复反馈。
 - 版本化离线阅读快照契约：历史、收藏和关注源均有 URL 规范化、数量上限、过期与损坏数据保护。
 
 当前功能基线已完成 R3 的代码/构建验证和 R4-A 至 R4-D 的服务端实现。部署环境的 Service Worker 离线切换仍是 M3 发布前人工验收项；当前自动化浏览器无法访问本机预览地址，因此不能把 Worker 产物检查误记为真实离线验收。
+
+### R5 数据源可用性修复
+
+状态：已完成（2026-08-10）。
+
+本切片只处理已复现的上游失败，不改变 NewsItem 或 API 响应契约：
+
+- FreeBuf 改用稳定 RSS，避免首页被 WAF 返回 `405` 后无法解析。
+- Bilibili 热搜改用官方 JSON trending API，绕开旧热词端点的 `412`。
+- 知乎保留网页热榜并在 `403` 时切换到 `api.zhihu.com` 公共热榜接口，同时规范化问题 URL。
+- Sputnik 移除 Cloudflare 下会回调自身 `/api/s` 的代理配置，改为直接读取上游时间线。
+- RSS 解析强制 `responseType: text`，兼容 `application/rss+xml` 返回的 feed（先知社区）。
+- MKTNews 官网当前为占位页、原 flash API 持续返回 `403`，因此从可用源清单隔离，避免把确定不可用的上游伪装成空数据。
+
+验收：
+
+- `pnpm exec vitest -c vitest.config.ts test/source-adapter-regressions.test.ts server/utils/rss2json.test.ts`
+- `pnpm typecheck`、`pnpm build`
+- 本地 HTTP 冒烟：FreeBuf、Bilibili 热搜、知乎、Sputnik 和先知社区均返回非空成功数据。
 
 ## 交付顺序
 

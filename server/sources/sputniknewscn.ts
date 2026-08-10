@@ -1,13 +1,15 @@
 import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
-import { HOME_PAGE } from "@shared/consts.ts";
-import { proxySource, defineSource, generateUrlHashId } from "#/utils/source";
+import { defineSource, generateUrlHashId } from "#/utils/source";
 
 import { myFetch } from "../utils/fetch";
 
-const source = defineSource(async () => {
-    const response: any = await myFetch("https://sputniknews.cn/services/widget/lenta/");
+export const SPUTNIK_TIMELINE_URL = "https://sputniknews.cn/services/widget/lenta/";
+
+/** Fetches and parses Sputnik's timeline without routing back through LatestNews. */
+export async function fetchSputnikNewsItems(fetcher: typeof myFetch = myFetch): Promise<NewsItem[]> {
+    const response = await fetcher<string>(SPUTNIK_TIMELINE_URL);
     const $ = cheerio.load(response);
     const $items = $(".lenta__item");
     const news: Promise<NewsItem | null>[] = [];
@@ -38,6 +40,7 @@ const source = defineSource(async () => {
     }
     const results = await Promise.all(news);
     return results as NewsItem[];
-});
+}
 
-export default proxySource(`${HOME_PAGE}/api/s?id=sputniknewscn&latest=`, source);
+// Fetch the upstream directly. Pointing this source at LatestNews itself creates a recursive request on Cloudflare.
+export default defineSource(fetchSputnikNewsItems);

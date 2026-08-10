@@ -152,9 +152,13 @@ export function parseRssXml(data: string): RSSInfo | undefined {
     };
 }
 
-export async function rss2json(url: string): Promise<RSSInfo | undefined> {
+/**
+ * Fetches an RSS or Atom feed as text before parsing it so XML MIME types never become Blob values.
+ * The optional fetcher keeps the network boundary testable without making a live request.
+ */
+export async function rss2json(url: string, fetcher: typeof myFetch = myFetch): Promise<RSSInfo | undefined> {
     if (!/^https?:\/\/[^\s$.?#].\S*/i.test(url)) return undefined;
 
-    const data = await myFetch<string>(url);
+    const data = await fetcher<string>(url, { responseType: "text" });
     return parseRssXml(data);
 }

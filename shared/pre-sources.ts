@@ -65,6 +65,8 @@ export const originSources = {
         home: "https://mktnews.net",
         color: "indigo",
         interval: Time.Realtime,
+        // The public site is now a placeholder and its former flash API rejects all server requests.
+        disable: true,
         sub: {
             flash: {
                 title: "快讯",
@@ -463,7 +465,6 @@ export const originSources = {
         color: "green",
         type: "hottest",
         home: "https://www.freebuf.com/",
-        desc: "数据抓取受限，内容可能无法正常加载",
     },
     seebug: {
         name: "Seebug Paper",

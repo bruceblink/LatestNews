@@ -1,6 +1,8 @@
-import { it, expect, describe } from "vitest";
+import { vi, it, expect, describe } from "vitest";
 
-import { parseRssXml } from "./rss2json";
+import { rss2json, parseRssXml } from "./rss2json";
+
+import type { myFetch } from "./fetch";
 
 describe("parseRssXml", () => {
     it("parses rss items with media and namespaced fields", () => {
@@ -67,5 +69,18 @@ describe("parseRssXml", () => {
             author: "Alice",
             created: "2026-06-08T09:30:00Z",
         });
+    });
+
+    it("forces an RSS response to text before parsing XML MIME types", async () => {
+        const fetcher = vi.fn().mockResolvedValue(`
+            <rss><channel><title>RSS</title><item>
+                <title>Entry</title><link>https://example.com/entry</link>
+            </item></channel></rss>
+        `) as unknown as typeof myFetch;
+
+        const feed = await rss2json("https://example.com/feed", fetcher);
+
+        expect(fetcher).toHaveBeenCalledWith("https://example.com/feed", { responseType: "text" });
+        expect(feed?.items[0]).toMatchObject({ title: "Entry", link: "https://example.com/entry" });
     });
 });

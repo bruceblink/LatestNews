@@ -1,3 +1,5 @@
 import { defineRSSSource } from "../utils/source";
 
-export default defineRSSSource("https://xz.aliyun.com/feed");
+export const XIANZHISHE_RSS_URL = "https://xz.aliyun.com/feed/";
+
+export default defineRSSSource(XIANZHISHE_RSS_URL);
