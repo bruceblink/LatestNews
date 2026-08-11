@@ -10,15 +10,22 @@ import { focusSourcesAtom } from "~/atoms";
 import { metadata } from "@shared/metadata";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useReadingState } from "~/hooks/useReadingState";
 import { getUnifiedFeedCacheKey } from "@shared/source-api";
 import { fetchUnifiedFeed } from "~/services/source.service";
+import { memo, useMemo, useState, useEffect, useCallback } from "react";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 import { readOfflineFeedSnapshot, saveOfflineFeedSnapshot } from "~/services/offline-feed-snapshot.service";
-import { createUnifiedFeedView, normalizeUnifiedFeedSearch, getUnifiedFeedScopeSources } from "@shared/unified-feed";
+import {
+    unifiedFeedPageSize,
+    createUnifiedFeedView,
+    getUnifiedFeedScopeSources,
+    getUnifiedFeedVisibleItems,
+    normalizeUnifiedFeedSearch,
+    unifiedFeedInitialVisibleItems,
+} from "@shared/unified-feed";
 
 const scopeOptions: Array<{ id: UnifiedFeedScope; label: string; icon: string }> = [
     { id: "focus", label: "关注", icon: "i-ph:star-duotone" },
@@ -119,15 +126,28 @@ function FeedPage() {
             }),
         [categoryId, hiddenUrls, keyword, loadedResponses, sourceId]
     );
+    const [visibleItemCount, setVisibleItemCount] = useState(unifiedFeedInitialVisibleItems);
+    const visibleItems = useMemo(
+        () => getUnifiedFeedVisibleItems(feedView.items, visibleItemCount),
+        [feedView.items, visibleItemCount]
+    );
+
+    useEffect(() => {
+        setVisibleItemCount(unifiedFeedInitialVisibleItems);
+    }, [feedView.items]);
+
     const readUrls = useMemo(() => new Set(history.map((item) => item.url)), [history]);
     const sourceOptions = sourceOptionView.sourceSummaries.slice(0, 80);
     const hasActiveFilters = Boolean(
         feedView.activeFilters.keyword || sourceId !== "all" || categoryId !== "all" || since !== "24h"
     );
 
-    const handleRead = (item: UnifiedFeedItem) => {
-        addHistory(item.sourceId, item.item.id, item.title, item.url);
-    };
+    const handleRead = useCallback(
+        (item: UnifiedFeedItem) => {
+            addHistory(item.sourceId, item.item.id, item.title, item.url);
+        },
+        [addHistory]
+    );
 
     const resetFilters = () => {
         setKeyword("");
@@ -144,7 +164,14 @@ function FeedPage() {
                         <h1 className="m-0 text-2xl font-bold text-zinc-800 dark:text-zinc-100">统一 Feed</h1>
                         <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                             <SignalPill icon="i-ph:database-duotone" label={`${sources.length} 个来源`} />
-                            <SignalPill icon="i-ph:newspaper-duotone" label={`${feedView.filteredItemCount} 条内容`} />
+                            <SignalPill
+                                icon="i-ph:newspaper-duotone"
+                                label={
+                                    feedView.items.length < feedView.filteredItemCount
+                                        ? `${feedView.items.length}/${feedView.filteredItemCount} 条内容`
+                                        : `${feedView.filteredItemCount} 条内容`
+                                }
+                            />
                             {activeResponse?.meta.partial && (
                                 <SignalPill icon="i-ph:warning-circle-duotone" label="部分来源未返回" tone="warning" />
                             )}
@@ -255,7 +282,18 @@ function FeedPage() {
                 <EmptyState />
             ) : (
                 <div className="grid gap-4 xl:grid-cols-[1fr_280px]">
-                    <FeedList items={feedView.items} readUrls={readUrls} onRead={handleRead} />
+                    <FeedList
+                        items={visibleItems}
+                        availableCount={feedView.items.length}
+                        filteredCount={feedView.filteredItemCount}
+                        readUrls={readUrls}
+                        onRead={handleRead}
+                        onLoadMore={() =>
+                            setVisibleItemCount((current) =>
+                                Math.min(current + unifiedFeedPageSize, feedView.items.length)
+                            )
+                        }
+                    />
                     <FeedAside
                         categories={feedView.categorySummaries}
                         sources={feedView.sourceSummaries}
@@ -281,17 +319,30 @@ function FeedPage() {
     );
 }
 
-function FeedList({
+// Renders a bounded feed page and lets readers request more entries on demand.
+const FeedList = memo(function FeedList({
     items,
+    availableCount,
+    filteredCount,
     readUrls,
     onRead,
+    onLoadMore,
 }: {
     items: UnifiedFeedItem[];
+    availableCount: number;
+    filteredCount: number;
     readUrls: Set<string>;
     onRead: (item: UnifiedFeedItem) => void;
+    onLoadMore: () => void;
 }) {
     return (
         <section className="rounded-2xl border border-zinc-200/88 bg-zinc-50/88 p-3 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
+            <div className="mb-2 flex items-center justify-between gap-2 px-1 text-xs text-zinc-500">
+                <span>
+                    已显示 {items.length} / {availableCount} 条
+                    {filteredCount > availableCount ? `（匹配 ${filteredCount} 条）` : ""}
+                </span>
+            </div>
             <div className="flex flex-col gap-2">
                 {items.length ? (
                     items.map((item) => {
@@ -345,9 +396,18 @@ function FeedList({
                     <PanelEmpty label="暂无匹配内容" />
                 )}
             </div>
+            {items.length < availableCount && (
+                <button
+                    type="button"
+                    className="mt-3 h-10 w-full rounded-xl border border-cyan-500/35 bg-cyan-500/10 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-500/18 dark:text-cyan-300"
+                    onClick={onLoadMore}
+                >
+                    加载更多（{Math.min(unifiedFeedPageSize, availableCount - items.length)} 条）
+                </button>
+            )}
         </section>
     );
-}
+});
 
 function FeedAside({
     categories,

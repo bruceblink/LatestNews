@@ -7,6 +7,8 @@ import type { ColumnID, NewsItem, SourceID, SourceResponse } from "./types";
 
 export const unifiedFeedScopeIds = ["focus", "hottest", "realtime", "broad"] as const;
 export const unifiedFeedSinceIds = ["all", "24h", "3d", "7d"] as const;
+export const unifiedFeedInitialVisibleItems = 40;
+export const unifiedFeedPageSize = 40;
 
 export type UnifiedFeedScope = (typeof unifiedFeedScopeIds)[number];
 export type UnifiedFeedSince = (typeof unifiedFeedSinceIds)[number];
@@ -75,6 +77,12 @@ export interface UnifiedFeedView {
     activeFilters: NormalizedUnifiedFeedFilters;
     sourceSummaries: UnifiedFeedSourceSummary[];
     categorySummaries: UnifiedFeedCategorySummary[];
+}
+
+// Keeps list rendering predictable by returning a bounded page of already-filtered items.
+export function getUnifiedFeedVisibleItems<T>(items: T[], visibleCount: number): T[] {
+    const safeVisibleCount = Number.isFinite(visibleCount) ? Math.max(0, Math.floor(visibleCount)) : 0;
+    return items.slice(0, safeVisibleCount);
 }
 
 export function isUnifiedFeedScope(value: unknown): value is UnifiedFeedScope {

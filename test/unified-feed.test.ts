@@ -7,6 +7,7 @@ import {
     createUnifiedFeedView,
     collectUnifiedFeedItems,
     getUnifiedFeedScopeSources,
+    getUnifiedFeedVisibleItems,
     normalizeUnifiedFeedSearch,
     normalizeUnifiedFeedFilters,
 } from "../shared/unified-feed";
@@ -123,5 +124,14 @@ describe("unified feed helpers", () => {
                 since: "30d",
             })
         ).toEqual({});
+    });
+
+    it("bounds the rendered feed page without mutating source order", () => {
+        const items = ["first", "second", "third"];
+
+        expect(getUnifiedFeedVisibleItems(items, 2)).toEqual(["first", "second"]);
+        expect(getUnifiedFeedVisibleItems(items, Number.POSITIVE_INFINITY)).toEqual([]);
+        expect(getUnifiedFeedVisibleItems(items, -1)).toEqual([]);
+        expect(items).toEqual(["first", "second", "third"]);
     });
 });
