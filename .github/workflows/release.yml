@@ -19,6 +19,19 @@ jobs:
         with:
           node-version: lts/*
 
-      - run: npx changelogithub
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Generate release notes
+        run: |
+          python3 .github/scripts/generate_release_notes.py \
+            --tag "${GITHUB_REF_NAME}" \
+            --output release-notes.md
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          body_path: release-notes.md
+          generate_release_notes: false
