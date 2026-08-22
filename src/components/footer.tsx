@@ -10,7 +10,7 @@ export function Footer() {
                 rel="noopener noreferrer"
                 className="btn text-sm ml-1 font-mono"
             >
-                MIT LICENSE
+                GNU AGPL v3.0
             </a>
             <span>
                 <span>

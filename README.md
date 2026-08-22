@@ -153,4 +153,4 @@ docker compose -f docker-compose.yml up -d
 
 ## License
 
-[MIT](./LICENSE)
+[GNU Affero General Public License v3.0](./LICENSE)
