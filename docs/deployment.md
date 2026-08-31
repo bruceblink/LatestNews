@@ -103,6 +103,11 @@ node --env-file .env.server dist/output/server/index.mjs
 
 The packaged `pnpm start` script runs the same server entry.
 
+The Node build keeps the server entry in one bundle so Nitro can resolve the
+public asset directory next to the packaged server output. Deploy the complete
+`dist/output` directory, including both `server` and `public`, rather than only
+the server entry.
+
 ## Pre-Release Checklist
 
 - `pnpm check` passes locally.
