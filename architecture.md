@@ -1,5 +1,7 @@
 # 📘 新闻数据时间流系统设计说明书（v1.0）
 
+> 文档状态：跨系统协作架构提案，尚未作为本仓库的实施基线。下文的 Java BFF、Python 采集、PostgreSQL、Redis 和统一认证描述的是候选方案；当前 LatestNews 使用 TypeScript、React、Vite、Nitro 与 SQLite/可选 D1。外部服务接入范围及实现进度以 [开发计划](DEVELOPMENT_PLAN.md) 和 [执行路线](docs/development-roadmap.md) 为准。
+
 ---
 
 # 一、系统概述
