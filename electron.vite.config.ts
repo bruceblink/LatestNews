@@ -1,10 +1,12 @@
 import { resolve } from "node:path";
-import { defineConfig } from "electron-vite";
+import { loadEnv, defineConfig } from "electron-vite";
 
+import { resolveAppTitle } from "./shared/app-title";
 import { normalizeServiceUrl } from "./electron/api-proxy";
 import {
     rendererAliases,
     createRendererPlugins,
+    createRendererDefines,
     createRendererBuildConfig,
     createRendererServerConfig,
 } from "./vite.renderer";
@@ -43,69 +45,76 @@ const appProtocolBase = {
     config: () => ({ base: "/" }),
 };
 
-export default defineConfig({
-    main: {
-        define: {
-            __LATESTNEWS_DESKTOP_API_URL__: JSON.stringify(newsApiUrl.href),
-            __LATESTNEWS_DESKTOP_AUTH_API_URL__: JSON.stringify(authApiUrl.href),
-            __LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL__: JSON.stringify(authCallbackUrl.href),
-        },
-        build: {
-            outDir: resolve(projectRoot, "out/main"),
-            lib: {
-                entry: resolve(projectRoot, "electron/main.ts"),
-                formats: ["cjs"],
-                fileName: "index.cjs",
+export default defineConfig(({ mode }) => {
+    const env = loadEnv(mode, projectRoot, "VITE_");
+    const appTitle = resolveAppTitle(env.VITE_APP_TITLE);
+    const rendererBuild = createRendererBuildConfig();
+
+    return {
+        main: {
+            define: {
+                __LATESTNEWS_DESKTOP_API_URL__: JSON.stringify(newsApiUrl.href),
+                __LATESTNEWS_DESKTOP_AUTH_API_URL__: JSON.stringify(authApiUrl.href),
+                __LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL__: JSON.stringify(authCallbackUrl.href),
             },
-        },
-    },
-    preload: {
-        build: {
-            outDir: resolve(projectRoot, "out/preload"),
-            lib: {
-                entry: resolve(projectRoot, "electron/preload.ts"),
-                formats: ["cjs"],
-                fileName: "index.cjs",
-            },
-        },
-    },
-    renderer: {
-        root: projectRoot,
-        envDir: projectRoot,
-        publicDir: resolve(projectRoot, "public"),
-        base: "/",
-        resolve: {
-            alias: [
-                ...Object.entries(rendererAliases).map(([find, replacement]) => ({ find, replacement })),
-                { find: "virtual:pwa-register/react", replacement: electronPwaAdapter },
-            ],
-        },
-        define: {
-            "import.meta.env.LATESTNEWS_DESKTOP": "true",
-            "import.meta.env.VITE_API_URL": JSON.stringify("app://bundle/__auth-api__"),
-        },
-        plugins: [...createRendererPlugins("electron"), disableWebAnalytics, appProtocolBase],
-        server: {
-            ...createRendererServerConfig(),
-            host: "127.0.0.1",
-            port: 5174,
-            strictPort: true,
-            proxy: {
-                "/api": {
-                    target: newsApiUrl.origin,
-                    changeOrigin: true,
-                    secure: newsApiUrl.protocol === "https:",
+            build: {
+                outDir: resolve(projectRoot, "out/main"),
+                lib: {
+                    entry: resolve(projectRoot, "electron/main.ts"),
+                    formats: ["cjs"],
+                    fileName: "index.cjs",
                 },
             },
         },
-        build: {
-            ...createRendererBuildConfig(),
-            outDir: resolve(projectRoot, "out/renderer"),
-            emptyOutDir: true,
-            rollupOptions: {
-                ...createRendererBuildConfig()?.rollupOptions,
-                input: resolve(projectRoot, "index.html"),
+        preload: {
+            build: {
+                outDir: resolve(projectRoot, "out/preload"),
+                lib: {
+                    entry: resolve(projectRoot, "electron/preload.ts"),
+                    formats: ["cjs"],
+                    fileName: "index.cjs",
+                },
             },
         },
-    },
+        renderer: {
+            root: projectRoot,
+            envDir: projectRoot,
+            publicDir: resolve(projectRoot, "public"),
+            base: "/",
+            resolve: {
+                alias: [
+                    ...Object.entries(rendererAliases).map(([find, replacement]) => ({ find, replacement })),
+                    { find: "virtual:pwa-register/react", replacement: electronPwaAdapter },
+                ],
+            },
+            define: {
+                ...createRendererDefines(appTitle),
+                "import.meta.env.LATESTNEWS_DESKTOP": "true",
+                "import.meta.env.VITE_API_URL": JSON.stringify("app://bundle/__auth-api__"),
+            },
+            plugins: [...createRendererPlugins("electron", appTitle), disableWebAnalytics, appProtocolBase],
+            server: {
+                ...createRendererServerConfig(),
+                host: "127.0.0.1",
+                port: 5174,
+                strictPort: true,
+                proxy: {
+                    "/api": {
+                        target: newsApiUrl.origin,
+                        changeOrigin: true,
+                        secure: newsApiUrl.protocol === "https:",
+                    },
+                },
+            },
+            build: {
+                ...rendererBuild,
+                outDir: resolve(projectRoot, "out/renderer"),
+                emptyOutDir: true,
+                rollupOptions: {
+                    ...rendererBuild?.rollupOptions,
+                    input: resolve(projectRoot, "index.html"),
+                },
+            },
+        },
+    };
 });

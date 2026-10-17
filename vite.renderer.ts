@@ -6,7 +6,7 @@ import react from "@vitejs/plugin-react-swc";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 
 import pwa from "./pwa.config";
-import initVoteNitro from "./nitro.config";
+import { escapeHtmlText } from "./shared/app-title";
 
 export type RendererPlatform = "web" | "electron";
 
@@ -16,9 +16,18 @@ export const rendererAliases = {
     "@shared": fileURLToPath(new URL("./shared", import.meta.url)),
 };
 
-/** Keep route generation, styling, and React transforms identical for both renderers. */
-export function createRendererPlugins(platform: RendererPlatform): PluginOption[] {
+/** Keep route generation, styling, app title and React transforms identical across renderers. */
+export function createRendererPlugins(platform: RendererPlatform, appTitle: string): PluginOption[] {
     const plugins: PluginOption[] = [
+        {
+            name: "latestnews-renderer-app-title",
+            transformIndexHtml: {
+                order: "pre",
+                handler(html) {
+                    return html.replaceAll("%VITE_APP_TITLE%", escapeHtmlText(appTitle));
+                },
+            },
+        },
         TanStackRouterVite({
             // error with auto import and vite-plugin-pwa
             // autoCodeSplitting: true,
@@ -27,9 +36,13 @@ export function createRendererPlugins(platform: RendererPlatform): PluginOption[
         react(),
     ];
 
-    if (platform === "web") plugins.push(pwa(), initVoteNitro());
+    if (platform === "web") plugins.push(pwa(appTitle));
 
     return plugins;
+}
+
+export function createRendererDefines(appTitle: string): UserConfig["define"] {
+    return { "import.meta.env.VITE_APP_TITLE": JSON.stringify(appTitle) };
 }
 
 export function createRendererBuildConfig(): UserConfig["build"] {

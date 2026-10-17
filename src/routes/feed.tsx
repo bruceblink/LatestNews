@@ -8,6 +8,7 @@ import { useTitle } from "react-use";
 import { useAtomValue } from "jotai";
 import { focusSourcesAtom } from "~/atoms";
 import { metadata } from "@shared/metadata";
+import { APP_TITLE } from "~/utils/app-title";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -55,7 +56,7 @@ export const Route = createFileRoute("/feed")({
 });
 
 function FeedPage() {
-    useTitle(`${import.meta.env.VITE_APP_TITLE} | 统一 Feed`);
+    useTitle(`${APP_TITLE} | 统一 Feed`);
 
     const search = Route.useSearch();
     const focusSources = useAtomValue(focusSourcesAtom);
@@ -320,7 +321,7 @@ function FeedPage() {
 }
 
 // Renders a bounded feed page and lets readers request more entries on demand.
-const FeedList = memo(function FeedList({
+const FeedList = memo(function FeedListContent({
     items,
     availableCount,
     filteredCount,
@@ -408,6 +409,8 @@ const FeedList = memo(function FeedList({
         </section>
     );
 });
+
+FeedList.displayName = "FeedList";
 
 function FeedAside({
     categories,

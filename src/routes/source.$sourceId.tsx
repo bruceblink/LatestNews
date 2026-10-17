@@ -5,6 +5,7 @@ import type { SourceHealthEvent, SourceHealthSnapshot } from "@shared/source-hea
 import clsx from "clsx";
 import { useTitle } from "react-use";
 import { useMemo, useState } from "react";
+import { APP_TITLE } from "~/utils/app-title";
 import { useFocusWith } from "~/hooks/useFocus";
 import { useHistory } from "~/hooks/useHistory";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
@@ -58,7 +59,7 @@ function SourceDetailPage() {
         retry: false,
     });
 
-    useTitle(`${import.meta.env.VITE_APP_TITLE} | ${metadataItem?.name ?? sourceId}`);
+    useTitle(`${APP_TITLE} | ${metadataItem?.name ?? sourceId}`);
 
     const sourceItemsQueryKey = useMemo(() => getSourceItemsV1CacheKey(id, { limit: 20 }), [id]);
     const itemsQuery = useQuery({

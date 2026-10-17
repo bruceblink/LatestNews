@@ -17,6 +17,7 @@ import { useTitle } from "react-use";
 import { useAtomValue } from "jotai";
 import { useMemo, useState } from "react";
 import { focusSourcesAtom } from "~/atoms";
+import { APP_TITLE } from "~/utils/app-title";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/insights")({
 });
 
 function InsightsPage() {
-    useTitle(`${import.meta.env.VITE_APP_TITLE} | 阅读洞察`);
+    useTitle(`${APP_TITLE} | 阅读洞察`);
 
     const focusSources = useAtomValue(focusSourcesAtom);
     const { history, addHistory } = useHistory();

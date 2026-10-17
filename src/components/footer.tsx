@@ -1,4 +1,5 @@
 import dayjs from "dayjs/esm";
+import { APP_TITLE } from "~/utils/app-title";
 import { Author, PROJECT_URL } from "@shared/consts";
 
 export function Footer() {
@@ -20,7 +21,7 @@ export function Footer() {
                         rel="noopener noreferrer"
                         className="btn text-sm ml-1 font-mono"
                     >
-                        {`${import.meta.env.VITE_APP_TITLE} `}
+                        {`${APP_TITLE} `}
                     </a>
                     © {dayjs().year()} By{" "}
                 </span>

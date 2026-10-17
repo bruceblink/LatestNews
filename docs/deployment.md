@@ -18,7 +18,7 @@ Start from [example.env.server](../example.env.server) and configure secrets onl
 | Variable | Required | Scope | Notes |
 | --- | --- | --- | --- |
 | `TZ` | No | Runtime | Defaults to the host timezone when omitted. |
-| `VITE_APP_TITLE` | No | Build | Browser title and app label. |
+| `VITE_APP_TITLE` | No | Build | Browser, desktop, and PWA name; defaults to `LatestNews`. |
 | `VITE_API_URL` | No | Build/runtime | Enables login UI only when paired with `JWT_SECRET`. |
 | `JWT_SECRET` | Login only | Runtime | Must match the external login service. Do not commit a real value. |
 | `ENABLE_CACHE` | No | Runtime | Set to `false` to disable cache reads and writes. |

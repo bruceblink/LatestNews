@@ -3,6 +3,7 @@ import type { FixedColumnID } from "@shared/types";
 import { useAtom } from "jotai";
 import { useEffect } from "react";
 import { useTitle } from "react-use";
+import { APP_TITLE } from "~/utils/app-title";
 import { currentColumnIDAtom } from "~/atoms";
 import { metadata } from "@shared/metadata.ts";
 
@@ -15,7 +16,7 @@ export function Column({ id }: { id: FixedColumnID }) {
         setCurrentColumnID(id);
     }, [id, setCurrentColumnID]);
 
-    useTitle(`${import.meta.env.VITE_APP_TITLE} | ${metadata[id].name}`);
+    useTitle(`${APP_TITLE} | ${metadata[id].name}`);
 
     return (
         <>

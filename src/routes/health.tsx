@@ -9,6 +9,7 @@ import type {
 import clsx from "clsx";
 import { useTitle } from "react-use";
 import { useToast } from "~/hooks/useToast";
+import { APP_TITLE } from "~/utils/app-title";
 import { useQuery } from "@tanstack/react-query";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { sourceHealthCacheKey } from "@shared/source-api";
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/health")({
 });
 
 function HealthPage() {
-    useTitle(`${import.meta.env.VITE_APP_TITLE} | 数据源健康`);
+    useTitle(`${APP_TITLE} | 数据源健康`);
     const [keyword, setKeyword] = useState("");
     const [statusFilter, setStatusFilter] = useState<SourceHealthFilterStatus>("all");
     const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);

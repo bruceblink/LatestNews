@@ -6,6 +6,7 @@ import { useTitle } from "react-use";
 import { useMemo, useState } from "react";
 import { getDateLabel } from "~/utils/date";
 import { useToast } from "~/hooks/useToast";
+import { APP_TITLE } from "~/utils/app-title";
 import { usePWAStatus } from "~/hooks/usePWA";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
@@ -75,7 +76,7 @@ function HistoryItem({
 }
 
 function HistoryPage() {
-    useTitle(`${import.meta.env.VITE_APP_TITLE} | 阅读历史`);
+    useTitle(`${APP_TITLE} | 阅读历史`);
     const { history, clearHistory, clearSourceHistory, removeHistory, replaceHistory } = useHistory();
     const { readingState, removeState, replaceReadingState } = useReadingState();
     const { isOffline } = usePWAStatus();
