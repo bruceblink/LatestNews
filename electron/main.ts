@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import {
     app,
     net,
+    Menu,
     shell,
     ipcMain,
     session,
@@ -92,6 +93,9 @@ let mainWindow: BrowserWindow | null = null;
 let authWindow: BrowserWindow | null = null;
 let rendererDevUrl: URL | null = null;
 let trustedRendererUrl = APP_BASE_URL;
+
+// Prevent Electron from creating its default File, Edit, View, and Window menu.
+Menu.setApplicationMenu(null);
 
 function getAppResourceRoot() {
     return app.isPackaged ? app.getAppPath() : resolve(app.getAppPath(), "out");
