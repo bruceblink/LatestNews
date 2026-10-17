@@ -1,0 +1,28 @@
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { mkdir, access, copyFile, readFile, writeFile } from "node:fs/promises";
+
+const projectRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
+const outputRoot = resolve(projectRoot, "out");
+const rootPackage = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
+
+for (const file of ["main/main.cjs", "preload/preload.cjs", "renderer/index.html"]) {
+    await access(resolve(outputRoot, file));
+}
+
+const appManifest = {
+    name: "latestnews-desktop",
+    productName: "LatestNews",
+    version: rootPackage.version,
+    license: rootPackage.license,
+    description: rootPackage.description,
+    private: true,
+    dependencies: {},
+    main: "main/main.cjs",
+    author: rootPackage.author,
+};
+
+await mkdir(outputRoot, { recursive: true });
+await writeFile(resolve(outputRoot, "package.json"), `${JSON.stringify(appManifest, null, 2)}\n`, "utf8");
+await copyFile(resolve(projectRoot, "LICENSE"), resolve(outputRoot, "LICENSE"));
+console.info("Prepared a minimal Electron app manifest without server dependencies.");

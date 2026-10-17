@@ -9,6 +9,9 @@ dist/
 .env
 .env.*
 dev-dist
+/out
+/release
+/build
 *.tsbuildinfo
 /screenshots
 /test

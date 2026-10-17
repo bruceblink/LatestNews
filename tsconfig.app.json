@@ -11,5 +11,6 @@
     "imports.app.d.ts",
     "tools",
     "*.ts"
-  ]
+  ],
+  "exclude": ["electron.vite.config.ts"]
 }

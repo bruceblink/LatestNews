@@ -1,0 +1,5 @@
+# Keep validation working with GitHub-hosted runner labels not known to older actionlint builds.
+self-hosted-runner:
+  labels:
+    - windows-11-arm
+    - macos-15-intel

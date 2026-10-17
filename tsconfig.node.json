@@ -6,7 +6,12 @@
   },
   "include": [
     "server",
+    "electron/api-proxy.ts",
+    "electron/security.ts",
+    "electron/synchub-policy.ts",
+    "electron/synchub-storage.ts",
     "*.config.*",
+    "vite.renderer.ts",
     "shared",
     "test",
     "scripts",
@@ -14,6 +19,7 @@
   ],
   "exclude": [
     "eslint.config.mjs",
+    "electron.vite.config.ts",
     "dist/.nitro/types"
   ]
 }

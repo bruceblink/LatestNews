@@ -1,7 +1,7 @@
 {
     "name": "latestnews",
     "type": "module",
-    "version": "0.5.3",
+    "version": "0.6.0",
     "private": true,
     "license": "AGPL-3.0-only",
     "packageManager": "pnpm@10.30.3",
@@ -29,7 +29,15 @@
         "prepare": "simple-git-hooks",
         "log": "wrangler pages deployment tail --project-name latestnews",
         "test": "vitest -c vitest.config.ts",
-        "caching": "ts-node ./server/database/caching.ts"
+        "caching": "ts-node ./server/database/caching.ts",
+        "electron:dev": "pnpm presource && cross-env NODE_ENV=development electron-vite dev",
+        "electron:build": "pnpm presource && cross-env NODE_ENV=production electron-vite build && node scripts/prepare-electron-package.mjs && node scripts/electron-icon.mjs",
+        "electron:package:win": "pnpm electron:build && electron-builder --projectDir out --config ../electron-builder.yml --win nsis --publish never",
+        "electron:package:mac": "pnpm electron:build && electron-builder --projectDir out --config ../electron-builder.yml --mac dmg zip --publish never",
+        "electron:package:linux": "pnpm electron:build && electron-builder --projectDir out --config ../electron-builder.yml --linux AppImage deb --publish never",
+        "typecheck:electron": "tsc --noEmit -p tsconfig.electron.json --composite false",
+        "test:electron": "vitest -c vitest.config.ts run test/electron-api-proxy.test.ts test/electron-security.test.ts test/electron-synchub-policy.test.ts test/electron-synchub-storage.test.ts",
+        "asar:list": "asar list release/win-unpacked/resources/app.asar"
     },
     "dependencies": {
         "@atlaskit/pragmatic-drag-and-drop": "^1.5.0",
@@ -126,7 +134,11 @@
         "vitest": "^3.0.7",
         "workbox-build": "^7.3.0",
         "workbox-window": "^7.3.0",
-        "wrangler": "^4.59.1"
+        "wrangler": "^4.59.1",
+        "electron": "44.8.0",
+        "electron-builder": "26.15.3",
+        "electron-vite": "6.0.0",
+        "@electron/asar": "3.4.1"
     },
     "pnpm": {
         "patchedDependencies": {
@@ -147,7 +159,8 @@
             "sharp",
             "simple-git-hooks",
             "unrs-resolver",
-            "workerd"
+            "workerd",
+            "electron"
         ]
     },
     "simple-git-hooks": {
@@ -156,5 +169,7 @@
     },
     "lint-staged": {
         "*.{js,mjs,cjs,ts,tsx}": "eslint --fix"
-    }
+    },
+    "description": "A cross-platform reader for the latest news.",
+    "main": "out/main/main.cjs"
 }

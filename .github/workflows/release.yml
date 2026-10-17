@@ -5,33 +5,249 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  release:
-    permissions:
-      contents: write
+  verify:
+    name: Verify release source
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out source and tags
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
         with:
-          node-version: lts/*
+          version: 10.30.3
 
-      - uses: actions/setup-python@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: "3.x"
+          node-version: 24
+          cache: pnpm
 
-      - name: Generate release notes
+      - name: Check tag and package version
+        run: |
+          node -e 'const { version } = require("./package.json"); if (process.env.GITHUB_REF_NAME !== `v${version}`) { throw new Error(`Tag ${process.env.GITHUB_REF_NAME} does not match package version ${version}`); }'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run source checks
+        run: |
+          pnpm lint:check
+          pnpm typecheck
+          pnpm typecheck:electron
+          pnpm test --run
+          pnpm test:electron
+
+  desktop:
+    name: Build ${{ matrix.label }}
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: windows-x64
+            label: Windows x64
+            runner: windows-latest
+            platform: win
+            arch: x64
+            arch_flag: x64
+          - id: windows-arm64
+            label: Windows ARM64
+            runner: windows-11-arm
+            platform: win
+            arch: arm64
+            arch_flag: arm64
+          - id: macos-x64
+            label: macOS Intel
+            runner: macos-15-intel
+            platform: mac
+            arch: x64
+            arch_flag: x64
+          - id: macos-arm64
+            label: macOS Apple Silicon
+            runner: macos-15
+            platform: mac
+            arch: arm64
+            arch_flag: arm64
+          - id: linux-x64
+            label: Linux x64
+            runner: ubuntu-24.04
+            platform: linux
+            arch: x64
+            arch_flag: x64
+          - id: linux-arm64
+            label: Linux ARM64
+            runner: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+            arch_flag: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          architecture: ${{ matrix.arch }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Electron application
+        run: pnpm electron:build
+
+      - name: Package desktop application
+        run: pnpm exec electron-builder --projectDir out --config ../electron-builder.yml --${{ matrix.platform }} --${{ matrix.arch_flag }} --publish never
+
+      - name: Upload desktop packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.id }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: error
+          retention-days: 14
+
+  web:
+    name: Build Web deployment package
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Web application
+        run: pnpm build
+
+      - name: Package Web server and static assets
+        run: |
+          mkdir -p release-web
+          cp -R dist/output release-web/output
+          printf 'LatestNews %s Web deployment package\n\nRun with Node.js 22 or newer:\n  node output/server/index.mjs\n' "${GITHUB_REF_NAME#v}" > release-web/README.txt
+          cd release-web
+          zip -r "../LatestNews-${GITHUB_REF_NAME#v}-Web.zip" .
+
+      - name: Upload Web package
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-${{ github.ref_name }}
+          path: LatestNews-*-Web.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  docker:
+    name: Publish multi-architecture Docker image
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Build and publish Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  publish:
+    name: Publish GitHub Release
+    needs: [verify, desktop, web, docker]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source and tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Generate release notes from the tag range
         run: |
           python3 .github/scripts/generate_release_notes.py \
             --tag "${GITHUB_REF_NAME}" \
             --output release-notes.md
 
-      - name: Publish GitHub release
+      - name: Download all release packages
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish GitHub release and assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           body_path: release-notes.md
+          files: release-assets/*
+          fail_on_unmatched_files: true
           generate_release_notes: false

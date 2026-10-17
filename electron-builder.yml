@@ -1,0 +1,35 @@
+appId: top.likanug.latestnews
+productName: LatestNews
+asar: true
+directories:
+  buildResources: ../build
+  output: ../release
+electronVersion: 44.8.0
+electronDist: ../node_modules/electron/dist
+npmRebuild: false
+files:
+  - "**/*"
+artifactName: "LatestNews-${version}-${arch}.${ext}"
+win:
+  artifactName: "LatestNews-${version}-Windows-${arch}.${ext}"
+  icon: icon.ico
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+mac:
+  artifactName: "LatestNews-${version}-macOS-${arch}.${ext}"
+  icon: icon.icns
+  target:
+    - dmg
+    - zip
+linux:
+  artifactName: "LatestNews-${version}-Linux-${arch}.${ext}"
+  icon: icon.png
+  category: Network
+  target:
+    - AppImage
+    - deb

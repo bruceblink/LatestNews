@@ -8,6 +8,8 @@ WORKDIR /usr/src
 RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
+# The web server build does not use the Electron runtime binary.
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
 RUN pnpm install --frozen-lockfile
 
 COPY . .

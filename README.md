@@ -52,6 +52,21 @@ pnpm dev
 
 默认会在启动前执行资源预处理脚本。如果你需要完整的登录和同步能力，请同时配置服务端环境变量。
 
+### Electron 桌面开发
+
+Electron 桌面端复用同一份 `index.html`、React 入口、路由、页面和 service。应用界面从安装包中的本地资源加载。新闻数据默认请求 `https://news.likanug.top`，登录默认请求 `https://api.likanug.top`。
+
+```bash
+pnpm electron:dev
+pnpm typecheck:electron
+pnpm test:electron
+pnpm electron:package:win
+pnpm electron:package:mac
+pnpm electron:package:linux
+```
+
+桌面构建可通过 `LATESTNEWS_DESKTOP_API_URL`、`LATESTNEWS_DESKTOP_AUTH_API_URL` 和 `LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL` 覆盖新闻 API、认证 API 和登录回调地址。生产构建要求远程地址使用 HTTPS。开发时仅允许把 HTTP 用于本机 API。桌面应用将已验证的 SyncHub 地址和 API Key 一起加密保存；地址不变时可留空复用密钥，更换地址时需要重新输入并验证。
+
 ## 环境变量
 
 可参考 [example.env.server](./example.env.server) 进行配置：
@@ -73,6 +88,9 @@ PRODUCTHUNT_API_TOKEN=
 
 - `VITE_APP_TITLE`：浏览器标题和页面展示名称
 - `VITE_API_URL`：登录与用户同步相关 API 地址
+- `LATESTNEWS_DESKTOP_API_URL`：可选的桌面新闻 API 根地址，默认 `https://news.likanug.top`
+- `LATESTNEWS_DESKTOP_AUTH_API_URL`：可选的桌面认证 API 根地址，默认 `https://api.likanug.top`
+- `LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL`：可选的桌面登录回调地址，默认 `https://news.likanug.top/auth/callback`
 - `JWT_SECRET`：与登录服务保持一致的 JWT 密钥
 - `ENABLE_CACHE`：是否启用服务端缓存
 - `INIT_TABLE`：首次初始化数据库时设置为 `true`
@@ -126,6 +144,19 @@ docker compose -f docker-compose.yml up -d
 | `pnpm typecheck` | 运行 TypeScript 检查 |
 | `pnpm test` | 运行 Vitest |
 | `pnpm deploy` | 部署到 Cloudflare Pages |
+| `pnpm electron:dev` | 启动 Electron 桌面开发环境 |
+| `pnpm electron:build` | 构建桌面主进程、预加载脚本和共享前端 |
+| `pnpm electron:package:win` | 生成 Windows NSIS 安装包 |
+| `pnpm electron:package:mac` | 生成 macOS DMG 和 ZIP |
+| `pnpm electron:package:linux` | 生成 Linux AppImage 和 DEB |
+| `pnpm typecheck:electron` | 检查桌面主进程和构建配置 |
+| `pnpm test:electron` | 检查桌面 API 转发和资源隔离规则 |
+
+## 0.6.0 发布产物
+
+[GitHub Releases](https://github.com/bruceblink/LatestNews/releases) 提供 Windows x64/ARM64、macOS Intel/Apple Silicon 和 Linux x64/ARM64 桌面包，也提供 Web Node 部署包。桌面安装包目前没有代码签名；macOS 包也没有公证。
+
+Docker 镜像发布到 `ghcr.io/bruceblink/latestnews`，支持 `linux/amd64` 和 `linux/arm64`。使用 Compose 时可将镜像版本固定为 `ghcr.io/bruceblink/latestnews:0.6.0`。
 
 ## 项目结构
 
@@ -139,7 +170,7 @@ docker compose -f docker-compose.yml up -d
 ## 路线方向
 
 当前能力、优先级和候选版本目标见 [开发计划](./DEVELOPMENT_PLAN.md)，具体任务、依赖和验收标准见 [后续开发路线](./docs/development-roadmap.md)。下一阶段先恢复开发模式与自动回归，再完成发布验收和阅读体验改进。
-- 计划以“桌面客户端＋远程 API”支持 Electron，复用现有 Web 前端；范围与验收见 [Web 与 Electron 共用前端开发计划](./docs/01-web-electron-plan.md)。当前尚未实施。
+- 以“桌面客户端＋远程 API”支持 Electron，复用现有 Web 前端；范围与验收见 [Web 与 Electron 共用前端开发计划](./docs/01-web-electron-plan.md)。
 - 继续提升同步状态和多端体验
 - 持续完善数据源健康治理和排障效率
 - 优化移动端阅读、离线缓存和安装体验

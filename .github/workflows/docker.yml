@@ -1,9 +1,6 @@
 name: Publish Docker image
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -37,7 +34,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile

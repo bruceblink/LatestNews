@@ -14,7 +14,6 @@ import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useReadingState } from "~/hooks/useReadingState";
 import { getReadingStateList } from "@shared/reading-state";
 import { formatReadingHistoryExport } from "@shared/history-export";
-import { verifyLatestNewsSyncHubConnection } from "@shared/synchub-contract";
 import { shouldUseOfflineReadingSnapshot } from "@shared/offline-reading-state";
 import { hasBrowserStorageValue } from "~/services/offline-reading-state.service";
 import { useOfflineReadingSnapshotStatus } from "~/hooks/useOfflineReadingSnapshot";
@@ -23,7 +22,9 @@ import {
     getSyncHubConfig,
     saveSyncHubConfig,
     clearSyncHubConfig,
+    isSyncHubConfigured,
     defaultSyncHubEndpoint,
+    verifySyncHubConnection,
 } from "~/services/synchub.service";
 
 export const Route = createFileRoute("/history")({
@@ -227,35 +228,54 @@ function HistoryPage() {
                     type="password"
                     value={syncHubApiKey}
                     onChange={(event) => setSyncHubApiKey(event.target.value)}
-                    placeholder="LatestNews API Key (shk_...)"
+                    placeholder={
+                        import.meta.env.LATESTNEWS_DESKTOP && isSyncHubConfigured()
+                            ? "密钥已安全保存；地址不变时可留空"
+                            : "LatestNews API Key (shk_...)"
+                    }
                     className="min-w-0 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-cyan-500 dark:border-zinc-700 dark:bg-zinc-800"
                 />
                 <button
                     type="button"
                     disabled={syncHubChecking}
-                    onClick={() => {
-                        setSyncHubChecking(true);
-                        void verifyLatestNewsSyncHubConnection(syncHubEndpoint, syncHubApiKey).then((result) => {
-                            setSyncHubChecking(false);
-                            toaster(result.message, { type: result.ok ? "success" : "error" });
-                            if (!result.ok) return;
-                            saveSyncHubConfig({ endpoint: syncHubEndpoint, apiKey: syncHubApiKey });
-                            window.location.reload();
-                        });
-                    }}
+                    onClick={() =>
+                        void (async () => {
+                            setSyncHubChecking(true);
+                            try {
+                                const result = await verifySyncHubConnection(syncHubEndpoint, syncHubApiKey);
+                                toaster(result.message, { type: result.ok ? "success" : "error" });
+                                if (!result.ok) return;
+                                await saveSyncHubConfig({ endpoint: syncHubEndpoint, apiKey: syncHubApiKey });
+                                window.location.reload();
+                            } catch (error) {
+                                toaster(error instanceof Error ? error.message : "无法保存 SyncHub 配置", {
+                                    type: "error",
+                                });
+                            } finally {
+                                setSyncHubChecking(false);
+                            }
+                        })()
+                    }
                     className="rounded-xl bg-cyan-500 px-3 py-2 text-sm font-medium text-zinc-900 disabled:cursor-wait disabled:opacity-60"
                 >
                     {syncHubChecking ? "正在验证" : "验证并保存"}
                 </button>
-                {(syncHubEndpoint !== defaultSyncHubEndpoint || syncHubApiKey) && (
+                {(syncHubEndpoint !== defaultSyncHubEndpoint || syncHubApiKey || isSyncHubConfigured()) && (
                     <button
                         type="button"
-                        onClick={() => {
-                            clearSyncHubConfig();
-                            setSyncHubEndpoint(defaultSyncHubEndpoint);
-                            setSyncHubApiKey("");
-                            window.location.reload();
-                        }}
+                        onClick={() =>
+                            void clearSyncHubConfig()
+                                .then(() => {
+                                    setSyncHubEndpoint(defaultSyncHubEndpoint);
+                                    setSyncHubApiKey("");
+                                    window.location.reload();
+                                })
+                                .catch((error: unknown) => {
+                                    toaster(error instanceof Error ? error.message : "无法移除 SyncHub 配置", {
+                                        type: "error",
+                                    });
+                                })
+                        }
                         className="rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700"
                     >
                         移除

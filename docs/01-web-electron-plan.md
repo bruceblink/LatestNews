@@ -1,24 +1,23 @@
 # Web 与 Electron 共用前端开发计划
 
-日期：2026-10-17。状态：计划已编写，实施未开始。
-
-本次交付仅包含开发计划和文档入口。下文的新增文件、命令、功能和验收均为后续工作，不代表已经实现或验证。
+日期：2026-10-17。状态：桌面基础实现、自动检查、真实窗口检查和 Windows 覆盖安装检查已完成；真实认证服务仍未通过验证。0.6.0 多平台发布流水线正在验证。
 
 ## 1. 目标与范围
 
 采用“桌面客户端＋远程 API”。Web 和 Electron 共用现有 React 界面及业务代码。日常功能以 Web 前端为主开发，同一次源码变更直接进入两种构建，桌面层保持最小范围。
 
-首发目标为 Windows。参考 `F:/project/it-tools-template` 的双端构建、本地资源协议、进程隔离和打包结构，继续使用本项目的 React、TanStack Router、TanStack Query、Jotai 和 UnoCSS。
+桌面目标为 Windows、macOS 和 Linux。参考 `F:/project/it-tools-template` 的双端构建、本地资源协议、进程隔离和打包结构，继续使用本项目的 React、TanStack Router、TanStack Query、Jotai 和 UnoCSS。
 
 本阶段交付：
 
 - 相同 HTML 模板、React 入口、路由、页面、组件、主题、状态和 service 层。
 - 随安装包分发的前端资源，界面在本机渲染。
 - 对现有远程新闻 API、认证服务和 SyncHub 的集中适配。
-- Windows 桌面开发、构建、安装包和持续集成（Continuous Integration / CI）流程。
+- Windows、macOS 和 Linux 桌面开发、构建、安装包和持续集成（Continuous Integration / CI）流程。
+- Web 构建包、Docker 镜像和桌面安装包的版本化发布。
 - Web 回归、桌面自动化和 Windows 真实窗口验收记录。
 
-本阶段不包含本机 Nitro 服务、新闻采集、业务数据库、局域网服务、托盘、开机启动、多窗口、自动更新，以及 macOS/Linux 安装包。后续仅在有明确需求时扩展。
+本阶段不包含本机 Nitro 服务、新闻采集、业务数据库、局域网服务、托盘、开机启动、多窗口、自动更新、代码签名和 macOS 公证。
 
 共用源码可以减少重复开发。Web 上线后，已安装的桌面包仍使用随包分发的页面版本，需要重新构建并安装新版本。首版采用安装包升级，不将 Web 的 Service Worker 更新当作桌面软件更新。
 
@@ -33,7 +32,7 @@
 | 认证服务 | 现有 `VITE_API_URL` 指向的外部登录和布局同步服务。 |
 | SyncHub | 现有历史、收藏和偏好同步服务，地址及 API Key 与新闻服务和认证服务分别管理。 |
 
-当前源码证据：
+实施前源码基线：
 
 - [Vite 配置](../vite.config.ts) 将 React、路由、样式、PWA 和 Nitro 构建放在一起，需要抽取共用的前端配置。
 - [React 入口](../src/main.tsx) 和 [页面目录](../src/routes) 可以由两种构建直接使用，不需要桌面页面副本。
@@ -41,7 +40,7 @@
 - [PWA hook](../src/hooks/usePWA.ts) 同时承担网络状态、离线反馈和 Service Worker 更新，需要隔离平台启动与更新动作。
 - [登录逻辑](../src/hooks/useLogin.ts)、[用户状态](../src/auth/authAtoms.ts) 和 [布局同步](../src/services/metadata.service.ts) 同时涉及浏览器跳转、Cookie 和 Bearer Token。桌面登录的可用性需要先验证。
 - [阅读状态服务](../src/services/offline-reading-state.service.ts)、[Feed 快照服务](../src/services/offline-feed-snapshot.service.ts) 和 [SyncHub 服务](../src/services/synchub.service.ts) 已存在，保留其数据模型、合并策略和失败处理。
-- 当前发布流程生成 Release 说明，尚未生成 Electron 安装包。
+- 实施前的发布流程生成 Release 说明，尚未生成 Electron 安装包。
 
 参考项目已检查的文件包括 `electron.vite.config.ts`、`electron/main.ts`、`electron/security.ts`、`electron/preload.ts`、`electron-renderer/main.ts` 和 `.github/workflows/electron-desktop.yml`。只借用与本项目目标有关的结构，不复制 Vue 应用、媒体权限或打印窗口等专用功能。
 
@@ -68,7 +67,7 @@
 | `electron/preload.ts` | 有需要时提供有限的平台接口。 |
 | `src/platform/*` | PWA、认证和请求的少量平台适配。 |
 | `tsconfig.electron.json` | 桌面代码类型检查。 |
-| `.github/workflows/electron-desktop.yml` | Windows 构建和安装包产物检查。 |
+| `.github/workflows/release.yml` | 版本检查、全平台桌面包、Web 部署包、Docker 镜像和 GitHub Release。 |
 
 这些名称是实施起点，可以按实际复杂度合并文件。`server` 中的采集、数据库及其专用依赖不得进入桌面运行包。
 
@@ -116,14 +115,14 @@ SyncHub 优先复用现有请求与合并逻辑。若桌面来源受到跨域限
 | D1 | 共用前端构建；起点 | 抽取共用配置，增加最小桌面入口、本地资源协议和 PWA 适配；核对认证服务能力。 | 同一份页面源码进入 Web 和桌面产物；Web 构建行为保持兼容；桌面无 Service Worker；认证路径和外部依赖已记录。 |
 | D2 | 远程 API；依赖 D1 | 增加固定目标转发和构建配置，复用全部新闻 service、错误状态及离线逻辑。 | 首页、Feed、洞察、健康和源详情读取远程数据；查询、POST、错误、超时和取消正常；桌面无采集器、数据库或监听端口。 |
 | D3 | 登录与同步；依赖 D2 及认证服务支持 | 完成集中认证适配、凭据存储和 SyncHub 请求适配，复用状态合并与反馈。 | 登录、取消、退出、过期、布局同步和阅读数据同步可验收；初始化或网络失败不覆盖已有本地数据。 |
-| D4 | Windows 打包与持续构建；依赖 D2，D3 为完整功能交付条件 | 增加脚本、最小桌面运行依赖清单、安装包和 CI；更新使用说明。 | 同一提交构建 Web 和桌面；生成 Windows 安装包；产物不携带 Nitro、better-sqlite3 等服务端专用依赖；发布行为显式控制。 |
-| D5 | 双端回归与发行演练；依赖 D1 至 D4 | 检查真实窗口、安装、升级保留数据、卸载及失败恢复，汇总证据。 | 完整验收矩阵通过；未完成项明确列出；包体、启动时间和内存均有实测记录。 |
+| D4 | 多平台打包与发布 CI；依赖 D2，D3 为完整功能交付条件 | 构建 Windows、macOS、Linux 桌面包；打包 Web Node 服务与静态资源；构建并推送多架构 Docker 镜像；生成双语 Release 说明。 | Windows x64/ARM64、macOS x64/ARM64、Linux x64/ARM64 均生成桌面包；Web zip 和 GHCR 镜像成功；任何必需构建失败时不发布 GitHub Release。 |
+| D5 | 双端回归与发行演练；依赖 D1 至 D4 | 检查真实窗口、Windows 覆盖安装保留数据、卸载及失败恢复，汇总证据。 | 自动化检查和 Windows 真实窗口验收通过；真实认证服务限制明确；各平台 CI 产物可下载；未完成项列出。 |
 
 每个切片先达到自身验收条件，再扩大范围。D1 至 D4 可生成内部验证产物；完整桌面功能交付必须包含 D3 和 D5。新增桌面专属功能不得混入这些切片。
 
 ## 6. 开发、构建与发布约定
 
-保留现有 Web 命令，计划新增以下命令；名称在实施时固定并写入 README：
+保留现有 Web 命令，并提供以下桌面命令：
 
 | 命令 | 预期用途 |
 | --- | --- |
@@ -131,13 +130,15 @@ SyncHub 优先复用现有请求与合并逻辑。若桌面来源受到跨域限
 | `pnpm electron:build` | 构建主进程、预加载脚本和共享前端资源。 |
 | `pnpm typecheck:electron` | 检查桌面代码和配置。 |
 | `pnpm electron:package:win` | 生成 Windows 安装包，不自动发布。 |
+| `pnpm electron:package:mac` | 生成 macOS DMG 和 ZIP，不自动发布。 |
+| `pnpm electron:package:linux` | 生成 Linux AppImage 和 DEB，不自动发布。 |
 | `pnpm test:electron` | 运行桌面协议、隔离和基础交互检查。 |
 
 使用 `electron-vite` 和 `electron-builder`，在 D1 选择经当前元数据确认兼容的版本，并写入锁文件。构建共用资源预处理和前端插件，不复制路由、组件或来源清单。
 
-Windows 为唯一首发打包目标。CI 从同一提交执行 Web 与桌面构建，并保留安装包 artifact。桌面版本沿用项目版本，记录源码提交和远程 API 兼容范围。普通桌面构建不发布 Release；后续正式发布需显式触发，并按现有双语说明规则生成变更记录。
+CI 在发布标签上并行构建 Windows x64/ARM64、macOS x64/ARM64、Linux x64/ARM64 桌面包、Web Node 部署包和 `linux/amd64`、`linux/arm64` Docker 镜像。所有任务成功后才创建 GitHub Release，并附带桌面包和 Web zip。Release 说明按上一个版本标签到当前标签的提交范围生成。桌面版本与 Web、Docker 版本一致。
 
-桌面包使用最小运行依赖清单，避免根目录服务端依赖被打包器自动全部收集。D4 检查最终包内容。自动更新、代码签名和其他平台分别作为后续切片，不以首版安装包生成代替这些能力。
+桌面包使用最小运行依赖清单，避免根目录服务端依赖被打包器自动全部收集。D4 检查最终包内容。0.6.0 安装包未配置代码签名和 macOS 公证；自动更新作为后续切片，不以生成安装包代替这些能力。
 
 ## 7. 验证与完成标准
 
@@ -157,7 +158,7 @@ pnpm electron:package:win
 git diff --check
 ```
 
-部分命令尚不存在，由对应切片新增。本次计划交付不执行或宣称这些未来检查已通过。
+这些命令已随桌面实现加入。最终交付前应在最终源码上运行全部检查；运行结果记录在第 8.1 节。
 
 新增有实际风险价值的测试：本地资源越界与缺失路径、深层路由、远程目标与凭据隔离、方法/参数/错误保留、超时与取消、认证回调、同步失败及升级数据保留。避免为纯配置搬运添加重复测试。
 
@@ -165,7 +166,7 @@ git diff --check
 
 ### 7.2 双端功能矩阵
 
-| 场景 | Web/PWA | Windows Electron |
+| 场景 | Web/PWA | Windows、macOS、Linux Electron |
 | --- | --- | --- |
 | 首页、Feed、洞察、健康、源详情与历史 | 浏览器真实页面检查 | Computer Use 真实窗口检查。 |
 | 深层路由、刷新与静态资源缺失 | 验证服务端回退与错误状态 | 验证本地协议回退，缺失资源返回错误。 |
@@ -175,7 +176,7 @@ git diff --check
 | 登录、退出、布局与 SyncHub 同步 | 检查现有流程 | 检查桌面会话、取消、过期与失败恢复。 |
 | 原文外链与剪贴板 | 检查浏览器行为 | 外链打开系统浏览器；检查焦点和剪贴板。 |
 | 页面功能变更复用 | 修改一处共享源码并构建 | 同一变更自动进入桌面，无页面副本或额外业务实现。 |
-| 安装、升级与卸载 | 不适用 | 新用户目录安装、升级保留数据、退出清理及卸载检查。 |
+| 安装、升级与卸载 | 不适用 | CI 生成三类操作系统包；Windows 执行新目录安装、覆盖升级保留数据及卸载检查；macOS/Linux 安装行为需在各系统实机补充验收。 |
 
 Electron 保持 `nodeIntegration: false`、`contextIsolation: true`、`sandbox: true` 和 `webSecurity: true`。静态路径限制在构建目录内，IPC 校验发送方和参数，外链校验协议，内容安全策略（Content Security Policy / CSP）与服务地址保持一致。
 
@@ -194,4 +195,20 @@ Electron 保持 `nodeIntegration: false`、`contextIsolation: true`、`sandbox: 
 
 回退以切片为边界：移除该切片新增的 Electron 文件、脚本和依赖，恢复相关共用配置与少量平台适配调用。回退前检查用户新改动，不使用破坏性的 Git 命令。保留原有 Web/PWA 行为、用户数据和远程服务。
 
-实施前已有 `.gitignore`、`package.json`、`pnpm-lock.yaml` 和 `wrangler.jsonc` 改动，不属于本次计划修改。当前仅完成本文及文档链接；未安装桌面依赖、修改运行代码、构建、验收、提交、推送或发布。后续实施从 D1 开始。
+实施前已有 `.gitignore`、`package.json`、`pnpm-lock.yaml` 和 `wrangler.jsonc` 改动。处理本次工作区时保留这些用户改动。用户已要求发布 0.6.0，因此本次工作会在验证后提交、推送并发布；不覆盖生产 Web 服务配置。
+
+### 8.1 实施状态与验收记录
+
+| 切片 | 状态与证据 |
+| --- | --- |
+| D1 共用前端构建 | 已实现。Web 与 Electron 使用共用的 React 入口、路由、页面和 renderer 配置。桌面构建不注册 Service Worker，并从 `app://bundle/` 加载本地页面。 |
+| D2 新闻 API | 已实现客户端受限转发、路径和大小限制，并保留共用 service。API 代理与资源安全测试通过。生产站点和部署健康接口可访问；健康结果为 `degraded`，原因是缓存不可用，因此不代表完整生产服务健康。 |
+| D3 登录与 SyncHub | 桌面适配和凭据加密代码已实现，但真实服务验收未完成。检查期间 `https://api.likanug.top/api/me`、`/api/sync/me` 和 OAuth 登录入口均返回 HTTP 520，无法验证完整登录、布局同步和 SyncHub 会话流程。 |
+| D4 多平台打包 | 已验证 Windows x64 NSIS 打包结构，应用清单 `dependencies` 为空，包内没有服务端依赖。0.6.0 CI 已配置 Windows x64/ARM64、macOS x64/ARM64、Linux x64/ARM64，并生成 Web zip、推送多架构 GHCR 镜像。远端平台产物仍需等待发布流水线验证。 |
+| D5 双端验收 | Computer Use 实际打开 Windows 0.5.3 安装包窗口。热门页成功显示新闻；菜单显示“Github 账号登录”入口，未输入账号或密码。将 0.5.2 安装到隔离目录后覆盖安装 0.5.3，测试数据哨兵文件保留；卸载程序返回 0，安装文件和快捷方式均已移除。真实认证服务仍返回 HTTP 520，登录、布局同步和 SyncHub 真实流程未验证。 |
+
+最终源码自动检查结果：`pnpm lint:check`、`pnpm typecheck`、`pnpm typecheck:electron`、`pnpm test --run`、`pnpm build` 和 `pnpm electron:build` 通过；测试为 53 个文件、248 个用例。`pnpm test:electron` 包含在完整测试运行内，11 个 Electron 相关用例通过。`git diff --check` 通过。
+
+开发模式验证中，首页、`/api/v1/health/deployment`、`/api/v1/node` 和 `/api/v1/openapi.json` 返回 HTTP 200。运行 `pnpm electron:build` 更新 `out/` 时，开发服务器没有因生成目录变化而触发 Nitro 解析错误或页面重载循环。资源预处理有 4 个图标下载超时，构建继续使用现有图标；这不影响构建通过，但图标更新未验证。
+
+Windows 安装包的首个 electron-builder 调用遇到 GitHub 下载超时和 Windows 目录替换错误。首次重试生成的包从仓库根目录收集了服务端依赖。项目打包命令现把 `out/` 作为独立项目目录，使用本机 Electron 44.8.0 运行时，并跳过应用依赖重建。最终安装包重新生成成功。检查确认包内没有服务端依赖，全部本地 renderer 资源存在。旧构建留下的 `latest.yml` 与当前安装包不一致，已从输出目录移除。0.6.0 还未发布；应以 GitHub Actions 的全平台产物、Web 包和 GHCR 镜像结果作为发行验收依据。

@@ -15,7 +15,7 @@ const pluginRendererPath = join(dirname(require.resolve("vite-plugin-with-nitro"
 const pluginRendererUrl = `file:///${pluginRendererPath}`;
 const localRendererPath = join(projectDir, "server/renderer.ts");
 
-const nitroOption: Parameters<typeof viteNitro>[0] = {
+const nitroOption: NonNullable<Parameters<typeof viteNitro>[0]> = {
     experimental: {
         database: true,
     },
@@ -93,5 +93,17 @@ if (process.env.VERCEL) {
 }
 
 export default function initVoteNitro() {
-    return viteNitro(nitroOption);
+    const nitroPlugin = viteNitro(nitroOption);
+
+    return [
+        {
+            name: "latestnews-nitro-dev-renderer",
+            enforce: "pre" as const,
+            config(_viteConfig: unknown, { command }: { command: string }) {
+                // Vite serves the development SPA shell itself; Nitro's production HTML alias does not exist in dev.
+                if (command === "serve" && useNodeRuntime) nitroOption.renderer = undefined;
+            },
+        },
+        nitroPlugin,
+    ];
 }
