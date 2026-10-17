@@ -101,6 +101,12 @@ function getAppResourceRoot() {
     return app.isPackaged ? app.getAppPath() : resolve(app.getAppPath(), "out");
 }
 
+// Keep the native window icon outside app.asar so the operating system can load it as a file.
+function getWindowIconPath() {
+    const resourceRoot = app.isPackaged ? process.resourcesPath : getAppResourceRoot();
+    return resolve(resourceRoot, "icon.png");
+}
+
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) {
     app.quit();
@@ -588,6 +594,7 @@ async function openAuthenticationWindow() {
         modal: mainWindow !== null,
         show: false,
         title: "登录 LatestNews",
+        icon: getWindowIconPath(),
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -672,6 +679,7 @@ async function createMainWindow() {
         minHeight: 620,
         show: false,
         backgroundColor: "#18181b",
+        icon: getWindowIconPath(),
         webPreferences: {
             preload: resolve(getAppResourceRoot(), "preload/preload.cjs"),
             nodeIntegration: false,

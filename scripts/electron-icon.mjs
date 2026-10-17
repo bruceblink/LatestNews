@@ -56,6 +56,12 @@ const linuxIcon = resolve(buildDirectory, "icon.png");
 await writeFile(linuxIcon, images.get(512));
 console.info(`Generated Linux application icon: ${linuxIcon}`);
 
+const appResourcesDirectory = resolve(projectRoot, "out");
+const windowIcon = resolve(appResourcesDirectory, "icon.png");
+await mkdir(appResourcesDirectory, { recursive: true });
+await writeFile(windowIcon, images.get(512));
+console.info(`Generated Electron window icon: ${windowIcon}`);
+
 if (process.platform === "darwin") {
     const iconsetDirectory = resolve(buildDirectory, "icon.iconset");
     const iconsetFiles = [
