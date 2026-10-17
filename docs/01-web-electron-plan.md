@@ -1,6 +1,6 @@
 # Web 与 Electron 共用前端开发计划
 
-日期：2026-10-17。状态：桌面基础实现、自动检查、真实窗口检查和 Windows 覆盖安装检查已完成；真实认证服务仍未通过验证。0.6.0 多平台发布流水线正在验证。
+日期：2026-10-17。状态：D1、D2 已实现；D3 真实认证服务仍未通过验证；D4 首轮发布 CI 未通过，修复已推送到 `main`，尚未重新触发；D5 已完成部分 Windows 真实窗口和覆盖安装检查。
 
 ## 1. 目标与范围
 
@@ -203,9 +203,9 @@ Electron 保持 `nodeIntegration: false`、`contextIsolation: true`、`sandbox: 
 | --- | --- |
 | D1 共用前端构建 | 已实现。Web 与 Electron 使用共用的 React 入口、路由、页面和 renderer 配置。桌面构建不注册 Service Worker，并从 `app://bundle/` 加载本地页面。 |
 | D2 新闻 API | 已实现客户端受限转发、路径和大小限制，并保留共用 service。API 代理与资源安全测试通过。生产站点和部署健康接口可访问；健康结果为 `degraded`，原因是缓存不可用，因此不代表完整生产服务健康。 |
-| D3 登录与 SyncHub | 桌面适配和凭据加密代码已实现，但真实服务验收未完成。检查期间 `https://api.likanug.top/api/me`、`/api/sync/me` 和 OAuth 登录入口均返回 HTTP 520，无法验证完整登录、布局同步和 SyncHub 会话流程。 |
-| D4 多平台打包 | 已验证 Windows x64 NSIS 打包结构，应用清单 `dependencies` 为空，包内没有服务端依赖。0.6.0 CI 已配置 Windows x64/ARM64、macOS x64/ARM64、Linux x64/ARM64，并生成 Web zip、推送多架构 GHCR 镜像。远端平台产物仍需等待发布流水线验证。 |
-| D5 双端验收 | Computer Use 实际打开 Windows 0.5.3 安装包窗口。热门页成功显示新闻；菜单显示“Github 账号登录”入口，未输入账号或密码。将 0.5.2 安装到隔离目录后覆盖安装 0.5.3，测试数据哨兵文件保留；卸载程序返回 0，安装文件和快捷方式均已移除。真实认证服务仍返回 HTTP 520，登录、布局同步和 SyncHub 真实流程未验证。 |
+| D3 登录与 SyncHub | 桌面适配和凭据加密代码已实现，但真实服务验收未完成。2026-10-17 只读探测中，`https://api.likanug.top/api/me` 和 `/api/sync/me` 均返回 HTTP 520，无法验证完整登录、布局同步和 SyncHub 会话流程。 |
+| D4 多平台打包 | Windows x64 NSIS 本地包结构已验证，应用清单 `dependencies` 为空，包内没有服务端依赖。首轮 CI `39018805479` 的源码检查和 Web 包通过；六个平台包均失败。Linux 和 macOS 找不到配置指定的本地 Electron 目录，Windows x64 因 `better-sqlite3` 编译找不到可用的 Visual Studio 失败，Windows ARM64 因 `workerd` 不支持该平台失败。Docker 和 Release job 已取消，没有发布 0.6.0。`6617fb9` 已移除本地 `electronDist` 路径，并在桌面 CI 中跳过通用安装脚本后单独重建 Electron；`actionlint` 已通过。修复后的发布流水线尚未运行。 |
+| D5 双端验收 | Computer Use 实际打开本地 0.6.0 Windows 解包版窗口：热门页显示新闻，Electron 默认菜单已移除，窗口标题栏显示 LatestNews 图标。此前将 0.5.2 安装到隔离目录后覆盖安装 0.5.3，测试数据哨兵文件保留；卸载程序返回 0，安装文件和快捷方式均已移除。Windows 登录和同步尚未通过真实服务验证；macOS、Linux 真实窗口及安装升级流程尚未执行。 |
 
 最终源码自动检查结果：`pnpm lint:check`、`pnpm typecheck`、`pnpm typecheck:electron`、`pnpm test --run`、`pnpm build` 和 `pnpm electron:build` 通过；测试为 53 个文件、248 个用例。`pnpm test:electron` 包含在完整测试运行内，11 个 Electron 相关用例通过。`git diff --check` 通过。
 
