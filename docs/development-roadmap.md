@@ -2,6 +2,8 @@
 
 本文件是 [开发总计划](../DEVELOPMENT_PLAN.md) 的执行版。基于 `0.5.3` / `5ce4aa4`，将已完成记录与下一轮开发分开维护。每个待办切片完成后补充 commit、检查结果、部署验收记录和遗留限制。
 
+2026-10-17 新增的桌面开发方向采用“桌面客户端＋远程 API”，按 [Web 与 Electron 共用前端开发计划](01-web-electron-plan.md) 的 D1 至 D5 推进。当前仅完成计划；原有 M3/M4 部署验收继续保留，不能据此标记完成。
+
 ## 当前基线
 
 已实现：标准化与缓存降级、v1 API/Feed/OpenAPI、统一 Feed 与洞察、阅读状态与 SyncHub 合并/重试、离线快照、健康诊断、上游清单诊断和下游清单鉴权。另已交付：
@@ -487,3 +489,11 @@ interface KeywordTrend {
 - `pnpm exec vitest -c vitest.config.ts test/source-adapter-regressions.test.ts server/utils/rss2json.test.ts`
 - `pnpm typecheck`、`pnpm build`
 - 本地 HTTP 冒烟：FreeBuf、Bilibili 热搜、知乎、Sputnik 和先知社区均返回非空成功数据。
+
+## M9：Web 与 Electron 共用前端（已规划，未实施）
+
+采用“桌面客户端＋远程 API”，共用 React 页面、路由、状态和 service 层。桌面端使用随 Windows 安装包分发的前端资源，不在本机启动 Nitro 或新闻采集服务。
+
+本里程碑按独立计划中的 D1 至 D5 推进，覆盖前端构建、远程请求、登录与同步、Windows 安装包及双端验收。D3 依赖认证服务支持桌面会话；其余依赖、切片验收和回退边界见 [Web 与 Electron 共用前端开发计划](01-web-electron-plan.md)。
+
+桌面开发尚未排入当前下一项工作。下一步仍先执行 R6-A，恢复 `pnpm dev`，并按 M5/M6 完成近期开发与发布基线，再确定 M9 的实施时间。

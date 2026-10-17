@@ -139,7 +139,7 @@ docker compose -f docker-compose.yml up -d
 ## 路线方向
 
 当前能力、优先级和候选版本目标见 [开发计划](./DEVELOPMENT_PLAN.md)，具体任务、依赖和验收标准见 [后续开发路线](./docs/development-roadmap.md)。下一阶段先恢复开发模式与自动回归，再完成发布验收和阅读体验改进。
-
+- 计划以“桌面客户端＋远程 API”支持 Electron，复用现有 Web 前端；范围与验收见 [Web 与 Electron 共用前端开发计划](./docs/01-web-electron-plan.md)。当前尚未实施。
 - 继续提升同步状态和多端体验
 - 持续完善数据源健康治理和排障效率
 - 优化移动端阅读、离线缓存和安装体验
