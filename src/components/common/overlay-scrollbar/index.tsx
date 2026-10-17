@@ -26,7 +26,7 @@ const defaultScrollbarParams: UseOverlayScrollbarsParams = {
     defer: true,
 };
 
-export const OverlayScrollbar = forwardRef<HTMLDivElement, PropsWithChildren<Props>>(function OverlayScrollbar(
+export const OverlayScrollbar = forwardRef<HTMLDivElement, PropsWithChildren<Props>>(function OverlayScrollbarRender(
     { disabled, children, options, events, defer, className, ...props },
     forwardedRef
 ) {
@@ -76,6 +76,8 @@ export const OverlayScrollbar = forwardRef<HTMLDivElement, PropsWithChildren<Pro
         </div>
     );
 });
+
+OverlayScrollbar.displayName = "OverlayScrollbar";
 
 export function GlobalOverlayScrollbar({
     children,

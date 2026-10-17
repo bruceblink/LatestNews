@@ -8,132 +8,56 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as FeedRouteImport } from './routes/feed'
+import { Route as HealthRouteImport } from './routes/health'
+import { Route as HistoryRouteImport } from './routes/history'
+import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as CColumnRouteImport } from './routes/c.$column'
+import { Route as SourceSourceIdRouteImport } from './routes/source.$sourceId'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as InsightsImport } from './routes/insights'
-import { Route as HistoryImport } from './routes/history'
-import { Route as HealthImport } from './routes/health'
-import { Route as FeedImport } from './routes/feed'
-import { Route as IndexImport } from './routes/index'
-import { Route as SourceSourceIdImport } from './routes/source.$sourceId'
-import { Route as CColumnImport } from './routes/c.$column'
-import { Route as AuthCallbackImport } from './routes/auth/callback'
-
-// Create/Update Routes
-
-const InsightsRoute = InsightsImport.update({
-  id: '/insights',
-  path: '/insights',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const HistoryRoute = HistoryImport.update({
-  id: '/history',
-  path: '/history',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const HealthRoute = HealthImport.update({
-  id: '/health',
-  path: '/health',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const FeedRoute = FeedImport.update({
-  id: '/feed',
-  path: '/feed',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const SourceSourceIdRoute = SourceSourceIdImport.update({
-  id: '/source/$sourceId',
-  path: '/source/$sourceId',
-  getParentRoute: () => rootRoute,
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const CColumnRoute = CColumnImport.update({
-  id: '/c/$column',
-  path: '/c/$column',
-  getParentRoute: () => rootRoute,
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthCallbackRoute = AuthCallbackImport.update({
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InsightsRoute = InsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/feed': {
-      id: '/feed'
-      path: '/feed'
-      fullPath: '/feed'
-      preLoaderRoute: typeof FeedImport
-      parentRoute: typeof rootRoute
-    }
-    '/health': {
-      id: '/health'
-      path: '/health'
-      fullPath: '/health'
-      preLoaderRoute: typeof HealthImport
-      parentRoute: typeof rootRoute
-    }
-    '/history': {
-      id: '/history'
-      path: '/history'
-      fullPath: '/history'
-      preLoaderRoute: typeof HistoryImport
-      parentRoute: typeof rootRoute
-    }
-    '/insights': {
-      id: '/insights'
-      path: '/insights'
-      fullPath: '/insights'
-      preLoaderRoute: typeof InsightsImport
-      parentRoute: typeof rootRoute
-    }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackImport
-      parentRoute: typeof rootRoute
-    }
-    '/c/$column': {
-      id: '/c/$column'
-      path: '/c/$column'
-      fullPath: '/c/$column'
-      preLoaderRoute: typeof CColumnImport
-      parentRoute: typeof rootRoute
-    }
-    '/source/$sourceId': {
-      id: '/source/$sourceId'
-      path: '/source/$sourceId'
-      fullPath: '/source/$sourceId'
-      preLoaderRoute: typeof SourceSourceIdImport
-      parentRoute: typeof rootRoute
-    }
-  }
-}
-
-// Create and export the route tree
+const CColumnRoute = CColumnRouteImport.update({
+  id: '/c/$column',
+  path: '/c/$column',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SourceSourceIdRoute = SourceSourceIdRouteImport.update({
+  id: '/source/$sourceId',
+  path: '/source/$sourceId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -145,7 +69,6 @@ export interface FileRoutesByFullPath {
   '/c/$column': typeof CColumnRoute
   '/source/$sourceId': typeof SourceSourceIdRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
@@ -156,9 +79,8 @@ export interface FileRoutesByTo {
   '/c/$column': typeof CColumnRoute
   '/source/$sourceId': typeof SourceSourceIdRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
   '/health': typeof HealthRoute
@@ -168,7 +90,6 @@ export interface FileRoutesById {
   '/c/$column': typeof CColumnRoute
   '/source/$sourceId': typeof SourceSourceIdRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
@@ -202,7 +123,6 @@ export interface FileRouteTypes {
     | '/source/$sourceId'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FeedRoute: typeof FeedRoute
@@ -212,6 +132,67 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   CColumnRoute: typeof CColumnRoute
   SourceSourceIdRoute: typeof SourceSourceIdRoute
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/insights': {
+      id: '/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof InsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/$column': {
+      id: '/c/$column'
+      path: '/c/$column'
+      fullPath: '/c/$column'
+      preLoaderRoute: typeof CColumnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/source/$sourceId': {
+      id: '/source/$sourceId'
+      path: '/source/$sourceId'
+      fullPath: '/source/$sourceId'
+      preLoaderRoute: typeof SourceSourceIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -224,51 +205,6 @@ const rootRouteChildren: RootRouteChildren = {
   CColumnRoute: CColumnRoute,
   SourceSourceIdRoute: SourceSourceIdRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/feed",
-        "/health",
-        "/history",
-        "/insights",
-        "/auth/callback",
-        "/c/$column",
-        "/source/$sourceId"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/feed": {
-      "filePath": "feed.tsx"
-    },
-    "/health": {
-      "filePath": "health.tsx"
-    },
-    "/history": {
-      "filePath": "history.tsx"
-    },
-    "/insights": {
-      "filePath": "insights.tsx"
-    },
-    "/auth/callback": {
-      "filePath": "auth/callback.tsx"
-    },
-    "/c/$column": {
-      "filePath": "c.$column.tsx"
-    },
-    "/source/$sourceId": {
-      "filePath": "source.$sourceId.tsx"
-    }
-  }
-}
-ROUTE_MANIFEST_END */

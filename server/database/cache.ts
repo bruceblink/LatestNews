@@ -48,8 +48,7 @@ export class Cache {
 
     async get(key: string): Promise<CacheInfo | undefined> {
         const row = (await this.db.prepare("SELECT id, data, updated FROM cache WHERE id = ?").get(key)) as
-            | CacheRow
-            | undefined;
+            CacheRow | undefined;
         if (row) {
             logger.success(`get ${key} cache`);
             return {

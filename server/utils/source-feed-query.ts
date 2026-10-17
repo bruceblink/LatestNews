@@ -41,9 +41,9 @@ export function getMaxFeedItems(query: z.infer<typeof sourceFeedQuerySchema>) {
 export function hasSourceFeedSelector(payload: SourceBatchPayload) {
     return Boolean(
         normalizeStringArray(payload.sources).length ||
-            normalizeStringArray(payload.source).length ||
-            normalizeStringArray(payload.column).length ||
-            normalizeStringArray(payload.type).length
+        normalizeStringArray(payload.source).length ||
+        normalizeStringArray(payload.column).length ||
+        normalizeStringArray(payload.type).length
     );
 }
 
