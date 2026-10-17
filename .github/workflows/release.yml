@@ -239,11 +239,18 @@ jobs:
             --tag "${GITHUB_REF_NAME}" \
             --output release-notes.md
 
-      - name: Download all release packages
+      - name: Download desktop release packages
         uses: actions/download-artifact@v4
         with:
+          pattern: desktop-*
           path: release-assets
           merge-multiple: true
+
+      - name: Download Web release package
+        uses: actions/download-artifact@v4
+        with:
+          name: web-${{ github.ref_name }}
+          path: release-assets
 
       - name: Publish GitHub release and assets
         uses: softprops/action-gh-release@v2
