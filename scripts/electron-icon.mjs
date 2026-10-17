@@ -6,7 +6,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 const projectRoot = resolve(import.meta.dirname, "..");
 const buildDirectory = resolve(projectRoot, "build");
-const sizes = [16, 24, 32, 48, 64, 128, 256, 512, 1024];
+const sizes = [16, 20, 24, 32, 40, 48, 64, 128, 256, 512, 1024];
 const svg = await readFile(resolve(projectRoot, "public/icon.svg"), "utf8");
 const images = new Map(
     sizes.map((size) => [
@@ -20,7 +20,7 @@ const images = new Map(
         ),
     ])
 );
-const icoSizes = [16, 24, 32, 48, 64, 128, 256];
+const icoSizes = [16, 20, 24, 32, 40, 48, 64, 128, 256];
 
 const header = Buffer.alloc(6);
 header.writeUInt16LE(0, 0);
@@ -61,6 +61,9 @@ const windowIcon = resolve(appResourcesDirectory, "icon.png");
 await mkdir(appResourcesDirectory, { recursive: true });
 await writeFile(windowIcon, images.get(512));
 console.info(`Generated Electron window icon: ${windowIcon}`);
+const windowsWindowIcon = resolve(appResourcesDirectory, "icon.ico");
+await writeFile(windowsWindowIcon, await readFile(windowsIcon));
+console.info(`Generated Windows Electron window icon: ${windowsWindowIcon}`);
 
 if (process.platform === "darwin") {
     const iconsetDirectory = resolve(buildDirectory, "icon.iconset");

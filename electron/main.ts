@@ -104,7 +104,7 @@ function getAppResourceRoot() {
 // Keep the native window icon outside app.asar so the operating system can load it as a file.
 function getWindowIconPath() {
     const resourceRoot = app.isPackaged ? process.resourcesPath : getAppResourceRoot();
-    return resolve(resourceRoot, "icon.png");
+    return resolve(resourceRoot, process.platform === "win32" ? "icon.ico" : "icon.png");
 }
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();

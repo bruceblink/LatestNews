@@ -9,6 +9,8 @@ npmRebuild: false
 extraResources:
   - from: ../build/icon.png
     to: icon.png
+  - from: ../build/icon.ico
+    to: icon.ico
 files:
   - "**/*"
 artifactName: "LatestNews-${version}-${arch}.${ext}"
