@@ -204,10 +204,10 @@ Electron 保持 `nodeIntegration: false`、`contextIsolation: true`、`sandbox: 
 | D1 共用前端构建 | 已实现。Web 与 Electron 使用共用的 React 入口、路由、页面和 renderer 配置。桌面构建不注册 Service Worker，并从 `app://bundle/` 加载本地页面。 |
 | D2 新闻 API | 已实现客户端受限转发、路径和大小限制，并保留共用 service。API 代理与资源安全测试通过。生产站点和部署健康接口可访问；健康结果为 `degraded`，原因是缓存不可用，因此不代表完整生产服务健康。 |
 | D3 登录与 SyncHub | 桌面适配和凭据加密代码已实现，但真实服务验收未完成。2026-10-17 只读探测中，`https://api.likanug.top/api/me` 和 `/api/sync/me` 均返回 HTTP 520，无法验证完整登录、布局同步和 SyncHub 会话流程。 |
-| D4 多平台打包 | Windows x64 NSIS 本地包结构已验证，应用清单 `dependencies` 为空，包内没有服务端依赖。首轮 CI `39018805479` 的源码检查和 Web 包通过；六个平台包均失败。Linux 和 macOS 找不到配置指定的本地 Electron 目录，Windows x64 因 `better-sqlite3` 编译找不到可用的 Visual Studio 失败，Windows ARM64 因 `workerd` 不支持该平台失败。Docker 和 Release job 已取消，没有发布 0.6.0。`6617fb9` 已移除本地 `electronDist` 路径，并在桌面 CI 中跳过通用安装脚本后单独重建 Electron；`actionlint` 已通过。修复后的发布流水线尚未运行。 |
-| D5 双端验收 | Computer Use 实际打开本地 0.6.0 Windows 解包版窗口：热门页显示新闻，Electron 默认菜单已移除，窗口标题栏显示 LatestNews 图标。此前将 0.5.2 安装到隔离目录后覆盖安装 0.5.3，测试数据哨兵文件保留；卸载程序返回 0，安装文件和快捷方式均已移除。Windows 登录和同步尚未通过真实服务验证；macOS、Linux 真实窗口及安装升级流程尚未执行。 |
+| D4 多平台打包 | 首轮 CI `39018805479` 的源码检查和 Web 包通过；六个平台包均失败，原因包括 Electron 运行时路径、Windows 原生依赖和 ARM64 `workerd`。`6617fb9` 修复 Electron 下载与桌面依赖安装后，第二轮 CI `39021350553` 的 Windows x64/ARM64、macOS Intel/Apple Silicon、Web 包和 Docker 镜像均成功；Linux x64/ARM64 在构建 `.deb` 时因生成的桌面 `package.json` 缺少 `homepage` 失败，发布任务因此跳过。当前 `scripts/prepare-electron-package.mjs` 已将根清单的 `homepage` 写入桌面清单。本地 `electron:build` 已确认生成 `https://news.likanug.top`；Windows x64 解包包验证成功。修复后的发布 CI 尚待重新运行，0.6.0 尚未发布。 |
+| D5 双端验收 | Computer Use 实际打开最新本地 0.6.0 Windows 解包包：热门页显示新闻，Electron 默认菜单已移除，窗口标题栏显示 LatestNews 图标。包内 `resources/icon.png` 存在，`LatestNews.exe` 含 32×32 应用图标。原 `release/win-unpacked` 本地包早于当前源文件构建；更新后的 Windows 安装包仍需发布后再检查任务栏图标。此前将 0.5.2 安装到隔离目录后覆盖安装 0.5.3，测试数据哨兵文件保留；卸载程序返回 0，安装文件和快捷方式均已移除。Windows 登录和同步尚未通过真实服务验证；macOS、Linux 真实窗口及安装升级流程尚未执行。 |
 
-最终源码自动检查结果：`pnpm lint:check`、`pnpm typecheck`、`pnpm typecheck:electron`、`pnpm test --run`、`pnpm build` 和 `pnpm electron:build` 通过；测试为 53 个文件、248 个用例。`pnpm test:electron` 包含在完整测试运行内，11 个 Electron 相关用例通过。`git diff --check` 通过。
+最终源码自动检查结果：`pnpm lint:check`、`pnpm typecheck`、`pnpm typecheck:electron`、`pnpm test --run` 和 `pnpm electron:build` 通过；测试为 55 个文件、255 个用例。`pnpm test:electron` 另行通过，包含 4 个文件、18 个用例。Windows x64 解包包含 `resources/icon.png`，并且其可执行文件图标可读取。`git diff --check` 通过。
 
 开发模式验证中，首页、`/api/v1/health/deployment`、`/api/v1/node` 和 `/api/v1/openapi.json` 返回 HTTP 200。运行 `pnpm electron:build` 更新 `out/` 时，开发服务器没有因生成目录变化而触发 Nitro 解析错误或页面重载循环。资源预处理有 4 个图标下载超时，构建继续使用现有图标；这不影响构建通过，但图标更新未验证。
 

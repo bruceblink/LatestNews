@@ -16,6 +16,7 @@ const appManifest = {
     version: rootPackage.version,
     license: rootPackage.license,
     description: rootPackage.description,
+    homepage: rootPackage.homepage,
     private: true,
     dependencies: {},
     main: "main/main.cjs",
