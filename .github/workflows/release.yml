@@ -111,7 +111,9 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm rebuild electron
 
       - name: Build Electron application
         run: pnpm electron:build

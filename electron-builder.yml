@@ -5,7 +5,6 @@ directories:
   buildResources: ../build
   output: ../release
 electronVersion: 44.8.0
-electronDist: ../node_modules/electron/dist
 npmRebuild: false
 extraResources:
   - from: ../build/icon.png
