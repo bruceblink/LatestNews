@@ -1,0 +1,22 @@
+{
+  "now": "2026-10-18T00:00:00.000Z",
+  "responses": {
+    "https://bbs.pcbeta.com/forum.php?mod=rss&fid=563&auth=0": {
+      "status": 200,
+      "headers": { "content-type": "application/rss+xml" },
+      "bodyFile": "fixture.xml"
+    }
+  },
+  "cases": [
+    {
+      "sourceId": "pcbeta-windows11",
+      "expectedItems": [
+        {
+          "title": "Windows fixture headline",
+          "url": "https://bbs.pcbeta.com/topic/1",
+          "publishedAt": "Sun, 18 Oct 2026 07:00:00 GMT"
+        }
+      ]
+    }
+  ]
+}

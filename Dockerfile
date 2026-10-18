@@ -35,6 +35,8 @@ WORKDIR /usr/app
 
 # 只拷贝构建产物
 COPY --from=builder /usr/src/dist/output ./output
+# Node crawler workers run as child processes and need this source runtime beside the server bundle.
+COPY --from=builder /usr/src/crawler-platform/runtime/worker-entry.mjs ./crawler-platform/runtime/worker-entry.mjs
 
 # -------- runtime env --------
 # 仅 Node / Nitro 运行时需要的变量

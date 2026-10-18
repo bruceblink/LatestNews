@@ -47,6 +47,10 @@ const nitroOption: NonNullable<Parameters<typeof viteNitro>[0]> = {
     alias: {
         "@shared": join(projectDir, "shared"),
         "#": join(projectDir, "server"),
+        "#/utils/crawler-plugin-runtime": join(
+            projectDir,
+            useNodeRuntime ? "server/crawler-plugin-runtime.node.ts" : "server/crawler-plugin-runtime.pages.ts"
+        ),
         // The plugin emits an absolute renderer URL; keep the fallback in this repository so it can be bundled.
         [pluginRendererPath]: localRendererPath,
         [pluginRendererUrl]: localRendererPath,

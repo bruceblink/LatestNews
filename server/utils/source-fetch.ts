@@ -2,6 +2,7 @@ import type { NewsItem, SourceID } from "@shared/types";
 
 import { getters } from "#/getters";
 import { normalizeNewsItems } from "@shared/news-item-schema";
+import { hasCrawlerPluginSource, fetchCrawlerPluginSource } from "#/utils/crawler-plugin-runtime";
 
 import { recordSourceFailure, recordSourceSuccess } from "./source-health";
 
@@ -13,7 +14,7 @@ interface CreateSourceFetcherOptions {
 }
 
 export function hasSourceGetter(id: SourceID) {
-    return typeof getters[id] === "function";
+    return typeof getters[id] === "function" || hasCrawlerPluginSource(id);
 }
 
 export function createSourceFetcher({ getItems, onSuccess, onFailure, now = Date.now }: CreateSourceFetcherOptions) {
@@ -44,7 +45,10 @@ export function createSourceFetcher({ getItems, onSuccess, onFailure, now = Date
 }
 
 export const fetchSourceItems = createSourceFetcher({
-    getItems: (id) => getters[id](),
+    getItems: async (id) => {
+        const pluginItems = await fetchCrawlerPluginSource(id);
+        return pluginItems ?? getters[id]();
+    },
     onSuccess: recordSourceSuccess,
     onFailure: recordSourceFailure,
 });

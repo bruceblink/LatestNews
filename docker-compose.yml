@@ -13,6 +13,9 @@ services:
       INIT_TABLE: true
       ENABLE_CACHE: true
       JWT_SECRET: ${JWT_SECRET}
+      # Optional Node-side plugins. Their bundles live under the persistent .data volume.
+      LATESTNEWS_CRAWLER_PLUGIN_IDS: ${LATESTNEWS_CRAWLER_PLUGIN_IDS:-}
+      LATESTNEWS_CRAWLER_PLUGIN_DIR: ${LATESTNEWS_CRAWLER_PLUGIN_DIR:-}
     restart: unless-stopped
 
 volumes:

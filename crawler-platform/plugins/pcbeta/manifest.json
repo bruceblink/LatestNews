@@ -1,0 +1,21 @@
+{
+  "manifestVersion": 1,
+  "id": "org.latestnews.pcbeta",
+  "name": "远景论坛",
+  "version": "0.1.0",
+  "apiVersion": "^1.0.0",
+  "runtime": "trusted-js",
+  "entry": "plugin.ts",
+  "targets": ["node", "electron"],
+  "permissions": {
+    "network": [{ "origin": "https://bbs.pcbeta.com", "methods": ["GET"] }]
+  },
+  "sources": [
+    {
+      "id": "pcbeta-windows11",
+      "name": "Win11",
+      "kind": "realtime",
+      "refreshIntervalSeconds": 300
+    }
+  ]
+}
