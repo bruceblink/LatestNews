@@ -8,12 +8,14 @@
 - Node 宿主从已启用插件清单产生运行时来源目录。Electron 宿主通过受信任 IPC 返回本机启用插件的来源描述。
 - 来源发现 API 返回内置源和插件源的合并目录。单源、详情、批量和 Feed 请求使用同一动态目录解析来源。
 - Web 和 Electron renderer 在加载路由前合并已验证的来源目录。动态来源可以搜索、关注、渲染、打开详情、进入 Feed、历史与同步数据。
+- Pages Web 客户端可通过构建变量 `VITE_NEWS_API_URL` 连接远程 Node API。Node 用运行时变量 `LATESTNEWS_WEB_ORIGINS` 限制允许的网页来源。`VITE_API_URL` 继续只用于认证与用户同步。
 - 保持现有静态 `SourceID`、文章 URL 哈希、旧 API 和未启用插件时的内置 getter 行为。
 
 ## 验收条件
 
-- 使用固定 JSON/RSS 插件可新增两个无静态 `sources.json` 条目的来源。
+- 固定 JSON 和 RSS 插件可新增两个无静态 `sources.json` 条目的来源。
 - Node API 的来源发现、详情、单源、批量和 Feed 返回这些来源；未知、重复、错误命名空间 ID 被拒绝。
+- Pages Web 客户端可在配置 Node API 地址和精确 CORS 来源后，发现并请求动态来源；Electron 请求继续通过主进程 API 代理。
 - Web 和 Electron 共用界面都可显示动态来源；用户可关注、取消关注、查看详情和 Feed；来源 ID 写入阅读历史后可正确显示名称。
 - Electron 本地插件列表只接受已验证的 ID 和清单；渲染器不能提交插件路径或命令；本地失败仍回退远程 API。
 - Pages 构建仍使用无 Node 插件宿主适配器，且不包含 Node 子进程代码。

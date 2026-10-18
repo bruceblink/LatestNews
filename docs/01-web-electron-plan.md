@@ -81,6 +81,8 @@
 
 拟新增构建变量 `LATESTNEWS_DESKTOP_API_URL`，默认使用项目现有公开新闻站点的服务根地址。它是公开地址，不是凭据。自建服务通过构建配置覆盖，首版不新增连接管理页面。`VITE_API_URL` 保持原有认证服务含义，SyncHub 保持现有配置入口。
 
+Web 默认请求同源 `/api`。Pages 前端需要读取独立 Node API 的插件数据时，构建时设置 `VITE_NEWS_API_URL` 为 Node API 根地址，并在 Node 运行环境设置精确的 `LATESTNEWS_WEB_ORIGINS` 来源列表。`VITE_API_URL` 仍只选择认证和用户同步服务。
+
 转发必须满足：
 
 - 服务 origin 来自受信任构建配置，页面参数不能改变新闻或认证转发目标。

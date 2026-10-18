@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld(
         requestSyncHub: (collection: string, method: string, body?: string) =>
             ipcRenderer.invoke("desktop:synchub:request", collection, method, body),
         listCrawlerSources: () => ipcRenderer.invoke("desktop:crawler:list-sources"),
+        listCrawlerSourceMetadata: () => ipcRenderer.invoke("desktop:crawler:list-source-metadata"),
         fetchCrawlerSource: (sourceId: string) => ipcRenderer.invoke("desktop:crawler:fetch-source", sourceId),
     })
 );

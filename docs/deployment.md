@@ -20,6 +20,8 @@ Start from [example.env.server](../example.env.server) and configure secrets onl
 | `TZ` | No | Runtime | Defaults to the host timezone when omitted. |
 | `VITE_APP_TITLE` | No | Build | Browser, desktop, and PWA name; defaults to `LatestNews`. |
 | `VITE_API_URL` | No | Build/runtime | Enables login UI only when paired with `JWT_SECRET`. |
+| `VITE_NEWS_API_URL` | No | Web build | Optional HTTPS origin for the remote Node news API. When empty, Web uses the same-origin `/api` path. Electron keeps using its main-process proxy. |
+| `LATESTNEWS_WEB_ORIGINS` | No | Node runtime | Comma-separated exact Web origins allowed by the Node API CORS middleware. Leave empty when clients use same-origin requests. |
 | `JWT_SECRET` | Login only | Runtime | Must match the external login service. Do not commit a real value. |
 | `ENABLE_CACHE` | No | Runtime | Set to `false` to disable cache reads and writes. |
 | `INIT_TABLE` | No | Runtime | Defaults to table initialization; set to `false` after managed schema setup if needed. |
@@ -82,6 +84,8 @@ Recommended Pages settings:
 - Output directory: `dist/output/public`
 - Runtime variables: `ENABLE_CACHE`, `INIT_TABLE`, `LATESTNEWS_NODE_ID`, and optional node endpoint hints.
 - Secrets: `JWT_SECRET` and source-specific API tokens.
+
+When Pages must read plugins from a separate Node API, set the Pages build variable `VITE_NEWS_API_URL` to the Node API origin, for example `https://api.example.com`. Set `LATESTNEWS_WEB_ORIGINS` on that Node service to the exact Pages origin, for example `https://news.example.com`. Keep `VITE_API_URL` for login and user synchronization; it does not select the news API.
 
 After deployment, verify:
 

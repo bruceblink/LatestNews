@@ -1,6 +1,6 @@
 # 新闻采集插件平台调研与实施建议
 
-日期：2026-10-18。状态：调研结论与实施方案；P0 原型已通过，P1 SDK/CLI、P2 Node、P3 Electron 已交付首轮实现。动态来源、插件更新、完整桌面生命周期和陌生代码隔离仍未完成。当前验收状态见 [插件平台进度记录](04-crawler-plugin-implementation-progress.md)。
+日期：2026-10-18。状态：调研结论与实施方案；P0 原型、P1 SDK/CLI 首轮实现和 P2/P3 首轮宿主接入已完成。动态来源目录已有首轮实现；公开 UI 验收、完整桌面生命周期、插件更新和陌生代码隔离仍未完成。当前验收状态见 [插件平台进度记录](04-crawler-plugin-implementation-progress.md)。
 
 源码基线：LatestNews `main`，`93dfe43`，应用版本 `0.6.1`。本轮检查现有采集路径，并查阅下文链接的官方文档与源码；没有对全部源站做在线可用性测试，也没有验证候选沙箱的性能。
 
@@ -152,9 +152,9 @@ crawler-platform/
 
 增加统一的数据提供接口，例如 `listSources / fetchItems / getHealth / cancel`。远程提供器调用现有 API，本地提供器调用受限 IPC，Feed、收藏和历史页面继续复用。
 
-现有 `/api/v1/sources` 可作为运行时源目录的起点，但它目前仍由静态元数据构造。需要同时处理 `dataSources` 导入、`SourceID` 静态联合类型、关注列表验证和图标发现。仅改造服务端目录 API 不足以支持动态插件。
+现有 `/api/v1/sources` 已扩展为运行时源目录。Node API 从启用插件清单生成动态 ID，Web 和 Electron renderer 在导入路由前验证并注册动态元数据。Pages 若要读取 Node 插件数据，需要设置 `VITE_NEWS_API_URL` 并在 Node 配置 `LATESTNEWS_WEB_ORIGINS`；登录同步仍使用单独的 `VITE_API_URL`。收藏、历史、图标和离线数据仍需真实客户端验收。
 
-类型迁移可保留 `BuiltinSourceID` 作为内置源联合类型，新增经过注册表验证的运行时 `SourceKey`。前端按目录中的描述对象渲染；API 参数和持久化数据仍做运行时校验，不能仅把所有 ID 改成不受检查的 `string`。新旧 ID 的映射由宿主管理，插件版本不进入用户稳定的关注键。
+当前实现保留静态 `SourceID` 联合，并增加带品牌类型的 `DynamicSourceID`。运行时目录校验 `ext.<plugin-id>.<channel-id>` 格式后注册元数据；API 参数仍根据启用清单解析，不能只把所有 ID 改成任意 `string`。新旧 ID 的映射由宿主管理，插件版本不进入用户稳定的关注键。
 
 远程与本地的同名源分别显示执行位置。来源不支持本地执行时给出明确状态。私有或带本机凭据的源不得自动回退到远端执行。
 

@@ -1,7 +1,13 @@
 import { it, vi, expect, describe, afterEach } from "vitest";
 
 import { sourceApi } from "../../shared/source-api";
+import { createDynamicSourceId } from "../../shared/dynamic-source-id";
 import { fetchSource, fetchSourceBatchV1, fetchSourceItemsV1, fetchEntireSourcesEnvelope } from "./source.service";
+import {
+    clearRuntimeSourceCatalog,
+    registerRuntimeSourceCatalog,
+    createRuntimeSourceMetadataItem,
+} from "../../shared/runtime-source-catalog";
 
 import type { SourceID, SourceResponse } from "../../shared/types";
 
@@ -11,11 +17,13 @@ vi.mock("~/utils", () => ({ myFetch: mockMyFetch }));
 
 const remoteSource = createSource("hackernews", "Remote headline", "remote-1");
 const localSource = createSource("pcbeta-windows11", "Local headline", "local-1");
+const dynamicSourceId = createDynamicSourceId("org.latestnews.desktop-test", "latest");
 
 describe("desktop local crawler routing", () => {
     afterEach(() => {
         mockMyFetch.mockReset();
         vi.unstubAllGlobals();
+        clearRuntimeSourceCatalog();
     });
 
     it("uses an enabled local source for the single-source endpoint", async () => {
@@ -117,6 +125,50 @@ describe("desktop local crawler routing", () => {
             types: [],
             limit: 1,
         });
+    });
+
+    it("routes a registered dynamic source to the desktop host and keeps static sources remote", async () => {
+        registerRuntimeSourceCatalog([
+            createRuntimeSourceMetadataItem({ id: dynamicSourceId, name: "Desktop Dynamic", interval: 300_000 }),
+        ]);
+        const dynamicSource = createSource(dynamicSourceId, "Local dynamic headline", "dynamic-1");
+        const bridge = createDesktopBridge([dynamicSourceId], { [dynamicSourceId]: dynamicSource });
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+        mockMyFetch.mockResolvedValue({
+            data: [remoteSource],
+            meta: {
+                generatedAt: 10,
+                requestedSourceCount: 1,
+                resolvedSourceCount: 1,
+                partial: false,
+                omittedSourceIds: [],
+            },
+            errors: [],
+        });
+
+        const response = await fetchSourceBatchV1({ sources: ["hackernews", dynamicSourceId] });
+
+        expect(response.data.map((source) => source.id)).toEqual(["hackernews", dynamicSourceId]);
+        expect(bridge.fetchCrawlerSource).toHaveBeenCalledWith(dynamicSourceId);
+        expect(mockMyFetch).toHaveBeenCalledWith(sourceApi.entire, {
+            method: "POST",
+            body: { sources: ["hackernews"] },
+        });
+    });
+
+    it("falls back to the remote API when a local dynamic source fails", async () => {
+        registerRuntimeSourceCatalog([
+            createRuntimeSourceMetadataItem({ id: dynamicSourceId, name: "Desktop Dynamic", interval: 300_000 }),
+        ]);
+        const dynamicSource = createSource(dynamicSourceId, "Remote fallback headline", "fallback-1");
+        const bridge = createDesktopBridge([dynamicSourceId], {});
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+        mockMyFetch.mockResolvedValue(dynamicSource);
+
+        await expect(fetchSource({ id: dynamicSourceId })).resolves.toEqual(dynamicSource);
+
+        expect(bridge.fetchCrawlerSource).toHaveBeenCalledWith(dynamicSourceId);
+        expect(mockMyFetch).toHaveBeenCalledWith(sourceApi.single, { query: { id: dynamicSourceId } });
     });
 });
 

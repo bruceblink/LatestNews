@@ -75,6 +75,10 @@ pnpm electron:package:linux
 TZ=Asia/Shanghai
 VITE_APP_TITLE=LatestNews
 VITE_API_URL=http://localhost:8000
+# Pages frontend build only: set when the web app must read plugins from a separate Node API.
+# VITE_NEWS_API_URL=https://api.example.com
+# Node runtime: exact web origins allowed to call the news API; separate multiple origins with commas.
+LATESTNEWS_WEB_ORIGINS=https://news.example.com
 JWT_SECRET=
 ENABLE_CACHE=true
 INIT_TABLE=true
@@ -88,6 +92,8 @@ PRODUCTHUNT_API_TOKEN=
 
 - `VITE_APP_TITLE`：浏览器与桌面应用名称，未配置时默认为 `LatestNews`
 - `VITE_API_URL`：登录与用户同步相关 API 地址
+- `VITE_NEWS_API_URL`：可选 Web 构建变量。设置为远程 Node API 根地址后，Web 新闻请求使用该服务；桌面仍使用主进程代理。
+- `LATESTNEWS_WEB_ORIGINS`：Node 运行变量。填写允许访问 Node API 的 Web 来源地址；多个地址用逗号分隔。
 - `LATESTNEWS_DESKTOP_API_URL`：可选的桌面新闻 API 根地址，默认 `https://news.likanug.top`
 - `LATESTNEWS_DESKTOP_AUTH_API_URL`：可选的桌面认证 API 根地址，默认 `https://api.likanug.top`
 - `LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL`：可选的桌面登录回调地址，默认 `https://news.likanug.top/auth/callback`

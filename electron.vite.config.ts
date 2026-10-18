@@ -91,6 +91,7 @@ export default defineConfig(({ mode }) => {
                 ...createRendererDefines(appTitle),
                 "import.meta.env.LATESTNEWS_DESKTOP": "true",
                 "import.meta.env.VITE_API_URL": JSON.stringify("app://bundle/__auth-api__"),
+                "import.meta.env.VITE_NEWS_API_URL": JSON.stringify(""),
             },
             plugins: [...createRendererPlugins("electron", appTitle), disableWebAnalytics, appProtocolBase],
             server: {

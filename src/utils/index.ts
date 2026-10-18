@@ -1,6 +1,7 @@
 import type { MaybePromise } from "@shared/type.util";
 
 import { $fetch } from "ofetch";
+import { resolveNewsApiBaseUrl } from "@shared/news-api-url";
 
 export function safeParseString<T = unknown>(str: string): T | "" {
     try {
@@ -41,7 +42,7 @@ export class Timer {
 export const myFetch = $fetch.create({
     timeout: 15000,
     retry: 0,
-    baseURL: "/api",
+    baseURL: resolveNewsApiBaseUrl(import.meta.env.VITE_NEWS_API_URL, import.meta.env.LATESTNEWS_DESKTOP),
 });
 
 export const apiFetch = $fetch.create({

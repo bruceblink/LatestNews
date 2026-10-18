@@ -76,6 +76,7 @@ try {
         headers: {
             Origin: "https://news.example.test",
             "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "authorization,content-type",
         },
     });
     assert.equal(corsPreflight.status, 204, "The configured Pages origin should pass the API CORS preflight.");

@@ -552,6 +552,11 @@ function installDesktopIpc(crawlerRuntime: ElectronCrawlerPluginRuntime) {
         return crawlerRuntime.listSourceIds();
     });
 
+    ipcMain.handle("desktop:crawler:list-source-metadata", async (event) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted crawler source metadata request.");
+        return crawlerRuntime.listSourceMetadata();
+    });
+
     ipcMain.handle("desktop:crawler:fetch-source", async (event, sourceId: unknown) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted crawler source request.");
         if (typeof sourceId !== "string") throw new Error("Invalid crawler source ID.");

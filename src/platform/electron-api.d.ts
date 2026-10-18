@@ -1,4 +1,5 @@
 import type { SourceResponse } from "@shared/types";
+import type { SourceMetadataItem } from "@shared/source-metadata";
 
 declare global {
     interface Window {
@@ -13,6 +14,7 @@ declare global {
                 body?: string
             ) => Promise<{ status: number; bodyText: string }>;
             listCrawlerSources: () => Promise<string[]>;
+            listCrawlerSourceMetadata?: () => Promise<SourceMetadataItem[]>;
             fetchCrawlerSource: (sourceId: string) => Promise<SourceResponse | null>;
         };
     }

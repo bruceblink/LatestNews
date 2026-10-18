@@ -5,8 +5,7 @@ services:
       context: .
       args:
         VITE_APP_TITLE: LatestNews
-        # 需要的话，可以继续加
-        # VITE_API_BASE: http://localhost:4444
+        VITE_NEWS_API_URL: ${VITE_NEWS_API_URL:-}
     ports:
       - "4444:4444"
     volumes:
@@ -19,6 +18,7 @@ services:
       ENABLE_CACHE: true
       JWT_SECRET: ${JWT_SECRET}
       VITE_API_URL: ${VITE_API_URL}
+      LATESTNEWS_WEB_ORIGINS: ${LATESTNEWS_WEB_ORIGINS:-}
       # Optional Node-side plugins. Their bundles live under the persistent .data volume.
       LATESTNEWS_CRAWLER_PLUGIN_IDS: ${LATESTNEWS_CRAWLER_PLUGIN_IDS:-}
       LATESTNEWS_CRAWLER_PLUGIN_DIR: ${LATESTNEWS_CRAWLER_PLUGIN_DIR:-}
