@@ -27,7 +27,8 @@ concurrency:
 jobs:
   windows:
     name: Build and check Windows desktop
-    runs-on: windows-latest
+    # This runner keeps VS 2022, supported by pnpm's bundled node-gyp 11.5.
+    runs-on: windows-2022
     timeout-minutes: 60
     steps:
       - name: Check out source
