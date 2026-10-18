@@ -20,6 +20,7 @@
         "lint:check": "eslint .",
         "commitlint": "commitlint --edit",
         "presource": "tsx ./scripts/favicon.ts && tsx ./scripts/source.ts",
+        "crawler": "tsx ./crawler-platform/cli.ts",
         "start": "node --env-file .env.server dist/output/server/index.mjs",
         "preview": "cross-env CF_PAGES=1 pnpm build && wrangler pages dev dist/output/public",
         "deploy": "cross-env CF_PAGES=1 pnpm build && wrangler pages deploy dist/output/public",
@@ -35,6 +36,8 @@
         "electron:package:win": "pnpm electron:build && electron-builder --projectDir out --config ../electron-builder.yml --win nsis --publish never",
         "electron:package:mac": "pnpm electron:build && electron-builder --projectDir out --config ../electron-builder.yml --mac dmg zip --publish never",
         "electron:package:linux": "pnpm electron:build && electron-builder --projectDir out --config ../electron-builder.yml --linux AppImage deb --publish never",
+        "test:crawler:electron": "pnpm exec tsx scripts/crawler/electron-host-smoke.ts",
+        "test:crawler:docker": "pnpm exec tsx scripts/crawler/docker-host-smoke.ts",
         "typecheck:electron": "tsc --noEmit -p tsconfig.electron.json --composite false",
         "test:electron": "vitest -c vitest.config.ts run test/electron-api-proxy.test.ts test/electron-security.test.ts test/electron-synchub-policy.test.ts test/electron-synchub-storage.test.ts",
         "asar:list": "asar list release/win-unpacked/resources/app.asar"

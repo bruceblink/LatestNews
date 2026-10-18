@@ -6,7 +6,10 @@
   },
   "include": [
     "server",
+    "crawler-platform",
     "electron/api-proxy.ts",
+    "electron/crawler-host.ts",
+    "electron/crawler-plugin-provider.ts",
     "electron/security.ts",
     "electron/synchub-policy.ts",
     "electron/synchub-storage.ts",

@@ -11,6 +11,8 @@ extraResources:
     to: icon.png
   - from: ../build/icon.ico
     to: icon.ico
+  - from: ../crawler-platform/runtime/worker-entry.mjs
+    to: crawler-platform/runtime/worker-entry.mjs
 files:
   - "**/*"
 artifactName: "LatestNews-${version}-${arch}.${ext}"

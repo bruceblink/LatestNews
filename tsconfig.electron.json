@@ -5,5 +5,5 @@
         "types": ["node"],
         "forceConsistentCasingInFileNames": true
     },
-    "include": ["electron", "electron.vite.config.ts", "vite.renderer.ts", "shared/synchub-contract.ts"]
+    "include": ["electron", "crawler-platform", "electron.vite.config.ts", "vite.renderer.ts", "shared/synchub-contract.ts"]
 }

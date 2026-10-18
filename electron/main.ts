@@ -16,6 +16,7 @@ import {
     type IpcMainInvokeEvent,
 } from "electron";
 
+import { createElectronCrawlerPluginRuntime } from "./crawler-plugin-provider";
 import { getSafeExternalUrl, resolveRendererFile, isTrustedRendererUrl } from "./security";
 import { isValidSyncHubApiKey, parseStoredSyncHubConfig, serializeStoredSyncHubConfig } from "./synchub-storage";
 import {
@@ -37,6 +38,9 @@ import {
     latestNewsSyncHubCollections,
     type LatestNewsSyncHubCollection,
 } from "../shared/synchub-contract";
+
+import type { SourceID } from "../shared/types";
+import type { ElectronCrawlerPluginRuntime } from "./crawler-plugin-provider";
 
 const APP_BASE_URL = "app://bundle/";
 const MAX_API_REQUEST_BYTES = 5 * 1024 * 1024;
@@ -124,7 +128,8 @@ if (!hasSingleInstanceLock) {
             trustedRendererUrl = rendererDevUrl?.origin ?? APP_BASE_URL;
             installProtocol();
             installPermissionPolicy();
-            installDesktopIpc();
+            const crawlerRuntime = await createElectronCrawlerPluginRuntime();
+            installDesktopIpc(crawlerRuntime);
             await createMainWindow();
 
             app.on("activate", () => {
@@ -486,7 +491,7 @@ async function requestSyncHub(
     return { status: response.status, bodyText: await readResponseText(response, MAX_SYNC_HUB_RESPONSE_BYTES) };
 }
 
-function installDesktopIpc() {
+function installDesktopIpc(crawlerRuntime: ElectronCrawlerPluginRuntime) {
     ipcMain.handle("desktop:start-login", async (event) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop login request.");
         await openAuthenticationWindow();
@@ -540,6 +545,18 @@ function installDesktopIpc() {
             savedConfig?.apiKey ?? null
         );
         return requestSyncHub(credentials.endpoint, collection, method, body, credentials.apiKey);
+    });
+
+    ipcMain.handle("desktop:crawler:list-sources", async (event) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted crawler source list request.");
+        return crawlerRuntime.listSourceIds();
+    });
+
+    ipcMain.handle("desktop:crawler:fetch-source", async (event, sourceId: unknown) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted crawler source request.");
+        if (typeof sourceId !== "string") throw new Error("Invalid crawler source ID.");
+        if (!crawlerRuntime.listSourceIds().includes(sourceId)) return null;
+        return crawlerRuntime.fetchSource(sourceId as SourceID);
     });
 }
 
