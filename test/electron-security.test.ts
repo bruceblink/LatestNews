@@ -1,7 +1,7 @@
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { rm, mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { it, expect, describe, afterEach, beforeEach } from "vitest";
+import { rm, mkdir, mkdtemp, realpath, writeFile } from "node:fs/promises";
 
 import { getSafeExternalUrl, resolveRendererFile, isTrustedRendererUrl } from "../electron/security";
 
@@ -20,11 +20,15 @@ afterEach(async () => {
 
 describe("Electron renderer boundaries", () => {
     it("falls back to the shared index for extensionless app routes", async () => {
-        expect(await resolveRendererFile(rendererRoot, "/auth/callback")).toBe(join(rendererRoot, "index.html"));
+        expect(await resolveRendererFile(rendererRoot, "/auth/callback")).toBe(
+            await realpath(join(rendererRoot, "index.html"))
+        );
     });
 
     it("serves assets by path and leaves missing asset paths as 404s", async () => {
-        expect(await resolveRendererFile(rendererRoot, "/assets/app.js")).toBe(join(rendererRoot, "assets", "app.js"));
+        expect(await resolveRendererFile(rendererRoot, "/assets/app.js")).toBe(
+            await realpath(join(rendererRoot, "assets", "app.js"))
+        );
         expect(await resolveRendererFile(rendererRoot, "/assets/missing.js")).toBeNull();
     });
 
