@@ -18,7 +18,10 @@ export type FixedColumnID = (typeof fixedColumnIds)[number];
 // ---------------------------
 // 数据源 ID
 // ---------------------------
-export type SourceID = keyof typeof sources & string;
+export type StaticSourceID = keyof typeof sources & string;
+declare const dynamicSourceIdBrand: unique symbol;
+export type DynamicSourceID = string & { readonly [dynamicSourceIdBrand]: true };
+export type SourceID = StaticSourceID | DynamicSourceID;
 
 type OriginSources = typeof originSources;
 type OriginMainSourceID = keyof OriginSources & string;

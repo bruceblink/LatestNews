@@ -5,6 +5,7 @@ import { logger } from "#/utils/logger";
 import { getSourceHealthSummary } from "#/utils/source-health";
 import { getQuery, createError, defineEventHandler } from "h3";
 import { createSourceHealthSourcesResponse } from "@shared/source-health-api";
+import { initializeCrawlerPluginCatalog } from "#/utils/crawler-plugin-runtime";
 
 const sourceHealthSourcesQuerySchema = z.object({
     keyword: z
@@ -34,6 +35,7 @@ const sourceHealthSourcesQuerySchema = z.object({
 
 export default defineEventHandler((event): SourceHealthSourcesResponse => {
     try {
+        initializeCrawlerPluginCatalog();
         const parsedQuery = sourceHealthSourcesQuerySchema.safeParse(getQuery(event));
         if (!parsedQuery.success) {
             throw createError({

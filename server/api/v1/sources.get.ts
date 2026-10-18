@@ -3,9 +3,11 @@ import type { SourceMetadataResponse } from "@shared/source-metadata";
 import { logger } from "#/utils/logger";
 import { createError, defineEventHandler } from "h3";
 import { createSourceMetadataResponse } from "@shared/source-metadata";
+import { initializeCrawlerPluginCatalog } from "#/utils/crawler-plugin-runtime";
 
 export default defineEventHandler((): SourceMetadataResponse => {
     try {
+        initializeCrawlerPluginCatalog();
         return createSourceMetadataResponse({
             generatedAt: Date.now(),
         });

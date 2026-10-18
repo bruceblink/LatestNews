@@ -7,8 +7,10 @@ import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { rm, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 
+import { createDynamicSourceId } from "../../shared/dynamic-source-id";
 import { pcbetaPlugin } from "../../crawler-platform/plugins/pcbeta/plugin";
 import { createLegacyUrlHashId } from "../../crawler-platform/sdk/legacy-id";
+import { jsonExamplePlugin } from "../../crawler-platform/examples/json/plugin";
 import { bundleCrawlerPlugin } from "../../crawler-platform/testing/bundle-plugin";
 import { createRestrictedWorkerEnvironment } from "../../crawler-platform/host/environment";
 import { createServerCrawlerPluginRuntime } from "../../server/crawler-plugin-runtime.node.ts";
@@ -31,20 +33,31 @@ const userDataPath = join(temporaryRoot, "user-data");
 const pluginRoot = join(userDataPath, "crawler-plugins");
 const packagesDirectory = join(pluginRoot, "packages");
 const pluginDirectory = join(packagesDirectory, pcbetaPlugin.manifest.id);
+const jsonPluginDirectory = join(packagesDirectory, jsonExamplePlugin.manifest.id);
 const resultPath = join(temporaryRoot, "result.json");
 const responsePath = join(temporaryRoot, "response.json");
+const jsonResponsePath = join(temporaryRoot, "json-fixture.json");
 const mainPath = join(appDirectory, "main.cjs");
+const dynamicSourceId = createDynamicSourceId(jsonExamplePlugin.manifest.id, "latest");
 
 try {
     await Promise.all([
         mkdir(appDirectory, { recursive: true }),
         mkdir(pluginDirectory, { recursive: true }),
+        mkdir(jsonPluginDirectory, { recursive: true }),
         mkdir(pluginRoot, { recursive: true }),
     ]);
     await bundleCrawlerPlugin(join(projectRoot, "crawler-platform", "plugins", "pcbeta", "plugin.ts"), pluginDirectory);
+    await bundleCrawlerPlugin(
+        join(projectRoot, "crawler-platform", "examples", "json", "plugin.ts"),
+        jsonPluginDirectory
+    );
     const pluginPath = join(pluginDirectory, "plugin.mjs");
     const pluginHash = createHash("sha256")
         .update(await readFile(pluginPath))
+        .digest("hex");
+    const jsonPluginHash = createHash("sha256")
+        .update(await readFile(join(jsonPluginDirectory, "plugin.mjs")))
         .digest("hex");
     await writeFile(join(appDirectory, "package.json"), JSON.stringify({ name: "crawler-smoke", main: "main.cjs" }));
     await writeFile(
@@ -55,39 +68,65 @@ try {
         "utf8"
     );
     await writeFile(responsePath, await readFile(fixturePath, "utf8"), "utf8");
+    await writeFile(
+        jsonResponsePath,
+        await readFile(join(projectRoot, "crawler-platform", "examples", "json", "fixture.json"), "utf8"),
+        "utf8"
+    );
     await writeFile(join(pluginDirectory, "manifest.json"), JSON.stringify(pcbetaPlugin.manifest), "utf8");
-    await writeFile(join(pluginRoot, "enabled.json"), JSON.stringify({ enabledPluginIds: [pcbetaPlugin.manifest.id] }));
+    await writeFile(join(jsonPluginDirectory, "manifest.json"), JSON.stringify(jsonExamplePlugin.manifest), "utf8");
+    await writeFile(
+        join(pluginRoot, "enabled.json"),
+        JSON.stringify({ enabledPluginIds: [pcbetaPlugin.manifest.id, jsonExamplePlugin.manifest.id] })
+    );
 
     const fixtureBody = await readFile(responsePath, "utf8");
+    const jsonFixtureBody = await readFile(jsonResponsePath, "utf8");
     const nodeStartedAt = performance.now();
     const nodeRuntime = createServerCrawlerPluginRuntime({
         pluginDirectory: packagesDirectory,
-        enabledPluginIds: [pcbetaPlugin.manifest.id],
+        enabledPluginIds: [pcbetaPlugin.manifest.id, jsonExamplePlugin.manifest.id],
         acceptedSourceIds: new Set(["pcbeta-windows11"]),
         workerPath,
-        requestHandler: async (request) => createFixtureResponse(request, fixtureBody),
+        requestHandler: async (request) => createFixtureResponse(request, fixtureBody, jsonFixtureBody),
     });
     const nodeItems = await nodeRuntime.fetchSource("pcbeta-windows11");
     assert.ok(nodeItems, "The Node server adapter should return the enabled plugin source.");
+    const nodeDynamicItems = await nodeRuntime.fetchSource(dynamicSourceId);
+    assert.ok(nodeDynamicItems, "The Node server adapter should return a dynamically registered plugin source.");
+    assert.ok(
+        nodeRuntime.listSources().some((source) => source.id === dynamicSourceId && source.column === "tech"),
+        "The Node source catalog should expose dynamic plugin metadata."
+    );
     const nodeElapsedMs = Math.round(performance.now() - nodeStartedAt);
 
     const exitCode = await runElectronApp(electronExecutable, appDirectory, {
         LATESTNEWS_CRAWLER_SMOKE_USER_DATA: userDataPath,
         LATESTNEWS_CRAWLER_PLUGIN_DIR: pluginRoot,
         LATESTNEWS_CRAWLER_SMOKE_FIXTURE: responsePath,
+        LATESTNEWS_CRAWLER_SMOKE_JSON_FIXTURE: jsonResponsePath,
         LATESTNEWS_CRAWLER_SMOKE_RESULT: resultPath,
         LATESTNEWS_CRAWLER_SMOKE_WORKER: workerPath,
         LATESTNEWS_CRAWLER_SMOKE_PLUGIN_HASH: pluginHash,
+        LATESTNEWS_CRAWLER_SMOKE_JSON_PLUGIN_HASH: jsonPluginHash,
     });
     assert.equal(exitCode, 0, "Electron host smoke process should exit successfully.");
 
     const electronResult = JSON.parse(await readFile(resultPath, "utf8")) as {
         items: unknown;
+        dynamicItems: unknown;
         pluginHash: string;
+        dynamicPluginHash: string;
+        dynamicSourceMetadata: { id: string; column?: string };
         elapsedMs: number;
         processMetrics: Array<{ type: string; serviceName?: string; workingSetSize: number }>;
     };
     assert.equal(electronResult.pluginHash, pluginHash, "Both hosts must execute the same bundled artifact.");
+    assert.equal(
+        electronResult.dynamicPluginHash,
+        jsonPluginHash,
+        "Both hosts must execute the same dynamic artifact."
+    );
     const expectedItem = {
         id: await createLegacyUrlHashId(itemUrl),
         title: "Windows fixture headline",
@@ -96,6 +135,8 @@ try {
     };
     assert.deepEqual(nodeItems, [expectedItem]);
     assert.deepEqual(electronResult.items, nodeItems, "Node and Electron hosts must return identical items.");
+    assert.deepEqual(electronResult.dynamicItems, nodeDynamicItems, "Dynamic plugin output must match across hosts.");
+    assert.deepEqual(electronResult.dynamicSourceMetadata, { id: dynamicSourceId, column: "tech" });
     assert.ok(
         electronResult.processMetrics.some((metric) => metric.type === "Utility"),
         "Electron must report a utility process during plugin execution."
@@ -104,6 +145,7 @@ try {
         `${JSON.stringify({
             result: "passed",
             pluginSha256: pluginHash,
+            dynamicPluginSha256: jsonPluginHash,
             nodeElapsedMs,
             electronElapsedMs: electronResult.elapsedMs,
             electronProcesses: electronResult.processMetrics,
@@ -113,14 +155,26 @@ try {
     await rm(temporaryRoot, { recursive: true, force: true });
 }
 
-function createFixtureResponse(request: CrawlerHttpRequest, fixtureBody: string): CrawlerHttpResponse {
-    if (request.url !== feedUrl || (request.method ?? "GET") !== "GET") {
+function createFixtureResponse(
+    request: CrawlerHttpRequest,
+    rssFixtureBody: string,
+    jsonFixtureBody: string
+): CrawlerHttpResponse {
+    if ((request.method ?? "GET") !== "GET") {
         throw new Error(`Unexpected smoke request ${request.method ?? "GET"} ${request.url}.`);
     }
+    if (request.url === "https://json.example.test/news.json") {
+        return {
+            status: 200,
+            headers: { "content-type": "application/json" },
+            body: jsonFixtureBody,
+        };
+    }
+    if (request.url !== feedUrl) throw new Error(`Unexpected smoke request ${request.method ?? "GET"} ${request.url}.`);
     return {
         status: 200,
         headers: { "content-type": "application/rss+xml" },
-        body: fixtureBody,
+        body: rssFixtureBody,
     };
 }
 

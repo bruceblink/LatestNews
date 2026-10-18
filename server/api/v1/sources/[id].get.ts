@@ -4,9 +4,11 @@ import type { SourceMetadataItemResponse } from "@shared/source-metadata";
 import { logger } from "#/utils/logger";
 import { createError, getRouterParam, defineEventHandler } from "h3";
 import { createSourceMetadataItemResponse } from "@shared/source-metadata";
+import { initializeCrawlerPluginCatalog } from "#/utils/crawler-plugin-runtime";
 
 export default defineEventHandler((event): SourceMetadataItemResponse => {
     try {
+        initializeCrawlerPluginCatalog();
         const sourceId = getRouterParam(event, "id");
         if (!sourceId) {
             throw createError({

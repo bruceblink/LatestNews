@@ -1,17 +1,22 @@
 import { z } from "zod";
 
 import { CrawlerPlatformError } from "../core/errors";
+import { createDynamicSourceId } from "../../shared/dynamic-source-id";
 
 const pluginIdPattern = /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/;
-const sourceIdPattern = /^[a-z0-9][a-z0-9._-]{0,63}$/;
+const channelIdPattern = /^[a-z0-9][a-z0-9_-]{0,47}$/;
 const versionPattern = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
 const sourceSchema = z
     .object({
-        id: z.string().regex(sourceIdPattern),
+        id: z.string().regex(channelIdPattern),
         name: z.string().trim().min(1).max(80),
         kind: z.enum(["timeline", "hottest", "realtime"]),
         refreshIntervalSeconds: z.number().int().min(30).max(86400),
+        column: z.enum(["china", "world", "tech", "finance"]).optional(),
+        title: z.string().trim().min(1).max(40).optional(),
+        description: z.string().trim().min(1).max(240).optional(),
+        home: z.string().url().refine(isAllowedHomePage, "Expected an HTTPS homepage without credentials.").optional(),
     })
     .strict();
 
@@ -30,7 +35,7 @@ const networkPermissionSchema = z
 export const crawlerPluginManifestSchema = z
     .object({
         manifestVersion: z.literal(1),
-        id: z.string().min(3).max(120).regex(pluginIdPattern),
+        id: z.string().min(3).max(64).regex(pluginIdPattern),
         name: z.string().trim().min(1).max(80),
         version: z.string().regex(versionPattern),
         apiVersion: z.string().regex(/^\^?1\.\d+\.\d+$/),
@@ -53,6 +58,18 @@ export const crawlerPluginManifestSchema = z
         const sourceIds = manifest.sources.map((source) => source.id);
         if (new Set(sourceIds).size !== sourceIds.length) {
             context.addIssue({ code: "custom", path: ["sources"], message: "Source IDs must be unique." });
+        }
+
+        for (const source of manifest.sources) {
+            try {
+                createDynamicSourceId(manifest.id, source.id);
+            } catch (error) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["sources", source.id],
+                    message: error instanceof Error ? error.message : "Invalid dynamic source ID.",
+                });
+            }
         }
 
         const origins = manifest.permissions.network.map((permission) => permission.origin);
@@ -90,6 +107,15 @@ function isAllowedOrigin(value: string) {
             !url.hash &&
             url.origin === value.replace(/\/$/, "")
         );
+    } catch {
+        return false;
+    }
+}
+
+function isAllowedHomePage(value: string) {
+    try {
+        const url = new URL(value);
+        return url.protocol === "https:" && !url.username && !url.password;
     } catch {
         return false;
     }

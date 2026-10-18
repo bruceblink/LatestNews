@@ -6,6 +6,7 @@ import { it, expect, describe } from "vitest";
 import { rm, mkdtemp, readFile } from "node:fs/promises";
 
 import { generateUrlHashId } from "../server/utils/source";
+import { createDynamicSourceId } from "../shared/dynamic-source-id";
 import { defineCrawlerPlugin } from "../crawler-platform/sdk/plugin";
 import { CrawlerPlatformError } from "../crawler-platform/core/errors";
 import { normalizeCrawlerItems } from "../crawler-platform/core/output";
@@ -197,6 +198,91 @@ describe("crawler plugin SDK and core", () => {
         }
     });
 
+    it("registers undeclared application channels under a stable dynamic source namespace", async () => {
+        const pluginDirectory = join(fixtureRoot, "json");
+        const outputParent = await mkdtemp(join(tmpdir(), "latestnews-crawler-dynamic-node-"));
+        const packageDirectory = join(outputParent, "org.latestnews.example-json");
+        const fixture = await readFile(join(pluginDirectory, "fixture.json"), "utf8");
+        const sourceId = createDynamicSourceId("org.latestnews.example-json", "latest");
+        try {
+            await bundlePluginPackage(pluginDirectory, packageDirectory);
+            const runtime = createServerCrawlerPluginRuntime({
+                pluginDirectory: outputParent,
+                enabledPluginIds: ["org.latestnews.example-json"],
+                acceptedSourceIds: new Set(["pcbeta-windows11"]),
+                workerPath: join(process.cwd(), "crawler-platform", "runtime", "worker-entry.mjs"),
+                requestHandler: async (request) => {
+                    expect(request.url).toBe("https://json.example.test/news.json");
+                    return { status: 200, headers: { "content-type": "application/json" }, body: fixture };
+                },
+            });
+
+            expect(runtime.hasSource(sourceId)).toBe(true);
+            expect(runtime.listSourceIds()).toEqual([sourceId]);
+            expect(runtime.listSources()).toEqual([
+                {
+                    id: sourceId,
+                    pluginId: "org.latestnews.example-json",
+                    pluginVersion: "0.1.0",
+                    name: "Latest",
+                    interval: 300_000,
+                    column: "tech",
+                    title: "示例 JSON",
+                    desc: "展示如何声明运行时来源信息。",
+                    home: "https://json.example.test",
+                },
+            ]);
+            expect(await runtime.fetchSource(sourceId)).toEqual([
+                {
+                    id: 901,
+                    title: "JSON headline",
+                    url: "https://json.example.test/story/1",
+                    pubDate: "2026-10-18T09:00:00Z",
+                },
+            ]);
+            expect(await runtime.fetchSource("ext.org.latestnews.example-json.unknown" as SourceID)).toBeUndefined();
+            expect(await runtime.fetchSource("ext.org.latestnews.other.latest" as SourceID)).toBeUndefined();
+        } finally {
+            await rm(outputParent, { recursive: true, force: true });
+        }
+    });
+
+    it("registers an RSS channel without a static application source entry", async () => {
+        const pluginDirectory = join(fixtureRoot, "rss");
+        const outputParent = await mkdtemp(join(tmpdir(), "latestnews-crawler-dynamic-rss-"));
+        const packageDirectory = join(outputParent, rssExamplePlugin.manifest.id);
+        const fixture = await readFile(join(pluginDirectory, "fixture.xml"), "utf8");
+        const sourceId = createDynamicSourceId(rssExamplePlugin.manifest.id, "latest");
+        try {
+            await bundlePluginPackage(pluginDirectory, packageDirectory);
+            const runtime = createServerCrawlerPluginRuntime({
+                pluginDirectory: outputParent,
+                enabledPluginIds: [rssExamplePlugin.manifest.id],
+                acceptedSourceIds: new Set(["pcbeta-windows11"]),
+                workerPath: join(process.cwd(), "crawler-platform", "runtime", "worker-entry.mjs"),
+                requestHandler: async (request) => {
+                    expect(request.url).toBe("https://rss.example.test/feed.xml");
+                    return { status: 200, headers: { "content-type": "application/rss+xml" }, body: fixture };
+                },
+            });
+
+            expect(runtime.listSourceIds()).toEqual([sourceId]);
+            expect(runtime.listSources()).toMatchObject([
+                { id: sourceId, name: "Latest", interval: 900_000, type: "realtime" },
+            ]);
+            expect(await runtime.fetchSource(sourceId)).toEqual([
+                {
+                    id: "rss-1",
+                    title: "RSS headline",
+                    url: "https://rss.example.test/story/3",
+                    pubDate: "Sun, 18 Oct 2026 07:00:00 GMT",
+                },
+            ]);
+        } finally {
+            await rm(outputParent, { recursive: true, force: true });
+        }
+    });
+
     it("rejects unsafe manifests before registration", () => {
         expect(() =>
             parseCrawlerPluginManifest({
@@ -208,6 +294,12 @@ describe("crawler plugin SDK and core", () => {
             parseCrawlerPluginManifest({
                 ...jsonExamplePlugin.manifest,
                 permissions: { network: [{ origin: "https://json.example.test/private", methods: ["GET"] }] },
+            })
+        ).toThrowError(CrawlerPlatformError);
+        expect(() =>
+            parseCrawlerPluginManifest({
+                ...jsonExamplePlugin.manifest,
+                sources: [...jsonExamplePlugin.manifest.sources, jsonExamplePlugin.manifest.sources[0]],
             })
         ).toThrowError(CrawlerPlatformError);
     });

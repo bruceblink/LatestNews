@@ -4,6 +4,7 @@ import { z } from "zod";
 import { logger } from "#/utils/logger";
 import { getSourceHealthSummary } from "#/utils/source-health";
 import { getQuery, setHeader, createError, defineEventHandler } from "h3";
+import { initializeCrawlerPluginCatalog } from "#/utils/crawler-plugin-runtime";
 import {
     formatSourceHealthDiagnostics,
     createSourceHealthDiagnosticFilename,
@@ -19,6 +20,7 @@ const diagnosticsQuerySchema = z.object({
 
 export default defineEventHandler((event): SourceHealthDiagnosticsResponse | string => {
     try {
+        initializeCrawlerPluginCatalog();
         const parsedQuery = diagnosticsQuerySchema.safeParse(getQuery(event));
         if (!parsedQuery.success) {
             throw createError({

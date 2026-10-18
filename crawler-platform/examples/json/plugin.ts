@@ -13,7 +13,18 @@ const manifest = {
     permissions: {
         network: [{ origin: "https://json.example.test", methods: ["GET"] }],
     },
-    sources: [{ id: "latest", name: "Latest", kind: "timeline", refreshIntervalSeconds: 300 }],
+    sources: [
+        {
+            id: "latest",
+            name: "Latest",
+            kind: "timeline",
+            refreshIntervalSeconds: 300,
+            column: "tech",
+            title: "示例 JSON",
+            description: "展示如何声明运行时来源信息。",
+            home: "https://json.example.test",
+        },
+    ],
 } as const;
 
 interface JsonArticle {

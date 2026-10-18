@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 
 import { dataSources } from "../shared/data-sources";
 import { createNodeCrawlerPluginProvider } from "../crawler-platform/host/node-plugin-provider";
+import { registerRuntimeSourceCatalog, createRuntimeSourceMetadataItem } from "../shared/runtime-source-catalog";
 
 import type { NodeCrawlerPluginProviderOptions } from "../crawler-platform/host/node-plugin-provider";
 
@@ -24,12 +25,17 @@ const pluginProvider =
           })
         : undefined;
 
+if (pluginProvider) {
+    registerRuntimeSourceCatalog(pluginProvider.listSources().map(createRuntimeSourceMetadataItem));
+}
+
 /** Keep plugin loading configurable so the server adapter can be tested with offline responses. */
 export function createServerCrawlerPluginRuntime(options: NodeCrawlerPluginProviderOptions) {
     const provider = createNodeCrawlerPluginProvider(options);
     return {
         hasSource: provider.hasSource,
         listSourceIds: provider.listSourceIds,
+        listSources: provider.listSources,
         async fetchSource(id: SourceID): Promise<NewsItem[] | undefined> {
             const items = await provider.collect(id);
             if (!items) return undefined;
@@ -46,6 +52,11 @@ export function createServerCrawlerPluginRuntime(options: NodeCrawlerPluginProvi
 
 export function hasCrawlerPluginSource(id: SourceID) {
     return pluginProvider?.hasSource(id) ?? false;
+}
+
+/** Ensure Node plugin metadata is registered before source discovery and resolution. */
+export function initializeCrawlerPluginCatalog() {
+    return pluginProvider?.listSources() ?? [];
 }
 
 /** Adapt plugin output to the existing NewsItem shape used by caches and API responses. */

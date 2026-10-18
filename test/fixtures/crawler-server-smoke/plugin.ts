@@ -12,10 +12,13 @@ const manifest = {
     permissions: { network: [] },
     sources: [
         {
-            id: "hackernews",
-            name: "Hacker News",
+            id: "latest",
+            name: "Server Smoke",
             kind: "hottest",
             refreshIntervalSeconds: 600,
+            column: "tech",
+            title: "容器测试",
+            home: "https://smoke.example.test",
         },
     ],
 } as const;

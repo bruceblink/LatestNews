@@ -7,6 +7,7 @@ import { readFile } from "node:fs/promises";
 import dataSources from "../shared/data-sources";
 import { createElectronCrawlerHost } from "./crawler-host";
 import { createCrawlerPluginProvider } from "../crawler-platform/host/plugin-provider";
+import { registerRuntimeSourceCatalog, createRuntimeSourceMetadataItem } from "../shared/runtime-source-catalog";
 
 import type { CrawlerItem } from "../crawler-platform/sdk/types";
 import type { ElectronCrawlerHostOptions } from "./crawler-host";
@@ -54,9 +55,13 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                     ...(options.requestHandler ? { requestHandler: options.requestHandler } : {}),
                 }),
         });
+        const sourceMetadata = registerRuntimeSourceCatalog(
+            provider.listSources().map(createRuntimeSourceMetadataItem)
+        );
 
         return {
             listSourceIds: provider.listSourceIds,
+            listSourceMetadata: () => sourceMetadata,
             async fetchSource(sourceId: SourceID): Promise<SourceResponse | null> {
                 const items = await provider.collect(sourceId);
                 if (!items) return null;
@@ -76,6 +81,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
         );
         return {
             listSourceIds: () => [],
+            listSourceMetadata: () => [],
             fetchSource: async () => null,
         };
     }

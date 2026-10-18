@@ -9,6 +9,7 @@ import { bundleCrawlerPlugin } from "../../crawler-platform/testing/bundle-plugi
 
 const projectRoot = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const pluginId = "org.latestnews.server-smoke";
+const sourceId = `ext.${pluginId}.latest`;
 const fixtureDirectory = join(projectRoot, "test", "fixtures", "crawler-server-smoke");
 const temporaryRoot = await mkdtemp(join(tmpdir(), "latestnews-crawler-docker-smoke-"));
 const packageDirectory = join(temporaryRoot, pluginId);
@@ -48,6 +49,8 @@ try {
             "--env",
             "LATESTNEWS_CRAWLER_PLUGIN_DIR=/usr/app/.data/crawler-plugins",
             "--env",
+            "LATESTNEWS_WEB_ORIGINS=https://news.example.test",
+            "--env",
             "ENABLE_CACHE=false",
             "--volume",
             `${temporaryRoot}:/usr/app/.data/crawler-plugins:ro`,
@@ -57,12 +60,65 @@ try {
     );
     containerStarted = true;
 
-    const response = await waitForPluginResponse(`http://127.0.0.1:${port}/api/s?id=hackernews&latest=true`);
-    assert.equal(response.status, 200, "The Node API should return HTTP 200 for the fixture source.");
+    const origin = `http://127.0.0.1:${port}`;
+    const response = await waitForPluginResponse(`${origin}/api/s?id=${encodeURIComponent(sourceId)}&latest=true`);
+    assert.equal(response.status, 200, "The Node API should return HTTP 200 for a dynamic fixture source.");
     const body = await response.text();
     assert.ok(body.includes("server-smoke-1"), "The API response should contain the fixture item ID.");
     assert.ok(body.includes("Server plugin API smoke"), "The API response should contain the fixture title.");
-    process.stdout.write(`Docker Node plugin API smoke passed (127.0.0.1:${port} -> container :4444).\n`);
+    const unknownSourceResponse = await fetch(
+        `${origin}/api/s?id=${encodeURIComponent("ext.org.latestnews.unknown.latest")}`
+    );
+    assert.equal(unknownSourceResponse.status, 400, "Unknown dynamic source namespaces must be rejected.");
+
+    const corsPreflight = await fetch(`${origin}/api/v1/sources`, {
+        method: "OPTIONS",
+        headers: {
+            Origin: "https://news.example.test",
+            "Access-Control-Request-Method": "GET",
+        },
+    });
+    assert.equal(corsPreflight.status, 204, "The configured Pages origin should pass the API CORS preflight.");
+    assert.equal(corsPreflight.headers.get("access-control-allow-origin"), "https://news.example.test");
+    const deniedOriginResponse = await fetch(`${origin}/api/v1/sources`, {
+        headers: { Origin: "https://attacker.example.test" },
+    });
+    assert.equal(
+        deniedOriginResponse.headers.get("access-control-allow-origin"),
+        null,
+        "Unlisted origins must not receive CORS permission."
+    );
+
+    const catalogResponse = await fetch(`${origin}/api/v1/sources`);
+    assert.equal(catalogResponse.status, 200, "The source catalog API should return HTTP 200.");
+    const catalog = (await catalogResponse.json()) as { data: { sources: Array<{ id: string; name: string }> } };
+    assert.ok(
+        catalog.data.sources.some((source) => source.id === sourceId && source.name === "Server Smoke"),
+        "The source catalog should expose the dynamic fixture metadata."
+    );
+
+    const idsResponse = await fetch(`${origin}/api/s/ids`);
+    assert.equal(idsResponse.status, 200, "The legacy source ID endpoint should include dynamic sources.");
+    assert.ok(((await idsResponse.json()) as string[]).includes(sourceId));
+
+    const detailResponse = await fetch(`${origin}/api/v1/sources/${encodeURIComponent(sourceId)}`);
+    assert.equal(detailResponse.status, 200, "The source metadata API should resolve dynamic source IDs.");
+    const detail = (await detailResponse.json()) as { data: { id: string; column: string } };
+    assert.equal(detail.data.id, sourceId);
+    assert.equal(detail.data.column, "tech");
+
+    const batchResponse = await fetch(`${origin}/api/v1/sources/batch`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sources: [sourceId] }),
+    });
+    assert.equal(batchResponse.status, 200, "The batch API should accept dynamic source IDs.");
+    assert.ok((await batchResponse.text()).includes("server-smoke-1"));
+
+    const feedResponse = await fetch(`${origin}/api/v1/feeds/json?source=${encodeURIComponent(sourceId)}`);
+    assert.equal(feedResponse.status, 200, "The JSON Feed endpoint should accept dynamic source IDs.");
+    assert.ok((await feedResponse.text()).includes("Server plugin API smoke"));
+    process.stdout.write(`Docker dynamic source API smoke passed (127.0.0.1:${port} -> container :4444).\n`);
 } catch (error) {
     if (containerStarted) runDocker(["logs", containerName], { allowFailure: true, inheritOutput: true });
     throw error;

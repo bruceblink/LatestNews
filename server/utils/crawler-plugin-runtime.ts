@@ -1,1 +1,5 @@
-export { hasCrawlerPluginSource, fetchCrawlerPluginSource } from "../crawler-plugin-runtime.node.ts";
+export {
+    hasCrawlerPluginSource,
+    fetchCrawlerPluginSource,
+    initializeCrawlerPluginCatalog,
+} from "../crawler-plugin-runtime.node.ts";
