@@ -35,8 +35,8 @@ export const crawlerTestFixturesSchema = z
     .strict()
     .superRefine(({ responses }, context) => {
         const entries = Object.keys(responses);
-        if (entries.length < 1 || entries.length > 64) {
-            context.addIssue({ code: "custom", path: ["responses"], message: "Define between 1 and 64 responses." });
+        if (entries.length > 64) {
+            context.addIssue({ code: "custom", path: ["responses"], message: "Define no more than 64 responses." });
         }
         for (const url of entries) {
             try {

@@ -38,6 +38,7 @@
         "electron:package:linux": "pnpm electron:build && electron-builder --projectDir out --config ../electron-builder.yml --linux AppImage deb --publish never",
         "test:crawler:electron": "pnpm exec tsx scripts/crawler/electron-host-smoke.ts",
         "test:crawler:docker": "pnpm exec tsx scripts/crawler/docker-host-smoke.ts",
+        "performance:baseline": "cross-env LATESTNEWS_SKIP_FAVICON_FETCH=true pnpm build && pnpm exec tsx scripts/performance/api-baseline.ts",
         "typecheck:electron": "tsc --noEmit -p tsconfig.electron.json --composite false",
         "test:electron": "vitest -c vitest.config.ts run test/electron-api-proxy.test.ts test/electron-security.test.ts test/electron-synchub-policy.test.ts test/electron-synchub-storage.test.ts",
         "asar:list": "asar list release/win-unpacked/resources/app.asar"

@@ -1,0 +1,18 @@
+{
+    "now": "2026-01-01T00:00:00.000Z",
+    "responses": {},
+    "cases": [
+        {
+            "sourceId": "source-01",
+            "parameters": { "itemCount": 1 },
+            "expectedItems": [
+                {
+                    "id": "source-01-item-01",
+                    "title": "Baseline item source-01 01",
+                    "url": "https://performance.invalid/source-01/01",
+                    "publishedAt": 1767225600000
+                }
+            ]
+        }
+    ]
+}

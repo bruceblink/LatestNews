@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { join } from "node:path";
 import { consola } from "consola";
+import process from "node:process";
 import { Buffer } from "node:buffer";
 import { fileURLToPath } from "node:url";
 
@@ -52,6 +53,11 @@ async function downloadImage(url: string, outputPath: string, id: string): Promi
 }
 
 async function main() {
+    if (process.env.LATESTNEWS_SKIP_FAVICON_FETCH === "true") {
+        consola.info("Skipped favicon downloads by request.");
+        return;
+    }
+
     const results = await Promise.all(
         Object.entries(originSources).map(async ([id, source]) => {
             try {

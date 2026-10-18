@@ -20,6 +20,7 @@ import { htmlExamplePlugin } from "../crawler-platform/examples/html/plugin";
 import { jsonExamplePlugin } from "../crawler-platform/examples/json/plugin";
 import { parseCrawlerPluginManifest } from "../crawler-platform/sdk/manifest";
 import { bundleCrawlerPlugin } from "../crawler-platform/testing/bundle-plugin";
+import performanceExamplePlugin from "../crawler-platform/examples/performance/plugin";
 import { createServerCrawlerPluginRuntime } from "../server/crawler-plugin-runtime.node.ts";
 import { bundlePluginPackage, runPluginFixtureTests, validatePluginDirectory } from "../crawler-platform/cli";
 
@@ -116,6 +117,7 @@ describe("crawler plugin SDK and core", () => {
             { directory: join(fixtureRoot, "json"), manifest: jsonExamplePlugin.manifest },
             { directory: join(fixtureRoot, "html"), manifest: htmlExamplePlugin.manifest },
             { directory: join(fixtureRoot, "rss"), manifest: rssExamplePlugin.manifest },
+            { directory: join(fixtureRoot, "performance"), manifest: performanceExamplePlugin.manifest },
             {
                 directory: join(process.cwd(), "crawler-platform", "plugins", "pcbeta"),
                 manifest: pcbetaPlugin.manifest,
