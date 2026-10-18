@@ -1,6 +1,6 @@
 # 性能、新闻源扩展与插件化评估和开发计划
 
-日期：2026-10-18。状态：计划基线；插件 P0–P4 已完成首轮实现，F0 验收核对已完成，F1 Node API 缓存命中基准代码已提交，默认 1,000 样本测量待执行。插件进度见 [插件平台进度记录](04-crawler-plugin-implementation-progress.md)，性能基准见 [性能基线实施记录](07-performance-baseline-progress.md)。
+日期：2026-10-18。状态：计划基线；插件 P0–P4 已完成首轮实现，F0 验收核对已完成，F1 Node API 缓存命中首轮 1,000 样本测量已完成。完整计划仍包含 Web、Electron、冷缓存、慢源和新闻源质量测量。插件进度见 [插件平台进度记录](04-crawler-plugin-implementation-progress.md)，性能基准见 [性能基线实施记录](07-performance-baseline-progress.md)。
 
 基线：已发布的 `v0.6.1`（`93dfe43`），以及当前主线基准提交 `9b4341a`。排期、指标和接口草案均为建议，不代表已取得的性能结果或发布承诺。当前主线仍使用版本号 `0.6.1`，标签之后的改动尚未发布。
 
