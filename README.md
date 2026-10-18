@@ -8,7 +8,7 @@
 
 ## 项目简介
 
-LatestNews 是一个以中文资讯聚合为核心的实时阅读应用，提供更轻量的页面结构、更明确的个性化布局，以及适合长期维护的数据源治理能力。项目基于 React、Vite 和 Nitro 构建，前后端同仓，既可以部署为 Web/PWA，也支持 Docker 部署。
+LatestNews 是一个以中文资讯聚合为核心的实时阅读应用，提供更轻量的页面结构、更明确的个性化布局，以及适合长期维护的数据源治理能力。项目基于 React、Vite 和 Nitro 构建，前后端同仓，支持 Web/PWA、Docker 部署和复用同一前端的 Electron 桌面应用。
 
 当前版本重点关注以下方向：
 
@@ -86,7 +86,7 @@ PRODUCTHUNT_API_TOKEN=
 
 变量说明：
 
-- `VITE_APP_TITLE`：浏览器标题和页面展示名称
+- `VITE_APP_TITLE`：浏览器与桌面应用名称，未配置时默认为 `LatestNews`
 - `VITE_API_URL`：登录与用户同步相关 API 地址
 - `LATESTNEWS_DESKTOP_API_URL`：可选的桌面新闻 API 根地址，默认 `https://news.likanug.top`
 - `LATESTNEWS_DESKTOP_AUTH_API_URL`：可选的桌面认证 API 根地址，默认 `https://api.likanug.top`
@@ -169,12 +169,13 @@ Docker 镜像发布到 `ghcr.io/bruceblink/latestnews`，支持 `linux/amd64` �
 
 ## 路线方向
 
-当前能力、优先级和候选版本目标见 [开发计划](./DEVELOPMENT_PLAN.md)，具体任务、依赖和验收标准见 [后续开发路线](./docs/development-roadmap.md)。下一阶段先恢复开发模式与自动回归，再完成发布验收和阅读体验改进。
-- 以“桌面客户端＋远程 API”支持 Electron，复用现有 Web 前端；范围与验收见 [Web 与 Electron 共用前端开发计划](./docs/01-web-electron-plan.md)。
-- 继续提升同步状态和多端体验
-- 持续完善数据源健康治理和排障效率
-- 优化移动端阅读、离线缓存和安装体验
-- 逐步扩展高质量数据源与分类能力
+当前优先级见 [开发总计划](./DEVELOPMENT_PLAN.md)，后续任务、依赖、指标和验收标准见 [性能、新闻源扩展与插件化计划](./docs/02-performance-sources-platform-plan.md)。
+
+- 先建立可重复的性能基线，优化采集并发、缓存等待、首屏、轮询和内存。
+- 建立新闻源开发工具、清单校验与质量报告，分批接入高质量源，再支持 RSS/JSON 配置型接入。
+- 有独立发布需求后试点采集插件；第三方 UI 与插件市场暂不排期。
+- Web 与 Electron 继续共用前端；交付与未关闭验收项见 [多平台计划](./docs/01-web-electron-plan.md)。
+- [历史执行路线](./docs/development-roadmap.md) 保留原任务背景；登录同步、离线和真实安装验收继续跟踪。
 
 ## 致谢
 
