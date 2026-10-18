@@ -1,6 +1,6 @@
 # 新闻采集插件平台调研与实施建议
 
-日期：2026-10-18。状态：调研结论与接口草案，尚未实施。
+日期：2026-10-18。状态：调研结论与实施方案；P0 原型已通过，P1 SDK/CLI、P2 Node、P3 Electron 已交付首轮实现。动态来源、插件更新、完整桌面生命周期和陌生代码隔离仍未完成。当前验收状态见 [插件平台进度记录](04-crawler-plugin-implementation-progress.md)。
 
 源码基线：LatestNews `main`，`93dfe43`，应用版本 `0.6.1`。本轮检查现有采集路径，并查阅下文链接的官方文档与源码；没有对全部源站做在线可用性测试，也没有验证候选沙箱的性能。
 
@@ -131,7 +131,7 @@ crawler-platform/
 
 保留现有 API、SQLite/可选 D1、旧缓存回退和健康记录。`fetchSourceItems` 改为调用注册表与统一调度器，内置 getter 通过兼容适配器继续工作。
 
-首版动态执行宿主以 Node/Docker 为范围。Cloudflare Edge 不能使用 Node 子进程；Edge 需要单独的受限运行后端或调用远端执行器，不能统一标记为已支持。
+首版动态执行宿主以 Node/Docker 为范围。Cloudflare Pages Functions 使用 Workers runtime。当前 Workers 对 `node:child_process` 提供的实现是非功能性桩，不能用它启动 Node worker。因此 Pages 继续作为 Web 页面部署目标；需要运行服务端插件时，页面通过现有远程 API 配置连接 Node/Docker API。本文不要求新增单独的 Workers 部署。[Pages Functions](https://developers.cloudflare.com/pages/functions/)、[Node.js compatibility](https://developers.cloudflare.com/workers/runtime-apis/nodejs/)
 
 ### 5.3 Electron
 
@@ -332,8 +332,8 @@ P0 至 P3 约 16–25 人日。只有 P0 证明重用和开发体验确有收益
 
 这条路径能先减少爬虫作者要理解的项目结构，再逐步获得独立安装、更新与两端运行能力。公开陌生插件安装需要额外的沙箱验收，不能随目录页面一起默认开放。
 
-## 11. 本轮交付与验证边界
+## 11. 原调研交付与验证边界
 
-本轮新增本文，未修改应用代码、依赖、部署或发布配置；回退仅涉及本文。现有未提交计划和 Wrangler 改动保持原状。
+本文最初提交时只包含调研与计划，没有修改应用代码、依赖、部署或发布配置。后续实现与验证结果单独记录在 [插件平台进度记录](04-crawler-plugin-implementation-progress.md)。
 
 文档检查范围：本地引用路径、示例 JSON、章节结构、UTF-8/LF，以及 Mermaid 的节点、调用方向和语法结构。Mermaid 未在本轮渲染，布局仅做静态检查。运行时原型、性能测量、真实桌面窗口验收和外部服务集成测试均尚未实施。
