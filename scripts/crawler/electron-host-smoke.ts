@@ -7,11 +7,12 @@ import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { rm, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 
+import { bundlePluginPackage } from "../../crawler-platform/cli";
 import { createDynamicSourceId } from "../../shared/dynamic-source-id";
 import { pcbetaPlugin } from "../../crawler-platform/plugins/pcbeta/plugin";
 import { createLegacyUrlHashId } from "../../crawler-platform/sdk/legacy-id";
 import { jsonExamplePlugin } from "../../crawler-platform/examples/json/plugin";
-import { bundleCrawlerPlugin } from "../../crawler-platform/testing/bundle-plugin";
+import { installCrawlerPluginPackage } from "../../crawler-platform/host/plugin-store";
 import { createRestrictedWorkerEnvironment } from "../../crawler-platform/host/environment";
 import { createServerCrawlerPluginRuntime } from "../../server/crawler-plugin-runtime.node.ts";
 
@@ -31,9 +32,9 @@ const temporaryRoot = await mkdtemp(join(tmpdir(), "latestnews-electron-crawler-
 const appDirectory = join(temporaryRoot, "app");
 const userDataPath = join(temporaryRoot, "user-data");
 const pluginRoot = join(userDataPath, "crawler-plugins");
-const packagesDirectory = join(pluginRoot, "packages");
-const pluginDirectory = join(packagesDirectory, pcbetaPlugin.manifest.id);
-const jsonPluginDirectory = join(packagesDirectory, jsonExamplePlugin.manifest.id);
+const bundlesDirectory = join(temporaryRoot, "bundles");
+const pluginDirectory = join(bundlesDirectory, pcbetaPlugin.manifest.id);
+const jsonPluginDirectory = join(bundlesDirectory, jsonExamplePlugin.manifest.id);
 const resultPath = join(temporaryRoot, "result.json");
 const responsePath = join(temporaryRoot, "response.json");
 const jsonResponsePath = join(temporaryRoot, "json-fixture.json");
@@ -41,17 +42,11 @@ const mainPath = join(appDirectory, "main.cjs");
 const dynamicSourceId = createDynamicSourceId(jsonExamplePlugin.manifest.id, "latest");
 
 try {
-    await Promise.all([
-        mkdir(appDirectory, { recursive: true }),
-        mkdir(pluginDirectory, { recursive: true }),
-        mkdir(jsonPluginDirectory, { recursive: true }),
-        mkdir(pluginRoot, { recursive: true }),
-    ]);
-    await bundleCrawlerPlugin(join(projectRoot, "crawler-platform", "plugins", "pcbeta", "plugin.ts"), pluginDirectory);
-    await bundleCrawlerPlugin(
-        join(projectRoot, "crawler-platform", "examples", "json", "plugin.ts"),
-        jsonPluginDirectory
-    );
+    await Promise.all([mkdir(appDirectory, { recursive: true }), mkdir(bundlesDirectory, { recursive: true })]);
+    await bundlePluginPackage(join(projectRoot, "crawler-platform", "plugins", "pcbeta"), pluginDirectory);
+    await bundlePluginPackage(join(projectRoot, "crawler-platform", "examples", "json"), jsonPluginDirectory);
+    await installCrawlerPluginPackage(pluginDirectory, pluginRoot, { action: "install", enable: true });
+    await installCrawlerPluginPackage(jsonPluginDirectory, pluginRoot, { action: "install", enable: true });
     const pluginPath = join(pluginDirectory, "plugin.mjs");
     const pluginHash = createHash("sha256")
         .update(await readFile(pluginPath))
@@ -73,18 +68,11 @@ try {
         await readFile(join(projectRoot, "crawler-platform", "examples", "json", "fixture.json"), "utf8"),
         "utf8"
     );
-    await writeFile(join(pluginDirectory, "manifest.json"), JSON.stringify(pcbetaPlugin.manifest), "utf8");
-    await writeFile(join(jsonPluginDirectory, "manifest.json"), JSON.stringify(jsonExamplePlugin.manifest), "utf8");
-    await writeFile(
-        join(pluginRoot, "enabled.json"),
-        JSON.stringify({ enabledPluginIds: [pcbetaPlugin.manifest.id, jsonExamplePlugin.manifest.id] })
-    );
-
     const fixtureBody = await readFile(responsePath, "utf8");
     const jsonFixtureBody = await readFile(jsonResponsePath, "utf8");
     const nodeStartedAt = performance.now();
     const nodeRuntime = createServerCrawlerPluginRuntime({
-        pluginDirectory: packagesDirectory,
+        pluginDirectory: pluginRoot,
         enabledPluginIds: [pcbetaPlugin.manifest.id, jsonExamplePlugin.manifest.id],
         acceptedSourceIds: new Set(["pcbeta-windows11"]),
         workerPath,

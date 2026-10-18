@@ -1,11 +1,10 @@
-import { z } from "zod";
 import { app } from "electron";
 import process from "node:process";
 import { join, resolve } from "node:path";
-import { readFile } from "node:fs/promises";
 
 import dataSources from "../shared/data-sources";
 import { createElectronCrawlerHost } from "./crawler-host";
+import { readEnabledCrawlerPluginIds } from "../crawler-platform/host/plugin-store";
 import { createCrawlerPluginProvider } from "../crawler-platform/host/plugin-provider";
 import { registerRuntimeSourceCatalog, createRuntimeSourceMetadataItem } from "../shared/runtime-source-catalog";
 
@@ -19,19 +18,13 @@ export interface ElectronCrawlerPluginRuntimeOptions {
     requestHandler?: ElectronCrawlerHostOptions["requestHandler"];
 }
 
-const enabledPluginsSchema = z
-    .object({
-        enabledPluginIds: z.array(z.string().min(3).max(120)).max(256),
-    })
-    .strict();
-
 /** Read operator-enabled package IDs and keep invalid local settings from blocking remote reading. */
 export async function createElectronCrawlerPluginRuntime(options: ElectronCrawlerPluginRuntimeOptions = {}) {
     const configuredPluginRoot = process.env.LATESTNEWS_CRAWLER_PLUGIN_DIR?.trim();
     const pluginRoot = configuredPluginRoot
         ? resolve(configuredPluginRoot)
         : join(options.userDataPath ?? app.getPath("userData"), "crawler-plugins");
-    const enabledPluginIds = await readEnabledPluginIds(join(pluginRoot, "enabled.json"));
+    const enabledPluginIds = readEnabledPluginIds(join(pluginRoot, "enabled.json"));
     const workerPath =
         options.workerPath ??
         (app.isPackaged
@@ -58,6 +51,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
         const sourceMetadata = registerRuntimeSourceCatalog(
             provider.listSources().map(createRuntimeSourceMetadataItem)
         );
+        const sourceNames = new Map(provider.listSources().map((source) => [source.id, source.name]));
 
         return {
             listSourceIds: provider.listSourceIds,
@@ -68,7 +62,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                 return {
                     status: items.length ? "success" : "empty",
                     id: sourceId,
-                    name: dataSources[sourceId].name,
+                    name: dataSources[sourceId]?.name ?? sourceNames.get(sourceId) ?? sourceId,
                     updatedTime: Date.now(),
                     items: items.map(toNewsItem),
                 };
@@ -89,14 +83,9 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
 
 export type ElectronCrawlerPluginRuntime = Awaited<ReturnType<typeof createElectronCrawlerPluginRuntime>>;
 
-async function readEnabledPluginIds(path: string) {
+function readEnabledPluginIds(path: string) {
     try {
-        const parsed = enabledPluginsSchema.safeParse(JSON.parse(await readFile(path, "utf8")) as unknown);
-        if (!parsed.success) {
-            console.warn("Desktop crawler plugin settings are invalid; local plugins remain disabled.");
-            return [];
-        }
-        return parsed.data.enabledPluginIds;
+        return readEnabledCrawlerPluginIds(path);
     } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
             console.warn("Desktop crawler plugin settings could not be read; local plugins remain disabled.");

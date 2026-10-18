@@ -4,21 +4,35 @@ import process from "node:process";
 import { resolve } from "node:path";
 
 import { dataSources } from "../shared/data-sources";
+import { readEnabledCrawlerPluginIds } from "../crawler-platform/host/plugin-store";
 import { createNodeCrawlerPluginProvider } from "../crawler-platform/host/node-plugin-provider";
 import { registerRuntimeSourceCatalog, createRuntimeSourceMetadataItem } from "../shared/runtime-source-catalog";
 
 import type { NodeCrawlerPluginProviderOptions } from "../crawler-platform/host/node-plugin-provider";
 
-const enabledPluginIds = (process.env.LATESTNEWS_CRAWLER_PLUGIN_IDS ?? "")
+const environmentPluginIds = (process.env.LATESTNEWS_CRAWLER_PLUGIN_IDS ?? "")
     .split(",")
     .map((id) => id.trim())
     .filter(Boolean);
 const configuredPluginDirectory = process.env.LATESTNEWS_CRAWLER_PLUGIN_DIR?.trim();
+const pluginDirectory = resolve(configuredPluginDirectory || ".data/crawler-plugins");
+let enabledPluginIds = environmentPluginIds;
+if (enabledPluginIds.length === 0) {
+    try {
+        enabledPluginIds = readEnabledCrawlerPluginIds(resolve(pluginDirectory, "enabled.json"));
+    } catch (error) {
+        console.warn(
+            "Node crawler plugin settings are invalid; local plugins remain disabled.",
+            error instanceof Error ? error.message : "Invalid settings."
+        );
+        enabledPluginIds = [];
+    }
+}
 
 const pluginProvider =
     enabledPluginIds.length > 0
         ? createServerCrawlerPluginRuntime({
-              pluginDirectory: resolve(configuredPluginDirectory || ".data/crawler-plugins"),
+              pluginDirectory,
               enabledPluginIds,
               acceptedSourceIds: new Set(Object.keys(dataSources)),
               workerPath: resolve(process.cwd(), "crawler-platform/runtime/worker-entry.mjs"),

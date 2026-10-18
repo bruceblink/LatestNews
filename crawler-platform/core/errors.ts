@@ -3,6 +3,7 @@ export type CrawlerErrorCode =
     | "DUPLICATE_PLUGIN"
     | "HOST_NOT_READY"
     | "HTTP_FAILED"
+    | "INVALID_ARTIFACT"
     | "INVALID_MANIFEST"
     | "INVALID_OUTPUT"
     | "INVALID_PLUGIN"

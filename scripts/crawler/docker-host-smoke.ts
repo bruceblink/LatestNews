@@ -3,16 +3,18 @@ import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { rm, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { rm, mkdtemp } from "node:fs/promises";
 
-import { bundleCrawlerPlugin } from "../../crawler-platform/testing/bundle-plugin";
+import { bundlePluginPackage } from "../../crawler-platform/cli";
+import { installCrawlerPluginPackage } from "../../crawler-platform/host/plugin-store";
 
 const projectRoot = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const pluginId = "org.latestnews.server-smoke";
 const sourceId = `ext.${pluginId}.latest`;
 const fixtureDirectory = join(projectRoot, "test", "fixtures", "crawler-server-smoke");
 const temporaryRoot = await mkdtemp(join(tmpdir(), "latestnews-crawler-docker-smoke-"));
-const packageDirectory = join(temporaryRoot, pluginId);
+const packageDirectory = join(temporaryRoot, "bundle");
+const pluginStore = join(temporaryRoot, "plugin-store");
 const uniqueId = Date.now().toString(36);
 const imageTag = `latestnews-crawler-smoke:${uniqueId}`;
 const containerName = `latestnews-crawler-smoke-${uniqueId}`;
@@ -20,16 +22,8 @@ let imageBuilt = false;
 let containerStarted = false;
 
 try {
-    const manifest = JSON.parse(await readFile(join(fixtureDirectory, "manifest.json"), "utf8")) as Record<
-        string,
-        unknown
-    >;
-    await bundleCrawlerPlugin(join(fixtureDirectory, "plugin.ts"), packageDirectory);
-    await writeFile(
-        join(packageDirectory, "manifest.json"),
-        `${JSON.stringify({ ...manifest, entry: "plugin.mjs" }, null, 2)}\n`,
-        "utf8"
-    );
+    await bundlePluginPackage(fixtureDirectory, packageDirectory);
+    await installCrawlerPluginPackage(packageDirectory, pluginStore, { action: "install", enable: true });
 
     runDocker(["build", "--tag", imageTag, "."], { inheritOutput: true });
     imageBuilt = true;
@@ -45,15 +39,13 @@ try {
             "--publish",
             `127.0.0.1:${port}:4444`,
             "--env",
-            `LATESTNEWS_CRAWLER_PLUGIN_IDS=${pluginId}`,
-            "--env",
             "LATESTNEWS_CRAWLER_PLUGIN_DIR=/usr/app/.data/crawler-plugins",
             "--env",
             "LATESTNEWS_WEB_ORIGINS=https://news.example.test",
             "--env",
             "ENABLE_CACHE=false",
             "--volume",
-            `${temporaryRoot}:/usr/app/.data/crawler-plugins:ro`,
+            `${pluginStore}:/usr/app/.data/crawler-plugins:ro`,
             imageTag,
         ],
         { inheritOutput: true }

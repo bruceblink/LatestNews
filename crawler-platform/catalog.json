@@ -1,0 +1,10 @@
+{
+  "catalogVersion": 1,
+  "plugins": [
+    {
+      "id": "org.latestnews.pcbeta",
+      "name": "远景论坛",
+      "versions": [{ "version": "0.1.0", "sourcePath": "plugins/pcbeta" }]
+    }
+  ]
+}

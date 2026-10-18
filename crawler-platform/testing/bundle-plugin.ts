@@ -5,6 +5,7 @@ export async function bundleCrawlerPlugin(entryPath: string, outputDirectory: st
     await build({
         configFile: false,
         logLevel: "silent",
+        publicDir: false,
         build: {
             emptyOutDir: true,
             lib: {

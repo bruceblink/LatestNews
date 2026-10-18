@@ -1,15 +1,25 @@
 import { tmpdir } from "node:os";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { sep, join, dirname, resolve, basename, relative, isAbsolute } from "node:path";
 import { rm, stat, mkdir, rename, mkdtemp, readFile, realpath, writeFile } from "node:fs/promises";
 
 import { CrawlerPlatformError } from "./core/errors";
 import { createNodeCrawlerHost } from "./host/node-host";
+import { parseCrawlerPluginCatalog } from "./sdk/catalog";
 import { parseCrawlerPluginManifest } from "./sdk/manifest";
 import { bundleCrawlerPlugin } from "./testing/bundle-plugin";
 import { crawlerTestFixturesSchema } from "./testing/fixtures";
+import { createCrawlerPluginArtifact } from "./host/plugin-package";
+import {
+    pinCrawlerPluginVersion,
+    setCrawlerPluginEnabled,
+    unpinCrawlerPluginVersion,
+    installCrawlerPluginPackage,
+    listInstalledCrawlerPlugins,
+    rollbackCrawlerPluginVersion,
+    selectLatestCrawlerPluginVersion,
+} from "./host/plugin-store";
 
 import type { CrawlerPluginManifest } from "./sdk/manifest";
 import type { CrawlerTestFixtures } from "./testing/fixtures";
@@ -18,6 +28,7 @@ import type { CrawlerContext, CrawlerHttpRequest, CrawlerHttpResponse } from "./
 const manifestFilename = "manifest.json";
 const testFixturesFilename = "test-fixtures.json";
 const maxFixtureBodyBytes = 2 * 1024 * 1024;
+const maxCatalogBytes = 1024 * 1024;
 
 interface ValidatedPluginDirectory {
     root: string;
@@ -65,18 +76,7 @@ export async function bundlePluginPackage(pluginDirectory: string, outputDirecto
         await writeFile(join(stageDirectory, manifestFilename), manifestText, "utf8");
         await writeFile(
             join(stageDirectory, "artifact.json"),
-            `${JSON.stringify(
-                {
-                    artifactVersion: 1,
-                    pluginId: plugin.manifest.id,
-                    pluginVersion: plugin.manifest.version,
-                    targets: plugin.manifest.targets,
-                    pluginSha256: createHash("sha256").update(pluginBytes).digest("hex"),
-                    manifestSha256: createHash("sha256").update(manifestText).digest("hex"),
-                },
-                null,
-                2
-            )}\n`,
+            `${JSON.stringify(createCrawlerPluginArtifact(packagedManifest, manifestText, pluginBytes), null, 2)}\n`,
             "utf8"
         );
         await rename(stageDirectory, outputPath);
@@ -145,8 +145,83 @@ export async function runPluginFixtureTests(pluginDirectory: string) {
 /** Parse a small CLI grammar and return nonzero for invalid input or failed plugin checks. */
 export async function runCrawlerCli(args: string[]) {
     try {
-        const [command, pluginDirectory, ...options] = args;
-        if (!command || !pluginDirectory) return printUsage();
+        const [command, ...commandArgs] = args;
+        if (!command) return printUsage();
+
+        if (command === "catalog" && commandArgs[0] === "validate") {
+            if (commandArgs.length !== 2) return printUsage();
+            const catalog = await readPluginCatalog(commandArgs[1]!);
+            const validated: Array<{ id: string; version: string }> = [];
+            for (const plugin of catalog.data.plugins) {
+                for (const version of plugin.versions) {
+                    await resolveCatalogPluginSource(catalog.path, plugin, version.version);
+                    validated.push({ id: plugin.id, version: version.version });
+                }
+            }
+            process.stdout.write(`${JSON.stringify({ result: "valid", plugins: validated })}\n`);
+            return 0;
+        }
+
+        if (command === "list") {
+            const options = parseStoreOptions(commandArgs, { allowEnable: false, allowVersion: false });
+            if (options.positionals.length !== 0) return printUsage();
+            process.stdout.write(`${JSON.stringify(listInstalledCrawlerPlugins(options.root))}\n`);
+            return 0;
+        }
+
+        if (command === "install" || command === "update") {
+            const options = parseStoreOptions(commandArgs, { allowEnable: true, allowVersion: true });
+            if (options.positionals.length !== 2) return printUsage();
+            const [catalogPath, pluginId] = options.positionals;
+            const catalog = await readPluginCatalog(catalogPath!);
+            const plugin = catalog.data.plugins.find((entry) => entry.id === pluginId);
+            if (!plugin) throw new Error(`Plugin ${pluginId} is not present in the catalog.`);
+            const version =
+                options.version ?? selectLatestCrawlerPluginVersion(plugin.versions.map((entry) => entry.version));
+            const sourceDirectory = await resolveCatalogPluginSource(catalog.path, plugin, version);
+            const stagingDirectory = await mkdtemp(join(tmpdir(), "latestnews-crawler-install-"));
+            try {
+                const outputDirectory = join(stagingDirectory, "bundle");
+                const bundle = await bundlePluginPackage(sourceDirectory, outputDirectory);
+                const result = await installCrawlerPluginPackage(bundle.outputPath, options.root, {
+                    action: command,
+                    enable: options.enable,
+                });
+                process.stdout.write(
+                    `${JSON.stringify({ result: command === "install" ? "installed" : "updated", ...result })}\n`
+                );
+            } finally {
+                await rm(stagingDirectory, { recursive: true, force: true });
+            }
+            return 0;
+        }
+
+        if (["enable", "disable", "pin", "unpin", "rollback"].includes(command)) {
+            const options = parseStoreOptions(commandArgs, { allowEnable: false, allowVersion: false });
+            if (options.positionals.length !== 1) return printUsage();
+            const [pluginId] = options.positionals;
+            if (command === "enable" || command === "disable") {
+                const enabledPluginIds = await setCrawlerPluginEnabled(options.root, pluginId!, command === "enable");
+                process.stdout.write(`${JSON.stringify({ result: command, pluginId, enabledPluginIds })}\n`);
+                return 0;
+            }
+            if (command === "pin") {
+                const version = await pinCrawlerPluginVersion(options.root, pluginId!);
+                process.stdout.write(`${JSON.stringify({ result: "pinned", pluginId, version })}\n`);
+                return 0;
+            }
+            if (command === "unpin") {
+                await unpinCrawlerPluginVersion(options.root, pluginId!);
+                process.stdout.write(`${JSON.stringify({ result: "unpinned", pluginId })}\n`);
+                return 0;
+            }
+            const version = await rollbackCrawlerPluginVersion(options.root, pluginId!);
+            process.stdout.write(`${JSON.stringify({ result: "rolled-back", pluginId, version })}\n`);
+            return 0;
+        }
+
+        const [pluginDirectory, ...options] = commandArgs;
+        if (!pluginDirectory) return printUsage();
 
         if (command === "validate") {
             const plugin = await validatePluginDirectory(pluginDirectory);
@@ -187,6 +262,72 @@ async function resolvePluginFile(root: string, relativePath: string) {
     const path = await realpath(resolve(root, ...relativePath.split("/")));
     assertPathWithin(root, path);
     return path;
+}
+
+async function readPluginCatalog(catalogPath: string) {
+    const path = await realpath(resolve(catalogPath));
+    const catalogStat = await stat(path);
+    if (!catalogStat.isFile() || catalogStat.size > maxCatalogBytes) {
+        throw new CrawlerPlatformError("INVALID_MANIFEST", `Catalog exceeds the ${maxCatalogBytes}-byte limit.`);
+    }
+    const rawCatalog: unknown = JSON.parse(await readFile(path, "utf8"));
+    return { path, data: parseCrawlerPluginCatalog(rawCatalog) };
+}
+
+async function resolveCatalogPluginSource(
+    catalogPath: string,
+    plugin: { id: string; name: string; versions: Array<{ version: string; sourcePath: string }> },
+    version: string
+) {
+    const versionEntry = plugin.versions.find((entry) => entry.version === version);
+    if (!versionEntry) throw new Error(`Plugin ${plugin.id} version ${version} is not present in the catalog.`);
+    const catalogRoot = dirname(catalogPath);
+    const sourceDirectory = await realpath(resolve(catalogRoot, ...versionEntry.sourcePath.split("/")));
+    assertPathWithin(catalogRoot, sourceDirectory);
+    const validated = await validatePluginDirectory(sourceDirectory);
+    if (
+        validated.manifest.id !== plugin.id ||
+        validated.manifest.name !== plugin.name ||
+        validated.manifest.version !== version
+    ) {
+        throw new CrawlerPlatformError(
+            "INVALID_MANIFEST",
+            `Catalog entry ${plugin.id}@${version} does not match its plugin manifest.`
+        );
+    }
+    return sourceDirectory;
+}
+
+function parseStoreOptions(
+    args: string[],
+    { allowEnable, allowVersion }: { allowEnable: boolean; allowVersion: boolean }
+) {
+    const positionals: string[] = [];
+    let root: string | undefined;
+    let version: string | undefined;
+    let enable = false;
+    for (let index = 0; index < args.length; index += 1) {
+        const argument = args[index]!;
+        if (argument === "--root") {
+            if (root || !args[index + 1] || args[index + 1]!.startsWith("--"))
+                throw new Error("--root requires one path.");
+            root = args[++index];
+        } else if (argument === "--version" && allowVersion) {
+            if (version || !args[index + 1] || args[index + 1]!.startsWith("--")) {
+                throw new Error("--version requires one version.");
+            }
+            version = args[++index];
+        } else if (argument === "--enable" && allowEnable) {
+            if (enable) throw new Error("--enable can only appear once.");
+            enable = true;
+        } else if (argument.startsWith("--")) {
+            throw new Error(`Unknown option ${argument}.`);
+        } else {
+            positionals.push(argument);
+        }
+    }
+    if (!root) throw new Error("A plugin store path is required with --root.");
+    return { positionals, root: resolve(root), ...(version ? { version } : {}), enable };
 }
 
 function isSafeRelativePath(path: string) {
@@ -287,6 +428,11 @@ function printUsage() {
             "  pnpm crawler validate <plugin-directory>",
             "  pnpm crawler test <plugin-directory>",
             "  pnpm crawler bundle <plugin-directory> --out <output-directory>",
+            "  pnpm crawler catalog validate <catalog.json>",
+            "  pnpm crawler install <catalog.json> <plugin-id> --root <store> [--version <version>] [--enable]",
+            "  pnpm crawler update <catalog.json> <plugin-id> --root <store> [--version <version>]",
+            "  pnpm crawler list --root <store>",
+            "  pnpm crawler enable|disable|pin|unpin|rollback <plugin-id> --root <store>",
         ].join("\n") + "\n"
     );
     return 2;

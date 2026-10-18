@@ -5,6 +5,7 @@ import { CrawlerPlatformError } from "../core/errors";
 import { createCrawlerTaskQueue } from "./task-queue";
 import { parseCrawlerPluginManifest } from "../sdk/manifest";
 import { createDynamicSourceId } from "../../shared/dynamic-source-id";
+import { verifyCrawlerPluginArtifact, resolveInstalledPluginPackage } from "./plugin-package";
 
 import type { CrawlerPluginManifest } from "../sdk/manifest";
 import type { CrawlerItem, CrawlerTarget, CrawlerContext, CrawlerHttpResponse } from "../sdk/types";
@@ -119,10 +120,13 @@ function loadPluginSources(options: CrawlerPluginProviderOptions, enabledIds: Re
         );
     }
 
-    const pluginRoot = realpathSync(options.pluginDirectory);
-    const candidates = readdirSync(pluginRoot, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory() && enabledIds.has(entry.name))
-        .sort((left, right) => left.name.localeCompare(right.name));
+    const pluginRoots = getPluginSearchRoots(options.pluginDirectory);
+    const candidates = pluginRoots.flatMap((searchRoot) =>
+        readdirSync(searchRoot, { withFileTypes: true })
+            .filter((entry) => entry.isDirectory() && enabledIds.has(entry.name))
+            .map((entry) => ({ searchRoot, name: entry.name }))
+    );
+    candidates.sort((left, right) => left.name.localeCompare(right.name));
     if (candidates.length > MAX_PLUGIN_DIRECTORIES) {
         throw new Error(`Crawler plugin directory exceeds the ${MAX_PLUGIN_DIRECTORIES}-package limit.`);
     }
@@ -130,9 +134,12 @@ function loadPluginSources(options: CrawlerPluginProviderOptions, enabledIds: Re
     const foundPluginIds = new Set<string>();
     const sources = new Map<string, InstalledPluginSource>();
     for (const candidate of candidates) {
-        const packageRoot = realpathSync(resolve(pluginRoot, candidate.name));
-        const manifestPath = resolvePluginFile(pluginRoot, packageRoot, "manifest.json");
+        if (foundPluginIds.has(candidate.name)) continue;
+        const resolvedPackage = resolveInstalledPluginPackage(candidate.searchRoot, candidate.name);
+        const packageRoot = resolvedPackage.packageRoot;
+        const manifestPath = resolvePluginFile(packageRoot, "manifest.json");
         const manifest = parseCrawlerPluginManifest(JSON.parse(readFileSync(manifestPath, "utf8")) as unknown);
+        verifyCrawlerPluginArtifact(packageRoot, manifest, { required: resolvedPackage.versioned });
         if (!enabledIds.has(manifest.id)) continue;
         if (candidate.name !== manifest.id) {
             throw new Error(`Crawler plugin directory ${candidate.name} must match manifest ID ${manifest.id}.`);
@@ -145,7 +152,7 @@ function loadPluginSources(options: CrawlerPluginProviderOptions, enabledIds: Re
         }
         foundPluginIds.add(manifest.id);
 
-        const entryPath = resolvePluginFile(packageRoot, packageRoot, manifest.entry);
+        const entryPath = resolvePluginFile(packageRoot, manifest.entry);
         if (!statSync(entryPath).isFile()) {
             throw new CrawlerPlatformError("INVALID_MANIFEST", `Plugin entry ${manifest.entry} is not a file.`);
         }
@@ -190,7 +197,17 @@ function loadPluginSources(options: CrawlerPluginProviderOptions, enabledIds: Re
     return sources;
 }
 
-function resolvePluginFile(pluginRoot: string, packageRoot: string, relativePath: string) {
+function getPluginSearchRoots(pluginDirectory: string) {
+    const root = realpathSync(pluginDirectory);
+    const packagesDirectory = resolve(root, "packages");
+    if (!existsSync(packagesDirectory)) return [root];
+
+    const packagesRoot = realpathSync(packagesDirectory);
+    assertPathWithin(root, packagesRoot);
+    return packagesRoot === root ? [root] : [packagesRoot, root];
+}
+
+function resolvePluginFile(packageRoot: string, relativePath: string) {
     if (
         !relativePath ||
         isAbsolute(relativePath) ||
@@ -202,7 +219,7 @@ function resolvePluginFile(pluginRoot: string, packageRoot: string, relativePath
         throw new CrawlerPlatformError("INVALID_MANIFEST", `Unsafe plugin path ${relativePath}.`);
     }
     const resolvedPath = realpathSync(resolve(packageRoot, ...relativePath.split("/")));
-    assertPathWithin(pluginRoot, resolvedPath);
+    assertPathWithin(packageRoot, resolvedPath);
     return resolvedPath;
 }
 
