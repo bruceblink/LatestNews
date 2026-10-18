@@ -1,0 +1,23 @@
+{
+  "now": "2026-10-18T00:00:00.000Z",
+  "responses": {
+    "https://rss.example.test/feed.xml": {
+      "status": 200,
+      "headers": { "content-type": "application/rss+xml" },
+      "bodyFile": "fixture.xml"
+    }
+  },
+  "cases": [
+    {
+      "sourceId": "latest",
+      "expectedItems": [
+        {
+          "id": "rss-1",
+          "title": "RSS headline",
+          "url": "https://rss.example.test/story/3",
+          "publishedAt": "Sun, 18 Oct 2026 07:00:00 GMT"
+        }
+      ]
+    }
+  ]
+}

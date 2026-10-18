@@ -1,0 +1,14 @@
+{
+  "manifestVersion": 1,
+  "id": "org.latestnews.example-rss",
+  "name": "Example RSS Feed",
+  "version": "0.1.0",
+  "apiVersion": "^1.0.0",
+  "runtime": "trusted-js",
+  "entry": "plugin.ts",
+  "targets": ["node", "electron"],
+  "permissions": {
+    "network": [{ "origin": "https://rss.example.test", "methods": ["GET"] }]
+  },
+  "sources": [{ "id": "latest", "name": "Latest", "kind": "realtime", "refreshIntervalSeconds": 900 }]
+}

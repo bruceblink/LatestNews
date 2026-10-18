@@ -1,0 +1,10 @@
+{
+  "items": [
+    {
+      "id": 901,
+      "title": " JSON headline ",
+      "url": "https://json.example.test/story/1?utm_source=fixture",
+      "publishedAt": "2026-10-18T09:00:00Z"
+    }
+  ]
+}

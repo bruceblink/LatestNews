@@ -1,0 +1,22 @@
+{
+  "now": "2026-10-18T00:00:00.000Z",
+  "responses": {
+    "https://html.example.test/news": {
+      "status": 200,
+      "headers": { "content-type": "text/html" },
+      "bodyFile": "fixture.html"
+    }
+  },
+  "cases": [
+    {
+      "sourceId": "latest",
+      "expectedItems": [
+        {
+          "title": "HTML headline",
+          "url": "https://html.example.test/story/2",
+          "publishedAt": "2026-10-18T08:00:00Z"
+        }
+      ]
+    }
+  ]
+}

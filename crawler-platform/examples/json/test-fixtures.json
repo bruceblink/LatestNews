@@ -1,0 +1,23 @@
+{
+  "now": "2026-10-18T00:00:00.000Z",
+  "responses": {
+    "https://json.example.test/news.json": {
+      "status": 200,
+      "headers": { "content-type": "application/json" },
+      "bodyFile": "fixture.json"
+    }
+  },
+  "cases": [
+    {
+      "sourceId": "latest",
+      "expectedItems": [
+        {
+          "id": 901,
+          "title": "JSON headline",
+          "url": "https://json.example.test/story/1",
+          "publishedAt": "2026-10-18T09:00:00Z"
+        }
+      ]
+    }
+  ]
+}
