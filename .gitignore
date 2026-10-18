@@ -21,3 +21,5 @@ package-lock.json
 /out/
 /release/
 /build/
+.dev.vars*
+!.dev.vars.example
