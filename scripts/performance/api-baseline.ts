@@ -10,8 +10,10 @@ import { join, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { rm, open, mkdir, mkdtemp, copyFile, readFile, writeFile } from "node:fs/promises";
 
+import { TTL } from "../../shared/consts";
 import { bundlePluginPackage } from "../../crawler-platform/cli";
 import { installCrawlerPluginPackage } from "../../crawler-platform/host/plugin-store";
+import { type PerformanceCacheController, createPerformanceCacheController } from "./cache-controller";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const pluginId = "org.latestnews.performance";
@@ -90,6 +92,8 @@ interface RequestSample {
 
 interface ScenarioReport {
     name: string;
+    expectedStatusesPerRequest: Record<string, number>;
+    statusMismatchCount: number;
     requestCount: number;
     concurrency: number;
     elapsedMs: number;
@@ -104,6 +108,13 @@ interface ScenarioReport {
     latencySamplesMs: number[];
 }
 
+interface ScenarioDefinition {
+    name: string;
+    request: RequestSpec & { baseUrl: string };
+    expectedStatusesPerRequest: Record<string, number>;
+    prepareCache: () => void;
+}
+
 async function main() {
     const options = parseOptions(process.argv.slice(2));
     const temporaryRoot = await mkdtemp(join(os.tmpdir(), "latestnews-performance-"));
@@ -113,6 +124,7 @@ async function main() {
     const logPath = join(temporaryRoot, "server.log");
     const metricsPath = join(temporaryRoot, "server-metrics.json");
     let server: ChildProcess | undefined;
+    let cacheController: PerformanceCacheController | undefined;
     let logHandle: Awaited<ReturnType<typeof open>> | undefined;
     let reportPath: string | undefined;
 
@@ -132,13 +144,16 @@ async function main() {
         await waitForServer(server, baseUrl, requestTimeoutMs, logPath);
         const startupMs = round(performance.now() - startupStartedAt);
 
+        cacheController = createPerformanceCacheController(join(workingDirectory, ".data/db.sqlite3"));
         await warmSourceCache(baseUrl);
         const scenarios: ScenarioReport[] = [];
-        for (const scenario of createScenarios(baseUrl)) {
-            scenarios.push(await runScenario(scenario.name, scenario.request, options));
+        for (const scenario of createScenarios(baseUrl, cacheController)) {
+            scenarios.push(await runScenario(scenario, options));
         }
-        const passed = scenarios.every((scenario) => scenario.errorRate === 0 && scenario.cacheHitRate === 1);
+        const passed = scenarios.every((scenario) => scenario.errorRate === 0 && scenario.statusMismatchCount === 0);
 
+        cacheController.close();
+        cacheController = undefined;
         await stopServer(server);
         server = undefined;
         await logHandle.close();
@@ -169,7 +184,9 @@ async function main() {
                 network: "loopback only; fixture plugin has no network permissions",
             },
             workload: {
-                cacheMode: "SQLite cache warmed before each scenario",
+                cacheMode:
+                    "SQLite hit, cold miss, partial miss and stale cache; target rows reset between request waves",
+                cachePreparationExcludedFromRequestTiming: true,
                 fixtureSourceCount: sourceIds.length,
                 fixtureItemsPerSource: 30,
                 warmupRequestsPerScenario,
@@ -190,20 +207,27 @@ async function main() {
                     result: report.result,
                     reportPath,
                     startupMs,
-                    scenarios: scenarios.map(({ name, latencyMs, requestsPerSecond, errorRate, cacheHitRate }) => ({
-                        name,
-                        latencyMs,
-                        requestsPerSecond: round(requestsPerSecond),
-                        errorRate,
-                        cacheHitRate,
-                    })),
+                    scenarios: scenarios.map(
+                        ({ name, latencyMs, requestsPerSecond, errorRate, cacheHitRate, statusMismatchCount }) => ({
+                            name,
+                            latencyMs,
+                            requestsPerSecond: round(requestsPerSecond),
+                            errorRate,
+                            cacheHitRate,
+                            statusMismatchCount,
+                        })
+                    ),
                 },
                 null,
                 2
             )}\n`
         );
-        if (!passed) throw new Error(`The cache-hit baseline had errors or cache misses. See ${reportPath}.`);
+        if (!passed)
+            throw new Error(
+                `The cache-state baseline had API errors or response-status mismatches. See ${reportPath}.`
+            );
     } finally {
+        cacheController?.close();
         if (server) await stopServer(server);
         await logHandle?.close();
         await rm(temporaryRoot, { recursive: true, force: true });
@@ -326,24 +350,65 @@ async function warmSourceCache(baseUrl: string) {
     }
 
     const verify = await executeRequest(baseUrl, createSingleRequest(sourceIds[0]!));
-    assertSuccessfulSample(verify, 1, "cache warmup verification");
+    assertExpectedSample(verify, { cache: 1 }, "cache warmup verification");
 }
 
-function createScenarios(baseUrl: string) {
+function createScenarios(baseUrl: string, cacheController: PerformanceCacheController) {
+    const singleSourceIds = sourceIds.slice(0, 1);
+    const batch10SourceIds = sourceIds.slice(0, 10);
+    const cachedHalf = sourceIds.slice(0, 15);
+    const missingHalf = sourceIds.slice(15);
+
     return [
-        {
-            name: "single-source-cache-hit",
-            request: createSingleRequest(sourceIds[0]!),
-        },
-        {
-            name: "batch-10-sources-cache-hit",
-            request: createBatchRequest(sourceIds.slice(0, 10)),
-        },
-        {
-            name: "batch-30-sources-cache-hit",
-            request: createBatchRequest(sourceIds),
-        },
-    ].map((scenario) => ({ ...scenario, request: { ...scenario.request, baseUrl } }));
+        createScenario(baseUrl, "single-source-cache-hit", createSingleRequest(singleSourceIds[0]!), { cache: 1 }),
+        createScenario(baseUrl, "batch-10-sources-cache-hit", createBatchRequest(batch10SourceIds), { cache: 10 }),
+        createScenario(baseUrl, "batch-30-sources-cache-hit", createBatchRequest(sourceIds), { cache: 30 }),
+        createScenario(
+            baseUrl,
+            "single-source-cold-cache-miss",
+            createSingleRequest(singleSourceIds[0]!),
+            { success: 1 },
+            () => cacheController.clear(singleSourceIds)
+        ),
+        createScenario(
+            baseUrl,
+            "batch-10-sources-cold-cache-miss",
+            createBatchRequest(batch10SourceIds),
+            { success: 10 },
+            () => cacheController.clear(batch10SourceIds)
+        ),
+        createScenario(
+            baseUrl,
+            "batch-30-sources-cold-cache-miss",
+            createBatchRequest(sourceIds),
+            { success: 30 },
+            () => cacheController.clear(sourceIds)
+        ),
+        createScenario(
+            baseUrl,
+            "batch-30-sources-partial-cache-miss",
+            createBatchRequest(sourceIds),
+            { cache: cachedHalf.length, success: missingHalf.length },
+            () => cacheController.clear(missingHalf)
+        ),
+        createScenario(
+            baseUrl,
+            "batch-30-sources-stale-cache",
+            createBatchRequest(sourceIds),
+            { "stale-cache": 30 },
+            () => cacheController.setUpdatedAt(sourceIds, Date.now() - TTL - 1)
+        ),
+    ];
+}
+
+function createScenario(
+    baseUrl: string,
+    name: string,
+    request: RequestSpec,
+    expectedStatusesPerRequest: Record<string, number>,
+    prepareCache: () => void = () => undefined
+): ScenarioDefinition {
+    return { name, request: { ...request, baseUrl }, expectedStatusesPerRequest, prepareCache };
 }
 
 function createSingleRequest(sourceId: string): RequestSpec {
@@ -363,25 +428,31 @@ function createBatchRequest(ids: string[]): RequestSpec {
     };
 }
 
-async function runScenario(
-    name: string,
-    request: RequestSpec & { baseUrl: string },
-    options: Options
-): Promise<ScenarioReport> {
+async function runScenario(scenario: ScenarioDefinition, options: Options): Promise<ScenarioReport> {
     for (let index = 0; index < warmupRequestsPerScenario; index += 1) {
-        const sample = await executeRequest(request.baseUrl, request);
-        assertSuccessfulSample(sample, request.expectedSourceIds.length, name);
+        scenario.prepareCache();
+        const sample = await executeRequest(scenario.request.baseUrl, scenario.request);
+        assertExpectedSample(sample, scenario.expectedStatusesPerRequest, scenario.name);
     }
 
     const samples: RequestSample[] = [];
-    const startedAt = performance.now();
-    await runConcurrent(options.samples, options.concurrency, async () => {
-        samples.push(await executeRequest(request.baseUrl, request));
-    });
-    const elapsedMs = Math.max(0.001, performance.now() - startedAt);
+    let elapsedMs = 0;
+    while (samples.length < options.samples) {
+        scenario.prepareCache();
+        const waveSize = Math.min(options.concurrency, options.samples - samples.length);
+        const startedAt = performance.now();
+        const wave = await Promise.all(
+            Array.from({ length: waveSize }, () => executeRequest(scenario.request.baseUrl, scenario.request))
+        );
+        elapsedMs += Math.max(0.001, performance.now() - startedAt);
+        samples.push(...wave);
+    }
 
     const statuses = countValues(samples.flatMap((sample) => sample.responseStatuses));
     const httpStatuses = countValues(samples.map((sample) => String(sample.httpStatus)));
+    const statusMismatchCount = samples.filter(
+        (sample) => !hasExpectedResponseStatuses(sample.responseStatuses, scenario.expectedStatusesPerRequest)
+    ).length;
     const cacheResponses = samples.reduce(
         (count, sample) =>
             count +
@@ -393,7 +464,9 @@ async function runScenario(
     const errorCount = samples.filter((sample) => sample.errorCount > 0).length;
 
     return {
-        name,
+        name: scenario.name,
+        expectedStatusesPerRequest: scenario.expectedStatusesPerRequest,
+        statusMismatchCount,
         requestCount: samples.length,
         concurrency: Math.min(options.concurrency, options.samples),
         elapsedMs: round(elapsedMs),
@@ -475,16 +548,29 @@ function extractApiErrorCount(payload: unknown) {
     return payload.errors.length;
 }
 
-async function runConcurrent(count: number, concurrency: number, operation: () => Promise<void>) {
-    let nextIndex = 0;
-    const workerCount = Math.min(count, concurrency);
-    await Promise.all(
-        Array.from({ length: workerCount }, async () => {
-            while (nextIndex < count) {
-                nextIndex += 1;
-                await operation();
-            }
-        })
+function assertExpectedSample(sample: RequestSample, expectedStatuses: Record<string, number>, scenario: string) {
+    if (
+        sample.httpStatus < 200 ||
+        sample.httpStatus >= 300 ||
+        sample.errorCount > 0 ||
+        !hasExpectedResponseStatuses(sample.responseStatuses, expectedStatuses)
+    ) {
+        throw new Error(
+            `Scenario ${scenario} expected ${JSON.stringify(expectedStatuses)} but received HTTP ${sample.httpStatus} ` +
+                `with statuses ${JSON.stringify(countValues(sample.responseStatuses))}.`
+        );
+    }
+}
+
+function hasExpectedResponseStatuses(responseStatuses: string[], expectedStatuses: Record<string, number>) {
+    const actualStatuses = countValues(responseStatuses);
+    const expectedKeys = Object.keys(expectedStatuses).sort();
+    const actualKeys = Object.keys(actualStatuses).sort();
+    return (
+        expectedKeys.length === actualKeys.length &&
+        expectedKeys.every(
+            (status, index) => status === actualKeys[index] && expectedStatuses[status] === actualStatuses[status]
+        )
     );
 }
 
@@ -607,13 +693,6 @@ function parseInteger(value: string, option: string, minimum: number, maximum: n
         throw new Error(`${option} must be from ${minimum} to ${maximum}.`);
     }
     return parsed;
-}
-
-function assertSuccessfulSample(sample: RequestSample, expectedCount: number, scenario: string) {
-    const cachedCount = sample.responseStatuses.filter((status) => status === "cache").length;
-    if (sample.httpStatus < 200 || sample.httpStatus >= 300 || sample.errorCount > 0 || cachedCount !== expectedCount) {
-        throw new Error(`Scenario ${scenario} expected ${expectedCount} cached sources but received ${cachedCount}.`);
-    }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

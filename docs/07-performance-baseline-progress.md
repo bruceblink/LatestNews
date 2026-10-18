@@ -52,6 +52,25 @@ F0 已完成。F1 的 Node 生产 API 缓存命中首轮实测已通过。Web �
 
 性能数值只代表记录中的提交、硬件、操作系统、运行版本、缓存状态和并发配置。完整 JSON 报告保存在本机被 Git 忽略的 `.data/performance/`，可按相同提交重新生成。
 
+## F1 后续切片：缓存缺失状态基线
+
+### 范围
+
+- 扩展同一 Node API 基准，增加冷缓存、30 源部分命中和旧缓存场景。
+- 只操作基准临时目录中的 SQLite `cache` 表。每轮并发请求前清除指定来源缓存；旧缓存场景只调整这些临时记录的时间戳。
+- 对冷缓存要求所有来源返回 `success`；部分命中要求命中与新采集各占一半；旧缓存要求所有来源返回 `stale-cache`。任何状态不符或 API 错误都使基准失败。
+- 保留缓存命中基线和默认 1,000 样本。记录每个场景的缓存状态分布，不把预备和清理操作计入 API 延迟。
+
+### 验收与验证
+
+- 小样本运行覆盖命中、缺失、部分命中和旧缓存路径，并自动关闭 SQLite 连接、服务进程和临时目录。
+- 完整基准运行并记录各场景的 p50/p95/p99、吞吐、响应大小、状态分布及服务资源指标。
+- 运行 `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run`、`pnpm crawler validate crawler-platform/examples/performance`、`pnpm crawler test crawler-platform/examples/performance`、`pnpm performance:baseline -- --samples 10 --concurrency 2` 和 `git diff --check`。
+
+### 回退边界
+
+本切片只扩展本地基准脚本和本记录，不改生产 API、缓存结构或部署配置。回退时删除新场景和 SQLite 基准控制逻辑，保留已完成的缓存命中基线。
+
 ### 回退边界
 
 本切片新增基准脚本、离线样例、npm 命令、测试工具对空 HTTP 回放的支持和本记录。`scripts/favicon.ts` 只在明确设置 `LATESTNEWS_SKIP_FAVICON_FETCH=true` 时跳过图标下载；默认构建行为不变。上述改动不改变生产 API、插件默认状态、数据库格式、部署流程或发布门禁。需要回退时，删除基准文件和命令，并撤销这两个测试/构建辅助选项即可。
