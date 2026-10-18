@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-P0 同包跨宿主原型通过。P1 SDK、CLI 和离线测试工具已有首轮实现。P2/P3 动态来源目录已完成首轮代码实现，并通过固定 JSON/RSS host 测试、Node Docker API smoke 和 Electron utility process smoke；真实 renderer 窗口验收、完整数据兼容和 Pages Web→Node API 浏览器验收仍未完成。P4 安装、更新和版本回退尚未实现。P5 陌生插件隔离尚未评估。代码未部署到生产环境。
+P0 至 P3 已完成首轮实现。P4 静态目录、CLI 安装与更新、版本固定与回退、Node 和 Electron 共用启用配置已完成，并通过单元测试、Docker API smoke 和 Electron utility process smoke。真实窗口验收、完整数据兼容和 Pages Web→Node API 浏览器验收仍未完成。P5 陌生插件隔离尚未评估。代码未部署到生产环境。
 
 ## P0：同一插件产物跨宿主运行
 
@@ -26,11 +26,11 @@ P0 同包跨宿主原型通过。P1 SDK、CLI 和离线测试工具已有首轮�
 
 ## P2：Node 服务端兼容接入
 
-- Node 宿主只加载操作者通过 `LATESTNEWS_CRAWLER_PLUGIN_IDS` 明确启用的包。默认包目录是 `.data/crawler-plugins`，可用 `LATESTNEWS_CRAWLER_PLUGIN_DIR` 覆盖。
+- Node 宿主默认从 `.data/crawler-plugins/enabled.json` 读取启用列表。非空 `LATESTNEWS_CRAWLER_PLUGIN_IDS` 会覆盖该文件。可用 `LATESTNEWS_CRAWLER_PLUGIN_DIR` 指定其他插件存储目录。
 - 清单中的静态 ID 可替换对应旧 getter；未启用插件时保留旧 getter。其他频道使用 `ext.<plugin-id>.<channel-id>`。共享目录校验 ID 和元数据，并接入来源发现、详情、单源、批量、Feed、旧 ID 列表和健康摘要 API。
 - 首个兼容源为 Pcbeta `pcbeta-windows11`。离线 fixture 验证插件输出继续使用旧 URL 哈希，且 Node 适配器将 `publishedAt` 映射为现有 `NewsItem.pubDate`。
 - Node 宿主一次运行最多四个插件任务，最多等待 64 个任务；排队超过 30 秒返回 `TIMEOUT`，超出队列容量返回 `QUEUE_FULL`。
-- Docker 镜像会把 `worker-entry.mjs` 放在服务工作目录下。Compose 提供可选环境变量；不设置时不会启用插件。已加入 `pnpm test:crawler:docker`，用于验证容器中的现有 API 能返回 fixture 插件数据。
+- Docker 镜像会把 `worker-entry.mjs` 放在服务工作目录下。Compose 提供可选环境变量；没有启用列表或环境变量时不会加载插件。`pnpm test:crawler:docker` 会在本地镜像内从版本目录加载 fixture 插件。
 - Pages 构建选择无 Node 能力的适配器。Pages 页面默认使用同源 API；需要读取服务端插件时，用 `VITE_NEWS_API_URL` 指向 Node API，并在 Node 配置精确的 `LATESTNEWS_WEB_ORIGINS`。`VITE_API_URL` 继续用于认证与用户同步。Node 插件不在 Pages Functions 中运行。Pages 输出包含 `_worker.js` Pages Functions 入口；这不是单独的 Workers 部署。
 - Docker smoke 使用 `node:22-alpine` 本地镜像验证来源发现、详情、单源、批量和 JSON Feed。RSS 动态频道由固定响应 Node host 测试验证。真实收藏、阅读历史、离线恢复和同步往返仍未完成。
 
@@ -41,7 +41,17 @@ P0 同包跨宿主原型通过。P1 SDK、CLI 和离线测试工具已有首轮�
 - 共用 service 只对桌面已启用的源使用本地插件。其他来源继续调用远程 API；本地执行失败时回退到远程 API。Web 页面没有桌面 IPC，因此保持原有 API 路径。
 - `electron-builder.yml` 把 `worker-entry.mjs` 安装到 `resources/crawler-platform/runtime/`。Windows 临时打包检查确认该文件和 `app.asar` 均存在。
 - `pnpm test:crawler:electron` 使用 Pcbeta 静态源和 JSON 动态源验证 Node 与 Electron 宿主；同一插件包输出一致，并检查本地动态元数据。这是进程级 smoke，不是 UI 窗口验收。
-- 应用目前在启动时读取本地配置和插件包。安装、启用、停用、升级、版本锁定、失败回退，以及休眠/恢复/退出时的任务清理界面和验收仍未实现。
+- 桌面主进程继续从 `<userData>/crawler-plugins/enabled.json` 读取启用列表。P4 让同一 CLI 管理的版本化包可以供桌面 utility process 加载；渲染器仍只能请求已注册来源，不能传入插件路径。
+
+## P4：静态目录与包生命周期
+
+- `crawler-platform/catalog.json` 保存本地可信目录。目录条目只能使用相对来源路径；CLI 校验插件 ID、版本、名称和清单是否一致，并拒绝重复 ID、重复版本和路径越界。
+- `pnpm crawler install|update` 将源打包到临时目录，核对包结构、大小和 SHA-256 后，再将版本安装到 `packages/<plugin-id>/versions/<version>/`。`active.json` 通过原子文件替换切换活动版本。
+- CLI 支持 `catalog validate`、`list`、`enable`、`disable`、`pin`、`unpin` 和 `rollback`。固定版本会阻止更新和回退；取消固定后可以继续更新。回退只切换活动版本，不删除安装包。
+- Node 与 Electron 使用相同的 `enabled.json` 和版本目录。Node 环境变量仅在非空时覆盖文件设置。Electron 无效本地配置继续使用远程 API。
+- 新宿主优先读取 `packages/<plugin-id>/`。Node 旧平铺目录仍可读取；CLI 固定或更新旧包时会先复制到版本化目录。安装失败不会切换活动版本。
+- 包打包关闭 Vite 默认 `public/` 拷贝，避免应用图标等无关静态文件进入爬虫包。安装只处理文件，不运行插件入口代码。SHA-256 用于发现内容损坏，不代表发布者身份已认证。
+- `test/crawler-plugin-store.test.ts` 覆盖安装、更新、固定、取消固定、回退、停用、旧目录迁移、摘要损坏、活动版本路径穿越、静态目录校验和 CLI 安装。
 
 ## 验证结果
 
@@ -50,27 +60,26 @@ P0 同包跨宿主原型通过。P1 SDK、CLI 和离线测试工具已有首轮�
 | `pnpm lint:check` | 通过 | 当前工作区全部 ESLint 文件 |
 | `pnpm typecheck` | 通过 | Node 与 Web TypeScript 配置 |
 | `pnpm typecheck:electron` | 通过 | Electron TypeScript 配置 |
-| `pnpm test --run` | 通过 | 62 个测试文件、286 个测试 |
+| `pnpm test --run` | 通过 | 63 个测试文件、291 个测试 |
 | 定向动态目录测试 | 通过 | 24 个测试；覆盖 JSON/RSS 动态 ID、来源目录、Feed 解析、命名空间拒绝和 API URL 校验 |
 | `pnpm crawler validate/test` | 通过 | JSON 示例；HTML/RSS 由测试套件执行相同 CLI API |
 | `pnpm electron:build` | 通过 | Electron 主进程、预加载和渲染器构建；构建过程仍报告 4 个图标下载超时和 Zod 注释警告 |
-| Electron utility process smoke | 通过 | Windows、本地 Electron 44.8.0；同一个 Pcbeta 插件产物在 Node 与 Electron 返回相同条目 |
+| Electron utility process smoke | 通过 | Windows、本地 Electron 44.8.0；版本化 Pcbeta 和 JSON 包在 Node 与 Electron 返回相同条目。Electron 44.9.0 下载失败，因此未验证该二进制 |
 | Windows 桌面打包 | 通过 | 使用本机 Electron 44.8.0 目录打包；确认 worker 入口、`app.asar`、主进程和预加载文件存在。未运行窗口交互 |
 | Pages 构建与边界 | 通过 | Cloudflare Pages preset 构建成功；产物不含 Node 插件宿主、`node:child_process`、插件环境变量或 worker 入口 |
-| Node/Docker 动态 API smoke | 通过 | 本地 Docker 镜像基于 `node:22-alpine`；最终映射 `127.0.0.1:10997` 到容器 `4444`。动态来源目录、详情、单源、未知 ID 拒绝、批量、JSON Feed 和 CORS allow/deny 检查通过；脚本清理容器、临时镜像与插件目录 |
-| Electron 动态插件 smoke | 通过 | Electron 44.8.0 本机二进制；Pcbeta 静态源和 JSON 动态源都运行，同一个 JSON 插件包在 Node 和 Electron utility process 返回相同条目，并读取到来源元数据 |
+| Node/Docker 动态 API smoke | 通过 | 本地 Docker `node:22-alpine` 镜像；最终映射 `127.0.0.1:3713` 到容器 `4444`。从 `enabled.json` 读取版本化包；动态来源目录、详情、单源、未知 ID 拒绝、批量、JSON Feed 和 CORS allow/deny 检查通过，临时容器、镜像与插件目录已清理 |
+| Electron 动态插件 smoke | 通过 | Electron 44.8.0 本机二进制；Pcbeta 静态源和 JSON 动态源均从版本目录运行。同一 JSON 包在 Node 与 Electron utility process 返回相同条目，并返回来源元数据 |
 | 真实新闻源请求 | 未执行 | 本轮仅用固定离线响应 |
 | Web/Electron 真实窗口 UI 检查 | 未完成 | Computer Use 无法确认当前浏览器 URL，按策略停止窗口输入。`pnpm dev` 另因 `vite-plugin-with-nitro` 与 `h3-nightly` 的 `__nodeHandler` 错误未能启动 |
-| 代码提交与推送 | 通过 | 初始 SDK/Node/Electron 接入及动态来源目录、客户端注册批次均已分别验证并推送到 `origin/main` |
+| Pages worker 边界 | 通过 | Cloudflare Pages 产物不含 Node 插件宿主、`node:child_process`、本地插件环境变量或 package store |
+| 代码提交与推送 | 通过 | P4 实现提交 `11a0129` 已推送到 `origin/main`；本进度文档随后单独提交 |
 
 ## 未完成范围和回退边界
 
-Node 服务可以发现动态频道，客户端源码会在加载路由前注册远程或本地目录；Pages Web 可通过 `VITE_NEWS_API_URL` 指向 Node API，并用 `LATESTNEWS_WEB_ORIGINS` 限制 CORS 来源。当前实现还未通过真实窗口、线上 Pages 配置和收藏/历史/离线/同步端到端验收。F5 的质量报告和首批真实新闻源仍未实现。
+Node 服务可以发现动态频道，客户端源码会在加载路由前注册远程或本地目录；Pages Web 可通过 `VITE_NEWS_API_URL` 指向 Node API，并用 `LATESTNEWS_WEB_ORIGINS` 限制 CORS 来源。当前实现还未通过真实窗口、线上 Pages 配置和收藏/历史/离线/同步端到端验收。来源质量报告优化和首批代表新闻源迁移仍未实施。
 
-Electron 桌面包已包含 utility process 入口，但仍需在真实应用窗口中检查启动和本地源读取。当前没有插件安装界面、安装/更新/回退状态机或任务生命周期 UI。Docker 容器 API smoke 已通过；首次依赖安装中的 npm 超时通过重试恢复。
+Electron 桌面包已包含 utility process 入口。当前没有插件安装界面；操作者通过 CLI 安装和维护本地包。休眠、恢复、退出时的任务生命周期 UI 和真实窗口验收仍未完成。
 
-`trusted-js` 只适用于操作者信任的插件。独立进程和网络 broker 可限制平台调用、阻止任务卡住主进程并隔离环境变量；它们不能阻止任意插件代码直接访问 Node.js API。公开插件安装、更新器和陌生代码沙箱尚未实现。
-
-可信 `trusted-js` 宿主不是陌生代码沙箱。独立进程和网络 broker 可限制宿主提供的调用、处理卡住任务并隔离进程故障；它们不能阻止任意插件代码直接使用 Node.js API。公开插件目录、包签名、更新器、凭据管理、外网/私网策略和资源限额未实现。
+`trusted-js` 只适用于操作者信任的插件。独立进程和网络 broker 不能阻止任意插件代码直接访问 Node.js API。当前 CLI 只使用仓库内受审查的静态目录；公开目录、签名发布者认证、凭据管理、外网/私网策略和陌生代码沙箱仍未实现。P5 需先验证隔离方案，再决定是否接受第三方插件。
 
 本轮代码已推送，但未进入生产路径。未启用插件时，Node 服务端和桌面端继续使用原有远程 API 或 getter。每个来源仍可切回内置 getter。
