@@ -1,6 +1,16 @@
 import { $fetch, type FetchOptions } from "ofetch";
 
+import { createFetchScheduler } from "./fetch-scheduler";
+
 const RETRY_DELAY_MS = 500;
+
+export const fetchSchedulerDefaults = {
+    maxConcurrent: 8,
+    maxPerKey: 2,
+    maxQueued: 100,
+    queueTimeoutMs: 8_000,
+    taskTimeoutMs: 8_000,
+} as const;
 
 // 默认配置
 const defaultHeaders = {
@@ -18,6 +28,8 @@ const baseFetch = $fetch.create({
     retryStatusCodes: [408, 409, 425, 429, 500, 502, 503, 504],
 });
 
+const fetchScheduler = createFetchScheduler(fetchSchedulerDefaults);
+
 function normalizeHeaders(h?: FetchOptions["headers"]): Record<string, string> {
     if (!h) return {};
     if (h instanceof Headers) {
@@ -30,11 +42,26 @@ function normalizeHeaders(h?: FetchOptions["headers"]): Record<string, string> {
 }
 
 export function myFetch<T>(url: string, options: FetchOptions<any> = {}): Promise<T> {
-    return baseFetch<T>(url, {
-        ...options,
-        headers: {
-            ...defaultHeaders,
-            ...normalizeHeaders(options.headers),
-        },
-    });
+    const { signal: externalSignal, ...fetchOptions } = options;
+    return fetchScheduler.run(
+        getFetchKey(url),
+        (signal) =>
+            baseFetch<T>(url, {
+                ...fetchOptions,
+                signal,
+                headers: {
+                    ...defaultHeaders,
+                    ...normalizeHeaders(options.headers),
+                },
+            }),
+        externalSignal ?? undefined
+    );
+}
+
+function getFetchKey(url: string) {
+    try {
+        return new URL(url).origin;
+    } catch {
+        return "invalid-url";
+    }
 }
