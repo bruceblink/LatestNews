@@ -2,7 +2,7 @@
 
 当前开发顺序以 [性能、新闻源扩展与插件化计划](02-performance-sources-platform-plan.md) 的 F0–F6 为准，产品概览见 [开发总计划](../DEVELOPMENT_PLAN.md)。本文件保留 `0.5.3` / `5ce4aa4` 时期的任务设计和 R1–R9 记录，旧排期与候选版本不再代表当前安排。
 
-2026-10-20 更新：采集插件 P0–P4（SDK/CLI、跨宿主接入、动态来源目录、包安装/更新/回退）已分批提交并推送；陌生插件隔离仍未评估。后续性能与新闻源主线已完成 F0 核对、F1 Node API 缓存状态的 1,000 样本测量，以及 F2-A 服务端采集总并发与等待队列边界。按主机限流、慢源、Web、Electron 和真实新闻源质量基线仍待完成。跨宿主证据见 [插件平台进度记录](04-crawler-plugin-implementation-progress.md)，性能进度见 [性能基线实施记录](07-performance-baseline-progress.md)。
+2026-10-20 更新：采集插件 P0–P4（SDK/CLI、跨宿主接入、动态来源目录、包安装/更新/回退）已分批提交并推送；陌生插件隔离仍未评估。后续性能与新闻源主线已完成 F0 核对、F1 Node API 缓存状态的 1,000 样本测量，以及 F2-A/F2-B 服务端采集总并发、等待队列和上游 origin 调度边界。响应体限制、慢源、Web、Electron 和真实新闻源质量基线仍待完成。跨宿主证据见 [插件平台进度记录](04-crawler-plugin-implementation-progress.md)，性能进度见 [性能基线实施记录](07-performance-baseline-progress.md)。
 
 2026-10-17 更新：桌面已采用“桌面客户端＋远程 API”，`0.6.0` 已发布全平台桌面、Web 和 Docker 产物。D1–D5 状态见 [多平台实施记录](01-web-electron-plan.md)。当前已有 PR/主分支检查与发布前验证；下文的开发启动失败和缺少检查是历史问题描述，不应直接列为当前未修复问题。离线、同步与联邦部署等未关闭验收项继续保留，由 F0 核对证据后更新。
 
