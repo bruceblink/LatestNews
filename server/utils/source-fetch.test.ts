@@ -16,6 +16,14 @@ function createItems(count: number): NewsItem[] {
     }));
 }
 
+function createDeferred<T>() {
+    let resolve: (value: T) => void = () => undefined;
+    const promise = new Promise<T>((resolvePromise) => {
+        resolve = resolvePromise;
+    });
+    return { promise, resolve };
+}
+
 describe("createSourceFetcher", () => {
     it("deduplicates concurrent fetches for the same source", async () => {
         let resolveItems: (items: NewsItem[]) => void = () => undefined;
@@ -37,6 +45,7 @@ describe("createSourceFetcher", () => {
         const first = fetchSourceItems("weibo" as SourceID);
         const second = fetchSourceItems("weibo" as SourceID);
 
+        await Promise.resolve();
         resolveItems(createItems(2));
 
         await expect(Promise.all([first, second])).resolves.toEqual([createItems(2), createItems(2)]);
@@ -122,5 +131,58 @@ describe("createSourceFetcher", () => {
 
         expect(getItems).toHaveBeenCalledTimes(2);
         expect(onFailure).toHaveBeenCalledTimes(1);
+    });
+
+    it("bounds source collection concurrency and rejects an overfull queue", async () => {
+        const releases = [createDeferred<NewsItem[]>(), createDeferred<NewsItem[]>()];
+        const getItems = vi
+            .fn<(_: SourceID) => Promise<NewsItem[]>>()
+            .mockImplementationOnce(() => releases[0]!.promise)
+            .mockImplementationOnce(() => releases[1]!.promise);
+        const onFailure = vi.fn();
+        const fetchSourceItems = createSourceFetcher({
+            getItems,
+            onSuccess: vi.fn(),
+            onFailure,
+            maxConcurrent: 1,
+            maxQueued: 0,
+            queueTimeoutMs: 20,
+            now: () => 1_000,
+        });
+
+        const first = fetchSourceItems("weibo" as SourceID);
+        const second = fetchSourceItems("zhihu" as SourceID);
+        await Promise.resolve();
+        releases[0]!.resolve(createItems(1));
+
+        await expect(first).resolves.toHaveLength(1);
+        await expect(second).rejects.toMatchObject({ code: "QUEUE_FULL" });
+        expect(getItems).toHaveBeenCalledTimes(1);
+        expect(onFailure).toHaveBeenCalledWith("zhihu", 0, expect.objectContaining({ code: "QUEUE_FULL" }));
+    });
+
+    it("expires a source that waits beyond the queue budget", async () => {
+        const release = createDeferred<NewsItem[]>();
+        const getItems = vi
+            .fn<(_: SourceID) => Promise<NewsItem[]>>()
+            .mockImplementationOnce(() => release.promise)
+            .mockResolvedValueOnce(createItems(1));
+        const fetchSourceItems = createSourceFetcher({
+            getItems,
+            onSuccess: vi.fn(),
+            onFailure: vi.fn(),
+            maxConcurrent: 1,
+            maxQueued: 1,
+            queueTimeoutMs: 10,
+            now: () => 1_000,
+        });
+
+        const running = fetchSourceItems("weibo" as SourceID);
+        const waiting = fetchSourceItems("zhihu" as SourceID);
+        await expect(waiting).rejects.toMatchObject({ code: "TIMEOUT" });
+
+        release.resolve(createItems(1));
+        await expect(running).resolves.toHaveLength(1);
+        expect(getItems).toHaveBeenCalledTimes(1);
     });
 });
