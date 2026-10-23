@@ -1,4 +1,4 @@
-import { myFetch } from "#/utils/fetch";
+import { myFetch, myFetchRaw } from "#/utils/fetch";
 import { defineSource, generateUrlHashId } from "#/utils/source";
 
 interface Res {
@@ -15,7 +15,7 @@ interface Res {
 export default defineSource(async () => {
     const url =
         "https://www.douyin.com/aweme/v1/web/hot/search/list/?device_platform=webapp&aid=6383&channel=channel_pc_web&detail_list=1";
-    const cookie = (await $fetch.raw("https://login.douyin.com/")).headers.getSetCookie();
+    const cookie = (await myFetchRaw("https://login.douyin.com/")).headers.getSetCookie();
     const res: Res = await myFetch(url, {
         headers: {
             cookie: cookie.join("; "),
