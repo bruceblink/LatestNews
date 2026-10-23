@@ -149,6 +149,8 @@ F2-A 已完成服务端采集队列的第一步：内置源和插件源共用总
 
 `useEntireQuery` 取得批量来源响应后直接写入对应的 TanStack Query source cache。此前它先更新进程内缓存，再逐个调用 `refetchQueries`，会让同一批来源再次请求 API。该切片只改变客户端缓存更新路径，不改变 API、缓存键或刷新按钮的强制刷新行为。
 
+同时新增 `pnpm performance:web-baseline`。命令构建 Web 产物并输出 HTML、首屏脚本、全部 JavaScript/CSS 和最大资源的原始/gzip 大小。该报告用于比较资源变化，不替代真实浏览器的 LCP、INP、CLS 或请求瀑布验收。
+
 ### 回退边界
 
 恢复 `resolveEntireSources` 的全量等待和 `myFetch` 的直接 raw 入口即可回退本切片，不改变来源 ID、缓存格式或 API 字段结构。
