@@ -17,6 +17,7 @@ interface ResolveEntireSourcesOptions {
     fetchMissing: (id: SourceID) => Promise<SourceResponse["items"]>;
     saveCache: (id: SourceID, items: SourceResponse["items"]) => Promise<void>;
     now: number;
+    batchTimeoutMs?: number;
     onFetchError?: (error: unknown, id: SourceID) => void;
 }
 
@@ -30,6 +31,7 @@ export async function resolveEntireSources({
     fetchMissing,
     saveCache,
     now,
+    batchTimeoutMs = 8_000,
     onFetchError,
 }: ResolveEntireSourcesOptions): Promise<SourceResponse[]> {
     const cachedResponses = new Map<SourceID, SourceResponse>();
@@ -50,8 +52,12 @@ export async function resolveEntireSources({
 
     const missingIds = sourceIds.filter((id) => !cachedResponses.has(id));
     if (missingIds.length) {
-        const fetched = await Promise.allSettled(
-            missingIds.map(async (id) => {
+        if (!Number.isFinite(batchTimeoutMs) || batchTimeoutMs < 1) {
+            throw new RangeError("batchTimeoutMs must be a positive number.");
+        }
+        const states = new Map<SourceID, FetchState>();
+        const tasks = missingIds.map((id) =>
+            (async () => {
                 const items = (await fetchMissing(id)).slice(0, 30);
                 if (items.length) await saveCache(id, items);
                 return {
@@ -60,16 +66,31 @@ export async function resolveEntireSources({
                     name: dataSources[id].name,
                     items,
                     updatedTime: now,
-                };
-            })
+                } satisfies SourceResponse;
+            })().then(
+                (value) => states.set(value.id, { status: "fulfilled", value }),
+                (reason) => states.set(id, { status: "rejected", reason })
+            )
         );
 
-        for (const [index, result] of fetched.entries()) {
-            const id = missingIds[index];
-            if (result.status === "fulfilled") {
-                cachedResponses.set(result.value.id, result.value);
+        let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
+        const timeout = new Promise<void>((resolve) => {
+            timeoutTimer = setTimeout(resolve, batchTimeoutMs);
+        });
+        try {
+            await Promise.race([Promise.allSettled(tasks), timeout]);
+        } finally {
+            if (timeoutTimer) clearTimeout(timeoutTimer);
+        }
+
+        for (const id of missingIds) {
+            const state = states.get(id);
+            if (!state) {
+                onFetchError?.(new SourceBatchTimeoutError(batchTimeoutMs), id);
+            } else if (state.status === "fulfilled") {
+                cachedResponses.set(state.value.id, state.value);
             } else {
-                onFetchError?.(result.reason, id);
+                onFetchError?.(state.reason, id);
             }
         }
     }
@@ -77,6 +98,17 @@ export async function resolveEntireSources({
     return sourceIds
         .map((id) => cachedResponses.get(id))
         .filter((response): response is SourceResponse => Boolean(response));
+}
+
+type FetchState = { status: "fulfilled"; value: SourceResponse } | { status: "rejected"; reason: unknown };
+
+class SourceBatchTimeoutError extends Error {
+    readonly code = "BATCH_TIMEOUT" as const;
+
+    constructor(timeoutMs: number) {
+        super(`Source batch exceeded its ${timeoutMs} ms wait limit.`);
+        this.name = "SourceBatchTimeoutError";
+    }
 }
 
 export async function resolveEntireSourcesWithDiagnostics({
