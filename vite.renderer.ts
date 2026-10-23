@@ -29,8 +29,7 @@ export function createRendererPlugins(platform: RendererPlatform, appTitle: stri
             },
         },
         TanStackRouterVite({
-            // error with auto import and vite-plugin-pwa
-            // autoCodeSplitting: true,
+            autoCodeSplitting: true,
         }),
         unocss(),
         react(),

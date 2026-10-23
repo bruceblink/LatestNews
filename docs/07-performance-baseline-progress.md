@@ -151,6 +151,8 @@ F2-A 已完成服务端采集队列的第一步：内置源和插件源共用总
 
 同时新增 `pnpm performance:web-baseline`。命令构建 Web 产物并输出 HTML、首屏脚本、全部 JavaScript/CSS 和最大资源的原始/gzip 大小。该报告用于比较资源变化，不替代真实浏览器的 LCP、INP、CLS 或请求瀑布验收。
 
+启用 TanStack Router 自动代码分割后，2026-10-23 的本地构建生成 45 个 JavaScript 文件。`main` 为 `138,695 B`，`health` 路由为 `17,568 B`，`insights` 路由为 `21,781 B`；此前单一路由 chunk 为 `342,120 B`。构建、PWA service worker 和 Nitro Node 产物均生成成功。真实浏览器首屏请求瀑布仍待验收。
+
 ### 回退边界
 
 恢复 `resolveEntireSources` 的全量等待和 `myFetch` 的直接 raw 入口即可回退本切片，不改变来源 ID、缓存格式或 API 字段结构。
