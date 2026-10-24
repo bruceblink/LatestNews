@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react-swc";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 
-import pwa from "./pwa.config";
-import { escapeHtmlText } from "./shared/app-title";
+import pwa from "./pwa.config.js";
+import { escapeHtmlText } from "./shared/app-title.js";
 
 export type RendererPlatform = "web" | "electron";
 
@@ -50,11 +50,13 @@ export function createRendererBuildConfig(): UserConfig["build"] {
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
             output: {
-                manualChunks: {
-                    router: ["@tanstack/react-router"],
-                    query: ["@tanstack/react-query"],
-                    motion: ["framer-motion"],
-                    utils: ["dayjs", "clsx", "ofetch"],
+                codeSplitting: {
+                    groups: [
+                        { name: "router", test: /[\\/]node_modules[\\/]@tanstack[\\/]react-router(?:[\\/]|$)/ },
+                        { name: "query", test: /[\\/]node_modules[\\/]@tanstack[\\/]react-query(?:[\\/]|$)/ },
+                        { name: "motion", test: /[\\/]node_modules[\\/]framer-motion(?:[\\/]|$)/ },
+                        { name: "utils", test: /[\\/]node_modules[\\/](?:dayjs|clsx|ofetch)(?:[\\/]|$)/ },
+                    ],
                 },
             },
         },

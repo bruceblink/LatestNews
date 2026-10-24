@@ -1,20 +1,19 @@
-import { join } from "node:path";
 import { defineConfig } from "vite";
 import dotenvFlow from "dotenv-flow";
 
-import initVoteNitro from "./nitro.config";
-import { resolveAppTitle } from "./shared/app-title";
+import initVoteNitro from "./vite-nitro.js";
+import { resolveAppTitle } from "./shared/app-title.js";
 import {
     rendererAliases,
     createRendererPlugins,
     createRendererDefines,
     createRendererBuildConfig,
     createRendererServerConfig,
-} from "./vite.renderer";
+} from "./vite.renderer.js";
 
 // 自动按 .env、.env.local、.env.development 等文件顺序加载
 dotenvFlow.config({
-    path: join(__dirname),
+    path: import.meta.dirname,
 });
 
 const appTitle = resolveAppTitle(process.env.VITE_APP_TITLE);

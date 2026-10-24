@@ -13,7 +13,7 @@ export default defineEventHandler((event) => {
     setResponseHeader(event, "Access-Control-Allow-Origin", origin);
     setResponseHeader(event, "Access-Control-Allow-Methods", allowedMethods);
     setResponseHeader(event, "Access-Control-Allow-Headers", allowedHeaders);
-    setResponseHeader(event, "Access-Control-Max-Age", 600);
+    setResponseHeader(event, "Access-Control-Max-Age", "600");
     setResponseHeader(event, "Vary", "Origin");
 
     if (event.method === "OPTIONS" && getRequestHeader(event, "access-control-request-method")) {

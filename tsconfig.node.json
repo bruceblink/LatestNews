@@ -14,6 +14,7 @@
     "electron/synchub-policy.ts",
     "electron/synchub-storage.ts",
     "*.config.*",
+    "vite-*.ts",
     "vite.renderer.ts",
     "shared",
     "test",

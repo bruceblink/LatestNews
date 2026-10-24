@@ -10,7 +10,6 @@ export const publicApiPathPrefixes = [
     "/api/v1/feeds",
     "/api/proxy",
     "/api/latest",
-    "/api/mcp",
 ] as const;
 
 export function isPublicApiPath(pathname: string) {

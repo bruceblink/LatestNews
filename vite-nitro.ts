@@ -1,30 +1,23 @@
+import { join } from "node:path";
 import process from "node:process";
-import { join, dirname } from "node:path";
-import { createRequire } from "node:module";
-import viteNitro from "vite-plugin-with-nitro";
+import { nitro } from "nitro/vite";
 
-import { projectDir } from "./shared/dir";
-import { RollopGlob } from "./tools/rollup-glob";
+import { projectDir } from "./shared/dir.js";
+import { RollopGlob } from "./tools/rollup-glob.js";
 
 const useNodeRuntime = !process.env.CF_PAGES && !process.env.VERCEL;
-const require = createRequire(import.meta.url);
-const pluginRendererPath = join(dirname(require.resolve("vite-plugin-with-nitro")), "runtime/renderer.mjs").replaceAll(
-    "\\",
-    "/"
-);
-const pluginRendererUrl = `file:///${pluginRendererPath}`;
 const localRendererPath = join(projectDir, "server/renderer.ts");
 
-const nitroOption: NonNullable<Parameters<typeof viteNitro>[0]> = {
+const nitroOption: NonNullable<Parameters<typeof nitro>[0]> = {
     experimental: {
         database: true,
     },
 
-    rollupConfig: {
+    rolldownConfig: {
         plugins: [RollopGlob()] as any,
     },
 
-    sourceMap: false,
+    sourcemap: false,
 
     database: {
         default: {
@@ -38,11 +31,9 @@ const nitroOption: NonNullable<Parameters<typeof viteNitro>[0]> = {
         },
     },
 
-    imports: {
-        dirs: ["server/utils", "shared"],
-    },
-
     preset: "node-server",
+
+    serverDir: "./server",
 
     alias: {
         "@shared": join(projectDir, "shared"),
@@ -51,14 +42,11 @@ const nitroOption: NonNullable<Parameters<typeof viteNitro>[0]> = {
             projectDir,
             useNodeRuntime ? "server/crawler-plugin-runtime.node.ts" : "server/crawler-plugin-runtime.pages.ts"
         ),
-        // The plugin emits an absolute renderer URL; keep the fallback in this repository so it can be bundled.
-        [pluginRendererPath]: localRendererPath,
-        [pluginRendererUrl]: localRendererPath,
     },
 
     ...(useNodeRuntime
         ? {
-              renderer: localRendererPath,
+              renderer: { handler: localRendererPath },
               // Nitro's Node asset reader is relative to the server entry module.
               inlineDynamicImports: true,
           }
@@ -97,7 +85,7 @@ if (process.env.VERCEL) {
 }
 
 export default function initVoteNitro() {
-    const nitroPlugin = viteNitro(nitroOption);
+    const nitroPlugin = nitro(nitroOption);
 
     return [
         {

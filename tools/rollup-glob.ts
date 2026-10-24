@@ -1,4 +1,4 @@
-import type { Plugin } from "rollup";
+import type { Plugin } from "vite";
 import type { FilterPattern } from "@rollup/pluginutils";
 
 import path from "node:path";
@@ -6,7 +6,7 @@ import glob from "fast-glob";
 import { writeFile } from "node:fs/promises";
 import { createFilter, normalizePath } from "@rollup/pluginutils";
 
-import { projectDir } from "../shared/dir";
+import { projectDir } from "../shared/dir.js";
 
 const ID_PREFIX = "glob:";
 const root = path.join(projectDir, "server");
