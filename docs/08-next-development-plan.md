@@ -1,6 +1,6 @@
 # 后续开发计划
 
-日期：2026-10-24。基线：`main` 的 `7bbd8c0`。
+日期：2026-10-24。基线：`main` 的 `25cfeea`。
 
 本计划承接 F2-A/F2-B。当前主线已经限制来源任务总并发、等待队列和 `myFetch` 的上游 origin 调度。下一阶段先完成采集资源边界，再进入 Web/Electron 性能和新闻源工程化。每个切片独立提交，完成验证后再开始下一项。
 
@@ -13,9 +13,10 @@
 | 03 | F2-E 特殊请求收口 | 将 `$fetch.raw` 等绕过 `myFetch` 的来源请求纳入调度与边界 | F2-C |
 | 04 | F3-A Web 查询与首屏 | 减少重复请求和非首屏资源，建立 Web 比较数据 | F2-D |
 | 05 | F3-B Electron 生命周期 | 验证桌面启动、切页、最小化恢复和资源释放 | F3-A |
-| 06 | F4-A Source SDK | 固定抓取上下文、解析工具、清单校验和本地样例约定 | F2-E |
-| 07 | F4-B 适配器迁移 | 迁移 RSS、JSON、HTML 三类代表源并保留兼容行为 | F4-A |
-| 08 | F5-A 质量报告 | 建立来源成功率、空结果、重复率和新鲜度报告 | F4-B |
+| 06 | F3-C 统一设置入口 | Web 与 Electron 共用独立设置按钮；桌面端可覆盖新闻数据源 API 根地址 | F3-B |
+| 07 | F4-A Source SDK | 固定抓取上下文、解析工具、清单校验和本地样例约定 | F2-E、F3-C |
+| 08 | F4-B 适配器迁移 | 迁移 RSS、JSON、HTML 三类代表源并保留兼容行为 | F4-A |
+| 09 | F5-A 质量报告 | 建立来源成功率、空结果、重复率和新鲜度报告 | F4-B |
 
 F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 实际窗口证据；没有对应设备时只记录已执行的自动化和 headless 范围。F4/F5 的公网源采样与本地 fixture 分开记录。
 
@@ -77,13 +78,32 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 - `pnpm typecheck:electron`：通过。
 - `pnpm lint:check`：通过。
 - `pnpm electron:build`：通过。构建仍有 4 个图标下载超时和既有 Zod 注释警告，使用本地默认图标继续生成产物。
-- `pnpm exec tsx scripts/performance/electron-lifecycle.ts`：通过。观察到 `app://bundle/feed`、11 条生命周期事件、4 个 Electron 进程，关闭后窗口数为 0。
+- `pnpm exec tsx scripts/performance/electron-lifecycle.ts`：通过。观察到 `app://bundle/feed`、完整的启动、最小化、恢复和关闭事件、4 个 Electron 进程，关闭后窗口数为 0；探针同时确认 React 根节点已挂载，并在临时 userData 中完成桌面新闻 API 地址的默认读取、HTTPS 地址切换、读取回写和恢复默认。
 - 探针在当前工作站选择已安装的 Electron `44.8.0` 二进制运行；声明为 `44.9.0` 的 npm 包没有本地二进制，首次默认解析尝试下载时因网络不可用失败。脚本支持 `LATESTNEWS_ELECTRON_EXECUTABLE` 显式指定本地程序。
 
 ### 证据边界与回退
 
 本轮证据覆盖构建产物和真实 Electron 进程的自动化生命周期，不替代 Computer Use 的真实可视窗口、任务栏、安装升级、macOS 或 Linux 验收。回退时删除生命周期探针、诊断 IPC 和 worker 关闭钩子即可；不改变 Web API、缓存格式、来源 ID 或远程请求目标。
 
+## F3-C：统一设置入口与桌面数据源配置（实现完成）
+
+### 实现范围
+
+- Header 增加独立齿轮按钮。Web 和 Electron 打开同一个 Radix 配置面板；用户菜单不再承载设置入口。
+- 新增 `/settings` 路由，复用同一个设置面板，保留直接访问和深层路由能力。
+- Electron 主进程从构建默认值开始读取新闻 API origin。设置面板通过受信任 IPC 读取、保存和恢复地址，配置写入 `userData/news-api-config.json`，不保存认证凭据。
+- 保存后刷新页面，使后续 `/api` 请求使用新的数据源。认证 API 和 SyncHub 地址继续使用各自的配置与凭据边界。
+
+### 验收条件
+
+- Web 与 Electron 构建均包含独立设置按钮和共享面板。
+- Electron 生产构建只接受 HTTPS；开发构建额外接受 localhost HTTP；路径、查询、片段和凭据均被拒绝。
+- 生命周期探针在临时 userData 中读取默认值、切换到测试 HTTPS origin、读取切换结果并恢复默认值，不修改用户真实配置。
+
+### 回退边界
+
+移除设置组件、设置路由、桌面配置 IPC 和 `news-api-config.json` 读写逻辑即可恢复构建时固定数据源；不改变 Web `/api` service、认证 API 或 SyncHub 数据格式。
+
 ## 当前下一步
 
-F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针已完成；下一步继续 F4-A Source SDK。真实浏览器请求瀑布和真实 Windows 窗口证据单独记录，不把 headless 或进程输出标为 UI 通过。
+F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针和 F3-C 的统一设置入口已完成；下一步继续 F4-A Source SDK。真实浏览器请求瀑布和真实 Windows 窗口证据单独记录，不把 headless 或进程输出标为 UI 通过。

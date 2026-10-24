@@ -13,6 +13,7 @@ import { goToTopAtom, currentSourcesAtom } from "~/atoms";
 
 import { Menu } from "./menu";
 import { NavBar } from "../navbar";
+import { SettingsButton } from "../settings/settings-button";
 
 function GoTop() {
     const { ok, fn: goToTop } = useAtomValue(goToTopAtom);
@@ -118,6 +119,7 @@ export function Header() {
                 <GoTop />
                 {enableLogin.enable && <Refresh />}
                 <ThemeToggle />
+                <SettingsButton />
                 <Github />
                 <Menu />
             </span>

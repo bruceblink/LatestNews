@@ -14,6 +14,7 @@ import { Route as FeedRouteImport } from './routes/feed'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as CColumnRouteImport } from './routes/c.$column'
 import { Route as SourceSourceIdRouteImport } from './routes/source.$sourceId'
@@ -43,6 +44,11 @@ const InsightsRoute = InsightsRouteImport.update({
   path: '/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/health': typeof HealthRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$column': typeof CColumnRoute
   '/source/$sourceId': typeof SourceSourceIdRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/health': typeof HealthRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$column': typeof CColumnRoute
   '/source/$sourceId': typeof SourceSourceIdRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/health': typeof HealthRoute
   '/history': typeof HistoryRoute
   '/insights': typeof InsightsRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$column': typeof CColumnRoute
   '/source/$sourceId': typeof SourceSourceIdRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/history'
     | '/insights'
+    | '/settings'
     | '/auth/callback'
     | '/c/$column'
     | '/source/$sourceId'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/history'
     | '/insights'
+    | '/settings'
     | '/auth/callback'
     | '/c/$column'
     | '/source/$sourceId'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/history'
     | '/insights'
+    | '/settings'
     | '/auth/callback'
     | '/c/$column'
     | '/source/$sourceId'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   HealthRoute: typeof HealthRoute
   HistoryRoute: typeof HistoryRoute
   InsightsRoute: typeof InsightsRoute
+  SettingsRoute: typeof SettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   CColumnRoute: typeof CColumnRoute
   SourceSourceIdRoute: typeof SourceSourceIdRoute
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -201,6 +221,7 @@ const rootRouteChildren: RootRouteChildren = {
   HealthRoute: HealthRoute,
   HistoryRoute: HistoryRoute,
   InsightsRoute: InsightsRoute,
+  SettingsRoute: SettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   CColumnRoute: CColumnRoute,
   SourceSourceIdRoute: SourceSourceIdRoute,

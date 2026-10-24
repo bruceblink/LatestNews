@@ -1,8 +1,8 @@
 import { myFetch, apiFetch } from "~/utils";
+import { queryClient } from "~/query-client";
 import { atomWithStorage } from "jotai/utils";
 import { useAtomValue, getDefaultStore } from "jotai";
 
-import { queryClient } from "../main";
 import { userAtom, authStatusAtom } from "../auth/authAtoms";
 
 // -----------------------------

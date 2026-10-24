@@ -28,6 +28,7 @@ LatestNews 是一个以中文资讯聚合为核心的实时阅读应用，提供
 - 支持安装为 PWA，并提供离线与更新反馈
 - 支持缓存、限频抓取与登录用户强制刷新
 - 支持通过 `https://sync.likanug.app` 和 LatestNews API Key 同步阅读历史、收藏与偏好，也可覆盖服务地址接入自建 SyncHub
+- Web 与 Electron 共用独立的设置按钮和配置面板；桌面端可以覆盖新闻数据源 API 根地址
 
 ## 技术栈
 
@@ -68,6 +69,8 @@ pnpm electron:package:linux
 
 桌面构建可通过 `LATESTNEWS_DESKTOP_API_URL`、`LATESTNEWS_DESKTOP_AUTH_API_URL` 和 `LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL` 覆盖新闻 API、认证 API 和登录回调地址。生产构建要求远程地址使用 HTTPS。开发时仅允许把 HTTP 用于本机 API。桌面应用将已验证的 SyncHub 地址和 API Key 一起加密保存；地址不变时可留空复用密钥，更换地址时需要重新输入并验证。
 
+Header 右侧的齿轮按钮在 Web 和 Electron 中打开同一套设置面板。Web 端显示构建变量 `VITE_NEWS_API_URL` 的来源说明；Electron 端可以填写新闻服务根地址，保存后写入应用用户数据目录，并立即用于后续 `/api` 请求。认证服务和 SyncHub 不使用这个数据源地址。
+
 ## 环境变量
 
 可参考 [example.env.server](./example.env.server) 进行配置：
@@ -95,7 +98,7 @@ PRODUCTHUNT_API_TOKEN=
 - `VITE_API_URL`：登录与用户同步相关 API 地址
 - `VITE_NEWS_API_URL`：可选 Web 构建变量。设置为远程 Node API 根地址后，Web 新闻请求使用该服务；桌面仍使用主进程代理。
 - `LATESTNEWS_WEB_ORIGINS`：Node 运行变量。填写允许访问 Node API 的 Web 来源地址；多个地址用逗号分隔。
-- `LATESTNEWS_DESKTOP_API_URL`：可选的桌面新闻 API 根地址，默认 `https://news.likanug.top`
+- `LATESTNEWS_DESKTOP_API_URL`：可选的桌面新闻 API 根地址，默认 `https://news.likanug.top`；桌面设置面板可以在运行时覆盖这个默认值
 - `LATESTNEWS_DESKTOP_AUTH_API_URL`：可选的桌面认证 API 根地址，默认 `https://api.likanug.top`
 - `LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL`：可选的桌面登录回调地址，默认 `https://news.likanug.top/auth/callback`
 - `JWT_SECRET`：与登录服务保持一致的 JWT 密钥

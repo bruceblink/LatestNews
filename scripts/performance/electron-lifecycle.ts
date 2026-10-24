@@ -20,12 +20,28 @@ await Promise.all([
 
 const temporaryRoot = await mkdtemp(join(tmpdir(), "latestnews-electron-lifecycle-"));
 const reportPath = join(temporaryRoot, "lifecycle.json");
+const userDataPath = join(temporaryRoot, "user-data");
 
 try {
     const exitCode = await runElectronApp(electronExecutable, appDirectory, reportPath);
     assert.equal(exitCode, 0, "Electron lifecycle probe should exit successfully.");
     const report = JSON.parse(await readFile(reportPath, "utf8")) as LifecycleProbeReport;
     assert.equal(report.result, "passed", "Electron lifecycle probe should write a passing report.");
+    const apiConfig = report.apiConfig ?? {};
+    assert.ok(
+        report.rendererSnapshot?.appHtml,
+        `Electron renderer did not mount the app root. ${JSON.stringify({
+            snapshot: report.rendererSnapshot,
+            console: report.rendererConsoleMessages,
+        })}`
+    );
+    assert.equal(
+        apiConfig.changedUrl,
+        "https://news.example.test",
+        `Desktop API URL did not update. ${JSON.stringify(apiConfig)}`
+    );
+    assert.equal(apiConfig.changed?.url, "https://news.example.test", "Updated desktop API URL was not read back.");
+    assert.equal(apiConfig.resetUrl, apiConfig.reset?.defaultUrl, "Desktop API URL did not reset.");
 
     const eventNames = new Set([
         ...report.beforeClose.lifecycle.events.map((event) => event.name),
@@ -69,6 +85,21 @@ try {
 
 interface LifecycleProbeReport {
     result: "passed" | "failed";
+    apiConfig?: {
+        changedUrl?: string;
+        changed?: { url: string; defaultUrl: string };
+        resetUrl?: string;
+        reset?: { url: string; defaultUrl: string };
+    };
+    rendererSnapshot?: {
+        title?: string;
+        readyState?: string;
+        bodyText?: string;
+        appHtml?: string;
+        scripts?: Array<{ src: string; type: string }>;
+        resources?: string[];
+    };
+    rendererConsoleMessages?: string[];
     beforeClose: DiagnosticsSnapshot;
     afterClose: DiagnosticsSnapshot;
 }
@@ -93,6 +124,7 @@ function runElectronApp(executable: string, appPath: string, report: string) {
                 ...process.env,
                 LATESTNEWS_ELECTRON_LIFECYCLE_PROBE: "1",
                 LATESTNEWS_ELECTRON_LIFECYCLE_REPORT: report,
+                LATESTNEWS_ELECTRON_LIFECYCLE_USER_DATA: userDataPath,
             },
             stdio: ["ignore", "ignore", "pipe"],
             windowsHide: true,

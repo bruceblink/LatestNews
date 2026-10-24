@@ -1,6 +1,6 @@
-import { promises as fs } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { join, resolve } from "node:path";
+import { existsSync, promises as fs } from "node:fs";
 import {
     app,
     net,
@@ -48,6 +48,7 @@ const MAX_API_REQUEST_BYTES = 5 * 1024 * 1024;
 const MAX_API_RESPONSE_BYTES = 25 * 1024 * 1024;
 const MAX_SYNC_HUB_BODY_BYTES = 2 * 1024 * 1024;
 const MAX_SYNC_HUB_RESPONSE_BYTES = 8 * 1024 * 1024;
+const NEWS_API_CONFIG_FILE = "news-api-config.json";
 const SYNC_HUB_CONFIG_FILE = "synchub-config.enc";
 const LEGACY_SYNC_HUB_KEY_FILE = "synchub-api-key.enc";
 const API_METHODS = new Set(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]);
@@ -67,7 +68,7 @@ protocol.registerSchemesAsPrivileged([
     },
 ]);
 
-const newsApiUrl = normalizeServiceUrl(__LATESTNEWS_DESKTOP_API_URL__, { allowLocalHttp: true });
+const defaultNewsApiUrl = normalizeServiceUrl(__LATESTNEWS_DESKTOP_API_URL__, { allowLocalHttp: true });
 const authApiUrl = normalizeServiceUrl(__LATESTNEWS_DESKTOP_AUTH_API_URL__, { allowLocalHttp: true });
 const authCallbackUrl = new URL(__LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL__);
 
@@ -75,7 +76,7 @@ if (authCallbackUrl.protocol !== "https:" || authCallbackUrl.username || authCal
     throw new Error("The desktop authentication callback must use an HTTPS URL without credentials.");
 }
 
-const apiTargets = { news: newsApiUrl, auth: authApiUrl };
+const apiTargets = { news: defaultNewsApiUrl, auth: authApiUrl };
 const securityHeaders = new Headers({
     "Content-Security-Policy": [
         "default-src 'self'",
@@ -107,7 +108,8 @@ const lifecycle = createDesktopLifecycleTracker();
 Menu.setApplicationMenu(null);
 
 function getAppResourceRoot() {
-    return app.isPackaged ? app.getAppPath() : resolve(app.getAppPath(), "out");
+    const appPath = app.getAppPath();
+    return app.isPackaged || existsSync(resolve(appPath, "main/main.cjs")) ? appPath : resolve(appPath, "out");
 }
 
 // Keep the native window icon outside app.asar so the operating system can load it as a file.
@@ -141,8 +143,11 @@ if (!hasSingleInstanceLock) {
         .then(async () => {
             lifecycle.record("app-ready");
             app.setAppUserModelId("top.likanug.latestnews");
+            const probeUserDataPath = process.env.LATESTNEWS_ELECTRON_LIFECYCLE_USER_DATA?.trim();
+            if (probeUserDataPath) app.setPath("userData", resolve(probeUserDataPath));
             rendererDevUrl = getDevelopmentRendererUrl(process.env.ELECTRON_RENDERER_URL);
             trustedRendererUrl = rendererDevUrl?.origin ?? APP_BASE_URL;
+            await loadStoredNewsApiUrl();
             installProtocol();
             installPermissionPolicy();
             crawlerRuntime = await createElectronCrawlerPluginRuntime();
@@ -230,8 +235,13 @@ async function runLifecycleProbe() {
     lifecycleProbeActive = true;
     const reportPath = process.env.LATESTNEWS_ELECTRON_LIFECYCLE_REPORT?.trim();
     const window = mainWindow;
+    const rendererConsoleMessages: string[] = [];
+    const handleRendererConsoleMessage = (_event: Electron.Event, level: number, message: string) => {
+        rendererConsoleMessages.push(`${level}: ${message}`);
+    };
     try {
         if (!window || window.isDestroyed()) throw new Error("Main window was not created.");
+        window.webContents.on("console-message", handleRendererConsoleMessage);
         await window.loadURL(new URL("feed", APP_BASE_URL).href);
         if (!window.isVisible()) window.show();
         await wait(100);
@@ -239,6 +249,43 @@ async function runLifecycleProbe() {
         await wait(100);
         window.restore();
         await wait(100);
+        const apiConfig = (await window.webContents.executeJavaScript(
+            `
+                (async () => {
+                    const current = await window.latestNewsDesktop?.getNewsApiUrl?.();
+                    const changedUrl = await window.latestNewsDesktop?.setNewsApiUrl?.("https://news.example.test");
+                    const changed = await window.latestNewsDesktop?.getNewsApiUrl?.();
+                    const resetUrl = await window.latestNewsDesktop?.resetNewsApiUrl?.();
+                    const reset = await window.latestNewsDesktop?.getNewsApiUrl?.();
+                    return { current, changedUrl, changed, resetUrl, reset };
+                })()
+            `,
+            true
+        )) as {
+            current?: { url: string; defaultUrl: string };
+            changedUrl?: string;
+            changed?: { url: string; defaultUrl: string };
+            resetUrl?: string;
+            reset?: { url: string; defaultUrl: string };
+        };
+        const rendererSnapshot = (await window.webContents.executeJavaScript(
+            `({
+                title: document.title,
+                readyState: document.readyState,
+                bodyText: document.body.innerText,
+                appHtml: document.querySelector("#app")?.innerHTML.slice(0, 500) ?? "",
+                scripts: [...document.scripts].map((script) => ({ src: script.src, type: script.type })),
+                resources: performance.getEntriesByType("resource").map((entry) => entry.name)
+            })`,
+            true
+        )) as {
+            title?: string;
+            readyState?: string;
+            bodyText?: string;
+            appHtml?: string;
+            scripts?: Array<{ src: string; type: string }>;
+            resources?: string[];
+        };
         const beforeClose = getDesktopDiagnostics();
         const closed = new Promise<void>((resolveClosed) => window.once("closed", resolveClosed));
         window.destroy();
@@ -247,7 +294,11 @@ async function runLifecycleProbe() {
         if (reportPath) {
             await fs.writeFile(
                 reportPath,
-                `${JSON.stringify({ result: "passed", beforeClose, afterClose }, null, 2)}\n`,
+                `${JSON.stringify(
+                    { result: "passed", apiConfig, rendererSnapshot, rendererConsoleMessages, beforeClose, afterClose },
+                    null,
+                    2
+                )}\n`,
                 "utf8"
             );
         }
@@ -260,6 +311,8 @@ async function runLifecycleProbe() {
             );
         }
     } finally {
+        if (window && !window.isDestroyed())
+            window.webContents.removeListener("console-message", handleRendererConsoleMessage);
         lifecycleProbeActive = false;
         app.quit();
     }
@@ -492,6 +545,49 @@ function getLegacySyncHubKeyPath() {
     return join(app.getPath("userData"), LEGACY_SYNC_HUB_KEY_FILE);
 }
 
+function getNewsApiConfigPath() {
+    return join(app.getPath("userData"), NEWS_API_CONFIG_FILE);
+}
+
+function validateNewsApiUrl(value: string) {
+    return normalizeServiceUrl(value, { allowLocalHttp: !app.isPackaged });
+}
+
+async function loadStoredNewsApiUrl() {
+    try {
+        const raw = await fs.readFile(getNewsApiConfigPath(), "utf8");
+        const parsed: unknown = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object" || !("url" in parsed) || typeof parsed.url !== "string") {
+            throw new Error("Invalid desktop news API configuration.");
+        }
+        apiTargets.news = validateNewsApiUrl(parsed.url);
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+        apiTargets.news = defaultNewsApiUrl;
+        console.warn(
+            "Desktop news API configuration could not be loaded; using the build-time default.",
+            error instanceof Error ? error.message : "Invalid settings."
+        );
+    }
+}
+
+async function saveNewsApiUrl(value: string) {
+    const checked = validateNewsApiUrl(value.trim());
+    await fs.mkdir(app.getPath("userData"), { recursive: true });
+    await fs.writeFile(getNewsApiConfigPath(), `${JSON.stringify({ url: checked.origin })}\n`, {
+        encoding: "utf8",
+        mode: 0o600,
+    });
+    apiTargets.news = checked;
+    return checked.origin;
+}
+
+async function resetNewsApiUrl() {
+    await fs.rm(getNewsApiConfigPath(), { force: true });
+    apiTargets.news = defaultNewsApiUrl;
+    return apiTargets.news.origin;
+}
+
 async function decryptStoredSyncHubConfig(path: string) {
     try {
         if (!(await safeStorage.isAsyncEncryptionAvailable()))
@@ -614,6 +710,25 @@ function installDesktopIpc(runtime: ElectronCrawlerPluginRuntime) {
     ipcMain.handle("desktop:lifecycle:diagnostics", (event) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop diagnostics request.");
         return getDesktopDiagnostics();
+    });
+
+    ipcMain.handle("desktop:news-api:get-url", (event) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop news API request.");
+        return {
+            url: apiTargets.news.origin,
+            defaultUrl: defaultNewsApiUrl.origin,
+        };
+    });
+
+    ipcMain.handle("desktop:news-api:set-url", async (event, value: unknown) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop news API request.");
+        if (typeof value !== "string" || !value.trim()) throw new Error("A news API URL is required.");
+        return saveNewsApiUrl(value);
+    });
+
+    ipcMain.handle("desktop:news-api:reset-url", async (event) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop news API request.");
+        return resetNewsApiUrl();
     });
 
     ipcMain.handle("desktop:start-login", async (event) => {

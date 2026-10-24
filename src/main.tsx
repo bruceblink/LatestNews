@@ -2,22 +2,14 @@ import type { SourceMetadataResponse } from "@shared/source-metadata";
 
 import ReactDOM from "react-dom/client";
 import { sourceApi } from "@shared/source-api";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { registerRuntimeSourceCatalog } from "@shared/runtime-source-catalog";
 
 import { myFetch } from "./utils";
+import { queryClient } from "./query-client";
 
-export const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            retry: false,
-            refetchOnWindowFocus: false,
-        },
-    },
-});
-
-await bootstrapRuntimeSourceCatalog();
+const runtimeSourceCatalogPromise = bootstrapRuntimeSourceCatalog();
 
 const [{ routeTree }, { AuthProvider }] = await Promise.all([import("./routeTree.gen"), import("./auth/AuthProvider")]);
 
@@ -40,6 +32,8 @@ if (!rootElement.innerHTML) {
         </QueryClientProvider>
     );
 }
+
+void runtimeSourceCatalogPromise;
 
 declare module "@tanstack/react-router" {
     interface Register {

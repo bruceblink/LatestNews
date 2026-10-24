@@ -79,7 +79,7 @@
 
 桌面通过标准、安全的 `app://bundle/` 协议读取前端资源。协议处理器区分静态资源和允许的 API 路径：页面路径返回本地资源，新闻 `/api/*` 请求转发到构建时配置的远程新闻服务。保留现有 service 调用方式，减少页面改动。
 
-拟新增构建变量 `LATESTNEWS_DESKTOP_API_URL`，默认使用项目现有公开新闻站点的服务根地址。它是公开地址，不是凭据。自建服务通过构建配置覆盖，首版不新增连接管理页面。`VITE_API_URL` 保持原有认证服务含义，SyncHub 保持现有配置入口。
+构建变量 `LATESTNEWS_DESKTOP_API_URL` 提供桌面新闻服务的默认根地址。它是公开地址，不是凭据。桌面端现在提供独立的设置按钮和配置面板，用户可以覆盖这个默认值；应用只保存经过校验的服务 origin，并将后续 `/api` 请求转发到该地址。生产构建要求 HTTPS，本地开发允许 localhost HTTP。Web 端复用同一个面板，但只显示 `VITE_NEWS_API_URL` 的构建配置说明，不在运行时修改 Web 服务地址。`VITE_API_URL` 保持原有认证服务含义，SyncHub 保持现有配置入口。
 
 Web 默认请求同源 `/api`。Pages 前端需要读取独立 Node API 的插件数据时，构建时设置 `VITE_NEWS_API_URL` 为 Node API 根地址，并在 Node 运行环境设置精确的 `LATESTNEWS_WEB_ORIGINS` 来源列表。`VITE_API_URL` 仍只选择认证和用户同步服务。
 
@@ -117,7 +117,7 @@ SyncHub 优先复用现有请求与合并逻辑。若桌面来源受到跨域限
 | 顺序 | 切片与依赖 | 主要工作 | 验收条件 |
 | --- | --- | --- | --- |
 | D1 | 共用前端构建；起点 | 抽取共用配置，增加最小桌面入口、本地资源协议和 PWA 适配；核对认证服务能力。 | 同一份页面源码进入 Web 和桌面产物；Web 构建行为保持兼容；桌面无 Service Worker；认证路径和外部依赖已记录。 |
-| D2 | 远程 API；依赖 D1 | 增加固定目标转发和构建配置，复用全部新闻 service、错误状态及离线逻辑。 | 首页、Feed、洞察、健康和源详情读取远程数据；查询、POST、错误、超时和取消正常；桌面无采集器、数据库或监听端口。 |
+| D2 | 远程 API；依赖 D1 | 增加受限目标转发和构建配置，复用全部新闻 service、错误状态及离线逻辑；桌面运行时可覆盖新闻服务 origin。 | 首页、Feed、洞察、健康和源详情读取远程数据；查询、POST、错误、超时和取消正常；桌面设置可以读取、保存和恢复数据源地址；桌面无采集器、数据库或监听端口。 |
 | D3 | 登录与同步；依赖 D2 及认证服务支持 | 完成集中认证适配、凭据存储和 SyncHub 请求适配，复用状态合并与反馈。 | 登录、取消、退出、过期、布局同步和阅读数据同步可验收；初始化或网络失败不覆盖已有本地数据。 |
 | D4 | 多平台打包与发布 CI；依赖 D2，D3 为完整功能交付条件 | 构建 Windows、macOS、Linux 桌面包；打包 Web Node 服务与静态资源；构建并推送多架构 Docker 镜像；生成双语 Release 说明。 | Windows x64/ARM64、macOS x64/ARM64、Linux x64/ARM64 均生成桌面包；Web zip 和 GHCR 镜像成功；任何必需构建失败时不发布 GitHub Release。 |
 | D5 | 双端回归与发行演练；依赖 D1 至 D4 | 检查真实窗口、Windows 覆盖安装保留数据、卸载及失败恢复，汇总证据。 | 自动化检查和 Windows 真实窗口验收通过；真实认证服务限制明确；各平台 CI 产物可下载；未完成项列出。 |
@@ -207,6 +207,7 @@ Electron 保持 `nodeIntegration: false`、`contextIsolation: true`、`sandbox: 
 | --- | --- |
 | D1 共用前端构建 | 已实现。Web 与 Electron 使用共用的 React 入口、路由、页面和 renderer 配置。桌面构建不注册 Service Worker，并从 `app://bundle/` 加载本地页面。 |
 | D2 新闻 API | 已实现客户端受限转发、路径和大小限制，并保留共用 service。API 代理与资源安全测试通过。生产站点和部署健康接口可访问；健康结果为 `degraded`，原因是缓存不可用，因此不代表完整生产服务健康。 |
+| 双端设置面板与桌面数据源 | 已实现。Web 与 Electron Header 使用独立齿轮按钮和共享设置面板；Electron 通过受信任 IPC 校验、保存和恢复新闻 API 根地址，认证服务与 SyncHub 配置保持独立。生命周期探针覆盖临时用户数据目录中的读取、切换和恢复流程。 |
 | D3 登录与 SyncHub | 桌面适配和凭据加密代码已实现，但真实服务验收未完成。2026-10-17 只读探测中，`https://api.likanug.top/api/me` 和 `/api/sync/me` 均返回 HTTP 520，无法验证完整登录、布局同步和 SyncHub 会话流程。 |
 | D4 多平台打包 | 首轮 CI `39018805479` 的源码检查和 Web 包通过；六个平台包均失败，原因包括 Electron 运行时路径、Windows 原生依赖和 ARM64 `workerd`。`6617fb9` 修复 Electron 下载与桌面依赖安装后，Linux x64/ARM64 在构建 `.deb` 时因桌面 `package.json` 缺少 `homepage` 失败。提交 `d0fec4f` 将根清单中的 `homepage` 写入桌面清单；随后发布任务又因下载 Docker Buildx 记录失败。提交 `29356b5` 将桌面包与 Web 包按名称下载，排除 Docker 构建记录。CI [39023279173](https://github.com/bruceblink/LatestNews/actions/runs/39023279173) 最终通过全部六个平台桌面包、Web 包和 Docker 镜像，并发布 [GitHub Release `v0.6.0`](https://github.com/bruceblink/LatestNews/releases/tag/v0.6.0)，包含 11 个文件。GHCR 的 `v0.6.0` 与 `latest` 指向摘要 `sha256:af500e3c21ba302d4705caf348a9888caa97c54ecf1e4e93369698eef599ad52`。 |
 | D5 双端验收 | Computer Use 实际打开 0.6.0 同源 Windows x64 解包包：热门页显示新闻，Electron 默认菜单已移除，窗口标题栏显示 LatestNews 图标。Windows 窗口改用外置 ICO；ICO 含 16、20、24、32、40、48、64、128、256 像素图层。解包包内 `resources/icon.ico` 与生成文件的 SHA-256 一致；`LatestNews.exe` 可读取 32×32 图标。Computer Use 的截图只包含应用窗口，未捕获任务栏；本次也无法从 GitHub 下载 112 MB 安装程序（资产连接超时），因此未直接验证安装后任务栏图标和快捷方式。此前将 0.5.2 安装到隔离目录后覆盖安装 0.5.3，测试数据哨兵文件保留；卸载程序返回 0，安装文件和快捷方式均已移除。Windows 登录和同步尚未通过真实服务验证；macOS、Linux 真实窗口及安装升级流程尚未执行。 |
