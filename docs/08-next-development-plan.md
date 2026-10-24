@@ -158,14 +158,17 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 - `shared/source-quality-watchlist.ts` 固定 10 个代表来源，覆盖 RSS、JSON、HTML 和热榜入口；每个来源记录适配器类型和采样目的。
 - `shared/source-quality-sampling.ts` 提供单来源采样函数。目标地址只接受 HTTPS；本地验收允许 localhost HTTP。请求不携带认证信息，单来源默认超时 20 秒，解码后响应上限为 2 MiB。
 - `scripts/performance/source-quality-sample.ts` 提供显式启用的 JSONL 采样命令。默认每轮间隔 15 分钟，按来源顺序执行，追加目标 `origin`、`sampledAt`、状态、条目数、最新发布时间、新鲜度、耗时和错误原因。
+- `shared/source-quality-window.ts` 和 `scripts/performance/source-quality-report.ts` 将 JSONL 汇总为按来源窗口报告，计算成功率、非空率、P50/P95 新鲜度，并保留未采样重点源。
 - 采样命令通过 `--origin` 或 `LATESTNEWS_QUALITY_SAMPLE_ORIGIN` 指定地址；默认不启动、不访问公网，也不写入版本库。
 
 ### 验证与证据边界
 
 - `pnpm exec vitest -c vitest.config.ts run test/source-quality-sampling.test.ts`：通过，5 个测试覆盖地址校验、正常响应、HTTP 错误、响应体上限和超时。
+- `pnpm exec vitest -c vitest.config.ts run test/source-quality-sampling.test.ts test/source-quality-window.test.ts`：通过，7 个测试覆盖采样和窗口汇总。
 - `pnpm typecheck`：通过。
 - 新增文件定向 ESLint：通过。
 - `pnpm source-quality:sample -- --help`：通过，命令帮助和默认参数可读。
+- `pnpm source-quality:report -- --help`：通过，命令帮助和报告参数可读。
 - 本切片没有执行公网采样。后续须使用明确授权的 HTTPS 部署地址，按 15 分钟或更长间隔运行至少 7 天，并保存运行提交、地址、时间窗口和错误记录。公网结果不作为本地代码测试通过证据。
 
 ### 回退边界

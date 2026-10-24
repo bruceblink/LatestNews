@@ -65,7 +65,7 @@ P0 至 P4 已完成首轮实现。F4-B 又迁移了 Freebuf RSS、稀土掘金 J
 
 - 服务端标准化阶段记录原始、有效、无效、重复和可解析发布时间条目计数，并计算空结果原因和最近样本新鲜度。
 - `/api/v1/health/sources` 的每个来源增加 `quality` 计数；`/api/v1/health/diagnostics` 的 JSON 与文本报告增加成功率、有效条目率、重复率、发布时间完整率、空结果次数和新鲜度。
-- 统计窗口从服务进程首次采样开始。服务重启后重新开始。`source-quality:sample` 使用同一组重点来源，按显式 HTTPS 地址和低频间隔追加 JSONL 记录；7 天公网采样窗口仍未执行。
+- 统计窗口从服务进程首次采样开始。服务重启后重新开始。`source-quality:sample` 使用同一组重点来源，按显式 HTTPS 地址和低频间隔追加 JSONL 记录；`source-quality:report` 汇总成功率、非空率和新鲜度分位数；7 天公网采样窗口仍未执行。
 
 ## 验证结果
 
