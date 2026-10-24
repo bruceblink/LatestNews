@@ -30,6 +30,7 @@
 
 ## 验收边界
 
+- 后续生产日志确认，来源接口仍存在 Cheerio/Undici 的初始化错误。本切片不能证明线上 HTTP 500 已修复；后续处理见 [新闻接口运行时修复](15-cloudflare-pages-source-runtime-fix.md)。
 - 本轮没有 Cloudflare 凭据、部署控制或线上构建日志，不能声称 news.likanug.top 已恢复。必须部署本切片产物后重新检查真实接口。
 - 7 天重点源采样尚未开始。线上接口恢复前，采样结果仍会记录失败。
 - 本修复只恢复 Pages Functions 的构建和运行。Web 采用自托管边缘采集节点时，Cloudflare Pages 仍应只承载静态用户入口；API 应通过 VITE_NEWS_API_URL 指向自托管 Node/Docker 节点，或由该节点同源承载页面与 API。

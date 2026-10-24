@@ -66,6 +66,12 @@ if (process.env.VERCEL) {
     nitroOption.database = undefined;
 } else if (process.env.CF_PAGES) {
     nitroOption.preset = "cloudflare-pages";
+    // Sources only parse HTML strings. The Node entry also loads Undici, which
+    // reads process.versions.node during initialization and fails in Workers.
+    nitroOption.alias = {
+        ...nitroOption.alias,
+        cheerio: join(projectDir, "node_modules/cheerio/dist/browser/index.js"),
+    };
 
     // The Pages preset defaults to a modular worker. Its chunks import back into the
     // entry module, which current Wrangler versions cannot resolve at build time. Its
