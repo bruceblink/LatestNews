@@ -4,7 +4,9 @@ export interface DesktopNewsApiSettings {
 }
 
 function getDesktopBridge() {
-    if (import.meta.env.LATESTNEWS_DESKTOP !== true || typeof window === "undefined") return undefined;
+    const desktopBuild =
+        import.meta.env.LATESTNEWS_DESKTOP === true || String(import.meta.env.LATESTNEWS_DESKTOP) === "true";
+    if (!desktopBuild || typeof window === "undefined") return undefined;
     return window.latestNewsDesktop;
 }
 
