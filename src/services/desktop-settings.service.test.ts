@@ -46,4 +46,17 @@ describe("desktop settings service", () => {
         await expect(saveDesktopNewsApiUrl("https://news.example.test")).rejects.toThrow("桌面 API 配置接口不可用");
         await expect(resetDesktopNewsApiUrl()).rejects.toThrow("桌面 API 配置接口不可用");
     });
+
+    it("reports an incomplete desktop bridge as unavailable", async () => {
+        vi.stubEnv("LATESTNEWS_DESKTOP", "true");
+        vi.stubGlobal("window", {
+            latestNewsDesktop: {
+                getNewsApiUrl: vi.fn(),
+            },
+        });
+
+        expect(isDesktopNewsApiConfigurable()).toBe(false);
+        await expect(saveDesktopNewsApiUrl("https://news.example.test")).rejects.toThrow("桌面 API 配置接口不可用");
+        await expect(resetDesktopNewsApiUrl()).rejects.toThrow("桌面 API 配置接口不可用");
+    });
 });
