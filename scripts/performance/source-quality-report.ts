@@ -3,13 +3,14 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 import { sourceQualityWatchlist } from "../../shared/source-quality-watchlist";
 import { createSourceQualityWindowReport } from "../../shared/source-quality-window";
-
-import type { SourceQualitySampleRecord } from "../../shared/source-quality-sampling";
+import { parseSourceQualitySampleRecords } from "../../shared/source-quality-records";
 
 interface ReportCommandOptions {
     input: string;
     output: string;
     origin?: string;
+    from?: number;
+    to?: number;
 }
 
 const DEFAULT_INPUT = ".data/source-quality/samples.jsonl";
@@ -23,54 +24,17 @@ if (options.help) {
 
 const inputPath = resolve(process.cwd(), options.input);
 const outputPath = resolve(process.cwd(), options.output);
-const records = parseRecords(await readFile(inputPath, "utf8"), options.origin);
+const records = parseSourceQualitySampleRecords(await readFile(inputPath, "utf8"));
 const report = createSourceQualityWindowReport(records, {
     expectedSources: sourceQualityWatchlist,
+    origin: options.origin,
+    from: options.from,
+    to: options.to,
 });
 await mkdir(dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-console.info(`[source-quality] summarized ${records.length} samples for ${report.sources.length} source windows`);
+console.info(`[source-quality] summarized ${report.sampleCount} samples for ${report.sources.length} source windows`);
 console.info(`[source-quality] report=${outputPath}`);
-
-function parseRecords(content: string, origin?: string): SourceQualitySampleRecord[] {
-    const sampleRecords: SourceQualitySampleRecord[] = [];
-    for (const [index, line] of content.split(/\r?\n/).entries()) {
-        if (!line.trim()) continue;
-        let value: unknown;
-        try {
-            value = JSON.parse(line);
-        } catch {
-            throw new Error(`Invalid JSON on line ${index + 1} of the sample file.`);
-        }
-        if (!isSampleRecord(value)) {
-            throw new Error(`Invalid source quality sample on line ${index + 1}.`);
-        }
-        if (!origin || value.origin === origin) sampleRecords.push(value);
-    }
-    return sampleRecords;
-}
-
-function isSampleRecord(value: unknown): value is SourceQualitySampleRecord {
-    if (!isRecord(value)) return false;
-    return (
-        typeof value.sampledAt === "number" &&
-        Number.isFinite(value.sampledAt) &&
-        typeof value.origin === "string" &&
-        typeof value.sourceId === "string" &&
-        typeof value.kind === "string" &&
-        typeof value.purpose === "string" &&
-        typeof value.durationMs === "number" &&
-        Number.isFinite(value.durationMs) &&
-        typeof value.status === "string" &&
-        typeof value.itemCount === "number" &&
-        Number.isInteger(value.itemCount) &&
-        value.itemCount >= 0
-    );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 function parseOptions(args: string[]) {
     const parsed: ReportCommandOptions & { help?: boolean } = {
@@ -83,15 +47,29 @@ function parseOptions(args: string[]) {
             parsed.help = true;
             continue;
         }
-        const [name, inlineValue] = argument.split("=", 2);
+        if (argument === "--") continue;
+        const separator = argument.indexOf("=");
+        const name = separator < 0 ? argument : argument.slice(0, separator);
+        const inlineValue = separator < 0 ? undefined : argument.slice(separator + 1);
         const value = inlineValue ?? args[++index];
         if (!value) throw new Error(`Missing value for ${name}.`);
         if (name === "--input") parsed.input = value;
         else if (name === "--output") parsed.output = value;
         else if (name === "--origin") parsed.origin = value;
+        else if (name === "--from") parsed.from = parseTimestamp(name, value);
+        else if (name === "--to") parsed.to = parseTimestamp(name, value);
         else throw new Error(`Unknown option ${name}.`);
     }
     return parsed;
+}
+
+function parseTimestamp(name: string, value: string) {
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) {
+        throw new Error(`${name} must be an ISO timestamp with an explicit timezone.`);
+    }
+    const timestamp = Date.parse(value);
+    if (!Number.isFinite(timestamp) || timestamp < 0) throw new Error(`Invalid timestamp for ${name}.`);
+    return timestamp;
 }
 
 function printUsage() {
@@ -101,5 +79,7 @@ Options:
   --input path             JSONL sample file (default: ${DEFAULT_INPUT})
   --output path            JSON report file (default: ${DEFAULT_OUTPUT})
   --origin https://...     Include only one normalized sampling origin
+  --from ISO-timestamp     Include samples at or after this time (timezone required)
+  --to ISO-timestamp       Include samples at or before this time (default: now)
 `);
 }

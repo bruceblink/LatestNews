@@ -1,7 +1,7 @@
 import { it, expect, describe } from "vitest";
 
-import { assessSourceQualityWindow } from "../shared/source-quality-policy";
 import { createSourceQualityWindowReport } from "../shared/source-quality-window";
+import { assessSourceQualityWindow, defaultSourceQualityThresholds } from "../shared/source-quality-policy";
 
 import type { SourceQualitySampleRecord } from "../shared/source-quality-sampling";
 
@@ -33,6 +33,7 @@ describe("source quality policy", () => {
     it("marks a complete healthy window as passing", () => {
         const assessment = assessSourceQualityWindow(createSource(), {
             minimumSampleCount: 1,
+            minimumObservationDurationMs: 0,
             minimumSuccessRate: 1,
             minimumNonEmptyRate: 1,
             maximumFreshnessP95Ms: 1_000,
@@ -45,6 +46,7 @@ describe("source quality policy", () => {
         const source = createSource("error");
         const assessment = assessSourceQualityWindow(source, {
             minimumSampleCount: 1,
+            minimumObservationDurationMs: 0,
             minimumSuccessRate: 1,
             minimumNonEmptyRate: 1,
             maximumFreshnessP95Ms: 1_000,
@@ -57,6 +59,7 @@ describe("source quality policy", () => {
     it("accepts a freshness value exactly at the configured limit", () => {
         const assessment = assessSourceQualityWindow(createSource(), {
             minimumSampleCount: 1,
+            minimumObservationDurationMs: 0,
             minimumSuccessRate: 1,
             minimumNonEmptyRate: 1,
             maximumFreshnessP95Ms: 100,
@@ -71,6 +74,7 @@ describe("source quality policy", () => {
 
         const assessment = assessSourceQualityWindow(source, {
             minimumSampleCount: 1,
+            minimumObservationDurationMs: 0,
             minimumSuccessRate: 1,
             minimumNonEmptyRate: 1,
             maximumFreshnessP95Ms: 100,
@@ -78,5 +82,28 @@ describe("source quality policy", () => {
 
         expect(assessment.status).toBe("needs-attention");
         expect(assessment.reasons).toContain("缺少发布时间新鲜度数据");
+    });
+
+    it("requires seven days even after the sample count threshold is met", () => {
+        const source = {
+            ...createSource(),
+            sampleCount: defaultSourceQualityThresholds.minimumSampleCount,
+            observationDurationMs: defaultSourceQualityThresholds.minimumObservationDurationMs - 1,
+        };
+
+        const assessment = assessSourceQualityWindow(source);
+
+        expect(assessment.status).toBe("insufficient-data");
+        expect(assessment.reasons).toContain("观察跨度不足（需要 7 天）");
+    });
+
+    it("accepts a healthy observation spanning exactly seven days", () => {
+        const source = {
+            ...createSource(),
+            sampleCount: defaultSourceQualityThresholds.minimumSampleCount,
+            observationDurationMs: defaultSourceQualityThresholds.minimumObservationDurationMs,
+        };
+
+        expect(assessSourceQualityWindow(source)).toEqual({ status: "passing", reasons: [] });
     });
 });

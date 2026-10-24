@@ -1,4 +1,8 @@
+import type { ExecFileSyncOptionsWithStringEncoding } from "node:child_process";
+
+import { randomUUID } from "node:crypto";
 import { dirname, resolve } from "node:path";
+import { execFileSync } from "node:child_process";
 import { mkdir, appendFile } from "node:fs/promises";
 
 import { sourceQualityWatchlist, getSourceQualityWatchlistEntry } from "../../shared/source-quality-watchlist";
@@ -7,6 +11,8 @@ import {
     SOURCE_QUALITY_SAMPLE_TIMEOUT_MS,
     normalizeSourceQualitySampleOrigin,
 } from "../../shared/source-quality-sampling";
+
+import type { SourceQualitySamplingRun } from "../../shared/source-quality-sampling";
 
 interface SampleCommandOptions {
     origin?: string;
@@ -31,17 +37,36 @@ if (!originInput) {
     throw new Error("Provide --origin or LATESTNEWS_QUALITY_SAMPLE_ORIGIN.");
 }
 const origin = normalizeSourceQualitySampleOrigin(originInput);
-const selectedSources = options.sourceIds?.map((sourceId) => {
-    const source = getSourceQualityWatchlistEntry(sourceId);
-    if (!source) throw new Error(`Source ${sourceId} is not in the quality watchlist.`);
-    return source;
-}) ?? [...sourceQualityWatchlist];
+if (new URL(origin).protocol === "https:" && options.intervalMs < DEFAULT_INTERVAL_MS) {
+    throw new Error("Public sampling requires an interval of at least 900000 ms.");
+}
+const selectedSources = options.sourceIds
+    ? [...new Set(options.sourceIds)].map((sourceId) => {
+          const source = getSourceQualityWatchlistEntry(sourceId);
+          if (!source) throw new Error(`Source ${sourceId} is not in the quality watchlist.`);
+          return source;
+      })
+    : [...sourceQualityWatchlist];
+if (!selectedSources.length) throw new Error("Select at least one watchlist source.");
 const outputPath = resolve(process.cwd(), options.output);
+const run: SourceQualitySamplingRun = {
+    id: randomUUID(),
+    startedAt: Date.now(),
+    ...readGitState(),
+    nodeVersion: process.version,
+    intervalMs: options.intervalMs,
+    timeoutMs: options.timeoutMs,
+};
 
 await mkdir(dirname(outputPath), { recursive: true });
+console.info(`[source-quality] run=${run.id} commit=${run.commit} dirty=${run.workingTreeDirty} origin=${origin}`);
 for (let sampleIndex = 0; sampleIndex < options.samples; sampleIndex += 1) {
     for (const source of selectedSources) {
-        const record = await sampleSourceQuality(source, { origin, timeoutMs: options.timeoutMs });
+        const record = {
+            ...(await sampleSourceQuality(source, { origin, timeoutMs: options.timeoutMs })),
+            run,
+            round: sampleIndex + 1,
+        };
         await appendFile(outputPath, `${JSON.stringify(record)}\n`, "utf8");
         console.info(
             `[source-quality] ${record.sourceId} ${record.status} ${record.itemCount} items ${record.durationMs} ms`
@@ -68,7 +93,10 @@ function parseOptions(args: string[]) {
             parsed.help = true;
             continue;
         }
-        const [name, inlineValue] = argument.split("=", 2);
+        if (argument === "--") continue;
+        const separator = argument.indexOf("=");
+        const name = separator < 0 ? argument : argument.slice(0, separator);
+        const inlineValue = separator < 0 ? undefined : argument.slice(separator + 1);
         const value = inlineValue ?? args[++index];
         if (!value) throw new Error(`Missing value for ${name}.`);
         if (name === "--origin") parsed.origin = value;
@@ -89,18 +117,35 @@ function parseOptions(args: string[]) {
 
 function parsePositiveInteger(name: string, value: string) {
     const parsed = Number(value);
-    if (!Number.isInteger(parsed) || parsed < 1) throw new Error(`${name} must be a positive integer.`);
+    if (!Number.isSafeInteger(parsed) || parsed < 1) throw new Error(`${name} must be a positive integer.`);
     return parsed;
 }
 
 function parseNonNegativeInteger(name: string, value: string) {
     const parsed = Number(value);
-    if (!Number.isInteger(parsed) || parsed < 0) throw new Error(`${name} must be a non-negative integer.`);
+    if (!Number.isSafeInteger(parsed) || parsed < 0) throw new Error(`${name} must be a non-negative integer.`);
     return parsed;
 }
 
 function wait(durationMs: number) {
     return new Promise<void>((resolvePromise) => setTimeout(resolvePromise, durationMs));
+}
+
+/** Record only commit metadata; Git failures remain explicit and never expose repository diagnostics. */
+function readGitState() {
+    try {
+        const gitOptions: ExecFileSyncOptionsWithStringEncoding = {
+            cwd: process.cwd(),
+            encoding: "utf8",
+            timeout: 5_000,
+            stdio: ["ignore", "pipe", "ignore"],
+        };
+        const commit = execFileSync("git", ["rev-parse", "HEAD"], gitOptions).trim();
+        const status = execFileSync("git", ["status", "--porcelain"], gitOptions);
+        return { commit, workingTreeDirty: status.trim().length > 0 };
+    } catch {
+        return { commit: "unknown", workingTreeDirty: true };
+    }
 }
 
 function printUsage() {
@@ -112,5 +157,8 @@ Options:
   --interval-ms number   Delay between rounds (default: 900000)
   --timeout-ms number    Per-source timeout (default: 20000)
   --output path          JSONL output path (default: ${DEFAULT_OUTPUT})
+
+HTTPS sampling requires --interval-ms >= 900000. Run 673 rounds at the default
+interval to observe at least 7 days. Git metadata describes this tool, not the deployment.
 `);
 }

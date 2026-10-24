@@ -7,6 +7,17 @@ export const SOURCE_QUALITY_SAMPLE_MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 
 export type SourceQualitySampleStatus = SourceResponseStatus | "http-error" | "invalid-response" | "error";
 
+/** Identifies the sampling tool and schedule, independently of the remote deployment version. */
+export interface SourceQualitySamplingRun {
+    id: string;
+    startedAt: number;
+    commit: string;
+    workingTreeDirty: boolean;
+    nodeVersion: string;
+    intervalMs: number;
+    timeoutMs: number;
+}
+
 export interface SourceQualitySampleRecord {
     sampledAt: number;
     origin: string;
@@ -20,6 +31,8 @@ export interface SourceQualitySampleRecord {
     newestPublishedAt?: number;
     freshnessMs?: number;
     error?: string;
+    run?: SourceQualitySamplingRun;
+    round?: number;
 }
 
 export interface SourceQualitySampleOptions {

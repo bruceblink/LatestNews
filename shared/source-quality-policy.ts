@@ -2,6 +2,7 @@ import type { SourceQualityWindowSummary } from "./source-quality-window";
 
 export const defaultSourceQualityThresholds = {
     minimumSampleCount: 96,
+    minimumObservationDurationMs: 7 * 24 * 60 * 60 * 1000,
     minimumSuccessRate: 0.9,
     minimumNonEmptyRate: 0.8,
     maximumFreshnessP95Ms: 24 * 60 * 60 * 1000,
@@ -9,6 +10,7 @@ export const defaultSourceQualityThresholds = {
 
 export interface SourceQualityThresholds {
     minimumSampleCount: number;
+    minimumObservationDurationMs: number;
     minimumSuccessRate: number;
     minimumNonEmptyRate: number;
     maximumFreshnessP95Ms: number;
@@ -30,6 +32,10 @@ export function assessSourceQualityWindow(
     if (source.sampleCount < thresholds.minimumSampleCount) {
         reasons.push(`样本不足（需要 ${thresholds.minimumSampleCount}，当前 ${source.sampleCount}）`);
     }
+    const observationTooShort = source.observationDurationMs < thresholds.minimumObservationDurationMs;
+    if (observationTooShort) {
+        reasons.push(`观察跨度不足（需要 ${formatDuration(thresholds.minimumObservationDurationMs)}）`);
+    }
     if (source.successRate === undefined || source.successRate < thresholds.minimumSuccessRate) {
         reasons.push(`成功率低于 ${(thresholds.minimumSuccessRate * 100).toFixed(1)}%`);
     }
@@ -42,7 +48,7 @@ export function assessSourceQualityWindow(
         reasons.push(`P95 新鲜度超过 ${formatDuration(thresholds.maximumFreshnessP95Ms)}`);
     }
 
-    if (source.sampleCount < thresholds.minimumSampleCount) {
+    if (source.sampleCount < thresholds.minimumSampleCount || observationTooShort) {
         return { status: "insufficient-data", reasons };
     }
     return reasons.length ? { status: "needs-attention", reasons } : { status: "passing", reasons: [] };
