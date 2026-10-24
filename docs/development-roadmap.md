@@ -2,7 +2,7 @@
 
 当前开发顺序以 [性能、新闻源扩展与插件化计划](02-performance-sources-platform-plan.md) 的 F0–F6 为准，产品概览见 [开发总计划](../DEVELOPMENT_PLAN.md)。本文件保留 `0.5.3` / `5ce4aa4` 时期的任务设计和 R1–R9 记录，旧排期与候选版本不再代表当前安排。
 
-2026-10-24 更新：F2-C 至 F2-E、F3-A 已完成实现，F3-B 已增加 Electron 生命周期诊断、退出时 worker 回收和自动化探针；F3-C 已完成 Web/Electron 统一设置入口与桌面数据源 API 配置；F4-A Source SDK、F4-B 三类代表适配器迁移和 F5-A 运行期质量指标首轮实现已完成。7 天公网采样、重点源维护集、真实浏览器瀑布与真实桌面窗口证据仍待验收。执行细节见 [后续开发计划](08-next-development-plan.md)、[插件平台进度记录](04-crawler-plugin-implementation-progress.md) 和 [性能基线实施记录](07-performance-baseline-progress.md)。
+2026-10-24 更新：F2-C 至 F2-E、F3-A 已完成实现，F3-B 已增加 Electron 生命周期诊断、退出时 worker 回收和自动化探针；F3-C 已完成 Web/Electron 统一设置入口与桌面数据源 API 配置；F4-A Source SDK、F4-B 三类代表适配器迁移和 F5-A 运行期质量指标、重点源采样工具已完成。7 天公网采样、真实浏览器瀑布与真实桌面窗口证据仍待验收。执行细节见 [后续开发计划](08-next-development-plan.md)、[插件平台进度记录](04-crawler-plugin-implementation-progress.md) 和 [性能基线实施记录](07-performance-baseline-progress.md)。
 
 2026-10-20 更新：采集插件 P0–P4（SDK/CLI、跨宿主接入、动态来源目录、包安装/更新/回退）已分批提交并推送；陌生插件隔离仍未评估。后续性能与新闻源主线已完成 F0 核对、F1 Node API 缓存状态的 1,000 样本测量，以及 F2-A/F2-B 服务端采集总并发、等待队列和上游 origin 调度边界。响应体限制、慢源、Web、Electron 和真实新闻源质量基线仍待完成。跨宿主证据见 [插件平台进度记录](04-crawler-plugin-implementation-progress.md)，性能进度见 [性能基线实施记录](07-performance-baseline-progress.md)。
 

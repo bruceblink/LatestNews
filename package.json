@@ -41,6 +41,7 @@
         "performance:baseline": "cross-env LATESTNEWS_SKIP_FAVICON_FETCH=true pnpm build && pnpm exec tsx scripts/performance/api-baseline.ts",
         "performance:web-baseline": "cross-env LATESTNEWS_SKIP_FAVICON_FETCH=true pnpm build && pnpm exec tsx scripts/performance/web-baseline.ts",
         "performance:electron-lifecycle": "pnpm electron:build && pnpm exec tsx scripts/performance/electron-lifecycle.ts",
+        "source-quality:sample": "pnpm exec tsx scripts/performance/source-quality-sample.ts",
         "typecheck:electron": "tsc --noEmit -p tsconfig.electron.json --composite false",
         "test:electron": "vitest -c vitest.config.ts run test/electron-api-proxy.test.ts test/electron-security.test.ts test/electron-synchub-policy.test.ts test/electron-synchub-storage.test.ts",
         "asar:list": "asar list release/win-unpacked/resources/app.asar"
