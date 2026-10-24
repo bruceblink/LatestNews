@@ -41,3 +41,25 @@ test("opens the shared settings route in the Electron renderer", async () => {
     expect(settings?.url).toMatch(/^https?:\/\//);
     expect(settings?.defaultUrl).toMatch(/^https?:\/\//);
 });
+
+test("saves and resets the desktop API URL through the settings panel", async () => {
+    await page.goto("app://bundle/settings");
+
+    const input = page.getByLabel("数据源 API URL");
+    const defaultUrl = (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.defaultUrl;
+    expect(defaultUrl).toMatch(/^https?:\/\//);
+    await input.fill("https://news.example.test");
+    await page.getByRole("button", { name: "保存并刷新" }).click();
+
+    await expect
+        .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.url)
+        .toBe("https://news.example.test");
+    await expect(input).toHaveValue("https://news.example.test");
+
+    page.once("dialog", (dialog) => void dialog.accept());
+    await page.getByRole("button", { name: "恢复默认" }).click();
+
+    await expect
+        .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.url)
+        .toBe(defaultUrl);
+});
