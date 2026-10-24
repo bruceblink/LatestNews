@@ -19,6 +19,7 @@ import {
 import { createElectronCrawlerPluginRuntime } from "./crawler-plugin-provider";
 import { getSafeExternalUrl, resolveRendererFile, isTrustedRendererUrl } from "./security";
 import { createDesktopLifecycleTracker, type DesktopLifecycleEventName } from "./lifecycle";
+import { parseStoredNewsApiConfig, serializeStoredNewsApiConfig } from "./news-api-storage";
 import { isValidSyncHubApiKey, parseStoredSyncHubConfig, serializeStoredSyncHubConfig } from "./synchub-storage";
 import {
     normalizeServiceUrl,
@@ -556,11 +557,7 @@ function validateNewsApiUrl(value: string) {
 async function loadStoredNewsApiUrl() {
     try {
         const raw = await fs.readFile(getNewsApiConfigPath(), "utf8");
-        const parsed: unknown = JSON.parse(raw);
-        if (!parsed || typeof parsed !== "object" || !("url" in parsed) || typeof parsed.url !== "string") {
-            throw new Error("Invalid desktop news API configuration.");
-        }
-        apiTargets.news = validateNewsApiUrl(parsed.url);
+        apiTargets.news = parseStoredNewsApiConfig(raw, validateNewsApiUrl);
     } catch (error) {
         if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
         apiTargets.news = defaultNewsApiUrl;
@@ -572,12 +569,12 @@ async function loadStoredNewsApiUrl() {
 }
 
 async function saveNewsApiUrl(value: string) {
-    const checked = validateNewsApiUrl(value.trim());
     await fs.mkdir(app.getPath("userData"), { recursive: true });
-    await fs.writeFile(getNewsApiConfigPath(), `${JSON.stringify({ url: checked.origin })}\n`, {
+    await fs.writeFile(getNewsApiConfigPath(), serializeStoredNewsApiConfig(value, validateNewsApiUrl), {
         encoding: "utf8",
         mode: 0o600,
     });
+    const checked = validateNewsApiUrl(value.trim());
     apiTargets.news = checked;
     return checked.origin;
 }
