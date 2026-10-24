@@ -68,4 +68,13 @@ describe("Electron remote API boundaries", () => {
             "http://127.0.0.1:8000"
         );
     });
+
+    it("accepts an origin root and rejects credentials, paths, and query values", () => {
+        expect(normalizeServiceUrl("https://news.example.com/", { allowLocalHttp: false }).origin).toBe(
+            "https://news.example.com"
+        );
+        expect(() => normalizeServiceUrl("https://user:secret@news.example.com", { allowLocalHttp: false })).toThrow();
+        expect(() => normalizeServiceUrl("https://news.example.com/api", { allowLocalHttp: false })).toThrow();
+        expect(() => normalizeServiceUrl("https://news.example.com/?tenant=one", { allowLocalHttp: false })).toThrow();
+    });
 });
