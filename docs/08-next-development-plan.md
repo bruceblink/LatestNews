@@ -216,4 +216,4 @@ F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源�
 
 本地 Web 来源接口的 Day.js 加载问题和 Node 生产构建缺少前端入口问题已修复，见 [Web 接口运行时修复](10-web-api-runtime-fix.md)。Cloudflare Pages 的 Worker 模块布局、缓存导入和 PWA 预缓存问题也已在本地修复，见 [Cloudflare Pages Worker 构建修复](12-cloudflare-pages-worker-fix.md)。线上 HTTP 500 尚无部署修复证据；先部署并恢复线上接口，再执行 7 天采样和阈值复核。
 
-用户提出的桌面本地采集方向已完成 [可行性评估](11-desktop-local-collection-assessment.md)。首个回退切片已实现远端优先、5xx 或网络失败回退本地、空地址仅本地模式和设置面板配置，见 [桌面远端到本地采集回退](13-desktop-remote-local-fallback.md)。持久新闻缓存、插件预置和托盘后台刷新仍未完成。真实浏览器请求瀑布、真实 Windows 窗口证据和公网采样单独记录，不把 headless、进程输出或离线 fixture 标为对应的真实环境通过。
+用户提出的桌面本地采集方向已完成 [可行性评估](11-desktop-local-collection-assessment.md)。远端优先、网络或 5xx 回退本地、空地址仅本地模式和设置面板配置见 [桌面远端到本地采集回退](13-desktop-remote-local-fallback.md)；持久新闻缓存见 [独立实现记录](14-desktop-persistent-crawler-cache.md)。插件预置和托盘后台刷新仍未完成。真实浏览器请求瀑布、真实 Windows 窗口证据和公网采样单独记录，不把 headless、进程输出或离线 fixture 标为对应的真实环境通过。

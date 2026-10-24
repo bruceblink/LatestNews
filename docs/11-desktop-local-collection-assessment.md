@@ -20,11 +20,11 @@
 | 子进程 | `electron/crawler-host.ts` 使用 `utilityProcess.fork`，复用 `ProcessCrawlerHost` | 当前按采集任务启动，未提供持续后台刷新 |
 | 调度 | `electron/crawler-plugin-provider.ts` 限制并发 2、排队 24、排队与执行各 15 秒 | 还需同源合并、持久缓存及目标站限频 |
 | 本地目录 | 从 `<userData>/crawler-plugins/enabled.json` 读取启用包，核对包摘要和来源清单 | 安装包只携带 worker 入口，尚未预置全部适配器包 |
-| 客户端路由 | `src/services/source.service.ts` 对已支持来源优先请求远端；网络失败或 5xx 时回退本地插件 | 已实现首个回退切片；本地持久缓存仍缺失 |
+| 客户端路由 | `src/services/source.service.ts` 对已支持来源优先请求远端；网络失败或 5xx 时回退本地插件 | 首个回退切片已实现；本地持久缓存已写入 Electron `userData` |
 | 来源覆盖 | 本地可信目录包含 Pcbeta、Freebuf、掘金、Hacker News 四个包 | 不等于全部内置来源支持本地采集 |
 | 来源发现 | `src/main.tsx` 尝试合并远端与本地来源描述 | 来源详情和健康 service 仍直接请求远端，不能仅靠条目回退完成页面 |
 | 配置 | 可保存远端 origin；空地址表示仅本地模式 | 已实现；尚无独立 remote/auto/local 枚举和后台刷新设置 |
-| 缓存 | 已有渲染器离线快照；插件 provider 本次采集直接返回条目 | 缺少桌面采集专用的持久新闻缓存、失败回退和容量规则 |
+| 缓存 | Electron 主进程把本地采集结果保存到 `crawler-cache.json`；采集异常时返回降级或旧缓存 | 文件上限 2 MiB、64 个来源、每源 100 条；细节见[持久缓存方案](14-desktop-persistent-crawler-cache.md) |
 | 退出 | `electron/main.ts` 退出前调用 provider `dispose()`；非 macOS 最后窗口关闭后退出 | 尚无托盘后台开关、后台状态和自启动管理 |
 
 ## 两种方案比较
@@ -66,13 +66,13 @@
 
 ## 分阶段实施与验收
 
-1. 本地数据能力：预置并验证首批可信适配器，补齐目录、详情、条目、批量与健康读取及持久缓存。分别验证网络成功、解析失败、无内容、超限、重启恢复和旧缓存。
+1. 本地数据能力：预置并验证首批可信适配器，补齐目录、详情、批量与健康读取。持久缓存已有容量限制和失败回退，仍需在真实桌面验收中验证断网与重启恢复。
 2. 模式切换：增加 `remote/local/auto` 配置，支持远端地址为空，验证拒绝连接、超时、5xx、429、401/403、远端恢复和部分来源不受影响。外部服务模拟与依赖集成使用本地 Docker，公网观察另记。
 3. 桌面验收：打包后禁用远端 API，Windows 真实窗口验证启动、来源列表、Feed、来源详情、刷新、最小化恢复和退出无残留任务。单独记录 CPU、内存和本地数据恢复，不以构建或 headless 替代真实窗口。
 4. 可选后台：增加托盘开关、后台刷新、休眠恢复与资源预算，再验收升级和卸载。不在第一阶段安装系统服务。
 
 ## 依据与限制
 
-评估依据是上述仓库源码。首个远端到本地回退切片已实现，见 [桌面远端到本地采集回退](13-desktop-remote-local-fallback.md)。预置包、持久新闻缓存和托盘后台仍未实现，不能把已有插件 smoke 视为完整离线桌面验收。
+评估依据是上述仓库源码。远端到本地回退见 [桌面远端到本地采集回退](13-desktop-remote-local-fallback.md)，本地持久新闻缓存见[独立实现记录](14-desktop-persistent-crawler-cache.md)。预置包和托盘后台仍未实现，不能把已有自动化用例视为完整离线桌面验收。
 
 Electron 官方文档说明 `utilityProcess.fork` 可从主进程运行 Node.js 子进程，并提供进程通信与结束方法：[utilityProcess](https://www.electronjs.org/docs/latest/api/utility-process)。桌面 IPC 继续遵循发送方校验与上下文隔离要求：[Electron Security](https://www.electronjs.org/docs/latest/tutorial/security)。

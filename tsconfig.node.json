@@ -8,6 +8,7 @@
     "server",
     "crawler-platform",
     "electron/api-proxy.ts",
+    "electron/crawler-cache.ts",
     "electron/crawler-host.ts",
     "electron/crawler-plugin-provider.ts",
     "electron/news-api-storage.ts",
