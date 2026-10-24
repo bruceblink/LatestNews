@@ -3,6 +3,7 @@ import type { SourceID } from "@shared/types";
 import type { SourceHealthEvent } from "@shared/source-health-types";
 
 import process from "node:process";
+import { useDatabase } from "nitro/database";
 
 import { logger } from "../utils/logger";
 
@@ -127,10 +128,7 @@ export async function getSourceHealthEventsTable() {
         try {
             if (process.env.ENABLE_CACHE === "false") return undefined;
 
-            const getDatabase = (globalThis as typeof globalThis & { useDatabase?: () => Database }).useDatabase;
-            if (typeof getDatabase !== "function") return undefined;
-
-            const table = new SourceHealthEvents(getDatabase());
+            const table = new SourceHealthEvents(useDatabase());
             if (process.env.INIT_TABLE !== "false") await table.init();
             return table;
         } catch (error) {

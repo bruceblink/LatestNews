@@ -96,6 +96,8 @@ curl -f https://news.example.com/api/v1/health/diagnostics?format=text
 curl -f https://news.example.com/api/v1/openapi.json
 ```
 
+The Pages build must emit a self-contained dist/_worker.js/index.js. The build command also verifies that the worker has no split modules and that the PWA precache excludes _worker.js. When the web shell should use a separate self-hosted edge collector, set VITE_NEWS_API_URL and configure LATESTNEWS_WEB_ORIGINS; do not run long-lived crawler jobs in Pages Functions.
+
 ## Node Output
 
 For a custom host, build once and start the Nitro server with a runtime env file:
@@ -121,6 +123,8 @@ the server entry.
 - No committed file contains real secrets, personal tokens, or machine-specific paths.
 - `/api/v1/health/deployment` returns `ok` or an expected degraded status with actionable details.
 - `/api/v1/node` advertises the expected node ID and public endpoint map.
+
+If the Pages homepage and OpenAPI return 200 while data routes return 500, rebuild with pnpm build:pages and confirm a single _worker.js/index.js. Then check the Pages compatibility date, nodejs_compat, and D1 binding.
 
 ## Troubleshooting
 

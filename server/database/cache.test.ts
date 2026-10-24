@@ -1,29 +1,28 @@
 import type { Database } from "db0";
 
+import { createDatabase } from "db0";
+import sqliteConnector from "db0/connectors/better-sqlite3";
 import { it, vi, expect, describe, afterEach } from "vitest";
 
-const originalEnableCache = process.env.ENABLE_CACHE;
-const originalInitTable = process.env.INIT_TABLE;
-const originalUseDatabase = globalThis.useDatabase;
+const { getRuntimeDatabase } = vi.hoisted(() => ({ getRuntimeDatabase: vi.fn() }));
+vi.mock("nitro/database", () => ({ useDatabase: getRuntimeDatabase }));
 
 afterEach(() => {
     vi.resetModules();
     vi.restoreAllMocks();
-    process.env.ENABLE_CACHE = originalEnableCache;
-    process.env.INIT_TABLE = originalInitTable;
-    globalThis.useDatabase = originalUseDatabase;
+    vi.unstubAllEnvs();
+    getRuntimeDatabase.mockReset();
 });
 
 describe("cache database availability", () => {
     it("returns no cache table when the configured database binding is unavailable", async () => {
-        process.env.ENABLE_CACHE = "true";
-        process.env.INIT_TABLE = "false";
-        globalThis.useDatabase = () =>
-            ({
-                prepare: () => ({
-                    get: () => Promise.reject(new Error("[db0] [d1] binding `LATESTNEWS_DB` not found")),
-                }),
-            }) as unknown as Database;
+        vi.stubEnv("ENABLE_CACHE", "true");
+        vi.stubEnv("INIT_TABLE", "false");
+        getRuntimeDatabase.mockReturnValue({
+            prepare: () => ({
+                get: () => Promise.reject(new Error("[db0] [d1] binding `LATESTNEWS_DB` not found")),
+            }),
+        } as unknown as Database);
 
         const { logger } = await import("../utils/logger");
         vi.spyOn(logger, "error").mockImplementation(() => undefined);
@@ -34,18 +33,35 @@ describe("cache database availability", () => {
     });
 
     it("returns the cache table after a successful availability check", async () => {
-        process.env.ENABLE_CACHE = "true";
-        process.env.INIT_TABLE = "false";
+        vi.stubEnv("ENABLE_CACHE", "true");
+        vi.stubEnv("INIT_TABLE", "false");
         const get = vi.fn().mockResolvedValue({ id: "probe" });
-        globalThis.useDatabase = () =>
-            ({
-                prepare: () => ({ get }),
-            }) as unknown as Database;
+        getRuntimeDatabase.mockReturnValue({
+            prepare: () => ({ get }),
+        } as unknown as Database);
 
         const { getCacheTable } = await import("./cache");
         const cacheTable = await getCacheTable();
 
         expect(cacheTable).toBeDefined();
         expect(get).toHaveBeenCalledOnce();
+    });
+
+    it("persists and reads news through the imported database provider", async () => {
+        vi.stubEnv("ENABLE_CACHE", "true");
+        vi.stubEnv("INIT_TABLE", "true");
+        const database = createDatabase(sqliteConnector({ name: ":memory:" }));
+        getRuntimeDatabase.mockReturnValue(database);
+        try {
+            const { getCacheTable } = await import("./cache");
+            const table = await getCacheTable();
+            expect(table).toBeDefined();
+            const items = [{ id: "article-1", title: "News", url: "https://example.com/news/1" }];
+            await table!.set("juejin", items);
+            expect(await table!.get("juejin")).toMatchObject({ id: "juejin", items });
+            expect(getRuntimeDatabase).toHaveBeenCalledOnce();
+        } finally {
+            await database.dispose();
+        }
     });
 });

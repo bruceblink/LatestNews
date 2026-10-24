@@ -67,6 +67,16 @@ if (process.env.VERCEL) {
 } else if (process.env.CF_PAGES) {
     nitroOption.preset = "cloudflare-pages";
 
+    // The Pages preset defaults to a modular worker. Its chunks import back into the
+    // entry module, which current Wrangler versions cannot resolve at build time. Its
+    // preset output config overrides the top-level switch, so set the output explicitly.
+    // Keep the Pages worker self-contained; this does not affect the Node/Docker build.
+    nitroOption.rollupConfig = {
+        output: {
+            inlineDynamicImports: true,
+        },
+    };
+
     // ⭐ 修复 node builtin
     nitroOption.unenv = {
         alias: {

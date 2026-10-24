@@ -1,6 +1,8 @@
 import type { SourceID } from "@shared/types";
 
-import { it, expect, describe } from "vitest";
+import { it, vi, expect, describe } from "vitest";
+
+vi.mock("../database/source-health-events", () => ({ getSourceHealthEventsTable: async () => undefined }));
 
 import {
     recordSourceFailure,

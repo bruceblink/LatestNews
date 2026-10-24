@@ -2,6 +2,7 @@ import type { Database } from "db0";
 import type { NewsItem } from "@shared/types";
 
 import process from "node:process";
+import { useDatabase } from "nitro/database";
 
 import { logger } from "../utils/logger";
 

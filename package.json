@@ -22,7 +22,7 @@
         "presource": "tsx ./scripts/favicon.ts && tsx ./scripts/source.ts",
         "crawler": "tsx ./crawler-platform/cli.ts",
         "start": "node --env-file .env.server dist/output/server/index.mjs",
-        "build:pages": "cross-env CF_PAGES=1 pnpm build",
+        "build:pages": "cross-env CF_PAGES=1 pnpm build && node ./scripts/verify-pages-output.mjs",
         "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.app.json",
         "check": "pnpm lint:check && pnpm typecheck && pnpm test",
         "release": "bumpp",

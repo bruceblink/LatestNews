@@ -39,6 +39,9 @@ export default function pwa(appTitle: string) {
         },
         workbox: {
             navigateFallbackDenylist: [/^\/api/],
+            // Cloudflare Pages emits its server bundle beside the browser assets.
+            // It must never enter the PWA precache manifest.
+            globIgnores: ["_worker.js/**"],
         },
         devOptions: {
             enabled: process.env.SW_DEV === "true",
