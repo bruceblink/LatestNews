@@ -191,7 +191,7 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 
 - `pnpm exec vitest -c vitest.config.ts run test/source-quality-sampling.test.ts`：通过，5 个测试覆盖地址校验、正常响应、HTTP 错误、响应体上限和超时。
 - `pnpm exec vitest -c vitest.config.ts run test/source-quality-sampling.test.ts test/source-quality-window.test.ts`：通过，7 个测试覆盖采样和窗口汇总。
-- `pnpm exec vitest -c vitest.config.ts run test/source-quality-policy.test.ts`：通过，3 个测试覆盖数据不足、通过和需要关注。
+- `pnpm exec vitest -c vitest.config.ts run test/source-quality-policy.test.ts`：通过，5 个测试覆盖数据不足、通过、需要关注、P95 边界和缺失新鲜度。
 - `pnpm typecheck`：通过。
 - 新增文件定向 ESLint：通过。
 - `pnpm source-quality:sample -- --help`：通过，命令帮助和默认参数可读。
