@@ -1,8 +1,0 @@
-name = "latestnews"
-pages_build_output_dir = "dist/output/public"
-compatibility_date = "2025-09-22"
-
-[[d1_databases]]
-binding = "LATESTNEWS_DB"
-database_name = "latestnews-db"
-database_id = "${DATABASE_ID}"

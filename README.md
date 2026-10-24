@@ -122,15 +122,15 @@ LatestNews 提供面向自动化工具、订阅器和下游采集节点的只读
 
 ### Cloudflare Pages
 
-- 构建命令：`pnpm run build`
-- 输出目录：`dist/output/public`
+- 构建命令：`pnpm run build:pages`
+- 输出目录：`dist`
 
 如果需要缓存与数据库能力：
 
 1. 创建 D1 数据库
-2. 复制并修改 [example.wrangler.toml](./example.wrangler.toml)
-3. 配置 `database_id` 与 `database_name`
-4. 重新部署
+2. 在 Pages 项目的数据库绑定中选择 `LATESTNEWS_DB`
+3. 配置数据库名称和 ID
+4. 重新触发 Pages 构建
 
 ### Docker
 
@@ -149,11 +149,9 @@ docker compose -f docker-compose.yml up -d
 | `pnpm dev` | 本地开发 |
 | `pnpm build` | 生产构建 |
 | `pnpm brand:assets` | 根据 SVG 生成 favicon、PWA 图标和分享图 |
-| `pnpm preview` | 本地预览 Pages 构建结果 |
 | `pnpm check` | 执行 lint、typecheck 和 test |
 | `pnpm typecheck` | 运行 TypeScript 检查 |
 | `pnpm test` | 运行 Vitest |
-| `pnpm deploy` | 部署到 Cloudflare Pages |
 | `pnpm electron:dev` | 启动 Electron 桌面开发环境 |
 | `pnpm electron:build` | 构建桌面主进程、预加载脚本和共享前端 |
 | `pnpm electron:package:win` | 生成 Windows NSIS 安装包 |

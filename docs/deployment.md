@@ -61,15 +61,15 @@ Operational notes:
 
 ## Cloudflare Pages
 
-On Cloudflare Pages, use the repository build script:
+For a Cloudflare Pages project, use the Pages-specific repository build script:
 
 ```bash
-pnpm build
+pnpm build:pages
 ```
 
-Use `dist/output/public` as the Pages output directory. For a local Pages rehearsal, run `pnpm preview`; it builds with the Cloudflare preset before starting Wrangler.
+Use `dist` as the Pages output directory. The `CF_PAGES=1` build emits the Pages worker at `dist/_worker.js`; the regular `pnpm build` command emits the Node deployment package instead. Deployment is managed by the configured Pages integration; this repository does not include a Wrangler CLI workflow.
 
-If cache and health history should persist, copy [example.wrangler.toml](../example.wrangler.toml), create a D1 database, and keep the binding name aligned with Nitro:
+If cache and health history should persist, create a D1 database in the Pages project and keep the binding name aligned with Nitro:
 
 ```toml
 [[d1_databases]]
@@ -80,8 +80,9 @@ database_id = "replace-with-your-d1-id"
 
 Recommended Pages settings:
 
-- Build command: `pnpm build`
-- Output directory: `dist/output/public`
+- Build command: `pnpm build:pages`
+- Output directory: `dist`
+- D1 binding: `LATESTNEWS_DB`
 - Runtime variables: `ENABLE_CACHE`, `INIT_TABLE`, `LATESTNEWS_NODE_ID`, and optional node endpoint hints.
 - Secrets: `JWT_SECRET` and source-specific API tokens.
 

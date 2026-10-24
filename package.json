@@ -22,13 +22,11 @@
         "presource": "tsx ./scripts/favicon.ts && tsx ./scripts/source.ts",
         "crawler": "tsx ./crawler-platform/cli.ts",
         "start": "node --env-file .env.server dist/output/server/index.mjs",
-        "preview": "cross-env CF_PAGES=1 pnpm build && wrangler pages dev dist/output/public",
-        "deploy": "cross-env CF_PAGES=1 pnpm build && wrangler pages deploy dist/output/public",
+        "build:pages": "cross-env CF_PAGES=1 pnpm build",
         "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.app.json",
         "check": "pnpm lint:check && pnpm typecheck && pnpm test",
         "release": "bumpp",
         "prepare": "simple-git-hooks",
-        "log": "wrangler pages deployment tail --project-name latestnews",
         "test": "vitest -c vitest.config.ts",
         "test:e2e": "playwright test --config=playwright.config.ts",
         "test:e2e:web": "playwright test --config=playwright.config.ts",
@@ -143,8 +141,7 @@
         "vite-plugin-pwa": "^2.0.0",
         "vitest": "^3.2.7",
         "workbox-build": "^7.4.1",
-        "workbox-window": "^7.4.1",
-        "wrangler": "^4.152.0"
+        "workbox-window": "^7.4.1"
     },
     "pnpm": {
         "patchedDependencies": {
