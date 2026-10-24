@@ -9,6 +9,9 @@ const useNodeRuntime = !process.env.CF_PAGES && !process.env.VERCEL;
 const localRendererPath = join(projectDir, "server/renderer.ts");
 
 const nitroOption: NonNullable<Parameters<typeof nitro>[0]> = {
+    // Day.js ESM uses extensionless imports; compile it to preserve the patched duration behavior in Node.
+    noExternals: ["dayjs"],
+
     experimental: {
         database: true,
     },
@@ -46,7 +49,12 @@ const nitroOption: NonNullable<Parameters<typeof nitro>[0]> = {
 
     ...(useNodeRuntime
         ? {
-              renderer: { handler: localRendererPath },
+              renderer: { handler: localRendererPath, template: join(projectDir, "index.html") },
+              output: {
+                  dir: join(projectDir, "dist/output"),
+                  serverDir: join(projectDir, "dist/output/server"),
+                  publicDir: join(projectDir, "dist/output/public"),
+              },
               // Nitro's Node asset reader is relative to the server entry module.
               inlineDynamicImports: true,
           }
