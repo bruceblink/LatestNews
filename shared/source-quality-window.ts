@@ -1,3 +1,10 @@
+import {
+    assessSourceQualityWindow,
+    type SourceQualityAssessment,
+    type SourceQualityThresholds,
+    defaultSourceQualityThresholds,
+} from "./source-quality-policy";
+
 import type { SourceQualityWatchlistEntry } from "./source-quality-watchlist";
 import type { SourceQualitySampleRecord, SourceQualitySampleStatus } from "./source-quality-sampling";
 
@@ -16,19 +23,25 @@ export interface SourceQualityWindowSummary {
     freshnessP50Ms?: number;
     freshnessP95Ms?: number;
     latestSampledAt?: number;
+    assessment: SourceQualityAssessment;
 }
 
 export interface SourceQualityWindowReport {
     generatedAt: number;
     sampleCount: number;
     origins: string[];
+    thresholds: SourceQualityThresholds;
     sources: SourceQualityWindowSummary[];
 }
 
 /** Aggregate append-only sample records without changing their original evidence. */
 export function createSourceQualityWindowReport(
     records: readonly SourceQualitySampleRecord[],
-    options: { generatedAt?: number; expectedSources?: readonly SourceQualityWatchlistEntry[] } = {}
+    options: {
+        generatedAt?: number;
+        expectedSources?: readonly SourceQualityWatchlistEntry[];
+        thresholds?: SourceQualityThresholds;
+    } = {}
 ): SourceQualityWindowReport {
     const groups = new Map<string, { origin: string; sourceId: string; records: SourceQualitySampleRecord[] }>();
     for (const record of records) {
@@ -46,12 +59,21 @@ export function createSourceQualityWindowReport(
     }
 
     const sources = [...groups.values()]
-        .map((group) => summarizeSourceRecords(group.records, options.expectedSources, group.origin, group.sourceId))
+        .map((group) =>
+            summarizeSourceRecords(
+                group.records,
+                options.expectedSources,
+                group.origin,
+                group.sourceId,
+                options.thresholds
+            )
+        )
         .sort((left, right) => left.origin.localeCompare(right.origin) || left.sourceId.localeCompare(right.sourceId));
     return {
         generatedAt: options.generatedAt ?? Date.now(),
         sampleCount: records.length,
         origins: getOrigins(records),
+        thresholds: options.thresholds ?? defaultSourceQualityThresholds,
         sources,
     };
 }
@@ -60,7 +82,8 @@ function summarizeSourceRecords(
     records: readonly SourceQualitySampleRecord[],
     expectedSources: readonly SourceQualityWatchlistEntry[] | undefined,
     origin: string,
-    sourceId: string
+    sourceId: string,
+    thresholds?: SourceQualityThresholds
 ): SourceQualityWindowSummary {
     const first = records[0];
     const expected = expectedSources?.find((source) => source.id === sourceId);
@@ -72,7 +95,7 @@ function summarizeSourceRecords(
         .filter((value): value is number => value !== undefined && Number.isFinite(value) && value >= 0)
         .sort((left, right) => left - right);
     const sampleCount = records.length;
-    return {
+    const summary: Omit<SourceQualityWindowSummary, "assessment"> = {
         origin,
         sourceId,
         kind: first?.kind ?? expected?.kind ?? "html",
@@ -89,6 +112,7 @@ function summarizeSourceRecords(
             : {}),
         ...(sampleCount ? { latestSampledAt: Math.max(...records.map((record) => record.sampledAt)) } : {}),
     };
+    return { ...summary, assessment: assessSourceQualityWindow(summary, thresholds) };
 }
 
 function getOrigins(records: readonly SourceQualitySampleRecord[]) {

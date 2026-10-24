@@ -159,12 +159,14 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 - `shared/source-quality-sampling.ts` 提供单来源采样函数。目标地址只接受 HTTPS；本地验收允许 localhost HTTP。请求不携带认证信息，单来源默认超时 20 秒，解码后响应上限为 2 MiB。
 - `scripts/performance/source-quality-sample.ts` 提供显式启用的 JSONL 采样命令。默认每轮间隔 15 分钟，按来源顺序执行，追加目标 `origin`、`sampledAt`、状态、条目数、最新发布时间、新鲜度、耗时和错误原因。
 - `shared/source-quality-window.ts` 和 `scripts/performance/source-quality-report.ts` 将 JSONL 汇总为按来源窗口报告，计算成功率、非空率、P50/P95 新鲜度，并保留未采样重点源。
+- `shared/source-quality-policy.ts` 对窗口执行初始阈值判定，输出 `passing`、`insufficient-data` 或 `needs-attention` 及可读原因。当前初始阈值为至少 96 个样本、成功率 90%、非空率 80%、P95 新鲜度不超过 24 小时；阈值会随 7 天数据复核。
 - 采样命令通过 `--origin` 或 `LATESTNEWS_QUALITY_SAMPLE_ORIGIN` 指定地址；默认不启动、不访问公网，也不写入版本库。
 
 ### 验证与证据边界
 
 - `pnpm exec vitest -c vitest.config.ts run test/source-quality-sampling.test.ts`：通过，5 个测试覆盖地址校验、正常响应、HTTP 错误、响应体上限和超时。
 - `pnpm exec vitest -c vitest.config.ts run test/source-quality-sampling.test.ts test/source-quality-window.test.ts`：通过，7 个测试覆盖采样和窗口汇总。
+- `pnpm exec vitest -c vitest.config.ts run test/source-quality-policy.test.ts`：通过，3 个测试覆盖数据不足、通过和需要关注。
 - `pnpm typecheck`：通过。
 - 新增文件定向 ESLint：通过。
 - `pnpm source-quality:sample -- --help`：通过，命令帮助和默认参数可读。
@@ -177,4 +179,4 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 
 ## 当前下一步
 
-F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针和 F3-C 的统一设置入口已完成。F4-A Source SDK、F4-B 三类代表适配器迁移、F5-A 运行期质量指标和重点源采样工具已完成；下一步执行受控公网采样窗口，随后根据长期记录确定质量阈值和维护动作。真实浏览器请求瀑布、真实 Windows 窗口证据和公网采样单独记录，不把 headless、进程输出或离线 fixture 标为对应的真实环境通过。
+F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针和 F3-C 的统一设置入口已完成。F4-A Source SDK、F4-B 三类代表适配器迁移、F5-A 运行期质量指标、重点源采样工具和初始阈值判定已完成；下一步执行受控公网采样窗口并复核阈值。真实浏览器请求瀑布、真实 Windows 窗口证据和公网采样单独记录，不把 headless、进程输出或离线 fixture 标为对应的真实环境通过。
