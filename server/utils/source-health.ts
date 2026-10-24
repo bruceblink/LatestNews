@@ -1,4 +1,6 @@
 import type { SourceID } from "@shared/types";
+import type { SourceHealthQuality } from "@shared/source-health-types";
+import type { NewsItemsNormalizationQuality } from "@shared/news-item-schema";
 
 import { logger } from "#/utils/logger";
 import dataSources from "@shared/data-sources";
@@ -28,6 +30,7 @@ export interface ServerSourceHealthSnapshot {
     lastErrorAt?: number;
     lastErrorMessage?: string;
     lastItemCount?: number;
+    quality: SourceHealthQuality;
     recentEvents: ServerSourceHealthEvent[];
 }
 
@@ -49,6 +52,7 @@ function createIdleSnapshot(id: SourceID): ServerSourceHealthSnapshot {
         errorCount: 0,
         consecutiveFailures: 0,
         cacheDegraded: false,
+        quality: createEmptyQuality(),
         recentEvents: [],
     };
 }
@@ -69,36 +73,63 @@ function getOrCreateSnapshot(id: SourceID): MutableSourceHealthSnapshot {
 
 export function recordSourceSuccess(id: SourceID, durationMs: number, itemCount: number) {
     const snapshot = getOrCreateSnapshot(id);
+    const occurredAt = Date.now();
     snapshot.status = "healthy";
     snapshot.successCount += 1;
     snapshot.consecutiveFailures = 0;
     snapshot.cacheDegraded = false;
     snapshot.lastDurationMs = durationMs;
-    snapshot.lastSuccessAt = Date.now();
+    snapshot.lastSuccessAt = occurredAt;
     snapshot.lastItemCount = itemCount;
     snapshot.lastErrorMessage = undefined;
+    snapshot.quality.firstSampleAt ??= occurredAt;
     pushRecentEvent(snapshot, {
         status: "healthy",
-        occurredAt: snapshot.lastSuccessAt,
+        occurredAt,
         durationMs,
         itemCount,
     });
     persistSourceHealthEvent(id, snapshot.recentEvents[0]);
 }
 
+/** Add item-level quality counters after a successful source normalization pass. */
+export function recordSourceQuality(id: SourceID, quality: NewsItemsNormalizationQuality, sampledAt: number) {
+    const snapshot = getOrCreateSnapshot(id);
+    const counters = snapshot.quality;
+    counters.firstSampleAt ??= sampledAt;
+    counters.rawItemCount += quality.rawItemCount;
+    counters.validItemCount += quality.validItemCount;
+    counters.invalidItemCount += quality.invalidItemCount;
+    counters.duplicateItemCount += quality.duplicateItemCount;
+    counters.publishedItemCount += quality.publishedItemCount;
+
+    if (quality.validItemCount === 0) {
+        counters.emptyResultCount += 1;
+        counters.lastEmptyReason = quality.rawItemCount === 0 ? "源返回空列表" : "条目校验后为空";
+    } else {
+        counters.lastEmptyReason = undefined;
+    }
+
+    counters.lastNewestPublishedAt = quality.newestPublishedAt;
+    counters.lastFreshnessMs =
+        quality.newestPublishedAt === undefined ? undefined : Math.max(0, sampledAt - quality.newestPublishedAt);
+}
+
 export function recordSourceFailure(id: SourceID, durationMs: number, error: unknown) {
     const snapshot = getOrCreateSnapshot(id);
+    const occurredAt = Date.now();
     const errorMessage = error instanceof Error ? error.message : String(error);
     snapshot.status = "failing";
     snapshot.errorCount += 1;
     snapshot.consecutiveFailures += 1;
     snapshot.cacheDegraded = shouldDegradeSourceToCache(snapshot);
     snapshot.lastDurationMs = durationMs;
-    snapshot.lastErrorAt = Date.now();
+    snapshot.lastErrorAt = occurredAt;
     snapshot.lastErrorMessage = errorMessage;
+    snapshot.quality.firstSampleAt ??= occurredAt;
     pushRecentEvent(snapshot, {
         status: "failing",
-        occurredAt: snapshot.lastErrorAt,
+        occurredAt,
         durationMs,
         errorMessage,
     });
@@ -132,6 +163,10 @@ export function getSourceHealthSnapshots(): ServerSourceHealthSnapshot[] {
 
 export function getSourceHealthSummary() {
     const sources = getSourceHealthSnapshots();
+    const sampleWindowStartedAt = sources
+        .map((source) => source.quality.firstSampleAt)
+        .filter((time): time is number => time !== undefined)
+        .sort((left, right) => left - right)[0];
     return {
         updatedAt: Date.now(),
         total: sources.length,
@@ -139,7 +174,19 @@ export function getSourceHealthSummary() {
         failing: sources.filter((source) => source.status === "failing").length,
         idle: sources.filter((source) => source.status === "idle").length,
         cacheDegraded: sources.filter((source) => source.cacheDegraded).length,
+        ...(sampleWindowStartedAt !== undefined ? { sampleWindowStartedAt } : {}),
         sources,
+    };
+}
+
+function createEmptyQuality(): SourceHealthQuality {
+    return {
+        rawItemCount: 0,
+        validItemCount: 0,
+        invalidItemCount: 0,
+        duplicateItemCount: 0,
+        publishedItemCount: 0,
+        emptyResultCount: 0,
     };
 }
 

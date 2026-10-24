@@ -4,6 +4,7 @@ import { it, expect, describe } from "vitest";
 
 import {
     recordSourceFailure,
+    recordSourceQuality,
     recordSourceSuccess,
     getSourceHealthSummary,
     getSourceHealthSnapshot,
@@ -47,5 +48,35 @@ describe("source health cache degradation", () => {
             durationMs: 24,
             itemCount: 24,
         });
+    });
+
+    it("accumulates quality counters for the current sampling window", () => {
+        const qualitySourceId = "juejin" as SourceID;
+        const sampledAt = Date.parse("2026-07-05T08:00:00.000Z");
+
+        recordSourceSuccess(qualitySourceId, 25, 2);
+        recordSourceQuality(
+            qualitySourceId,
+            {
+                rawItemCount: 4,
+                validItemCount: 2,
+                invalidItemCount: 1,
+                duplicateItemCount: 1,
+                publishedItemCount: 1,
+                newestPublishedAt: sampledAt - 90_000,
+            },
+            sampledAt
+        );
+
+        const snapshot = getSourceHealthSnapshot(qualitySourceId);
+        expect(snapshot.quality).toMatchObject({
+            rawItemCount: 4,
+            validItemCount: 2,
+            invalidItemCount: 1,
+            duplicateItemCount: 1,
+            publishedItemCount: 1,
+            lastFreshnessMs: 90_000,
+        });
+        expect(getSourceHealthSummary().sampleWindowStartedAt).toBeDefined();
     });
 });

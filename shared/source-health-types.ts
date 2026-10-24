@@ -10,6 +10,20 @@ export interface SourceHealthEvent {
     errorMessage?: string;
 }
 
+/** Cumulative source-quality counters for the current service sampling window. */
+export interface SourceHealthQuality {
+    rawItemCount: number;
+    validItemCount: number;
+    invalidItemCount: number;
+    duplicateItemCount: number;
+    publishedItemCount: number;
+    emptyResultCount: number;
+    firstSampleAt?: number;
+    lastEmptyReason?: string;
+    lastNewestPublishedAt?: number;
+    lastFreshnessMs?: number;
+}
+
 export interface SourceHealthSnapshot {
     id: SourceID;
     name: string;
@@ -23,6 +37,7 @@ export interface SourceHealthSnapshot {
     lastErrorAt?: number;
     lastErrorMessage?: string;
     lastItemCount?: number;
+    quality?: SourceHealthQuality;
     recentEvents: SourceHealthEvent[];
 }
 
@@ -33,5 +48,6 @@ export interface SourceHealthSummary {
     failing: number;
     idle: number;
     cacheDegraded: number;
+    sampleWindowStartedAt?: number;
     sources: SourceHealthSnapshot[];
 }

@@ -1,11 +1,12 @@
 import type { NewsItem, SourceID } from "@shared/types";
+import type { NewsItemsNormalizationQuality } from "@shared/news-item-schema";
 
 import { getters } from "#/getters";
-import { normalizeNewsItems } from "@shared/news-item-schema";
+import { normalizeNewsItemsWithQuality } from "@shared/news-item-schema";
 import { hasCrawlerPluginSource, fetchCrawlerPluginSource } from "#/utils/crawler-plugin-runtime";
 
-import { recordSourceFailure, recordSourceSuccess } from "./source-health";
 import { createCrawlerTaskQueue } from "../../crawler-platform/host/task-queue";
+import { recordSourceFailure, recordSourceQuality, recordSourceSuccess } from "./source-health";
 
 export interface SourceFetcherQueueOptions {
     /** Maximum number of source collectors that may execute at the same time. */
@@ -19,6 +20,7 @@ export interface SourceFetcherQueueOptions {
 interface CreateSourceFetcherOptions extends SourceFetcherQueueOptions {
     getItems: (id: SourceID) => Promise<NewsItem[]>;
     onSuccess: (id: SourceID, durationMs: number, itemCount: number) => void;
+    onQuality?: (id: SourceID, quality: NewsItemsNormalizationQuality, sampledAt: number) => void;
     onFailure: (id: SourceID, durationMs: number, error: unknown) => void;
     now?: () => number;
 }
@@ -36,6 +38,7 @@ export const sourceFetcherQueueDefaults = {
 export function createSourceFetcher({
     getItems,
     onSuccess,
+    onQuality,
     onFailure,
     now = Date.now,
     maxConcurrent = sourceFetcherQueueDefaults.maxConcurrent,
@@ -53,9 +56,11 @@ export function createSourceFetcher({
         const request = queue
             .run(() => getItems(id))
             .then((items) => {
-                const normalizedItems = normalizeNewsItems(items, { sourceId: id });
-                onSuccess(id, now() - startTime, normalizedItems.length);
-                return normalizedItems;
+                const normalized = normalizeNewsItemsWithQuality(items, { sourceId: id });
+                const completedAt = now();
+                onSuccess(id, completedAt - startTime, normalized.items.length);
+                onQuality?.(id, normalized.quality, completedAt);
+                return normalized.items;
             })
             .catch((error) => {
                 onFailure(id, now() - startTime, error);
@@ -76,5 +81,6 @@ export const fetchSourceItems = createSourceFetcher({
         return pluginItems ?? getters[id]();
     },
     onSuccess: recordSourceSuccess,
+    onQuality: recordSourceQuality,
     onFailure: recordSourceFailure,
 });

@@ -1,4 +1,9 @@
 import { rankFailingSourcesByPriority } from "./source-ranking-policy";
+import {
+    formatSourceHealthPercent,
+    formatSourceHealthFreshness,
+    getSourceHealthQualityMetrics,
+} from "./source-health-quality";
 
 import type { SourceApiError } from "./source-api";
 import type { SourceHealthEvent, SourceHealthSummary, SourceHealthSnapshot } from "./source-health-types";
@@ -9,6 +14,7 @@ export interface SourceHealthDiagnosticOptions {
     maxCacheDegradedSources?: number;
     maxIdleSources?: number;
     maxHealthySamples?: number;
+    maxQualitySources?: number;
     maxRecentEvents?: number;
 }
 
@@ -23,6 +29,7 @@ export interface SourceHealthDiagnosticsResponse {
         sourceCount: number;
         failingCount: number;
         cacheDegradedCount: number;
+        sampleWindowStartedAt?: number;
     };
     errors: SourceApiError[];
 }
@@ -31,6 +38,7 @@ const DEFAULT_MAX_FAILING_SOURCES = 10;
 const DEFAULT_MAX_CACHE_DEGRADED_SOURCES = 10;
 const DEFAULT_MAX_IDLE_SOURCES = 20;
 const DEFAULT_MAX_HEALTHY_SAMPLES = 5;
+const DEFAULT_MAX_QUALITY_SOURCES = 20;
 const DEFAULT_MAX_RECENT_EVENTS = 5;
 
 export function formatSourceHealthDiagnostics(
@@ -51,6 +59,7 @@ export function formatSourceHealthDiagnostics(
     const healthySamples = summary.sources
         .filter((source) => source.status === "healthy")
         .slice(0, options.maxHealthySamples ?? DEFAULT_MAX_HEALTHY_SAMPLES);
+    const qualitySources = summary.sources.slice(0, options.maxQualitySources ?? DEFAULT_MAX_QUALITY_SOURCES);
 
     return [
         "LatestNews 数据源诊断报告",
@@ -62,6 +71,9 @@ export function formatSourceHealthDiagnostics(
         `异常：${summary.failing}`,
         `未采样：${summary.idle}`,
         `缓存降级：${summary.cacheDegraded}`,
+        `采样窗口开始：${formatOptionalTime(summary.sampleWindowStartedAt, formatTime)}`,
+        "",
+        formatQualitySection(qualitySources, formatTime),
         "",
         formatFailingSection(failingSources, formatTime, options.maxRecentEvents),
         "",
@@ -96,9 +108,34 @@ export function createSourceHealthDiagnosticsResponse(
             sourceCount: summary.total,
             failingCount: summary.failing,
             cacheDegradedCount: summary.cacheDegraded,
+            ...(summary.sampleWindowStartedAt !== undefined
+                ? { sampleWindowStartedAt: summary.sampleWindowStartedAt }
+                : {}),
         },
         errors: [],
     };
+}
+
+function formatQualitySection(sources: SourceHealthSnapshot[], formatTime: (time: number) => string) {
+    if (!sources.length) return "## 质量概览\n无";
+
+    return [
+        "## 质量概览",
+        ...sources.map((source, index) => {
+            const metrics = getSourceHealthQualityMetrics(source);
+            if (metrics.sampleCount === 0) return `${index + 1}. ${source.name} (${source.id}) · 未采样`;
+
+            return [
+                `${index + 1}. ${source.name} (${source.id})`,
+                `采样 ${metrics.sampleCount} 次 · 成功率 ${formatSourceHealthPercent(metrics.successRate)} · 有效条目率 ${formatSourceHealthPercent(metrics.validItemRate)}`,
+                `重复率 ${formatSourceHealthPercent(metrics.duplicateRate)} · 发布时间完整率 ${formatSourceHealthPercent(metrics.publicationCompleteness)} · 空结果 ${metrics.emptyResultCount} 次`,
+                `有效条目 ${metrics.validItemCount} · 无效条目 ${metrics.invalidItemCount} · 重复条目 ${metrics.duplicateItemCount} · 最近成功 ${formatOptionalTime(source.lastSuccessAt, formatTime)} · 新鲜度 ${formatSourceHealthFreshness(metrics.lastFreshnessMs)}`,
+                metrics.lastEmptyReason ? `最近空结果原因：${metrics.lastEmptyReason}` : undefined,
+            ]
+                .filter((line): line is string => line !== undefined)
+                .join("\n");
+        }),
+    ].join("\n\n");
 }
 
 function formatFailingSection(

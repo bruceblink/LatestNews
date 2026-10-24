@@ -38,24 +38,68 @@ export interface NormalizeNewsItemsOptions {
     limit?: number;
 }
 
+export interface NewsItemsNormalizationQuality {
+    rawItemCount: number;
+    validItemCount: number;
+    invalidItemCount: number;
+    duplicateItemCount: number;
+    publishedItemCount: number;
+    newestPublishedAt?: number;
+}
+
 export function normalizeNewsItems(items: unknown[], options: NormalizeNewsItemsOptions = {}): NewsItem[] {
+    return normalizeNewsItemsWithQuality(items, options).items;
+}
+
+/** Normalize source output and expose counters used by the source-quality report. */
+export function normalizeNewsItemsWithQuality(
+    items: unknown[],
+    options: NormalizeNewsItemsOptions = {}
+): { items: NewsItem[]; quality: NewsItemsNormalizationQuality } {
     const limit = options.limit ?? DEFAULT_LIMIT;
     const normalizedItems: NewsItem[] = [];
     const seenUrls = new Set<string>();
+    let validItemCount = 0;
+    let invalidItemCount = 0;
+    let duplicateItemCount = 0;
+    let publishedItemCount = 0;
+    let newestPublishedAt: number | undefined;
 
     for (const item of items) {
         const normalized = normalizeNewsItem(item, options.sourceId);
-        if (!normalized) continue;
+        if (!normalized) {
+            invalidItemCount += 1;
+            continue;
+        }
 
         const urlKey = normalizeNewsItemUrlKey(normalized.url);
-        if (seenUrls.has(urlKey)) continue;
+        if (seenUrls.has(urlKey)) {
+            duplicateItemCount += 1;
+            continue;
+        }
         seenUrls.add(urlKey);
+        validItemCount += 1;
 
-        normalizedItems.push(normalized);
-        if (normalizedItems.length >= limit) break;
+        const publishedAt = toTimestamp(normalized.pubDate);
+        if (publishedAt !== undefined) {
+            publishedItemCount += 1;
+            newestPublishedAt = Math.max(newestPublishedAt ?? publishedAt, publishedAt);
+        }
+
+        if (normalizedItems.length < limit) normalizedItems.push(normalized);
     }
 
-    return normalizedItems;
+    return {
+        items: normalizedItems,
+        quality: {
+            rawItemCount: items.length,
+            validItemCount,
+            invalidItemCount,
+            duplicateItemCount,
+            publishedItemCount,
+            ...(newestPublishedAt !== undefined ? { newestPublishedAt } : {}),
+        },
+    };
 }
 
 export function normalizeNewsItem(item: unknown, sourceId?: SourceID): NewsItem | undefined {
@@ -132,6 +176,16 @@ function normalizeDateValue(value: number | string | null | undefined): number |
 
     const parsed = Date.parse(trimmed);
     return Number.isFinite(parsed) ? parsed : trimmed;
+}
+
+function toTimestamp(value: number | string | undefined) {
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return value < 100_000_000_000 ? value * 1000 : value;
+    }
+    if (typeof value !== "string") return undefined;
+
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function hashString(value: string) {

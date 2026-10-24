@@ -1,6 +1,11 @@
 import { it, expect, describe } from "vitest";
 
-import { normalizeNewsItem, normalizeNewsItems, normalizeNewsItemUrlKey } from "./news-item-schema";
+import {
+    normalizeNewsItem,
+    normalizeNewsItems,
+    normalizeNewsItemUrlKey,
+    normalizeNewsItemsWithQuality,
+} from "./news-item-schema";
 
 import type { NewsItem, SourceID } from "./types";
 
@@ -55,6 +60,25 @@ describe("news item normalization", () => {
                 date: 1_783_220_000_000,
                 info: "meta",
             },
+        });
+    });
+
+    it("reports invalid, duplicate, and publication counters without changing normalized output", () => {
+        const result = normalizeNewsItemsWithQuality([
+            { title: "Valid", url: "https://example.com/a", pubDate: "2026-07-05T08:00:00.000Z" },
+            { title: "Duplicate", url: "https://www.example.com/a" },
+            { title: "", url: "https://example.com/b" },
+            { title: "Missing URL", url: "" },
+        ]);
+
+        expect(result.items).toHaveLength(1);
+        expect(result.quality).toEqual({
+            rawItemCount: 4,
+            validItemCount: 1,
+            invalidItemCount: 2,
+            duplicateItemCount: 1,
+            publishedItemCount: 1,
+            newestPublishedAt: Date.parse("2026-07-05T08:00:00.000Z"),
         });
     });
 });

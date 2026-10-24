@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-P0 至 P4 已完成首轮实现。F4-B 又迁移了 Freebuf RSS、稀土掘金 JSON 和 Hacker News HTML 三个代表适配器，并保留静态来源 ID、旧 URL 哈希和 `NewsItem.extra` 展示字段。真实窗口验收、完整数据兼容和 Pages Web→Node API 浏览器验收仍未完成。P5 陌生插件隔离尚未评估。代码未部署到生产环境。
+P0 至 P4 已完成首轮实现。F4-B 又迁移了 Freebuf RSS、稀土掘金 JSON 和 Hacker News HTML 三个代表适配器，并保留静态来源 ID、旧 URL 哈希和 `NewsItem.extra` 展示字段。F5-A 已增加运行期来源质量计数和健康诊断报告；7 天公网采样、重点源维护集、真实窗口验收、完整数据兼容和 Pages Web→Node API 浏览器验收仍未完成。P5 陌生插件隔离尚未评估。代码未部署到生产环境。
 
 ## P0：同一插件产物跨宿主运行
 
@@ -61,6 +61,12 @@ P0 至 P4 已完成首轮实现。F4-B 又迁移了 Freebuf RSS、稀土掘金 J
 - `CrawlerItem.extra` 与 Node/Electron `NewsItem` 映射已覆盖 `hover`、`date`、`info`、`diff` 和 `icon`，插件输出限制继续由宿主统一执行。
 - 三个插件均提供 `manifest.json`、本地响应 fixture 和 `test-fixtures.json`，并已加入 `crawler-platform/catalog.json`。
 
+## F5-A：运行期来源质量报告首轮实现
+
+- 服务端标准化阶段记录原始、有效、无效、重复和可解析发布时间条目计数，并计算空结果原因和最近样本新鲜度。
+- `/api/v1/health/sources` 的每个来源增加 `quality` 计数；`/api/v1/health/diagnostics` 的 JSON 与文本报告增加成功率、有效条目率、重复率、发布时间完整率、空结果次数和新鲜度。
+- 统计窗口从服务进程首次采样开始。服务重启后重新开始，7 天公网采样和重点源维护集仍未完成。
+
 ## 验证结果
 
 | 检查 | 结果 | 证据范围 |
@@ -72,6 +78,7 @@ P0 至 P4 已完成首轮实现。F4-B 又迁移了 Freebuf RSS、稀土掘金 J
 | 定向动态目录测试 | 通过 | 24 个测试；覆盖 JSON/RSS 动态 ID、来源目录、Feed 解析、命名空间拒绝和 API URL 校验 |
 | `pnpm crawler validate/test` | 通过 | JSON 示例、Freebuf RSS、稀土掘金 JSON、Hacker News HTML；Pcbeta 仍保留兼容样例 |
 | `pnpm crawler catalog validate` | 通过 | Pcbeta、Freebuf、稀土掘金和 Hacker News 四个目录包 |
+| 定向来源质量测试 | 通过 | 标准化计数、健康聚合、诊断报告和旧来源抓取回归；4 个测试文件、19 个测试 |
 | `pnpm electron:build` | 通过 | Electron 主进程、预加载和渲染器构建；构建过程仍报告 4 个图标下载超时和 Zod 注释警告 |
 | Electron utility process smoke | 通过 | Windows、本地 Electron 44.8.0；版本化 Pcbeta 和 JSON 包在 Node 与 Electron 返回相同条目。Electron 44.9.0 下载失败，因此未验证该二进制 |
 | Windows 桌面打包 | 通过 | 使用本机 Electron 44.8.0 目录打包；确认 worker 入口、`app.asar`、主进程和预加载文件存在。未运行窗口交互 |

@@ -81,6 +81,7 @@ describe("source health diagnostics", () => {
         const report = formatSourceHealthDiagnostics(summary, {
             formatTime: (time) => `time:${time}`,
             maxFailingSources: 1,
+            maxQualitySources: 1,
         });
 
         expect(report).toContain("LatestNews 数据源诊断报告");
@@ -109,6 +110,40 @@ describe("source health diagnostics", () => {
         expect(report).toContain("## 异常源\n无");
         expect(report).toContain("## 缓存降级源\n无");
         expect(report).toContain("## 未采样源\n无");
+    });
+
+    it("reports quality rates and keeps unsampled sources out of success metrics", () => {
+        const report = formatSourceHealthDiagnostics(
+            {
+                ...summary,
+                sampleWindowStartedAt: UPDATED_AT - 3_600_000,
+                sources: [
+                    {
+                        ...summary.sources[2],
+                        quality: {
+                            rawItemCount: 12,
+                            validItemCount: 9,
+                            invalidItemCount: 1,
+                            duplicateItemCount: 2,
+                            publishedItemCount: 6,
+                            emptyResultCount: 1,
+                            firstSampleAt: UPDATED_AT - 3_600_000,
+                            lastFreshnessMs: 120_000,
+                        },
+                    },
+                    summary.sources[3],
+                ],
+            },
+            { formatTime: (time) => `time:${time}` }
+        );
+
+        expect(report).toContain(`采样窗口开始：time:${UPDATED_AT - 3_600_000}`);
+        expect(report).toContain("成功率 88.9%");
+        expect(report).toContain("有效条目率 75.0%");
+        expect(report).toContain("重复率 16.7%");
+        expect(report).toContain("发布时间完整率 66.7%");
+        expect(report).toContain("新鲜度 2 分钟");
+        expect(report).toContain("Seebug Paper (seebug) · 未采样");
     });
 
     it("creates filesystem-friendly diagnostic filenames", () => {
