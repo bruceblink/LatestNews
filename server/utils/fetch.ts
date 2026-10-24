@@ -30,14 +30,18 @@ const defaultHeaders = {
     "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
 };
 
-const baseFetch = $fetch.create({
-    headers: defaultHeaders,
-    timeout: 10000,
-    retry: 3,
-    retryDelay: RETRY_DELAY_MS,
-    retryStatusCodes: [408, 409, 425, 429, 500, 502, 503, 504],
-    fetch: createBoundedFetch(fetchSchedulerDefaults.maxResponseBytes),
-});
+const baseFetch = $fetch.create(
+    {
+        headers: defaultHeaders,
+        timeout: 10000,
+        retry: 3,
+        retryDelay: RETRY_DELAY_MS,
+        retryStatusCodes: [408, 409, 425, 429, 500, 502, 503, 504],
+    },
+    {
+        fetch: createBoundedFetch(fetchSchedulerDefaults.maxResponseBytes),
+    }
+);
 
 const fetchScheduler = createFetchScheduler(fetchSchedulerDefaults);
 
@@ -91,7 +95,7 @@ export function createBoundedFetch(maxBytes: number, fetchImpl: typeof globalThi
         throw new RangeError("maxBytes must be a positive safe integer.");
     }
 
-    return async (input: RequestInfo | URL, init?: RequestInit) => {
+    return async (input: Parameters<typeof globalThis.fetch>[0], init?: Parameters<typeof globalThis.fetch>[1]) => {
         const response = await fetchImpl(input, init);
         const contentLength = Number(response.headers.get("content-length"));
         if (response.body && Number.isSafeInteger(contentLength) && contentLength > maxBytes) {
