@@ -50,6 +50,7 @@ export function createServerCrawlerPluginRuntime(options: NodeCrawlerPluginProvi
         hasSource: provider.hasSource,
         listSourceIds: provider.listSourceIds,
         listSources: provider.listSources,
+        dispose: () => provider.dispose(),
         async fetchSource(id: SourceID): Promise<NewsItem[] | undefined> {
             const items = await provider.collect(id);
             if (!items) return undefined;

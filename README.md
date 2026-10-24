@@ -60,6 +60,7 @@ Electron 桌面端复用同一份 `index.html`、React 入口、路由、页面�
 pnpm electron:dev
 pnpm typecheck:electron
 pnpm test:electron
+pnpm performance:electron-lifecycle
 pnpm electron:package:win
 pnpm electron:package:mac
 pnpm electron:package:linux
@@ -157,6 +158,7 @@ docker compose -f docker-compose.yml up -d
 | `pnpm electron:package:linux` | 生成 Linux AppImage 和 DEB |
 | `pnpm typecheck:electron` | 检查桌面主进程和构建配置 |
 | `pnpm test:electron` | 检查桌面 API 转发和资源隔离规则 |
+| `pnpm performance:electron-lifecycle` | 构建并探测桌面启动、`/feed` 切页、最小化恢复和窗口关闭 |
 
 ## 0.6.0 发布产物
 

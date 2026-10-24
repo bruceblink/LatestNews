@@ -8,6 +8,7 @@ interface ImportMetaEnv {
 
 interface Window {
     latestNewsDesktop?: {
+        getLifecycleDiagnostics: () => Promise<unknown>;
         startLogin: () => Promise<void>;
         setSyncHubApiKey: (apiKey: string) => Promise<void>;
         clearSyncHubApiKey: () => Promise<void>;

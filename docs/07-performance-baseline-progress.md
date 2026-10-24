@@ -156,3 +156,28 @@ F2-A 已完成服务端采集队列的第一步：内置源和插件源共用总
 ### 回退边界
 
 恢复 `resolveEntireSources` 的全量等待和 `myFetch` 的直接 raw 入口即可回退本切片，不改变来源 ID、缓存格式或 API 字段结构。
+
+## F3-B：Electron 生命周期与资源释放（自动化通过，真实窗口待验收）
+
+本切片在主进程增加有界生命周期记录和受信任诊断 IPC。记录应用 ready、窗口加载、显示、最小化、恢复、关闭及渲染进程异常事件。诊断快照同时返回窗口状态和 `app.getAppMetrics()` 进程指标。预加载只暴露无参数的诊断读取方法。
+
+Electron 插件队列、进程宿主和桌面 runtime 现在支持关闭。应用收到 `before-quit` 时拒绝新的排队任务，终止活动 worker，并释放连接。该路径不改变来源 ID、缓存格式或远程 API。
+
+### 验证记录
+
+环境为 Windows 11、Node `v24.15.0`、pnpm `10.30.3`。构建提交基线为 F3-A 的 `7bbd8c0`，本切片包含当前工作区改动。
+
+| 检查 | 结果 | 证据边界 |
+| --- | --- | --- |
+| `pnpm typecheck:electron` | 通过 | Electron 主进程、预加载和构建配置 |
+| `pnpm lint:check` | 通过 | 全仓库 ESLint |
+| `pnpm electron:build` | 通过 | 主进程、预加载和 renderer 产物生成；仍有 4 个图标下载超时及既有 Zod 注释警告 |
+| `pnpm exec tsx scripts/performance/electron-lifecycle.ts` | 通过 | 真实 Electron 进程加载 `app://bundle/feed`，执行最小化、恢复、关闭；10 条事件、4 个进程，关闭后窗口数为 0 |
+| Vitest | 未执行 | 当前切片未运行测试命令；不将类型检查或探针结果当作单元测试通过 |
+| Computer Use 真实窗口 | 未执行 | 本轮只覆盖 Electron 进程探针；任务栏、安装升级、macOS/Linux 窗口仍待设备验收 |
+
+探针优先使用本地 Electron 二进制。在本机使用的是 Electron `44.8.0`，因为 `electron@44.9.0` 包的二进制未安装且网络下载失败。可以通过 `LATESTNEWS_ELECTRON_EXECUTABLE` 指定其他本地程序。该差异需要在发布前的打包环境重新确认。
+
+### 回退边界
+
+删除 `electron/lifecycle.ts`、诊断 IPC、生命周期探针和队列/worker 关闭钩子即可回退本切片。Web 页面、Node API、缓存和数据源协议不需要迁移。

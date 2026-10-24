@@ -45,6 +45,7 @@ export interface CrawlerPluginExecutionHost {
         sourceId: string;
         context: CrawlerContext;
     }): Promise<CrawlerItem[]>;
+    dispose?(): void;
 }
 
 export interface CrawlerPluginProviderOptions {
@@ -94,6 +95,10 @@ export function createCrawlerPluginProvider(options: CrawlerPluginProviderOption
                 ...(source.desc ? { desc: source.desc } : {}),
                 ...(source.home ? { home: source.home } : {}),
             }));
+        },
+        dispose() {
+            queue.close();
+            host?.dispose?.();
         },
         async collect(sourceId: string) {
             const source = sources.get(sourceId);

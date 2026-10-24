@@ -53,7 +53,18 @@ export interface ProcessCrawlerCollection {
 
 /** Execute a trusted plugin in a short-lived child process and broker its network calls. */
 export class ProcessCrawlerHost {
+    private readonly connections = new Set<CrawlerProcessConnection>();
+    private closed = false;
+
     constructor(private readonly options: ProcessCrawlerHostOptions) {}
+
+    /** Stop active workers when the owning application is closing. */
+    dispose() {
+        if (this.closed) return;
+        this.closed = true;
+        for (const connection of this.connections) connection.kill();
+        this.connections.clear();
+    }
 
     collect({ manifest: inputManifest, entryPath, sourceId, context, parameters }: ProcessCrawlerCollection) {
         const manifest = parseCrawlerPluginManifest(inputManifest);
@@ -66,9 +77,13 @@ export class ProcessCrawlerHost {
         if (!manifest.sources.some((source) => source.id === sourceId)) {
             throw new CrawlerPlatformError("SOURCE_NOT_FOUND", `Plugin ${manifest.id} does not declare ${sourceId}.`);
         }
+        if (this.closed) {
+            return Promise.reject(new CrawlerPlatformError("CANCELLED", "Crawler host is closed."));
+        }
 
         const sourceKey = `${manifest.id}/${sourceId}` as const;
         const connection = this.options.spawn();
+        this.connections.add(connection);
         const timeoutMs = this.options.timeoutMs ?? 15000;
         const maxResponseBytes = this.options.maxResponseBytes ?? 2 * 1024 * 1024;
         const cancelGraceMs = this.options.cancelGraceMs ?? 150;
@@ -87,6 +102,7 @@ export class ProcessCrawlerHost {
                 if (!requestController.signal.aborted) requestController.abort();
                 removeMessageListener();
                 removeExitListener();
+                this.connections.delete(connection);
             };
 
             const finish = (error?: unknown, items?: CrawlerItem[]) => {
@@ -144,8 +160,10 @@ export class ProcessCrawlerHost {
                 if (!settled) {
                     finish(
                         new CrawlerPlatformError(
-                            "WORKER_EXIT",
-                            `Plugin ${manifest.id} exited before returning results (code ${code ?? "unknown"}, signal ${signal ?? "none"}).`
+                            this.closed ? "CANCELLED" : "WORKER_EXIT",
+                            this.closed
+                                ? `Collection for ${sourceKey} was cancelled because the crawler host is closing.`
+                                : `Plugin ${manifest.id} exited before returning results (code ${code ?? "unknown"}, signal ${signal ?? "none"}).`
                         )
                     );
                 }

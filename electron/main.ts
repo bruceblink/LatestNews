@@ -18,6 +18,7 @@ import {
 
 import { createElectronCrawlerPluginRuntime } from "./crawler-plugin-provider";
 import { getSafeExternalUrl, resolveRendererFile, isTrustedRendererUrl } from "./security";
+import { createDesktopLifecycleTracker, type DesktopLifecycleEventName } from "./lifecycle";
 import { isValidSyncHubApiKey, parseStoredSyncHubConfig, serializeStoredSyncHubConfig } from "./synchub-storage";
 import {
     normalizeServiceUrl,
@@ -97,6 +98,10 @@ let mainWindow: BrowserWindow | null = null;
 let authWindow: BrowserWindow | null = null;
 let rendererDevUrl: URL | null = null;
 let trustedRendererUrl = APP_BASE_URL;
+let crawlerRuntime: ElectronCrawlerPluginRuntime | null = null;
+let isQuitting = false;
+let lifecycleProbeActive = false;
+const lifecycle = createDesktopLifecycleTracker();
 
 // Prevent Electron from creating its default File, Edit, View, and Window menu.
 Menu.setApplicationMenu(null);
@@ -116,23 +121,37 @@ if (!hasSingleInstanceLock) {
     app.quit();
 } else {
     app.on("second-instance", () => {
+        lifecycle.record("app-second-instance");
         if (!mainWindow) return;
         if (mainWindow.isMinimized()) mainWindow.restore();
         mainWindow.focus();
     });
 
+    app.on("before-quit", () => {
+        if (isQuitting) return;
+        isQuitting = true;
+        lifecycle.record("app-before-quit");
+        crawlerRuntime?.dispose?.();
+    });
+
+    app.on("will-quit", () => lifecycle.record("app-will-quit"));
+    app.on("quit", (_event, exitCode) => lifecycle.record("app-quit", { details: { exitCode } }));
+
     app.whenReady()
         .then(async () => {
+            lifecycle.record("app-ready");
             app.setAppUserModelId("top.likanug.latestnews");
             rendererDevUrl = getDevelopmentRendererUrl(process.env.ELECTRON_RENDERER_URL);
             trustedRendererUrl = rendererDevUrl?.origin ?? APP_BASE_URL;
             installProtocol();
             installPermissionPolicy();
-            const crawlerRuntime = await createElectronCrawlerPluginRuntime();
+            crawlerRuntime = await createElectronCrawlerPluginRuntime();
             installDesktopIpc(crawlerRuntime);
             await createMainWindow();
+            if (process.env.LATESTNEWS_ELECTRON_LIFECYCLE_PROBE === "1") void runLifecycleProbe();
 
             app.on("activate", () => {
+                lifecycle.record("app-activate");
                 if (BrowserWindow.getAllWindows().length === 0) void createMainWindow();
             });
         })
@@ -142,8 +161,108 @@ if (!hasSingleInstanceLock) {
         });
 
     app.on("window-all-closed", () => {
-        if (process.platform !== "darwin") app.quit();
+        lifecycle.record("app-window-all-closed");
+        if (process.platform !== "darwin" && !lifecycleProbeActive) app.quit();
     });
+}
+
+function attachWindowLifecycle(window: BrowserWindow, role: "main" | "auth") {
+    lifecycle.registerWindow(window.id, role);
+    const update = (
+        name: DesktopLifecycleEventName,
+        state: Parameters<typeof lifecycle.updateWindow>[1],
+        details?: Record<string, boolean | number | string | null>
+    ) => lifecycle.updateWindow(window.id, state, name, details);
+
+    window.webContents.on("did-start-loading", () => update("window-did-start-load", "loading"));
+    window.webContents.on("did-finish-load", () => update("window-did-finish-load", "ready"));
+    window.webContents.on("did-fail-load", (_event, errorCode, _errorDescription, _validatedURL, isMainFrame) => {
+        if (isMainFrame) update("window-did-fail-load", "ready", { errorCode });
+    });
+    window.webContents.on("render-process-gone", (_event, details) => {
+        update("window-render-process-gone", "closed", {
+            reason: details.reason,
+            exitCode: details.exitCode,
+        });
+    });
+    window.webContents.on("unresponsive", () => update("window-unresponsive", "ready"));
+    window.webContents.on("responsive", () => update("window-responsive", "ready"));
+    window.on("ready-to-show", () => update("window-ready-to-show", "ready"));
+    window.on("show", () => update("window-show", "visible"));
+    window.on("hide", () => update("window-hide", "hidden"));
+    window.on("minimize", () => update("window-minimize", "minimized"));
+    window.on("restore", () => update("window-restore", "visible"));
+    window.on("closed", () => update("window-closed", "closed"));
+}
+
+function getDesktopProcessMetrics() {
+    return app.getAppMetrics().map((metric) => ({
+        type: metric.type,
+        pid: metric.pid,
+        ...(metric.serviceName ? { serviceName: metric.serviceName } : {}),
+        cpuPercent: metric.cpu.percentCPUUsage,
+        workingSetSize: metric.memory.workingSetSize,
+        ...(metric.memory.privateBytes !== undefined ? { privateBytes: metric.memory.privateBytes } : {}),
+    }));
+}
+
+function getDesktopDiagnostics() {
+    return {
+        capturedAt: Date.now(),
+        isQuitting,
+        lifecycle: lifecycle.snapshot(),
+        windows: BrowserWindow.getAllWindows().map((window) => ({
+            id: window.id,
+            url: window.webContents.getURL(),
+            isDestroyed: window.isDestroyed(),
+            isVisible: window.isVisible(),
+            isMinimized: window.isMinimized(),
+        })),
+        processes: getDesktopProcessMetrics(),
+    };
+}
+
+function wait(milliseconds: number) {
+    return new Promise<void>((resolveWait) => setTimeout(resolveWait, milliseconds));
+}
+
+async function runLifecycleProbe() {
+    lifecycleProbeActive = true;
+    const reportPath = process.env.LATESTNEWS_ELECTRON_LIFECYCLE_REPORT?.trim();
+    const window = mainWindow;
+    try {
+        if (!window || window.isDestroyed()) throw new Error("Main window was not created.");
+        await window.loadURL(new URL("feed", APP_BASE_URL).href);
+        if (!window.isVisible()) window.show();
+        await wait(100);
+        window.minimize();
+        await wait(100);
+        window.restore();
+        await wait(100);
+        const beforeClose = getDesktopDiagnostics();
+        const closed = new Promise<void>((resolveClosed) => window.once("closed", resolveClosed));
+        window.destroy();
+        await Promise.race([closed, wait(1000)]);
+        const afterClose = getDesktopDiagnostics();
+        if (reportPath) {
+            await fs.writeFile(
+                reportPath,
+                `${JSON.stringify({ result: "passed", beforeClose, afterClose }, null, 2)}\n`,
+                "utf8"
+            );
+        }
+    } catch (error) {
+        if (reportPath) {
+            await fs.writeFile(
+                reportPath,
+                `${JSON.stringify({ result: "failed", error: error instanceof Error ? error.message : String(error) }, null, 2)}\n`,
+                "utf8"
+            );
+        }
+    } finally {
+        lifecycleProbeActive = false;
+        app.quit();
+    }
 }
 
 function getDevelopmentRendererUrl(candidate?: string) {
@@ -491,7 +610,12 @@ async function requestSyncHub(
     return { status: response.status, bodyText: await readResponseText(response, MAX_SYNC_HUB_RESPONSE_BYTES) };
 }
 
-function installDesktopIpc(crawlerRuntime: ElectronCrawlerPluginRuntime) {
+function installDesktopIpc(runtime: ElectronCrawlerPluginRuntime) {
+    ipcMain.handle("desktop:lifecycle:diagnostics", (event) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop diagnostics request.");
+        return getDesktopDiagnostics();
+    });
+
     ipcMain.handle("desktop:start-login", async (event) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop login request.");
         await openAuthenticationWindow();
@@ -549,19 +673,19 @@ function installDesktopIpc(crawlerRuntime: ElectronCrawlerPluginRuntime) {
 
     ipcMain.handle("desktop:crawler:list-sources", async (event) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted crawler source list request.");
-        return crawlerRuntime.listSourceIds();
+        return runtime.listSourceIds();
     });
 
     ipcMain.handle("desktop:crawler:list-source-metadata", async (event) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted crawler source metadata request.");
-        return crawlerRuntime.listSourceMetadata();
+        return runtime.listSourceMetadata();
     });
 
     ipcMain.handle("desktop:crawler:fetch-source", async (event, sourceId: unknown) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted crawler source request.");
         if (typeof sourceId !== "string") throw new Error("Invalid crawler source ID.");
-        if (!crawlerRuntime.listSourceIds().includes(sourceId)) return null;
-        return crawlerRuntime.fetchSource(sourceId as SourceID);
+        if (!runtime.listSourceIds().includes(sourceId)) return null;
+        return runtime.fetchSource(sourceId as SourceID);
     });
 }
 
@@ -628,6 +752,7 @@ async function openAuthenticationWindow() {
     });
 
     authWindow = window;
+    attachWindowLifecycle(window, "auth");
     window.once("ready-to-show", () => window.show());
     window.on("closed", () => {
         if (authWindow === window) authWindow = null;
@@ -714,6 +839,7 @@ async function createMainWindow() {
     });
 
     mainWindow = window;
+    attachWindowLifecycle(window, "main");
     attachMainWindowSecurity(window.webContents);
     window.once("ready-to-show", () => window.show());
     window.on("closed", () => {

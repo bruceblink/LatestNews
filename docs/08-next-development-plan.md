@@ -1,6 +1,6 @@
 # 后续开发计划
 
-日期：2026-10-23。基线：`main` 的 `5e66fcd`。
+日期：2026-10-24。基线：`main` 的 `7bbd8c0`。
 
 本计划承接 F2-A/F2-B。当前主线已经限制来源任务总并发、等待队列和 `myFetch` 的上游 origin 调度。下一阶段先完成采集资源边界，再进入 Web/Electron 性能和新闻源工程化。每个切片独立提交，完成验证后再开始下一项。
 
@@ -63,6 +63,27 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 
 代码切片完成后执行仓库要求的 lint、类型检查、定向测试和构建；影响 Electron 共用代码时追加 Electron 检查。计划阶段不把未执行的公网、浏览器、Electron 或 Docker 验收标为通过。每个切片保留变更范围、提交、环境、验证结果、未执行项和回退说明。
 
+## F3-B：Electron 生命周期与资源释放（实现完成，真实窗口验收待执行）
+
+### 实现范围
+
+- `electron/lifecycle.ts` 记录应用和窗口的启动、加载、显示、隐藏、最小化、恢复、关闭及渲染进程异常事件。记录最多保留 128 条，不保存 URL 查询值、Cookie 或认证内容。
+- 主进程增加受信任的 `desktop:lifecycle:diagnostics` IPC，返回窗口状态、生命周期记录和 `app.getAppMetrics()` 进程指标。预加载只暴露固定的无参数读取方法。
+- Electron 采集队列、插件宿主和进程 worker 增加关闭路径。应用退出前拒绝排队任务、终止活动 worker，并释放 worker 连接，避免窗口关闭后留下采集进程。
+- 新增 `pnpm performance:electron-lifecycle`。探针使用构建产物加载 `/feed`，执行最小化、恢复和关闭，再检查窗口是否清空及至少一个非零资源指标。
+
+### 自动化验收
+
+- `pnpm typecheck:electron`：通过。
+- `pnpm lint:check`：通过。
+- `pnpm electron:build`：通过。构建仍有 4 个图标下载超时和既有 Zod 注释警告，使用本地默认图标继续生成产物。
+- `pnpm exec tsx scripts/performance/electron-lifecycle.ts`：通过。观察到 `app://bundle/feed`、11 条生命周期事件、4 个 Electron 进程，关闭后窗口数为 0。
+- 探针在当前工作站选择已安装的 Electron `44.8.0` 二进制运行；声明为 `44.9.0` 的 npm 包没有本地二进制，首次默认解析尝试下载时因网络不可用失败。脚本支持 `LATESTNEWS_ELECTRON_EXECUTABLE` 显式指定本地程序。
+
+### 证据边界与回退
+
+本轮证据覆盖构建产物和真实 Electron 进程的自动化生命周期，不替代 Computer Use 的真实可视窗口、任务栏、安装升级、macOS 或 Linux 验收。回退时删除生命周期探针、诊断 IPC 和 worker 关闭钩子即可；不改变 Web API、缓存格式、来源 ID 或远程请求目标。
+
 ## 当前下一步
 
-F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。下一步继续完成真实浏览器请求瀑布和 F3-B Electron 生命周期验收。
+F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针已完成；下一步继续 F4-A Source SDK。真实浏览器请求瀑布和真实 Windows 窗口证据单独记录，不把 headless 或进程输出标为 UI 通过。

@@ -27,10 +27,15 @@ export function createCrawlerTaskQueue(options: CrawlerTaskQueueOptions) {
 
     const jobs: QueueJob<unknown>[] = [];
     let activeCount = 0;
+    let closed = false;
 
     return {
         run<T>(task: () => Promise<T>): Promise<T> {
             return new Promise<T>((resolve, reject) => {
+                if (closed) {
+                    reject(new CrawlerPlatformError("CANCELLED", "Crawler task queue is closed."));
+                    return;
+                }
                 const job: QueueJob<T> = { task, resolve, reject };
                 if (activeCount < options.maxConcurrent) {
                     start(job);
@@ -50,6 +55,15 @@ export function createCrawlerTaskQueue(options: CrawlerTaskQueueOptions) {
                 jobs.push(job as QueueJob<unknown>);
             });
         },
+        close(error: CrawlerPlatformError = new CrawlerPlatformError("CANCELLED", "Crawler task queue is closed.")) {
+            if (closed) return;
+            closed = true;
+            while (jobs.length > 0) {
+                const job = jobs.shift()!;
+                if (job.timeout) clearTimeout(job.timeout);
+                job.reject(error);
+            }
+        },
         get activeCount() {
             return activeCount;
         },
@@ -66,6 +80,7 @@ export function createCrawlerTaskQueue(options: CrawlerTaskQueueOptions) {
             .then(job.resolve, job.reject)
             .finally(() => {
                 activeCount -= 1;
+                if (closed) return;
                 const next = jobs.shift();
                 if (next) start(next);
             });

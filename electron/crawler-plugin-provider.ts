@@ -56,6 +56,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
         return {
             listSourceIds: provider.listSourceIds,
             listSourceMetadata: () => sourceMetadata,
+            dispose: () => provider.dispose(),
             async fetchSource(sourceId: SourceID): Promise<SourceResponse | null> {
                 const items = await provider.collect(sourceId);
                 if (!items) return null;

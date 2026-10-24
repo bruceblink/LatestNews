@@ -4,6 +4,7 @@ import type { SourceMetadataItem } from "@shared/source-metadata";
 declare global {
     interface Window {
         latestNewsDesktop?: {
+            getLifecycleDiagnostics: () => Promise<unknown>;
             startLogin: () => Promise<void>;
             setSyncHubApiKey: (apiKey: string) => Promise<void>;
             clearSyncHubApiKey: () => Promise<void>;
