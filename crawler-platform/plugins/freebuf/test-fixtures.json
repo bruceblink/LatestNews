@@ -1,0 +1,22 @@
+{
+  "now": "2026-10-18T00:00:00.000Z",
+  "responses": {
+    "https://www.freebuf.com/rss": {
+      "status": 200,
+      "headers": { "content-type": "application/rss+xml" },
+      "bodyFile": "fixture.xml"
+    }
+  },
+  "cases": [
+    {
+      "sourceId": "freebuf",
+      "expectedItems": [
+        {
+          "title": "Freebuf fixture headline",
+          "url": "https://www.freebuf.com/articles/1",
+          "publishedAt": "Sun, 18 Oct 2026 07:00:00 GMT"
+        }
+      ]
+    }
+  ]
+}

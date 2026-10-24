@@ -102,5 +102,6 @@ function toNewsItem(item: CrawlerItem): NewsItem {
         url: item.url,
         ...(item.mobileUrl ? { mobileUrl: item.mobileUrl } : {}),
         ...(item.publishedAt !== undefined ? { pubDate: item.publishedAt } : {}),
+        ...(item.extra ? { extra: item.extra } : {}),
     };
 }

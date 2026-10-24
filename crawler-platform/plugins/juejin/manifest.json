@@ -1,0 +1,23 @@
+{
+  "manifestVersion": 1,
+  "id": "org.latestnews.juejin",
+  "name": "稀土掘金",
+  "version": "0.1.0",
+  "apiVersion": "^1.0.0",
+  "runtime": "trusted-js",
+  "entry": "plugin.ts",
+  "targets": ["node", "electron"],
+  "permissions": {
+    "network": [{ "origin": "https://api.juejin.cn", "methods": ["GET"] }]
+  },
+  "sources": [
+    {
+      "id": "juejin",
+      "name": "稀土掘金",
+      "kind": "hottest",
+      "refreshIntervalSeconds": 600,
+      "column": "tech",
+      "home": "https://juejin.cn"
+    }
+  ]
+}

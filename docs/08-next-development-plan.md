@@ -1,6 +1,6 @@
 # 后续开发计划
 
-日期：2026-10-24。基线：`main` 的 `25cfeea`。
+日期：2026-10-24。基线：`main` 的 `bba1021`。
 
 本计划承接 F2-A/F2-B。当前主线已经限制来源任务总并发、等待队列和 `myFetch` 的上游 origin 调度。下一阶段先完成采集资源边界，再进入 Web/Electron 性能和新闻源工程化。每个切片独立提交，完成验证后再开始下一项。
 
@@ -104,6 +104,38 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 
 移除设置组件、设置路由、桌面配置 IPC 和 `news-api-config.json` 读写逻辑即可恢复构建时固定数据源；不改变 Web `/api` service、认证 API 或 SyncHub 数据格式。
 
+## F4-A：Source SDK（实现完成）
+
+### 已交付范围
+
+- `crawler-platform/sdk` 固定插件清单、抓取上下文、取消信号、HTTP 权限边界、RSS 解析和旧 URL 哈希 ID 工具。
+- `crawler-platform/core/output.ts` 在宿主边界校验条目、规范化 URL、去重并限制条目数量和响应体积。
+- `crawler-platform/cli.ts` 提供清单校验、离线 fixture 回放、独立打包和本地目录校验；Node 与 Electron 共用生成的 `plugin.mjs`。
+- JSON、HTML、RSS 本地样例和 Pcbeta 迁移样例固定了 `manifest.json`、`plugin.ts`、fixture 与失败边界约定。
+
+### 证据与限制
+
+- P0–P4 的跨宿主、动态目录和版本化包生命周期记录在 [插件平台进度记录](04-crawler-plugin-implementation-progress.md)。
+- 本阶段不包含公网采样、陌生代码沙箱或插件安装界面。真实窗口和生产配置仍按单独验收记录。
+
+## F4-B：代表适配器迁移（实现完成）
+
+### 已迁移来源
+
+| 类型 | 来源 ID | 插件包 | 兼容行为 |
+| --- | --- | --- | --- |
+| RSS | `freebuf` | `crawler-platform/plugins/freebuf` | 保留来源 ID、RSS URL 和旧 URL 哈希 ID |
+| JSON | `juejin` | `crawler-platform/plugins/juejin` | 保留来源 ID、文章 URL 和旧 URL 哈希 ID |
+| HTML | `hackernews` | `crawler-platform/plugins/hackernews` | 保留来源 ID、条目 URL、评分 `extra.info` 和旧 URL 哈希 ID |
+
+插件目录已加入 `crawler-platform/catalog.json`。插件输出现在保留旧 `NewsItem.extra` 字段，Node 与 Electron 运行时会继续映射 `hover`、`date`、`info`、`diff` 和 `icon`。
+
+### 验收条件与回退边界
+
+- 每个代表源提供离线响应、清单校验和 fixture 回放；HTTP 失败和无条目响应会返回明确错误。
+- 启用插件时只替换对应静态来源；未启用或插件失败时继续使用原有 getter 或远程 API。
+- 删除三个插件目录、目录条目和 `CrawlerItem.extra` 映射即可回退；不改变缓存格式、来源 ID 或客户端 API。
+
 ## 当前下一步
 
-F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针和 F3-C 的统一设置入口已完成；下一步继续 F4-A Source SDK。真实浏览器请求瀑布和真实 Windows 窗口证据单独记录，不把 headless 或进程输出标为 UI 通过。
+F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针和 F3-C 的统一设置入口已完成。F4-A Source SDK 与 F4-B 三类代表适配器迁移已完成；下一步进入 F5-A 来源质量报告。真实浏览器请求瀑布、真实 Windows 窗口证据和公网采样单独记录，不把 headless、进程输出或离线 fixture 标为对应的真实环境通过。

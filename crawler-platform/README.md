@@ -42,6 +42,18 @@ pnpm crawler disable org.latestnews.pcbeta --root .data/crawler-plugins
 
 The installer writes verified versions below `packages/<plugin-id>/versions/` and atomically selects the active version with `active.json`. It checks the manifest and bundle SHA-256 before the host loads code. Updates retain prior versions. A pin blocks updates and rollback until it is removed. Rollback switches the active pointer and does not delete packages. `enabled.json` is shared by Node and Electron. A flat package installed by the earlier workflow remains readable; pinning or updating it first copies it into the versioned store.
 
+## Representative source migrations
+
+The reviewed catalog now includes three static source migrations:
+
+| Source | Adapter | Fixture | Compatibility contract |
+| --- | --- | --- | --- |
+| `freebuf` | RSS | `plugins/freebuf` | Existing source ID and URL hash |
+| `juejin` | JSON | `plugins/juejin` | Existing source ID and article URL |
+| `hackernews` | HTML | `plugins/hackernews` | Existing source ID, item URL, and score metadata |
+
+Each package can be validated and replayed without network access. The host preserves the legacy `NewsItem.extra` presentation fields when a migrated adapter returns them.
+
 ## Node service integration
 
 The first migrated source is Pcbeta's Windows 11 feed. Its plugin source ID remains `pcbeta-windows11`, and it uses the existing LatestNews URL hash helper contract so article history and cache IDs stay stable. By default the Node service reads enabled IDs from `.data/crawler-plugins/enabled.json`. A non-empty `LATESTNEWS_CRAWLER_PLUGIN_IDS` value overrides that file. Set `LATESTNEWS_CRAWLER_PLUGIN_DIR` only when the plugin store is not `.data/crawler-plugins`.

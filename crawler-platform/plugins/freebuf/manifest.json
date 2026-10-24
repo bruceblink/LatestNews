@@ -1,0 +1,24 @@
+{
+  "manifestVersion": 1,
+  "id": "org.latestnews.freebuf",
+  "name": "Freebuf",
+  "version": "0.1.0",
+  "apiVersion": "^1.0.0",
+  "runtime": "trusted-js",
+  "entry": "plugin.ts",
+  "targets": ["node", "electron"],
+  "permissions": {
+    "network": [{ "origin": "https://www.freebuf.com", "methods": ["GET"] }]
+  },
+  "sources": [
+    {
+      "id": "freebuf",
+      "name": "Freebuf",
+      "kind": "hottest",
+      "refreshIntervalSeconds": 600,
+      "column": "china",
+      "title": "网络安全",
+      "home": "https://www.freebuf.com/"
+    }
+  ]
+}

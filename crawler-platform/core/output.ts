@@ -15,6 +15,27 @@ const itemSchema = z
         url: z.string().trim().min(1).max(4096).url().refine(isHttpUrl),
         mobileUrl: z.string().trim().min(1).max(4096).url().refine(isHttpUrl).optional(),
         publishedAt: z.union([z.number().finite(), z.string().trim().min(1).max(128)]).optional(),
+        extra: z
+            .object({
+                hover: z.string().max(8192).optional(),
+                date: z.union([z.number().finite(), z.string().trim().min(1).max(128)]).optional(),
+                info: z.union([z.literal(false), z.string().max(1024)]).optional(),
+                diff: z.number().finite().optional(),
+                icon: z
+                    .union([
+                        z.literal(false),
+                        z.string().trim().min(1).max(4096),
+                        z
+                            .object({
+                                url: z.string().trim().min(1).max(4096),
+                                scale: z.number().finite().min(0).max(10),
+                            })
+                            .strict(),
+                    ])
+                    .optional(),
+            })
+            .strict()
+            .optional(),
     })
     .strict();
 
@@ -54,6 +75,7 @@ export function normalizeCrawlerItems(input: unknown, options: NormalizeCrawlerI
             url,
             ...(parsed.data.mobileUrl ? { mobileUrl: normalizeCrawlerUrl(parsed.data.mobileUrl) } : {}),
             ...(parsed.data.publishedAt !== undefined ? { publishedAt: parsed.data.publishedAt } : {}),
+            ...(parsed.data.extra ? { extra: parsed.data.extra } : {}),
         });
     }
 

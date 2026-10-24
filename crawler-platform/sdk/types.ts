@@ -10,6 +10,16 @@ export interface CrawlerItem {
     url: string;
     mobileUrl?: string;
     publishedAt?: number | string;
+    extra?: CrawlerItemExtra;
+}
+
+/** Optional presentation metadata retained by the legacy NewsItem contract. */
+export interface CrawlerItemExtra {
+    hover?: string;
+    date?: number | string;
+    info?: false | string;
+    diff?: number;
+    icon?: false | string | { url: string; scale: number };
 }
 
 export interface CrawlerHttpRequest {

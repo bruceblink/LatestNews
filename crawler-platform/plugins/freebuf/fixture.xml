@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Freebuf</title>
+    <item>
+      <guid>freebuf-1</guid>
+      <title>Freebuf fixture headline</title>
+      <link>https://www.freebuf.com/articles/1</link>
+      <pubDate>Sun, 18 Oct 2026 07:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,21 @@
+{
+  "now": "2026-10-18T00:00:00.000Z",
+  "responses": {
+    "https://api.juejin.cn/content_api/v1/content/article_rank?category_id=1&type=hot&spider=0": {
+      "status": 200,
+      "headers": { "content-type": "application/json" },
+      "bodyFile": "fixture.json"
+    }
+  },
+  "cases": [
+    {
+      "sourceId": "juejin",
+      "expectedItems": [
+        {
+          "title": "Juejin fixture headline",
+          "url": "https://juejin.cn/post/fixture-1"
+        }
+      ]
+    }
+  ]
+}

@@ -5,6 +5,21 @@
       "id": "org.latestnews.pcbeta",
       "name": "远景论坛",
       "versions": [{ "version": "0.1.0", "sourcePath": "plugins/pcbeta" }]
+    },
+    {
+      "id": "org.latestnews.freebuf",
+      "name": "Freebuf",
+      "versions": [{ "version": "0.1.0", "sourcePath": "plugins/freebuf" }]
+    },
+    {
+      "id": "org.latestnews.juejin",
+      "name": "稀土掘金",
+      "versions": [{ "version": "0.1.0", "sourcePath": "plugins/juejin" }]
+    },
+    {
+      "id": "org.latestnews.hackernews",
+      "name": "Hacker News",
+      "versions": [{ "version": "0.1.0", "sourcePath": "plugins/hackernews" }]
     }
   ]
 }

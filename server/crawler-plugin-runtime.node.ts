@@ -60,6 +60,7 @@ export function createServerCrawlerPluginRuntime(options: NodeCrawlerPluginProvi
                 url: item.url,
                 ...(item.mobileUrl ? { mobileUrl: item.mobileUrl } : {}),
                 ...(item.publishedAt !== undefined ? { pubDate: item.publishedAt } : {}),
+                ...(item.extra ? { extra: item.extra } : {}),
             }));
         },
     };

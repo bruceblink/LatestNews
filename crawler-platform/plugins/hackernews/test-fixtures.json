@@ -1,0 +1,27 @@
+{
+  "now": "2026-10-18T00:00:00.000Z",
+  "responses": {
+    "https://news.ycombinator.com": {
+      "status": 200,
+      "headers": { "content-type": "text/html" },
+      "bodyFile": "fixture.html"
+    }
+  },
+  "cases": [
+    {
+      "sourceId": "hackernews",
+      "expectedItems": [
+        {
+          "title": "Hacker News fixture headline",
+          "url": "https://news.ycombinator.com/item?id=123",
+          "extra": { "info": "42 points" }
+        },
+        {
+          "title": "Second fixture headline",
+          "url": "https://news.ycombinator.com/item?id=124",
+          "extra": { "info": "17 points" }
+        }
+      ]
+    }
+  ]
+}
