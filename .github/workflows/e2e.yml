@@ -1,0 +1,106 @@
+name: Playwright E2E
+
+on:
+    push:
+        branches:
+            - main
+        paths-ignore:
+            - "**/*.md"
+            - "README*"
+            - "LICENSE*"
+            - "docs/**"
+    pull_request:
+        branches:
+            - main
+        paths-ignore:
+            - "**/*.md"
+            - "README*"
+            - "LICENSE*"
+            - "docs/**"
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: playwright-e2e-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    web:
+        name: Web Chromium E2E
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - name: Check out source
+              uses: actions/checkout@v4
+
+            - name: Enable pnpm
+              run: corepack enable
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Install Chromium
+              run: pnpm exec playwright install --with-deps chromium
+
+            - name: Run Web E2E tests
+              run: pnpm test:e2e:web
+
+            - name: Upload Web E2E results
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-web-results
+                  path: test-results/web
+                  if-no-files-found: ignore
+                  retention-days: 14
+
+    electron:
+        name: Electron E2E
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        steps:
+            - name: Check out source
+              uses: actions/checkout@v4
+
+            - name: Enable pnpm
+              run: corepack enable
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Build Electron renderer
+              run: pnpm electron:build
+
+            - name: Install Electron runtime
+              run: pnpm exec install-electron
+
+            - name: Install display dependencies
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install --yes xvfb xauth
+
+            - name: Run Electron E2E tests
+              run: xvfb-run --auto-servernum pnpm test:e2e:electron
+
+            - name: Upload Electron E2E results
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-electron-results
+                  path: test-results/electron
+                  if-no-files-found: ignore
+                  retention-days: 14

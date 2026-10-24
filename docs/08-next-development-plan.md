@@ -1,6 +1,6 @@
 # 后续开发计划
 
-日期：2026-10-24。基线：`main` 的 `c816a67`。
+日期：2026-10-24。基线：`main` 的 `55c1f52`。
 
 本计划承接 F2-A/F2-B。当前主线已经完成采集资源边界、Web/Electron 性能切片、Source SDK、代表适配器迁移和首轮来源质量指标。下一阶段固定重点来源的低频采样和长期记录，再根据记录补充质量阈值与维护动作。每个切片独立提交，完成验证后再开始下一项。
 
@@ -14,10 +14,11 @@
 | 04 | F3-A Web 查询与首屏 | 减少重复请求和非首屏资源，建立 Web 比较数据 | F2-D |
 | 05 | F3-B Electron 生命周期 | 验证桌面启动、切页、最小化恢复和资源释放 | F3-A |
 | 06 | F3-C 统一设置入口 | Web 与 Electron 共用独立设置按钮；桌面端可覆盖新闻数据源 API 根地址 | F3-B |
-| 07 | F4-A Source SDK | 固定抓取上下文、解析工具、清单校验和本地样例约定 | F2-E、F3-C |
-| 08 | F4-B 适配器迁移 | 迁移 RSS、JSON、HTML 三类代表源并保留兼容行为 | F4-A |
-| 09 | F5-A 质量报告 | 建立来源成功率、空结果、重复率和新鲜度报告 | F4-B |
-| 10 | F5-A 重点源采样 | 固定 10 个代表来源，按低频计划写入长期 JSONL 记录 | 09 |
+| 07 | F3-D Playwright E2E | 建立 Web Chromium 和 Electron smoke 测试及 CI 入口 | F3-C |
+| 08 | F4-A Source SDK | 固定抓取上下文、解析工具、清单校验和本地样例约定 | F2-E、F3-C |
+| 09 | F4-B 适配器迁移 | 迁移 RSS、JSON、HTML 三类代表源并保留兼容行为 | F4-A |
+| 10 | F5-A 质量报告 | 建立来源成功率、空结果、重复率和新鲜度报告 | F4-B |
+| 11 | F5-A 重点源采样 | 固定 10 个代表来源，按低频计划写入长期 JSONL 记录 | 10 |
 
 F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 实际窗口证据；没有对应设备时只记录已执行的自动化和 headless 范围。F4/F5 的公网源采样与本地 fixture 分开记录。
 
@@ -105,6 +106,27 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 
 移除设置组件、设置路由、桌面配置 IPC 和 `news-api-config.json` 读写逻辑即可恢复构建时固定数据源；不改变 Web `/api` service、认证 API 或 SyncHub 数据格式。
 
+## F3-D：Playwright Web 与 Electron E2E（实现完成）
+
+### 已交付范围
+
+- `@playwright/test`、`playwright.config.ts` 和 `playwright.electron.config.ts` 提供 Web Chromium 与 Electron 两套测试入口。
+- `e2e/app.smoke.e2e.spec.ts` 使用本地 API mock 验证 Web 首页、共享设置按钮和 `/settings` 直达路由。
+- `electron-e2e/settings.smoke.e2e.spec.ts` 使用临时 Electron profile 验证桌面设置路由、数据源 API URL 输入框和受信任配置 IPC。
+- `pnpm test:e2e:web`、`pnpm test:e2e` 和 `pnpm test:e2e:electron` 已加入 `package.json`。Electron CI 在测试前执行 `install-electron`。
+- `.github/workflows/e2e.yml` 执行 Web Chromium 和 Linux Electron E2E，并保存失败时的测试结果。
+
+### 验证与证据边界
+
+- `pnpm test:e2e:web`：通过，2 个 Chromium 用例。
+- `pnpm electron:build`：通过。
+- `LATESTNEWS_ELECTRON_EXECUTABLE=<本机缓存的 Electron 44.8.0>` 配合 `pnpm test:e2e:electron`：通过，1 个 Electron 用例。标准 Electron 44.9.0 下载因当前工作站网络不可用失败；CI 已显式安装运行时。
+- 本切片先完成 E2E 入口和 smoke 覆盖。相关单元测试和更细的页面行为测试按后续切片补充。
+
+### 回退边界
+
+删除 Playwright 依赖、配置、E2E 目录和工作流即可回退；不改变生产 API、缓存、来源协议或 Electron 运行时行为。
+
 ## F4-A：Source SDK（实现完成）
 
 ### 已交付范围
@@ -179,4 +201,4 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 
 ## 当前下一步
 
-F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针和 F3-C 的统一设置入口已完成。F4-A Source SDK、F4-B 三类代表适配器迁移、F5-A 运行期质量指标、重点源采样工具和初始阈值判定已完成；下一步执行受控公网采样窗口并复核阈值。真实浏览器请求瀑布、真实 Windows 窗口证据和公网采样单独记录，不把 headless、进程输出或离线 fixture 标为对应的真实环境通过。
+F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针、F3-C 的统一设置入口和 F3-D 的 Playwright Web/Electron E2E 基线已完成。F4-A Source SDK、F4-B 三类代表适配器迁移、F5-A 运行期质量指标、重点源采样工具和初始阈值判定已完成；下一步执行受控公网采样窗口并复核阈值，同时补充 E2E 相关单元测试。真实浏览器请求瀑布、真实 Windows 窗口证据和公网采样单独记录，不把 headless、进程输出或离线 fixture 标为对应的真实环境通过。
