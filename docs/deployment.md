@@ -96,7 +96,7 @@ curl -f https://news.example.com/api/v1/health/diagnostics?format=text
 curl -f https://news.example.com/api/v1/openapi.json
 ```
 
-The Pages build must emit a self-contained dist/_worker.js/index.js. The build command also verifies that the worker has no split modules and that the PWA precache excludes _worker.js. When the web shell should use a separate self-hosted edge collector, set VITE_NEWS_API_URL and configure LATESTNEWS_WEB_ORIGINS; do not run long-lived crawler jobs in Pages Functions.
+The Pages build must emit a self-contained dist/_worker.js/index.js. The build command verifies that the worker has no split modules, that the PWA precache excludes _worker.js, and that source modules initialize without process.versions.node. The Pages configuration uses Cheerio's browser entry for HTML parsing so Undici's Node-only initialization is excluded from the worker. When the web shell should use a separate self-hosted edge collector, set VITE_NEWS_API_URL and configure LATESTNEWS_WEB_ORIGINS; do not run long-lived crawler jobs in Pages Functions.
 
 ## Node Output
 
@@ -125,6 +125,8 @@ the server entry.
 - `/api/v1/node` advertises the expected node ID and public endpoint map.
 
 If the Pages homepage and OpenAPI return 200 while data routes return 500, rebuild with pnpm build:pages and confirm a single _worker.js/index.js. Then check the Pages compatibility date, nodejs_compat, and D1 binding.
+
+If the runtime log reports Cannot read properties of undefined (reading 'split') inside Undici, check whether the worker contains process.versions.node.split. This indicates that a Node dependency entry was bundled into the worker. Use the Pages configuration that selects Cheerio's browser entry, then rebuild and verify both a real source and an invalid source after deployment. An invalid source must return HTTP 400 rather than HTTP 500. A successful build or deployment alone does not verify the production news API.
 
 ## Troubleshooting
 
