@@ -120,7 +120,8 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                     />
                     <p className="mt-2 text-xs leading-5 op-65">
                         只填写服务根地址，例如 <code>https://news.example.com</code>。应用会自动请求该地址下的{" "}
-                        <code>/api</code> 路径。生产构建要求 HTTPS；本地开发允许 localhost HTTP。
+                        <code>/api</code> 路径。生产构建要求 HTTPS；本地开发允许 localhost HTTP。 留空表示不配置远端
+                        API，桌面端只使用已安装的本地采集插件。
                     </p>
 
                     {settings && (
@@ -138,7 +139,7 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                     <div className="mt-5 flex flex-wrap gap-2">
                         <button
                             type="submit"
-                            disabled={loading || saving || !url.trim()}
+                            disabled={loading || saving}
                             className="rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:op-45"
                         >
                             {saving ? "保存中" : "保存并刷新"}

@@ -34,9 +34,24 @@ import {
 const inFlightNewsInsights = new Map<string, Promise<NewsInsightsResponse>>();
 
 export async function fetchSource(query: SourceQuery, headers?: Record<string, string>): Promise<SourceResponse> {
-    const localSource = await tryFetchDesktopSource(query.id);
-    if (localSource) return localSource;
-    return myFetch(sourceApi.single, { query, headers });
+    const bridge = getDesktopBridge();
+    const localSupported = Boolean(bridge && (await getDesktopLocalSourceIds()).has(query.id));
+    if (!(await isDesktopRemoteNewsApiConfigured())) {
+        if (localSupported && bridge) {
+            const localSource = await fetchDesktopLocalSource(bridge, query.id);
+            if (localSource) return localSource;
+        }
+        throw new Error("本地采集不可用，且未配置远端新闻 API。");
+    }
+
+    try {
+        return await myFetch(sourceApi.single, { query, headers });
+    } catch (error) {
+        if (!localSupported || !bridge || !shouldFallbackToLocal(error)) throw error;
+        const localSource = await fetchDesktopLocalSource(bridge, query.id);
+        if (localSource) return localSource;
+        throw error;
+    }
 }
 
 export function fetchEntireSources(sources: SourceID[]): Promise<SourceResponse[] | undefined> {
@@ -44,9 +59,24 @@ export function fetchEntireSources(sources: SourceID[]): Promise<SourceResponse[
 }
 
 export async function fetchSourceItemsV1(id: SourceID, query?: SourceItemsQuery): Promise<SourceItemsResponse> {
-    const localSource = await tryFetchDesktopSource(id);
-    if (localSource) return createDesktopSourceItemsResponse(localSource, query);
-    return myFetch(getSourceItemsPath(id), { query });
+    const bridge = getDesktopBridge();
+    const localSupported = Boolean(bridge && (await getDesktopLocalSourceIds()).has(id));
+    if (!(await isDesktopRemoteNewsApiConfigured())) {
+        if (localSupported && bridge) {
+            const localSource = await fetchDesktopLocalSource(bridge, id);
+            if (localSource) return createDesktopSourceItemsResponse(localSource, query);
+        }
+        throw new Error("本地采集不可用，且未配置远端新闻 API。");
+    }
+
+    try {
+        return await myFetch(getSourceItemsPath(id), { query });
+    } catch (error) {
+        if (!localSupported || !bridge || !shouldFallbackToLocal(error)) throw error;
+        const localSource = await fetchDesktopLocalSource(bridge, id);
+        if (localSource) return createDesktopSourceItemsResponse(localSource, query);
+        throw error;
+    }
 }
 
 export function fetchSourceBatchV1(payload: SourceBatchPayload): Promise<SourceBatchResponse> {
@@ -84,10 +114,11 @@ function fetchRemoteSourceBatch(payload: SourceBatchPayload): Promise<SourceBatc
 
 async function fetchDesktopSourceBatch(payload: SourceBatchPayload): Promise<SourceBatchResponse> {
     const localSourceIds = await getDesktopLocalSourceIds();
-    if (!localSourceIds.size) return fetchRemoteSourceBatch(payload);
+    const remoteConfigured = await isDesktopRemoteNewsApiConfigured();
+    if (!localSourceIds.size && remoteConfigured) return fetchRemoteSourceBatch(payload);
 
     const selection = resolveSourceBatchSelection(payload);
-    if (!selection.sourceIds.some((sourceId) => localSourceIds.has(sourceId))) {
+    if (remoteConfigured && !selection.sourceIds.some((sourceId) => localSourceIds.has(sourceId))) {
         return fetchRemoteSourceBatch(payload);
     }
 
@@ -113,51 +144,57 @@ async function fetchDesktopEntireSources(
     sources: SourceID[],
     bridge: NonNullable<Window["latestNewsDesktop"]>
 ): Promise<EntireSourcesResponse> {
+    // Remote data wins when available. Only omitted sources with a trusted local package
+    // are collected locally, so one unavailable source does not discard the other results.
     const uniqueSourceIds = [...new Set(sources)];
     const localSourceIds = await getDesktopLocalSourceIds();
-    if (!uniqueSourceIds.some((sourceId) => localSourceIds.has(sourceId))) {
-        return toEntireSourcesEnvelope(await fetchRemoteEntireSources(sources), sources);
-    }
+    const remoteConfigured = await isDesktopRemoteNewsApiConfigured();
+    let remoteEnvelope: EntireSourcesResponse = createEmptyEntireSourcesEnvelope(uniqueSourceIds);
+    const errors: SourceApiError[] = [];
 
-    const localResponses = new Map<SourceID, SourceResponse>();
-    const localFailures = new Set<SourceID>();
-    await Promise.all(
-        uniqueSourceIds
-            .filter((sourceId) => localSourceIds.has(sourceId))
-            .map(async (sourceId) => {
-                try {
-                    const response = await bridge.fetchCrawlerSource(sourceId);
-                    if (response) localResponses.set(sourceId, response);
-                    else localFailures.add(sourceId);
-                } catch {
-                    localFailures.add(sourceId);
-                }
-            })
-    );
-
-    const remoteSourceIds = uniqueSourceIds.filter((sourceId) => !localResponses.has(sourceId));
-    let remoteEnvelope: EntireSourcesResponse = createEmptyEntireSourcesEnvelope(remoteSourceIds);
-    if (remoteSourceIds.length > 0) {
+    if (remoteConfigured && uniqueSourceIds.length > 0) {
         try {
-            remoteEnvelope = toEntireSourcesEnvelope(await fetchRemoteEntireSources(remoteSourceIds), remoteSourceIds);
-        } catch {
-            remoteEnvelope = {
-                ...remoteEnvelope,
-                errors: [{ message: "Remote API request failed while loading plugin sources." }],
-            };
+            remoteEnvelope = toEntireSourcesEnvelope(await fetchRemoteEntireSources(uniqueSourceIds), uniqueSourceIds);
+        } catch (error) {
+            if (!shouldFallbackToLocal(error)) throw error;
+            errors.push({ message: "Remote API request failed; local collection was used where available." });
         }
     }
 
     const remoteResponses = new Map(remoteEnvelope.data.map((source) => [source.id, source]));
+    const localResponses = new Map<SourceID, SourceResponse>();
+    const localFailures = new Set<SourceID>();
+    const fallbackSourceIds = uniqueSourceIds.filter(
+        (sourceId) => !remoteResponses.has(sourceId) && localSourceIds.has(sourceId)
+    );
+    await Promise.all(
+        fallbackSourceIds.map(async (sourceId) => {
+            const response = await fetchDesktopLocalSource(bridge, sourceId);
+            if (response) localResponses.set(sourceId, response);
+            else localFailures.add(sourceId);
+        })
+    );
+
     const data = uniqueSourceIds
-        .map((sourceId) => localResponses.get(sourceId) ?? remoteResponses.get(sourceId))
+        .map((sourceId) => remoteResponses.get(sourceId) ?? localResponses.get(sourceId))
         .filter((source): source is SourceResponse => source !== undefined);
-    const localFallbackErrors: SourceApiError[] = [...localFailures]
-        .filter((sourceId) => remoteResponses.has(sourceId))
-        .map((sourceId) => ({ sourceId, message: "Local plugin failed; the remote source was used." }));
-    const errors = [...remoteEnvelope.errors, ...localFallbackErrors];
+    const localFallbackErrors: SourceApiError[] = [
+        ...[...localResponses.keys()].map((sourceId) => ({
+            sourceId,
+            message: "Remote source was unavailable; the local collector was used.",
+        })),
+        ...[...localFailures].map((sourceId) => ({
+            sourceId,
+            message: "Remote source was unavailable and the local collector failed.",
+        })),
+    ];
     const responseIds = new Set(data.map((source) => source.id));
     const omittedSourceIds = uniqueSourceIds.filter((sourceId) => !responseIds.has(sourceId));
+    if (!remoteConfigured) {
+        errors.push({
+            message: "Remote news API is not configured; only local collector sources are available.",
+        });
+    }
 
     return {
         data,
@@ -168,13 +205,11 @@ async function fetchDesktopEntireSources(
             partial: remoteEnvelope.meta.partial || omittedSourceIds.length > 0,
             omittedSourceIds,
         },
-        errors,
+        errors: [...remoteEnvelope.errors, ...errors, ...localFallbackErrors],
     };
 }
 
-async function tryFetchDesktopSource(sourceId: SourceID) {
-    const bridge = getDesktopBridge();
-    if (!bridge || !(await getDesktopLocalSourceIds()).has(sourceId)) return undefined;
+async function fetchDesktopLocalSource(bridge: NonNullable<Window["latestNewsDesktop"]>, sourceId: SourceID) {
     try {
         return (await bridge.fetchCrawlerSource(sourceId)) ?? undefined;
     } catch {
@@ -203,6 +238,44 @@ function createDesktopSourceItemsResponse(source: SourceResponse, query?: Source
 
 function getDesktopBridge() {
     return typeof window === "undefined" ? undefined : window.latestNewsDesktop;
+}
+
+let desktopRemoteConfigPromise: Promise<boolean> | undefined;
+let desktopRemoteConfigBridge: NonNullable<Window["latestNewsDesktop"]> | undefined;
+
+async function isDesktopRemoteNewsApiConfigured() {
+    // Cache the setting for the lifetime of one preload bridge; saving a new URL reloads the page.
+    const bridge = getDesktopBridge();
+    if (!bridge?.getNewsApiUrl) return true;
+    if (bridge !== desktopRemoteConfigBridge) {
+        desktopRemoteConfigBridge = bridge;
+        desktopRemoteConfigPromise = undefined;
+    }
+    desktopRemoteConfigPromise ??= bridge
+        .getNewsApiUrl()
+        .then((settings) => Boolean(settings.url.trim()))
+        .catch(() => true);
+    return desktopRemoteConfigPromise;
+}
+
+function shouldFallbackToLocal(error: unknown) {
+    // Network failures and server faults are retryable through the local collector.
+    // Authorization, rate-limit, and ordinary application responses are not.
+    const status = readErrorStatus(error);
+    return status === undefined || status >= 500;
+}
+
+function readErrorStatus(error: unknown) {
+    if (!error || typeof error !== "object") return undefined;
+    const candidate = error as {
+        status?: unknown;
+        statusCode?: unknown;
+        response?: { status?: unknown };
+    };
+    for (const value of [candidate.status, candidate.statusCode, candidate.response?.status]) {
+        if (typeof value === "number" && Number.isFinite(value)) return value;
+    }
+    return undefined;
 }
 
 let desktopSourceIdsPromise: Promise<Set<SourceID>> | undefined;

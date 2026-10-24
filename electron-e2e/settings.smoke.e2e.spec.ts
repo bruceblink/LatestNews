@@ -63,3 +63,23 @@ test("saves and resets the desktop API URL through the settings panel", async ()
         .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.url)
         .toBe(defaultUrl);
 });
+
+test("saves an empty desktop API URL as local-only mode", async () => {
+    await page.goto("app://bundle/settings");
+
+    const input = page.getByLabel("数据源 API URL");
+    await input.fill("");
+    await page.getByRole("button", { name: "保存并刷新" }).click();
+
+    await expect
+        .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.url)
+        .toBe("");
+    await expect(input).toHaveValue("");
+
+    page.once("dialog", (dialog) => void dialog.accept());
+    await page.getByRole("button", { name: "恢复默认" }).click();
+
+    await expect
+        .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.url)
+        .toMatch(/^https?:\/\//);
+});

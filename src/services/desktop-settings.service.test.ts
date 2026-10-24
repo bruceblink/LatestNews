@@ -31,9 +31,11 @@ describe("desktop settings service", () => {
             defaultUrl: "https://news.likanug.top",
         });
         await expect(saveDesktopNewsApiUrl("https://news.example.test")).resolves.toBe("https://news.example.test");
+        await expect(saveDesktopNewsApiUrl("")).resolves.toBe("");
         await expect(resetDesktopNewsApiUrl()).resolves.toBe("https://news.likanug.top");
         expect(bridge.getNewsApiUrl).toHaveBeenCalledOnce();
         expect(bridge.setNewsApiUrl).toHaveBeenCalledWith("https://news.example.test");
+        expect(bridge.setNewsApiUrl).toHaveBeenCalledWith("");
         expect(bridge.resetNewsApiUrl).toHaveBeenCalledOnce();
     });
 

@@ -42,6 +42,7 @@ import {
 } from "../shared/synchub-contract";
 
 import type { SourceID } from "../shared/types";
+import type { ApiServiceTargets } from "./api-proxy";
 import type { ElectronCrawlerPluginRuntime } from "./crawler-plugin-provider";
 
 const APP_BASE_URL = "app://bundle/";
@@ -77,7 +78,7 @@ if (authCallbackUrl.protocol !== "https:" || authCallbackUrl.username || authCal
     throw new Error("The desktop authentication callback must use an HTTPS URL without credentials.");
 }
 
-const apiTargets = { news: defaultNewsApiUrl, auth: authApiUrl };
+const apiTargets: ApiServiceTargets = { news: defaultNewsApiUrl, auth: authApiUrl };
 const securityHeaders = new Headers({
     "Content-Security-Policy": [
         "default-src 'self'",
@@ -574,6 +575,10 @@ async function saveNewsApiUrl(value: string) {
         encoding: "utf8",
         mode: 0o600,
     });
+    if (!value.trim()) {
+        apiTargets.news = null;
+        return "";
+    }
     const checked = validateNewsApiUrl(value.trim());
     apiTargets.news = checked;
     return checked.origin;
@@ -712,14 +717,14 @@ function installDesktopIpc(runtime: ElectronCrawlerPluginRuntime) {
     ipcMain.handle("desktop:news-api:get-url", (event) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop news API request.");
         return {
-            url: apiTargets.news.origin,
+            url: apiTargets.news?.origin ?? "",
             defaultUrl: defaultNewsApiUrl.origin,
         };
     });
 
     ipcMain.handle("desktop:news-api:set-url", async (event, value: unknown) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop news API request.");
-        if (typeof value !== "string" || !value.trim()) throw new Error("A news API URL is required.");
+        if (typeof value !== "string") throw new Error("A news API URL is required.");
         return saveNewsApiUrl(value);
     });
 

@@ -1,7 +1,7 @@
 export type ApiService = "news" | "auth";
 
 export interface ApiServiceTargets {
-    news: URL;
+    news: URL | null;
     auth: URL;
 }
 
@@ -70,10 +70,13 @@ export function resolveApiProxyTarget(requestUrl: string, targets: ApiServiceTar
         return null;
     }
 
-    const target = new URL(targetPath, targets[service]);
+    const targetOrigin = targets[service];
+    if (!targetOrigin) return null;
+
+    const target = new URL(targetPath, targetOrigin);
     target.search = request.search;
     target.hash = "";
-    if (target.origin !== targets[service].origin) return null;
+    if (target.origin !== targetOrigin.origin) return null;
 
     return { service, url: target };
 }

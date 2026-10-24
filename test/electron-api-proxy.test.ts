@@ -35,6 +35,13 @@ describe("Electron remote API boundaries", () => {
         expect(resolveApiProxyTarget("app://bundle/api/%2e%2e/private", targets)).toBeNull();
     });
 
+    it("does not proxy news requests when local-only mode disables the news API", () => {
+        expect(resolveApiProxyTarget("app://bundle/api/v1/sources", { ...targets, news: null })).toBeNull();
+        expect(resolveApiProxyTarget("app://bundle/__auth-api__/api/me", { ...targets, news: null })?.url.href).toBe(
+            "https://api.likanug.top/api/me"
+        );
+    });
+
     it("rewrites same-origin redirects and rejects redirects to another service", () => {
         expect(rewriteApiRedirectLocation("/api/v1/health", targets.news.origin, "news")).toBe(
             "app://bundle/api/v1/health"

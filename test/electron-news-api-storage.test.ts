@@ -12,6 +12,11 @@ describe("Electron persisted news API configuration", () => {
         );
     });
 
+    it("treats null or empty URLs as local-only configuration", () => {
+        expect(parseStoredNewsApiConfig('{"url":null}', validate)).toBeNull();
+        expect(parseStoredNewsApiConfig('{"url":""}', validate)).toBeNull();
+    });
+
     it("rejects malformed payloads and unsafe URLs", () => {
         for (const raw of ["not-json", "{}", '{"url":42}', '{"url":"https://news.example.com/api"}']) {
             expect(() => parseStoredNewsApiConfig(raw, validate)).toThrow();
@@ -23,5 +28,9 @@ describe("Electron persisted news API configuration", () => {
             '{"url":"https://news.example.com"}\n'
         );
         expect(() => serializeStoredNewsApiConfig("http://news.example.com", validate)).toThrow();
+    });
+
+    it("serializes an empty URL as local-only configuration", () => {
+        expect(serializeStoredNewsApiConfig(" ", validate)).toBe('{"url":null}\n');
     });
 });
