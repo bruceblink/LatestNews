@@ -123,6 +123,7 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 - `LATESTNEWS_ELECTRON_EXECUTABLE=<本机缓存的 Electron 44.8.0>` 配合 `pnpm test:e2e:electron`：通过，1 个 Electron 用例。标准 Electron 44.9.0 下载因当前工作站网络不可用失败；CI 已显式安装运行时。
 - `src/services/desktop-settings.service.test.ts`：通过，3 个测试覆盖 Web/Electron 桥接判断、读取、保存、恢复默认地址和不完整桥接。
 - `test/electron-news-api-storage.test.ts`：通过，3 个测试覆盖桌面数据源配置的 JSON 解析、URL 校验、origin 规范化和序列化。
+- `pnpm test --run`：通过，69 个测试文件、317 个测试。
 - 本切片先完成 E2E 入口和 smoke 覆盖。更细的页面行为测试和持久化边界测试按后续切片补充。
 
 ### 回退边界
