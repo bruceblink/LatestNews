@@ -66,7 +66,9 @@ Pages Functions do not install or execute local plugin packages. The Web client 
 
 ## Electron desktop integration
 
-The desktop renderer asks the main process for enabled local source IDs. It uses those plugins for single-source, source-items, entire-source, and feed-batch requests. Other source IDs continue through the configured remote API. A local plugin failure falls back to the remote source. The renderer sends only a source ID through IPC. The main process does not accept plugin paths or commands from the renderer.
+The desktop renderer asks the main process for enabled local source IDs. Single-source, source-items, entire-source, and feed-batch requests prefer the configured remote API. Network failures and 5xx responses fall back to supported local plugins; 401, 403, 429 and valid empty responses do not. An empty remote origin selects local-only reading. The renderer sends only a source ID through IPC. The main process does not accept plugin paths or commands from the renderer.
+
+`pnpm electron:plugins` builds four reviewed standalone packages: Pcbeta, FreeBuf, Juejin and Hacker News. Desktop build and dev commands run this step. Windows, macOS and Linux packages carry them outside `app.asar` under `resources/crawler-platform/builtin-plugins/`. A fresh plugin store installs and enables all four before source discovery. Existing stores receive only missing packages, without changing active versions, pins or enabled settings. An explicit `LATESTNEWS_CRAWLER_PLUGIN_DIR` remains operator-managed and skips seeding. Missing or invalid shipped resources do not prevent remote reading.
 
 Use the same CLI store format for the desktop user's data directory:
 

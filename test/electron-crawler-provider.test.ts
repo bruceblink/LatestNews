@@ -5,12 +5,13 @@ import { rm, mkdir, mkdtemp, writeFile } from "node:fs/promises";
 
 import { createElectronCrawlerPluginRuntime } from "../electron/crawler-plugin-provider";
 
-const { collect } = vi.hoisted(() => ({ collect: vi.fn() }));
+const { collect, seed } = vi.hoisted(() => ({ collect: vi.fn(), seed: vi.fn() }));
 const temporaryDirectories: string[] = [];
 const originalPluginDirectory = process.env.LATESTNEWS_CRAWLER_PLUGIN_DIR;
 
 vi.mock("electron", () => ({ app: { getPath: () => "", isPackaged: false } }));
 vi.mock("../electron/crawler-host", () => ({ createElectronCrawlerHost: vi.fn() }));
+vi.mock("../electron/crawler-plugin-seeder", () => ({ seedBuiltinCrawlerPlugins: seed }));
 vi.mock("../crawler-platform/host/plugin-provider", () => ({
     createCrawlerPluginProvider: () => ({
         listSourceIds: () => ["juejin"],
@@ -23,6 +24,7 @@ vi.mock("../crawler-platform/host/plugin-provider", () => ({
 afterEach(async () => {
     vi.useRealTimers();
     collect.mockReset();
+    seed.mockReset();
     if (originalPluginDirectory === undefined) delete process.env.LATESTNEWS_CRAWLER_PLUGIN_DIR;
     else process.env.LATESTNEWS_CRAWLER_PLUGIN_DIR = originalPluginDirectory;
     await Promise.all(
@@ -31,6 +33,31 @@ afterEach(async () => {
 });
 
 describe("desktop crawler provider cache fallback", () => {
+    it("seeds default stores and keeps explicit external stores operator-managed", async () => {
+        delete process.env.LATESTNEWS_CRAWLER_PLUGIN_DIR;
+        seed.mockResolvedValue({ available: true });
+        const runtime = await createElectronCrawlerPluginRuntime({
+            userDataPath: "profile",
+            bundledPluginRoot: "bundles",
+        });
+        expect(seed).toHaveBeenCalledWith(join("profile", "crawler-plugins"), "bundles");
+        runtime.dispose?.();
+
+        seed.mockClear();
+        process.env.LATESTNEWS_CRAWLER_PLUGIN_DIR = "external-store";
+        const external = await createElectronCrawlerPluginRuntime({ userDataPath: "profile" });
+        expect(seed).not.toHaveBeenCalled();
+        external.dispose?.();
+    });
+
+    it("keeps the runtime available after a bundled installation failure", async () => {
+        delete process.env.LATESTNEWS_CRAWLER_PLUGIN_DIR;
+        seed.mockRejectedValue(new Error("Damaged shipped package"));
+        const runtime = await createElectronCrawlerPluginRuntime({ userDataPath: "profile" });
+        expect(runtime.listSourceIds()).toEqual(["juejin"]);
+        runtime.dispose?.();
+    });
+
     it("returns persisted items with degraded and stale statuses after collector failures", async () => {
         const root = await mkdtemp(join(tmpdir(), "latestnews-provider-"));
         temporaryDirectories.push(root);

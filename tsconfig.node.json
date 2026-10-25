@@ -11,6 +11,7 @@
     "electron/crawler-cache.ts",
     "electron/crawler-host.ts",
     "electron/crawler-plugin-provider.ts",
+    "electron/crawler-plugin-seeder.ts",
     "electron/news-api-storage.ts",
     "electron/security.ts",
     "electron/synchub-policy.ts",

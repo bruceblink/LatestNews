@@ -13,8 +13,11 @@ extraResources:
     to: icon.ico
   - from: ../crawler-platform/runtime/worker-entry.mjs
     to: crawler-platform/runtime/worker-entry.mjs
+  - from: ../out/crawler-platform/builtin-plugins
+    to: crawler-platform/builtin-plugins
 files:
   - "**/*"
+  - "!crawler-platform/builtin-plugins/**"
 artifactName: "LatestNews-${version}-${arch}.${ext}"
 win:
   artifactName: "LatestNews-${version}-Windows-${arch}.${ext}"

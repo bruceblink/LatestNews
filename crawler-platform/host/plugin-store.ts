@@ -422,9 +422,11 @@ function assertSourcesAndStoreAreSeparate(sourceRoot: string, storeRoot: string)
     const sourceToStore = relative(sourceRoot, storeRoot);
     const storeToSource = relative(storeRoot, sourceRoot);
     const sourceContainsStore =
-        sourceToStore === "" || (!sourceToStore.startsWith(`..${sep}`) && sourceToStore !== "..");
+        sourceToStore === "" ||
+        (!isAbsolute(sourceToStore) && !sourceToStore.startsWith(`..${sep}`) && sourceToStore !== "..");
     const storeContainsSource =
-        storeToSource === "" || (!storeToSource.startsWith(`..${sep}`) && storeToSource !== "..");
+        storeToSource === "" ||
+        (!isAbsolute(storeToSource) && !storeToSource.startsWith(`..${sep}`) && storeToSource !== "..");
     if (sourceContainsStore || storeContainsSource) {
         throw new CrawlerPlatformError(
             "INVALID_ARTIFACT",

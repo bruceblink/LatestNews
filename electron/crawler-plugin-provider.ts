@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import dataSources from "../shared/data-sources";
 import { CrawlerCacheStore } from "./crawler-cache";
 import { createElectronCrawlerHost } from "./crawler-host";
+import { seedBuiltinCrawlerPlugins } from "./crawler-plugin-seeder";
 import { readEnabledCrawlerPluginIds } from "../crawler-platform/host/plugin-store";
 import { createCrawlerPluginProvider } from "../crawler-platform/host/plugin-provider";
 import { registerRuntimeSourceCatalog, createRuntimeSourceMetadataItem } from "../shared/runtime-source-catalog";
@@ -17,6 +18,7 @@ export interface ElectronCrawlerPluginRuntimeOptions {
     userDataPath?: string;
     cachePath?: string;
     workerPath?: string;
+    bundledPluginRoot?: string;
     requestHandler?: ElectronCrawlerHostOptions["requestHandler"];
 }
 
@@ -25,6 +27,19 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
     const userDataPath = options.userDataPath ?? app.getPath("userData");
     const configuredPluginRoot = process.env.LATESTNEWS_CRAWLER_PLUGIN_DIR?.trim();
     const pluginRoot = configuredPluginRoot ? resolve(configuredPluginRoot) : join(userDataPath, "crawler-plugins");
+    // Explicit external stores remain operator-managed. Seeding failures must not block remote reading.
+    if (!configuredPluginRoot) {
+        const bundledPluginRoot =
+            options.bundledPluginRoot ??
+            (app.isPackaged
+                ? join(process.resourcesPath, "crawler-platform", "builtin-plugins")
+                : resolve(process.cwd(), "out", "crawler-platform", "builtin-plugins"));
+        try {
+            await seedBuiltinCrawlerPlugins(pluginRoot, bundledPluginRoot);
+        } catch {
+            console.warn("Desktop bundled crawler plugins could not be installed; existing settings remain in use.");
+        }
+    }
     const enabledPluginIds = readEnabledPluginIds(join(pluginRoot, "enabled.json"));
     const workerPath =
         options.workerPath ??

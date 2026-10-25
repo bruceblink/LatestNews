@@ -35,7 +35,7 @@
 ## 验收边界
 
 - 持久缓存由后续独立切片增加，容量和失败回退规则见 [桌面本地采集持久缓存](14-desktop-persistent-crawler-cache.md)。
-- 本地插件仍未随安装包预置，当前可信目录只有 Pcbeta、Freebuf、稀土掘金和 Hacker News 四个适配器。
+- 首批 Pcbeta、FreeBuf、稀土掘金和 Hacker News 四个适配器已随安装包预置，首次安装及已有配置规则见 [插件预置记录](16-desktop-builtin-plugin-plan.md)。
 - 来源健康和洞察接口仍以远端为主，仅本地模式下会显示不可用。Feed 和来源条目读取已支持回退。
 - Electron E2E 验证设置与配置 IPC，不替代真实窗口中的插件采集、断网恢复和长期后台刷新验收。
 - 远端地址为空的配置只适用于桌面构建，不改变 Web 同源或自托管边缘节点行为。

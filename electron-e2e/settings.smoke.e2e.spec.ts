@@ -2,8 +2,10 @@ import type { Page, ElectronApplication } from "@playwright/test";
 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { rm, mkdtemp } from "node:fs/promises";
+import { rm, mkdtemp, readFile } from "node:fs/promises";
 import { test, expect, _electron } from "@playwright/test";
+
+import { builtinCrawlerPlugins } from "../crawler-platform/builtin-plugins";
 
 let electronApp: ElectronApplication;
 let page: Page;
@@ -11,14 +13,32 @@ let userDataDirectory: string;
 
 test.beforeAll(async () => {
     userDataDirectory = await mkdtemp(join(tmpdir(), "latestnews-playwright-electron-"));
+    const env = { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: "true" };
+    delete env.LATESTNEWS_CRAWLER_PLUGIN_DIR;
     electronApp = await _electron.launch({
-        args: ["--no-sandbox", `--user-data-dir=${userDataDirectory}`, "."],
-        env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: "true" },
+        args: [
+            "--no-sandbox",
+            `--user-data-dir=${userDataDirectory}`,
+            ...(process.env.LATESTNEWS_ELECTRON_PACKAGED_TEST === "1" ? [] : ["."]),
+        ],
+        env,
         executablePath: process.env.LATESTNEWS_ELECTRON_EXECUTABLE,
         timeout: 60_000,
     });
     page = await electronApp.firstWindow();
     await page.waitForLoadState("load");
+});
+
+test("installs and discovers all bundled sources in a fresh desktop profile", async () => {
+    const sourceIds = await page.evaluate(() => window.latestNewsDesktop?.listCrawlerSources?.());
+    expect(sourceIds?.sort()).toEqual(["freebuf", "hackernews", "juejin", "pcbeta-windows11"]);
+    const pluginRoot = join(userDataDirectory, "crawler-plugins");
+    const settings = JSON.parse(await readFile(join(pluginRoot, "enabled.json"), "utf8"));
+    expect(settings.enabledPluginIds.sort()).toEqual(builtinCrawlerPlugins.map((plugin) => plugin.id).sort());
+    for (const plugin of builtinCrawlerPlugins) {
+        const active = JSON.parse(await readFile(join(pluginRoot, "packages", plugin.id, "active.json"), "utf8"));
+        expect(active.activeVersion).toBeTruthy();
+    }
 });
 
 test.afterAll(async () => {
