@@ -30,7 +30,7 @@
 - 修复插件安装器的跨磁盘判断：Windows 的 `relative` 可返回绝对路径，不能把这种结果当成父子目录。测试同时确认相同目录和包含关系继续拒绝。
 - 预置测试 8 个、provider 测试 3 个通过；完整 `pnpm check` 为 76 文件、373 个测试通过，Electron 类型检查通过。
 - `pnpm electron:build` 与 Windows x64 目录打包通过；打包程序 E2E 为 5 个用例通过，临时用户目录启用并发现四个来源。未使用公网内容证明离线采集成功。
-- 独立包遗漏 `zod` 的启动问题和菜单修复见 [独立记录](17-desktop-menu-package-fix.md)。Computer Use 未能定位此环境中的应用窗口，真实可视验收仍待执行。
+- 独立包遗漏 `zod` 的启动问题、菜单修复和 Windows 真实窗口复验见 [独立记录](17-desktop-menu-package-fix.md)。系统托盘上下文菜单的原生点击仍未验证。
 
 ## 回退边界
 
