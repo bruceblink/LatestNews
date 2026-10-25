@@ -4,24 +4,34 @@ import { existsSync, promises as fs } from "node:fs";
 import {
     app,
     net,
+    Tray,
     Menu,
     shell,
+    dialog,
     ipcMain,
     session,
     protocol,
     safeStorage,
+    nativeImage,
+    powerMonitor,
     BrowserWindow,
     type WebContents,
     type IpcMainEvent,
     type IpcMainInvokeEvent,
 } from "electron";
 
+import { createDesktopBackgroundRefresh } from "./background-refresh";
 import { isDesktopCollectionMode } from "../shared/desktop-collection-mode";
 import { createElectronCrawlerPluginRuntime } from "./crawler-plugin-provider";
 import { getSafeExternalUrl, resolveRendererFile, isTrustedRendererUrl } from "./security";
 import { createDesktopLifecycleTracker, type DesktopLifecycleEventName } from "./lifecycle";
 import { parseStoredNewsApiConfig, serializeStoredNewsApiConfig } from "./news-api-storage";
 import { isValidSyncHubApiKey, parseStoredSyncHubConfig, serializeStoredSyncHubConfig } from "./synchub-storage";
+import {
+    defaultDesktopPreferences,
+    serializeDesktopPreferences,
+    parseStoredDesktopPreferences,
+} from "./desktop-preferences";
 import {
     normalizeServiceUrl,
     createUpstreamHeaders,
@@ -53,6 +63,7 @@ const MAX_API_RESPONSE_BYTES = 25 * 1024 * 1024;
 const MAX_SYNC_HUB_BODY_BYTES = 2 * 1024 * 1024;
 const MAX_SYNC_HUB_RESPONSE_BYTES = 8 * 1024 * 1024;
 const NEWS_API_CONFIG_FILE = "news-api-config.json";
+const DESKTOP_PREFERENCES_FILE = "desktop-preferences.json";
 const SYNC_HUB_CONFIG_FILE = "synchub-config.enc";
 const LEGACY_SYNC_HUB_KEY_FILE = "synchub-api-key.enc";
 const API_METHODS = new Set(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]);
@@ -106,7 +117,11 @@ let authWindow: BrowserWindow | null = null;
 let rendererDevUrl: URL | null = null;
 let trustedRendererUrl = APP_BASE_URL;
 let crawlerRuntime: ElectronCrawlerPluginRuntime | null = null;
+let desktopTray: Tray | null = null;
+let desktopPreferences = defaultDesktopPreferences;
+let backgroundRefresh: ReturnType<typeof createDesktopBackgroundRefresh> | null = null;
 let isQuitting = false;
+let isHidingMainWindow = false;
 let lifecycleProbeActive = false;
 const lifecycle = createDesktopLifecycleTracker();
 
@@ -130,15 +145,14 @@ if (!hasSingleInstanceLock) {
 } else {
     app.on("second-instance", () => {
         lifecycle.record("app-second-instance");
-        if (!mainWindow) return;
-        if (mainWindow.isMinimized()) mainWindow.restore();
-        mainWindow.focus();
+        showMainWindow();
     });
 
     app.on("before-quit", () => {
         if (isQuitting) return;
         isQuitting = true;
         lifecycle.record("app-before-quit");
+        disposeTrayBackgroundMode();
         crawlerRuntime?.dispose?.();
     });
 
@@ -154,16 +168,35 @@ if (!hasSingleInstanceLock) {
             rendererDevUrl = getDevelopmentRendererUrl(process.env.ELECTRON_RENDERER_URL);
             trustedRendererUrl = rendererDevUrl?.origin ?? APP_BASE_URL;
             await loadStoredNewsApiSettings();
+            await loadDesktopPreferences();
             installProtocol();
             installPermissionPolicy();
             crawlerRuntime = await createElectronCrawlerPluginRuntime();
             installDesktopIpc(crawlerRuntime);
+            const trayReady = await installTrayMode(crawlerRuntime);
+            if (!trayReady) {
+                desktopPreferences = { ...desktopPreferences, trayBackgroundEnabled: false };
+                try {
+                    await persistDesktopPreferences();
+                } catch (error) {
+                    console.warn(
+                        "Tray mode was disabled for this run, but the preference could not be saved.",
+                        error instanceof Error ? error.message : error
+                    );
+                }
+                dialog.showErrorBox(
+                    "托盘后台不可用",
+                    "无法创建系统托盘。托盘后台模式已关闭。请检查应用程序图标文件后重试。"
+                );
+            }
+            backgroundRefresh?.pause("window-visible");
             await createMainWindow();
+            syncBackgroundRefreshState();
             if (process.env.LATESTNEWS_ELECTRON_LIFECYCLE_PROBE === "1") void runLifecycleProbe();
 
             app.on("activate", () => {
                 lifecycle.record("app-activate");
-                if (BrowserWindow.getAllWindows().length === 0) void createMainWindow();
+                showMainWindow();
             });
         })
         .catch((error: unknown) => {
@@ -173,7 +206,9 @@ if (!hasSingleInstanceLock) {
 
     app.on("window-all-closed", () => {
         lifecycle.record("app-window-all-closed");
-        if (process.platform !== "darwin" && !lifecycleProbeActive) app.quit();
+        if (!lifecycleProbeActive && !isHidingMainWindow && !shouldKeepBackgroundAlive()) {
+            if (process.platform !== "darwin") app.quit();
+        }
     });
 }
 
@@ -555,6 +590,191 @@ function getNewsApiConfigPath() {
     return join(app.getPath("userData"), NEWS_API_CONFIG_FILE);
 }
 
+function getDesktopPreferencesPath() {
+    return join(app.getPath("userData"), DESKTOP_PREFERENCES_FILE);
+}
+
+async function loadDesktopPreferences() {
+    try {
+        desktopPreferences = parseStoredDesktopPreferences(await fs.readFile(getDesktopPreferencesPath(), "utf8"));
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+            console.warn(
+                "Desktop preferences could not be loaded; optional tray mode is disabled.",
+                error instanceof Error ? error.message : "Invalid preferences."
+            );
+        }
+        desktopPreferences = { ...defaultDesktopPreferences };
+    }
+}
+
+async function persistDesktopPreferences() {
+    await fs.mkdir(app.getPath("userData"), { recursive: true });
+    await fs.writeFile(getDesktopPreferencesPath(), serializeDesktopPreferences(desktopPreferences), {
+        encoding: "utf8",
+        mode: 0o600,
+    });
+}
+
+function shouldKeepBackgroundAlive() {
+    return desktopPreferences.trayBackgroundEnabled && !isQuitting && !lifecycleProbeActive;
+}
+
+async function installTrayMode(runtime: ElectronCrawlerPluginRuntime) {
+    if (!desktopPreferences.trayBackgroundEnabled) return true;
+    if (desktopTray && backgroundRefresh) return true;
+
+    const trayIconPath = resolve(
+        app.isPackaged ? process.resourcesPath : getAppResourceRoot(),
+        process.platform === "win32" ? "icon.ico" : "icon.png"
+    );
+    if (!existsSync(trayIconPath)) {
+        console.warn("Tray mode is unavailable because the tray icon is missing.");
+        return false;
+    }
+
+    try {
+        const icon = nativeImage.createFromPath(trayIconPath);
+        if (icon.isEmpty()) return false;
+
+        desktopTray = new Tray(icon);
+        desktopTray.setToolTip("LatestNews");
+        desktopTray.setContextMenu(
+            Menu.buildFromTemplate([
+                { label: "打开 LatestNews", click: () => showMainWindow() },
+                {
+                    label: "立即刷新本地来源",
+                    enabled: desktopCollectionMode !== "remote",
+                    click: () => void backgroundRefresh?.refreshNow(),
+                },
+                { type: "separator" },
+                {
+                    label: desktopCollectionMode === "remote" ? "远端模式（不运行本地刷新）" : "自动刷新本地来源",
+                    enabled: false,
+                },
+                { type: "separator" },
+                { label: "退出 LatestNews", click: () => app.quit() },
+            ])
+        );
+        desktopTray.on("click", () => showMainWindow());
+
+        backgroundRefresh = createDesktopBackgroundRefresh({
+            listSources: runtime.listRefreshSources,
+            refreshSource: async (sourceId) => {
+                await runtime.fetchSource(sourceId as SourceID);
+            },
+            canRefresh: () => shouldKeepBackgroundAlive() && desktopCollectionMode !== "remote",
+            onError: (sourceId, error) => {
+                console.warn(`Background refresh failed for ${sourceId}.`, error);
+            },
+        });
+        backgroundRefresh.start();
+        backgroundRefresh.pause("window-visible");
+
+        powerMonitor.on("suspend", handleSystemSuspend);
+        powerMonitor.on("resume", handleSystemResume);
+        return true;
+    } catch (error) {
+        console.warn("Tray mode could not be initialized.", error instanceof Error ? error.message : error);
+        disposeTrayBackgroundMode();
+        return false;
+    }
+}
+
+function handleSystemSuspend() {
+    backgroundRefresh?.pause("system-suspended");
+}
+
+function handleSystemResume() {
+    backgroundRefresh?.resume("system-suspended");
+}
+
+async function setTrayBackgroundEnabled(enabled: boolean) {
+    const previousPreferences = desktopPreferences;
+    desktopPreferences = { ...desktopPreferences, trayBackgroundEnabled: enabled };
+    if (enabled) {
+        if (!crawlerRuntime || !(await installTrayMode(crawlerRuntime))) {
+            desktopPreferences = previousPreferences;
+            throw new Error("系统托盘初始化失败，已保持原设置。请检查安装包图标后重试。");
+        }
+    }
+
+    try {
+        await persistDesktopPreferences();
+    } catch (error) {
+        desktopPreferences = previousPreferences;
+        if (!previousPreferences.trayBackgroundEnabled) disposeTrayBackgroundMode();
+        throw error;
+    }
+
+    if (!enabled) disposeTrayBackgroundMode();
+    syncBackgroundRefreshState();
+    return { ...desktopPreferences };
+}
+
+/** Remove process-wide listeners together with the tray mode that owns them. */
+function disposeTrayBackgroundMode() {
+    backgroundRefresh?.dispose();
+    backgroundRefresh = null;
+    powerMonitor.removeListener("suspend", handleSystemSuspend);
+    powerMonitor.removeListener("resume", handleSystemResume);
+    desktopTray?.destroy();
+    desktopTray = null;
+}
+
+function updateTrayMenu() {
+    if (!desktopTray) return;
+    desktopTray.setContextMenu(
+        Menu.buildFromTemplate([
+            { label: "打开 LatestNews", click: () => showMainWindow() },
+            {
+                label: "立即刷新本地来源",
+                enabled: desktopCollectionMode !== "remote",
+                click: () => void backgroundRefresh?.refreshNow(),
+            },
+            { type: "separator" },
+            {
+                label: desktopCollectionMode === "remote" ? "远端模式（不运行本地刷新）" : "自动刷新本地来源",
+                enabled: false,
+            },
+            { type: "separator" },
+            { label: "退出 LatestNews", click: () => app.quit() },
+        ])
+    );
+}
+
+function syncBackgroundRefreshState() {
+    if (!backgroundRefresh) return;
+    const mainIsVisible = Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible());
+    if (mainIsVisible) backgroundRefresh.pause("window-visible");
+    else backgroundRefresh.resume("window-visible");
+    if (shouldKeepBackgroundAlive()) backgroundRefresh.start();
+    else backgroundRefresh.stop();
+}
+
+function showMainWindow() {
+    if (isQuitting) return;
+    if (!mainWindow || mainWindow.isDestroyed()) {
+        void createMainWindow().then(() => syncBackgroundRefreshState());
+        return;
+    }
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+    syncBackgroundRefreshState();
+}
+
+function hideMainWindowToTray(window: BrowserWindow) {
+    if (!desktopPreferences.trayBackgroundEnabled || isQuitting || isHidingMainWindow) return false;
+    if (authWindow && !authWindow.isDestroyed()) return false;
+    if (process.platform === "darwin" && desktopTray === null) return false;
+    isHidingMainWindow = true;
+    window.hide();
+    isHidingMainWindow = false;
+    backgroundRefresh?.resume("window-visible");
+    return true;
+}
+
 function validateNewsApiUrl(value: string) {
     return normalizeServiceUrl(value, { allowLocalHttp: !app.isPackaged });
 }
@@ -613,6 +833,8 @@ async function resetNewsApiUrl() {
 
 function applyNewsApiProxyTarget() {
     apiTargets.news = desktopCollectionMode === "local" ? null : configuredNewsApiUrl;
+    updateTrayMenu();
+    syncBackgroundRefreshState();
 }
 
 async function decryptStoredSyncHubConfig(path: string) {
@@ -737,6 +959,22 @@ function installDesktopIpc(runtime: ElectronCrawlerPluginRuntime) {
     ipcMain.handle("desktop:lifecycle:diagnostics", (event) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop diagnostics request.");
         return getDesktopDiagnostics();
+    });
+
+    ipcMain.handle("desktop:preferences:get", (event) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop preferences request.");
+        return { ...desktopPreferences };
+    });
+
+    ipcMain.handle("desktop:preferences:set-tray-background", async (event, value: unknown) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop preferences request.");
+        if (typeof value !== "boolean") throw new Error("Tray background setting must be a boolean.");
+        return setTrayBackgroundEnabled(value);
+    });
+
+    ipcMain.handle("desktop:window:show-main", (event) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop window request.");
+        showMainWindow();
     });
 
     ipcMain.handle("desktop:news-api:get-url", (event) => {
@@ -1013,6 +1251,11 @@ async function createMainWindow() {
     window.once("ready-to-show", () => window.show());
     window.on("closed", () => {
         if (mainWindow === window) mainWindow = null;
+    });
+    window.on("show", () => syncBackgroundRefreshState());
+    window.on("close", (event) => {
+        if (!hideMainWindowToTray(window)) return;
+        event.preventDefault();
     });
 
     await window.loadURL(rendererDevUrl?.href ?? APP_BASE_URL);

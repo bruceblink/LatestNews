@@ -6,6 +6,10 @@ export interface DesktopNewsApiSettings {
     mode: DesktopCollectionMode;
 }
 
+export interface DesktopPreferences {
+    trayBackgroundEnabled: boolean;
+}
+
 function getDesktopBridge() {
     const desktopBuild =
         import.meta.env.LATESTNEWS_DESKTOP === true || String(import.meta.env.LATESTNEWS_DESKTOP) === "true";
@@ -15,6 +19,23 @@ function getDesktopBridge() {
 
 export function isDesktopNewsApiConfigurable() {
     return Boolean(getDesktopBridge()?.getNewsApiUrl && getDesktopBridge()?.setNewsApiSettings);
+}
+
+export function isDesktopTrayBackgroundConfigurable() {
+    const bridge = getDesktopBridge();
+    return Boolean(bridge?.getDesktopPreferences && bridge?.setTrayBackgroundEnabled);
+}
+
+export async function readDesktopPreferences(): Promise<DesktopPreferences> {
+    const bridge = getDesktopBridge();
+    if (!bridge?.getDesktopPreferences) throw new Error("桌面偏好设置接口不可用。");
+    return bridge.getDesktopPreferences();
+}
+
+export async function saveDesktopTrayBackgroundEnabled(enabled: boolean) {
+    const bridge = getDesktopBridge();
+    if (!bridge?.setTrayBackgroundEnabled) throw new Error("桌面偏好设置接口不可用。");
+    return bridge.setTrayBackgroundEnabled(enabled);
 }
 
 export async function readDesktopNewsApiSettings(): Promise<DesktopNewsApiSettings> {

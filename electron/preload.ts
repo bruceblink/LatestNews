@@ -6,6 +6,10 @@ contextBridge.exposeInMainWorld(
     "latestNewsDesktop",
     Object.freeze({
         getLifecycleDiagnostics: () => ipcRenderer.invoke("desktop:lifecycle:diagnostics"),
+        getDesktopPreferences: () => ipcRenderer.invoke("desktop:preferences:get"),
+        setTrayBackgroundEnabled: (enabled: boolean) =>
+            ipcRenderer.invoke("desktop:preferences:set-tray-background", enabled),
+        showMainWindow: () => ipcRenderer.invoke("desktop:window:show-main"),
         getNewsApiUrl: () => ipcRenderer.invoke("desktop:news-api:get-url"),
         setNewsApiUrl: (url: string) => ipcRenderer.invoke("desktop:news-api:set-url", url),
         setNewsApiSettings: (settings: { url: string; mode: DesktopCollectionMode }) =>

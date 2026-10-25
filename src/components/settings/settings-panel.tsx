@@ -5,10 +5,13 @@ import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/useToast";
 import {
     resetDesktopNewsApiUrl,
+    readDesktopPreferences,
     saveDesktopNewsApiSettings,
     readDesktopNewsApiSettings,
     type DesktopNewsApiSettings,
     isDesktopNewsApiConfigurable,
+    saveDesktopTrayBackgroundEnabled,
+    isDesktopTrayBackgroundConfigurable,
 } from "~/services/desktop-settings.service";
 
 interface SettingsPanelProps {
@@ -20,12 +23,16 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
     const toaster = useToast();
     const desktopBuild = import.meta.env.LATESTNEWS_DESKTOP === true;
     const configurable = desktopBuild && isDesktopNewsApiConfigurable();
+    const trayConfigurable = desktopBuild && isDesktopTrayBackgroundConfigurable();
     const [settings, setSettings] = useState<DesktopNewsApiSettings>();
     const [url, setUrl] = useState("");
     const [mode, setMode] = useState<DesktopCollectionMode>("auto");
+    const [trayBackgroundEnabled, setTrayBackgroundEnabled] = useState(false);
     const [loading, setLoading] = useState(configurable);
     const [saving, setSaving] = useState(false);
+    const [traySaving, setTraySaving] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string>();
+    const [trayErrorMessage, setTrayErrorMessage] = useState<string>();
 
     useEffect(() => {
         let cancelled = false;
@@ -50,6 +57,24 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
             cancelled = true;
         };
     }, [configurable]);
+
+    useEffect(() => {
+        let cancelled = false;
+        if (trayConfigurable) {
+            void readDesktopPreferences()
+                .then((preferences) => {
+                    if (!cancelled) setTrayBackgroundEnabled(preferences.trayBackgroundEnabled);
+                })
+                .catch((error: unknown) => {
+                    if (!cancelled) {
+                        setTrayErrorMessage(error instanceof Error ? error.message : "无法读取桌面偏好设置。");
+                    }
+                });
+        }
+        return () => {
+            cancelled = true;
+        };
+    }, [trayConfigurable]);
 
     const handleSave = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -81,6 +106,22 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : "恢复默认数据源 API 地址失败。");
             setSaving(false);
+        }
+    };
+
+    const handleTrayBackgroundChange = async (enabled: boolean) => {
+        setTraySaving(true);
+        setTrayErrorMessage(undefined);
+        try {
+            const preferences = await saveDesktopTrayBackgroundEnabled(enabled);
+            setTrayBackgroundEnabled(preferences.trayBackgroundEnabled);
+            toaster(enabled ? "托盘后台模式已启用。关闭主窗口后，应用仍会刷新本地来源。" : "托盘后台模式已关闭。", {
+                type: "success",
+            });
+        } catch (error) {
+            setTrayErrorMessage(error instanceof Error ? error.message : "保存托盘后台设置失败。");
+        } finally {
+            setTraySaving(false);
         }
     };
 
@@ -180,6 +221,32 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                         </button>
                     </div>
                 </form>
+            )}
+
+            {trayConfigurable && (
+                <div className="rounded-2xl bg-base/70 p-5 shadow shadow-primary/8 backdrop-blur-sm">
+                    <label className="flex items-start gap-3 text-sm font-medium" htmlFor="desktop-tray-background">
+                        <input
+                            id="desktop-tray-background"
+                            type="checkbox"
+                            checked={trayBackgroundEnabled}
+                            disabled={traySaving}
+                            onChange={(event) => void handleTrayBackgroundChange(event.target.checked)}
+                            className="mt-0.5 accent-cyan-500"
+                        />
+                        <span>关闭窗口后保留托盘并刷新本地来源</span>
+                    </label>
+                    <p className="mt-2 pl-6 text-xs leading-5 op-65">
+                        启用后，关闭窗口会把 LatestNews
+                        收到系统托盘。托盘菜单可以重新打开窗口、立即刷新本地来源或退出应用。远端模式不会运行本地后台刷新。此选项默认关闭。
+                    </p>
+                    {traySaving && <p className="mt-2 pl-6 text-xs op-65">正在保存…</p>}
+                    {trayErrorMessage && (
+                        <div className="mt-3 rounded-xl bg-red-500/8 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                            {trayErrorMessage}
+                        </div>
+                    )}
+                </div>
             )}
         </section>
     );

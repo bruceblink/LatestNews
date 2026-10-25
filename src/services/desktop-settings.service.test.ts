@@ -3,9 +3,12 @@ import { it, vi, expect, describe, afterEach } from "vitest";
 import {
     saveDesktopNewsApiUrl,
     resetDesktopNewsApiUrl,
+    readDesktopPreferences,
     saveDesktopNewsApiSettings,
     readDesktopNewsApiSettings,
     isDesktopNewsApiConfigurable,
+    saveDesktopTrayBackgroundEnabled,
+    isDesktopTrayBackgroundConfigurable,
 } from "./desktop-settings.service";
 
 describe("desktop settings service", () => {
@@ -26,11 +29,16 @@ describe("desktop settings service", () => {
                 async ({ url, mode }: { url: string; mode: "auto" | "remote" | "local" }) => `${mode}:${url}`
             ),
             resetNewsApiUrl: vi.fn(async () => "https://news.likanug.top"),
+            getDesktopPreferences: vi.fn(async () => ({ trayBackgroundEnabled: false })),
+            setTrayBackgroundEnabled: vi.fn(async (trayBackgroundEnabled: boolean) => ({ trayBackgroundEnabled })),
         };
         vi.stubEnv("LATESTNEWS_DESKTOP", "true");
         vi.stubGlobal("window", { latestNewsDesktop: bridge });
 
         expect(isDesktopNewsApiConfigurable()).toBe(true);
+        expect(isDesktopTrayBackgroundConfigurable()).toBe(true);
+        await expect(readDesktopPreferences()).resolves.toEqual({ trayBackgroundEnabled: false });
+        await expect(saveDesktopTrayBackgroundEnabled(true)).resolves.toEqual({ trayBackgroundEnabled: true });
         await expect(readDesktopNewsApiSettings()).resolves.toEqual({
             url: "https://news.example.com",
             defaultUrl: "https://news.likanug.top",
@@ -47,6 +55,8 @@ describe("desktop settings service", () => {
         expect(bridge.setNewsApiUrl).toHaveBeenCalledWith("");
         expect(bridge.setNewsApiSettings).toHaveBeenCalledWith({ url: "https://news.example.test", mode: "remote" });
         expect(bridge.resetNewsApiUrl).toHaveBeenCalledOnce();
+        expect(bridge.getDesktopPreferences).toHaveBeenCalledOnce();
+        expect(bridge.setTrayBackgroundEnabled).toHaveBeenCalledWith(true);
     });
 
     it("reports an unavailable bridge instead of touching Web globals", async () => {
@@ -54,7 +64,9 @@ describe("desktop settings service", () => {
         vi.stubGlobal("window", {});
 
         expect(isDesktopNewsApiConfigurable()).toBe(false);
+        expect(isDesktopTrayBackgroundConfigurable()).toBe(false);
         await expect(readDesktopNewsApiSettings()).rejects.toThrow("桌面 API 配置接口不可用");
+        await expect(readDesktopPreferences()).rejects.toThrow("桌面偏好设置接口不可用");
         await expect(saveDesktopNewsApiUrl("https://news.example.test")).rejects.toThrow("桌面 API 配置接口不可用");
         await expect(resetDesktopNewsApiUrl()).rejects.toThrow("桌面 API 配置接口不可用");
     });

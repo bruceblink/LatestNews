@@ -9,6 +9,9 @@ interface ImportMetaEnv {
 interface Window {
     latestNewsDesktop?: {
         getLifecycleDiagnostics: () => Promise<unknown>;
+        getDesktopPreferences?: () => Promise<{ trayBackgroundEnabled: boolean }>;
+        setTrayBackgroundEnabled?: (enabled: boolean) => Promise<{ trayBackgroundEnabled: boolean }>;
+        showMainWindow?: () => Promise<void>;
         getNewsApiUrl?: () => Promise<{ url: string; defaultUrl: string; mode: "auto" | "remote" | "local" }>;
         setNewsApiUrl?: (url: string) => Promise<string>;
         setNewsApiSettings?: (settings: { url: string; mode: "auto" | "remote" | "local" }) => Promise<string>;

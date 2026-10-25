@@ -84,6 +84,7 @@ test("opens the shared settings route in the Electron renderer", async () => {
     await expect(page.getByRole("heading", { name: "设置", level: 1 })).toBeVisible();
     await expect(page.getByLabel("数据源 API URL")).toHaveValue(/^https?:\/\//);
     await expect(page.getByLabel("采集模式")).toHaveValue("auto");
+    await expect(page.getByLabel("关闭窗口后保留托盘并刷新本地来源")).not.toBeChecked();
 
     const settings = await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.());
     expect(settings?.url).toMatch(/^https?:\/\//);

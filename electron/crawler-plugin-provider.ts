@@ -109,6 +109,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
 
         return {
             listSourceIds: provider.listSourceIds,
+            listRefreshSources: () => provider.listSources().map(({ id, interval }) => ({ id, interval })),
             listSourceMetadata: () => sourceMetadata,
             dispose: () => provider.dispose(),
             async getHealthSummary(): Promise<SourceHealthSummary> {
@@ -233,6 +234,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
         );
         return {
             listSourceIds: () => [],
+            listRefreshSources: () => [],
             listSourceMetadata: () => [],
             getHealthSummary: async (): Promise<SourceHealthSummary> => ({
                 updatedAt: Date.now(),
