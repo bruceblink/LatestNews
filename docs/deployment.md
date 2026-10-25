@@ -56,6 +56,7 @@ curl -f http://localhost:4444/api/v1/openapi.json
 Operational notes:
 
 - Keep runtime data in the named Docker volume instead of binding the repo directory into the container.
+- Alpine builds include Python 3, make and g++ for native SQLite compilation when prebuilt binaries are unavailable. The final image contains libstdc++ and runs a SQLite query during image construction; build tools remain in the builder stage.
 - Set `JWT_SECRET` through an `.env` file or the host secret manager, not in `docker-compose.yml`.
 - Set `LATESTNEWS_NODE_ID` when multiple deployments feed the same downstream system.
 

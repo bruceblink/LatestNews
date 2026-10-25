@@ -5,6 +5,8 @@ FROM node:22-alpine AS builder
 
 WORKDIR /usr/src
 
+# Native SQLite must also build when a matching musl prebuilt binary is unavailable.
+RUN apk add --no-cache python3 make g++
 RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
@@ -35,10 +37,16 @@ FROM node:22-alpine
 
 WORKDIR /usr/app
 
+# Keep the C++ runtime required by locally compiled native modules without build tools.
+RUN apk add --no-cache libstdc++
+
 # 只拷贝构建产物
 COPY --from=builder /usr/src/dist/output ./output
 # Node crawler workers run as child processes and need this source runtime beside the server bundle.
 COPY --from=builder /usr/src/crawler-platform/runtime/worker-entry.mjs ./crawler-platform/runtime/worker-entry.mjs
+
+# Exercise the shipped binding for each target architecture before an image can be published.
+RUN node -e "const Database = require('./output/server/node_modules/better-sqlite3'); const db = new Database(':memory:'); if (db.prepare('SELECT 1 AS ok').get().ok !== 1) throw new Error('SQLite runtime check failed'); db.close();"
 
 # -------- runtime env --------
 # 仅 Node / Nitro 运行时需要的变量
