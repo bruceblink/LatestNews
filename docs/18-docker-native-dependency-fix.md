@@ -34,3 +34,9 @@ docker buildx build --platform linux/arm64 --progress plain --load -t latestnews
 - arm64 容器 `latestnews-docker-fix-arm64` 使用 `127.0.0.1:18445` 到容器 `4444`。首页、部署健康、节点清单和来源目录均返回 HTTP 200，缓存状态为 `ok`；磁盘 SQLite 写入和读回为 `native-ok`。容器已停止并删除。两个测试镜像随后删除，不删除共享基础镜像或构建缓存。
 - `pnpm check`：76 文件、373 测试通过；Electron 类型检查通过。Windows 目录包的 5 个 E2E 用例通过，与 Docker 结果分别记录。
 - 修复前的 GitHub 运行已终止，不能据本地结果将其写为成功。
+
+## 远端验证
+
+- 修复提交 `9a181c4781aa4f81833358d3c541864333bdc8ea` 已推送到 `main`。重新触发的 [Docker nightly release](https://github.com/bruceblink/LatestNews/actions/runs/40149396822) 成功；`check_date`、`ci` 和构建 job `121037699908` 全部通过。旧失败运行 `40134227695` 保留为故障证据。
+- GHCR 的 `ghcr.io/bruceblink/latestnews:nightly` 已发布双架构清单，摘要为 `sha256:0c313bae15b1affd9b2fee094caa2d5d04010f6708743694ae411827b8fc1bf3`，包含 `linux/amd64` 和 `linux/arm64`。
+- 同一提交的 [Playwright E2E](https://github.com/bruceblink/LatestNews/actions/runs/40149396743) 与 [Windows 桌面构建](https://github.com/bruceblink/LatestNews/actions/runs/40149396767) 均成功。Windows 安装包产物 `latestnews-windows-9a181c4781aa4f81833358d3c541864333bdc8ea` 可用，大小为 121,956,507 字节；本次未安装此 CI 产物。

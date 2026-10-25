@@ -28,3 +28,5 @@ pnpm test:e2e:electron
 ```
 
 菜单修复可独立回退。依赖打包和构建校验应成组保留，否则独立程序可能再次缺少 `zod`。本轮未创建安装程序、替换已安装版本或发布 Release。
+
+后续远端验证：源码修复 `85456c9` 和菜单修复 `f35492b` 已推送；聚合提交 `9a181c4` 的 Windows 桌面 CI 已生成安装程序，Web/Electron E2E 同时通过，运行编号见 [Docker 修复远端记录](18-docker-native-dependency-fix.md)。未安装 CI 产物，也未补充真实窗口证据。
