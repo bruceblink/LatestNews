@@ -75,7 +75,7 @@
 - Node 实际适配器请求返回 30 条新闻。本地 Pages 预览使用 Wrangler 4.152.0；`hackernews`、`freebuf` 和 `bilibili-hot-search` 接口均返回 HTTP 200，分别返回 30、20、30 条新闻。
 - `pnpm build:pages` 和 Pages 产物检查通过。Worker 为单文件产物，且没有 Node 专用 Undici 依赖。
 - 本地预览没有 `LATESTNEWS_DB` 绑定。缓存和健康记录写入没有通过测试；来源请求仍成功返回。此验证不代表 Cloudflare 生产环境结果，也不代表 D1 集成通过。Docker 集成测试：不适用。
-- 修复尚未提交或部署。公网采样仍访问当前生产部署。截至 2026-10-25 11:51:33（UTC+08:00），生产窗口已完成 11/673 轮，77 条成功、33 条失败；FreeBuf、Hacker News 和 Bilibili 热搜仍各失败 11 次。生产域名当前对这三个来源仍返回 HTTP 500，响应没有错误细节。FreeBuf 和 Bilibili 的生产 500 原因尚未确认。Wrangler 生产日志查询因本机没有 `CLOUDFLARE_API_TOKEN` 而未运行；没有尝试登录或改动 Cloudflare 配置。
+- 修复已提交为 `5175ce0`，尚未部署。公网采样仍访问当前生产部署。截至 2026-10-25 11:51:33（UTC+08:00），生产窗口已完成 11/673 轮，77 条成功、33 条失败；FreeBuf、Hacker News 和 Bilibili 热搜仍各失败 11 次。生产域名当前对这三个来源仍返回 HTTP 500，响应没有错误细节。FreeBuf 和 Bilibili 的生产 500 原因尚未确认。Wrangler 生产日志查询因本机没有 `CLOUDFLARE_API_TOKEN` 而未运行；没有尝试登录或改动 Cloudflare 配置。
 
 ## 运行说明
 
