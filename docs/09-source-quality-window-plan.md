@@ -55,6 +55,7 @@
 - 截至 2026-10-25 12:06:49（UTC+08:00），已完成 12/673 轮，共 120 条记录；84 条成功、36 条失败。FreeBuf、Hacker News 和 Bilibili 热搜仍各失败 12 次，其他 7 个来源均成功 12 次。采样进程仍在运行。
 - 2026-10-25 11:56（UTC+08:00）额外只读请求生产接口：FreeBuf 和 Hacker News 返回 HTTP 500；Bilibili 热搜返回 HTTP 200 和 3 条新闻。该单次请求不计入采样窗口，说明 Bilibili 的失败可能间歇发生；后续以采样记录复核。
 - 2026-10-25 12:05:27–29（UTC+08:00）再次只读请求三个生产接口，均返回 HTTP 500 和通用错误正文。Cloudflare Ray ID 分别为 FreeBuf `a4fe57c91ccfa2d6-LAX`、Hacker News `a4fe57d45fbc1691-LAX`、Bilibili 热搜 `a4fe57d909c6dcfa-LAX`。这组请求可用于查找对应的 Cloudflare Functions 运行日志，不计入采样窗口。
+- 2026-10-25 12:08:58–12:09:00（UTC+08:00）从 DFW 边缘节点再次请求三个生产接口，仍全部返回 HTTP 500。Ray ID 分别为 FreeBuf `a4fe5cea1d3a144b-DFW`、Hacker News `a4fe5cf7eea12cd6-DFW`、Bilibili 热搜 `a4fe5cfcadea6c74-DFW`。这组请求也不计入采样窗口。
 - 12 轮报告汇总 120 条记录；10 个来源仍全部为 `insufficient-data`，原因是样本数和观察跨度未达验收要求。三个失败来源成功率为 0%，其他七个为 100%。
 
 ### Hacker News 来源接口排查与修复
@@ -79,7 +80,7 @@
 - Node 实际适配器请求返回 30 条新闻。本地 Pages 预览使用 Wrangler 4.152.0；`hackernews`、`freebuf` 和 `bilibili-hot-search` 接口均返回 HTTP 200，分别返回 30、20、30 条新闻。
 - `pnpm build:pages` 和 Pages 产物检查通过。Worker 为单文件产物，且没有 Node 专用 Undici 依赖。
 - 本地预览没有 `LATESTNEWS_DB` 绑定。缓存和健康记录写入没有通过测试；来源请求仍成功返回。此验证不代表 Cloudflare 生产环境结果，也不代表 D1 集成通过。Docker 集成测试：不适用。
-- 修复已提交为 `5175ce0`，尚未部署。公网采样仍访问当前生产部署。截至 2026-10-25 12:06:49（UTC+08:00），生产窗口已完成 12/673 轮，84 条成功、36 条失败；FreeBuf、Hacker News 和 Bilibili 热搜在这 12 轮中均失败。Bilibili 热搜在 11:56 的单次请求曾返回 HTTP 200；12:05 的三项请求和第 12 轮采样又返回 HTTP 500，说明错误会间歇变化。12:05 请求的 Cloudflare Ray ID 已记录，便于查看 Functions 日志。Wrangler 生产日志查询因本机没有 `CLOUDFLARE_API_TOKEN` 而未运行；没有尝试登录或改动 Cloudflare 配置。
+- 修复已提交为 `5175ce0`，尚未部署。公网采样仍访问当前生产部署。截至 2026-10-25 12:06:49（UTC+08:00），生产窗口已完成 12/673 轮，84 条成功、36 条失败；FreeBuf、Hacker News 和 Bilibili 热搜在这 12 轮中均失败。Bilibili 热搜在 11:56 的单次请求曾返回 HTTP 200；12:05 的三项请求、第 12 轮采样和 12:08 的三项请求又返回 HTTP 500，说明错误会间歇变化。LAX 与 DFW 两组 Cloudflare Ray ID 均已记录，便于查看 Functions 日志。Wrangler 生产日志查询因本机没有 `CLOUDFLARE_API_TOKEN` 而未运行；没有尝试登录或改动 Cloudflare 配置。
 
 ## 运行说明
 
