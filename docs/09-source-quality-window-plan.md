@@ -49,6 +49,33 @@
 - 首轮 10 个来源中 7 个成功；FreeBuf、Hacker News 和 Bilibili 热搜接口报错。此结果不代表 7 天验收通过。
 - 截至 2026-10-25 09:34（UTC+08:00），已完成 2/673 轮，共 20 条记录。两轮均有 7 个来源成功、3 个来源失败，累计 14 条成功、6 条失败。第 2 轮中 FreeBuf、Hacker News 和 Bilibili 热搜返回 HTTP 500。观察窗口仍在运行。
 - 原始记录与日志分别为 `.data/source-quality/news-likanug-top-window-2026-10-25.jsonl` 和 `.data/source-quality/news-likanug-top-window-2026-10-25.log`，均由 Git 忽略。采样仍在运行。
+- 截至 2026-10-25 11:21:06（UTC+08:00），已完成 9/673 轮，共 90 条记录；63 条成功、27 条失败。第 9 轮有 7 个来源成功、3 个来源失败。FreeBuf、Hacker News 和 Bilibili 热搜在 9 轮中均返回 HTTP 500；其他 7 个来源在 9 轮中均返回 HTTP 200。采样进程仍在运行。
+- 同日从本机网络对这三个来源的公开上游地址各执行一次只读请求，FreeBuf RSS、Hacker News 页面和 Bilibili 热搜 API 均返回 HTTP 200。这只证明本机当时可以访问上游，不能证明 Cloudflare Pages 出口或部署适配器正常。生产 API 的错误响应为通用 500，没有提供根因。本轮没有改动或发布生产服务。
+- 截至 2026-10-25 11:51:33（UTC+08:00），已完成 11/673 轮，共 110 条记录；77 条成功、33 条失败。FreeBuf、Hacker News 和 Bilibili 热搜仍各失败 11 次，其他 7 个来源均成功 11 次。采样进程仍在运行。
+
+### Hacker News 来源接口排查与修复
+
+本机通过 LatestNews 的 Node `myFetch` 访问 `news.ycombinator.com` 时，在 8 秒采集期限内超时；PowerShell 的一次直接访问返回 HTTP 200。LatestNews 的 `myFetch` 通过 Node `fetch` 发出请求，因此两种请求使用不同的网络路径。本机通过 Node `fetch` 访问 Hacker News Search API 成功，并收到 30 条当前首页条目。该结果说明可以减少对 HTML 页面和页面结构的依赖，但不能证明 Cloudflare Pages 出口访问该 API 正常。
+
+实施范围限定为服务端 `hackernews` 适配器。使用 Hacker News Search API 的 `front_page` 查询；保留来源 ID、新闻讨论页 URL、稳定条目 ID 和分数信息。Electron 插件及其已安装版本不在本切片内。
+
+验收条件：
+
+- 单元测试使用本地 JSON 响应，验证字段检查、最多 30 条、讨论页 URL 和分数映射。
+- 空列表和格式错误的响应返回明确适配器错误，不伪装成正常空结果。
+- Node 实际适配器请求返回条目；Cloudflare Pages 构建验证通过。
+- 只有部署后生产接口返回 HTTP 200，才记录生产修复通过。当前不发布部署。
+
+回退边界：恢复原 HTML 适配器和对应测试；不改变来源 ID、缓存格式、API 响应结构或 Electron 插件包。
+
+本地实施与验证：
+
+- 服务端 `hackernews` 适配器改用 Hacker News Search API 的 `front_page` 查询。适配器保留 Hacker News 讨论页 URL、原有稳定 ID 计算和分数信息。Electron 插件未修改。
+- `test/source-adapter-regressions.test.ts` 增加映射、响应格式和空结果检查。`pnpm check` 通过：78 个测试文件、396 个测试。
+- Node 实际适配器请求返回 30 条新闻。本地 Pages 预览使用 Wrangler 4.152.0；`hackernews`、`freebuf` 和 `bilibili-hot-search` 接口均返回 HTTP 200，分别返回 30、20、30 条新闻。
+- `pnpm build:pages` 和 Pages 产物检查通过。Worker 为单文件产物，且没有 Node 专用 Undici 依赖。
+- 本地预览没有 `LATESTNEWS_DB` 绑定。缓存和健康记录写入没有通过测试；来源请求仍成功返回。此验证不代表 Cloudflare 生产环境结果，也不代表 D1 集成通过。Docker 集成测试：不适用。
+- 修复尚未提交或部署。公网采样仍访问当前生产部署。截至 2026-10-25 11:51:33（UTC+08:00），生产窗口已完成 11/673 轮，77 条成功、33 条失败；FreeBuf、Hacker News 和 Bilibili 热搜仍各失败 11 次。生产域名当前对这三个来源仍返回 HTTP 500，响应没有错误细节。FreeBuf 和 Bilibili 的生产 500 原因尚未确认。Wrangler 生产日志查询因本机没有 `CLOUDFLARE_API_TOKEN` 而未运行；没有尝试登录或改动 Cloudflare 配置。
 
 ## 运行说明
 

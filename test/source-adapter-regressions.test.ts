@@ -4,6 +4,7 @@ import { genSources } from "../shared/pre-sources";
 import { FREEBUF_RSS_URL } from "../server/sources/freebuf";
 import { XIANZHISHE_RSS_URL } from "../server/sources/xianzhishe";
 import { SPUTNIK_TIMELINE_URL, fetchSputnikNewsItems } from "../server/sources/sputniknewscn";
+import { fetchHackerNewsItems, HACKER_NEWS_FRONT_PAGE_URL } from "../server/sources/hackernews";
 import { BILIBILI_HOT_SEARCH_URL, fetchBilibiliHotSearchItems } from "../server/sources/bilibili";
 import { fetchZhihuHotItems, ZHIHU_PRIMARY_HOT_URL, ZHIHU_FALLBACK_HOT_URL } from "../server/sources/zhihu";
 
@@ -40,6 +41,40 @@ describe("source adapter regressions", () => {
             title: "Serverless crawler",
             url: "https://search.bilibili.com/all?keyword=serverless%20crawler",
         });
+    });
+
+    it("uses the Hacker News front-page API and keeps discussion links and scores", async () => {
+        const fetcher = vi.fn().mockResolvedValue({
+            hits: [
+                { objectID: "123", title: "Hacker News fixture headline", points: 42 },
+                { objectID: "124", title: "Second fixture headline", points: 17 },
+            ],
+        }) as unknown as SourceFetcher;
+
+        const items = await fetchHackerNewsItems(fetcher);
+
+        expect(fetcher).toHaveBeenCalledWith(HACKER_NEWS_FRONT_PAGE_URL, { responseType: "json" });
+        expect(items).toHaveLength(2);
+        expect(items[0]).toMatchObject({
+            title: "Hacker News fixture headline",
+            url: "https://news.ycombinator.com/item?id=123",
+            extra: { info: "42 points" },
+        });
+        expect(items[0].id).toBeTruthy();
+    });
+
+    it("rejects malformed or empty Hacker News front-page responses", async () => {
+        const malformedFetcher = vi.fn().mockResolvedValue({ results: [] }) as unknown as SourceFetcher;
+        const emptyFetcher = vi
+            .fn()
+            .mockResolvedValue({ hits: [{ objectID: "bad-id", title: "" }] }) as unknown as SourceFetcher;
+
+        await expect(fetchHackerNewsItems(malformedFetcher)).rejects.toThrow(
+            "Invalid Hacker News Search API response."
+        );
+        await expect(fetchHackerNewsItems(emptyFetcher)).rejects.toThrow(
+            "Hacker News Search API returned no front-page stories."
+        );
     });
 
     it("falls back to Zhihu's public API host and preserves the exact question id", async () => {
