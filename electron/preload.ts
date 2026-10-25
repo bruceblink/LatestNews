@@ -1,11 +1,15 @@
 import { ipcRenderer, contextBridge } from "electron";
 
+import type { DesktopCollectionMode } from "../shared/desktop-collection-mode";
+
 contextBridge.exposeInMainWorld(
     "latestNewsDesktop",
     Object.freeze({
         getLifecycleDiagnostics: () => ipcRenderer.invoke("desktop:lifecycle:diagnostics"),
         getNewsApiUrl: () => ipcRenderer.invoke("desktop:news-api:get-url"),
         setNewsApiUrl: (url: string) => ipcRenderer.invoke("desktop:news-api:set-url", url),
+        setNewsApiSettings: (settings: { url: string; mode: DesktopCollectionMode }) =>
+            ipcRenderer.invoke("desktop:news-api:set-settings", settings),
         resetNewsApiUrl: () => ipcRenderer.invoke("desktop:news-api:reset-url"),
         startLogin: () => ipcRenderer.invoke("desktop:start-login"),
         setSyncHubApiKey: (apiKey: string) => ipcRenderer.invoke("desktop:synchub:set-api-key", apiKey),

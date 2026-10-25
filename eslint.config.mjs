@@ -104,6 +104,7 @@ export default [
             "**/*.json",
             "node_modules/*",
             "dist/*",
+            ".data/",
             ".output/*",
             "out/",
             "release/",

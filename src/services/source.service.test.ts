@@ -9,6 +9,7 @@ import {
 } from "../../shared/runtime-source-catalog";
 import {
     fetchSource,
+    fetchNewsInsights,
     fetchSourceBatchV1,
     fetchSourceItemsV1,
     fetchSourceMetadata,
@@ -19,6 +20,7 @@ import {
 } from "./source.service";
 
 import type { SourceID, SourceResponse } from "../../shared/types";
+import type { DesktopCollectionMode } from "../../shared/desktop-collection-mode";
 
 const { mockMyFetch } = vi.hoisted(() => ({ mockMyFetch: vi.fn() }));
 
@@ -300,6 +302,77 @@ describe("desktop local crawler routing", () => {
         await expect(fetchSourceHealthSummary()).rejects.toBe(error);
         expect(bridge.getCrawlerSourceHealthSummary).not.toHaveBeenCalled();
     });
+
+    it("uses only local services in local mode, even when a remote URL is saved", async () => {
+        const health = createHealthSummary();
+        const localHackerNews = createSource("hackernews", "Local Hacker News headline", "local-1");
+        const bridge = createDesktopBridge(
+            ["hackernews"],
+            { hackernews: localHackerNews },
+            "https://news.example.com",
+            [],
+            health,
+            "local"
+        );
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+
+        await expect(fetchSource({ id: "hackernews" })).resolves.toEqual(localHackerNews);
+        await expect(fetchSourceItemsV1("hackernews")).resolves.toMatchObject({
+            data: { id: "hackernews", items: localHackerNews.items },
+        });
+        await expect(fetchSourceBatchV1({ sources: ["hackernews"] })).resolves.toMatchObject({
+            data: [expect.objectContaining({ id: "hackernews" })],
+        });
+        await expect(fetchEntireSourcesEnvelope(["hackernews", "pcbeta-windows11"])).resolves.toMatchObject({
+            data: [expect.objectContaining({ id: "hackernews" })],
+            errors: expect.arrayContaining([
+                expect.objectContaining({
+                    sourceId: "pcbeta-windows11",
+                    message: expect.stringContaining("enabled desktop collector"),
+                }),
+            ]),
+        });
+        await expect(fetchSourceMetadataItem("hackernews")).resolves.toMatchObject({ data: { id: "hackernews" } });
+        await expect(fetchSourceHealthSummary()).resolves.toEqual(health);
+        await expect(fetchNewsInsights({ sources: ["hackernews"] })).rejects.toThrow("本地模式暂不支持远端新闻洞察");
+        expect(mockMyFetch).not.toHaveBeenCalled();
+    });
+
+    it("keeps remote mode remote when a retryable request fails", async () => {
+        const bridge = createDesktopBridge(
+            ["hackernews"],
+            { hackernews: localSource },
+            "https://news.example.com",
+            [],
+            createHealthSummary(),
+            "remote"
+        );
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+        const error = Object.assign(new Error("bad gateway"), { status: 503 });
+        mockMyFetch.mockRejectedValue(error);
+
+        await expect(fetchSource({ id: "hackernews" })).rejects.toBe(error);
+        await expect(fetchSourceBatchV1({ sources: ["hackernews"] })).rejects.toBe(error);
+        await expect(fetchSourceMetadataItem("hackernews")).rejects.toBe(error);
+        expect(bridge.fetchCrawlerSource).not.toHaveBeenCalled();
+        expect(bridge.listCrawlerSourceMetadata).not.toHaveBeenCalled();
+    });
+
+    it("requires a remote URL when remote mode is selected", async () => {
+        const bridge = createDesktopBridge(
+            ["hackernews"],
+            { hackernews: localSource },
+            "",
+            [],
+            createHealthSummary(),
+            "remote"
+        );
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+
+        await expect(fetchSource({ id: "hackernews" })).rejects.toThrow("远端模式需要配置数据源 API 地址");
+        expect(mockMyFetch).not.toHaveBeenCalled();
+        expect(bridge.fetchCrawlerSource).not.toHaveBeenCalled();
+    });
 });
 
 function createDesktopBridge(
@@ -307,10 +380,11 @@ function createDesktopBridge(
     sources: Partial<Record<SourceID, SourceResponse>>,
     remoteUrl = "https://news.example.com",
     metadata: ReturnType<typeof createRuntimeSourceMetadataItem>[] = [],
-    health = createHealthSummary()
+    health = createHealthSummary(),
+    mode: DesktopCollectionMode = "auto"
 ) {
     return {
-        getNewsApiUrl: vi.fn(async () => ({ url: remoteUrl, defaultUrl: "https://news.example.com" })),
+        getNewsApiUrl: vi.fn(async () => ({ url: remoteUrl, defaultUrl: "https://news.example.com", mode })),
         listCrawlerSources: vi.fn(async () => sourceIds),
         listCrawlerSourceMetadata: vi.fn(async () => metadata),
         getCrawlerSourceHealthSummary: vi.fn(async () => health),

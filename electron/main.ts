@@ -16,6 +16,7 @@ import {
     type IpcMainInvokeEvent,
 } from "electron";
 
+import { isDesktopCollectionMode } from "../shared/desktop-collection-mode";
 import { createElectronCrawlerPluginRuntime } from "./crawler-plugin-provider";
 import { getSafeExternalUrl, resolveRendererFile, isTrustedRendererUrl } from "./security";
 import { createDesktopLifecycleTracker, type DesktopLifecycleEventName } from "./lifecycle";
@@ -44,6 +45,7 @@ import {
 import type { SourceID } from "../shared/types";
 import type { ApiServiceTargets } from "./api-proxy";
 import type { ElectronCrawlerPluginRuntime } from "./crawler-plugin-provider";
+import type { DesktopCollectionMode } from "../shared/desktop-collection-mode";
 
 const APP_BASE_URL = "app://bundle/";
 const MAX_API_REQUEST_BYTES = 5 * 1024 * 1024;
@@ -78,6 +80,8 @@ if (authCallbackUrl.protocol !== "https:" || authCallbackUrl.username || authCal
     throw new Error("The desktop authentication callback must use an HTTPS URL without credentials.");
 }
 
+let configuredNewsApiUrl: URL | null = defaultNewsApiUrl;
+let desktopCollectionMode: DesktopCollectionMode = "auto";
 const apiTargets: ApiServiceTargets = { news: defaultNewsApiUrl, auth: authApiUrl };
 const securityHeaders = new Headers({
     "Content-Security-Policy": [
@@ -149,7 +153,7 @@ if (!hasSingleInstanceLock) {
             if (probeUserDataPath) app.setPath("userData", resolve(probeUserDataPath));
             rendererDevUrl = getDevelopmentRendererUrl(process.env.ELECTRON_RENDERER_URL);
             trustedRendererUrl = rendererDevUrl?.origin ?? APP_BASE_URL;
-            await loadStoredNewsApiUrl();
+            await loadStoredNewsApiSettings();
             installProtocol();
             installPermissionPolicy();
             crawlerRuntime = await createElectronCrawlerPluginRuntime();
@@ -555,39 +559,60 @@ function validateNewsApiUrl(value: string) {
     return normalizeServiceUrl(value, { allowLocalHttp: !app.isPackaged });
 }
 
-async function loadStoredNewsApiUrl() {
+async function loadStoredNewsApiSettings() {
     try {
         const raw = await fs.readFile(getNewsApiConfigPath(), "utf8");
-        apiTargets.news = parseStoredNewsApiConfig(raw, validateNewsApiUrl);
+        const config = parseStoredNewsApiConfig(raw, validateNewsApiUrl);
+        configuredNewsApiUrl = config.url;
+        desktopCollectionMode = config.mode;
+        applyNewsApiProxyTarget();
     } catch (error) {
         if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+        configuredNewsApiUrl = defaultNewsApiUrl;
+        desktopCollectionMode = "auto";
         apiTargets.news = defaultNewsApiUrl;
         console.warn(
-            "Desktop news API configuration could not be loaded; using the build-time default.",
+            "Desktop news API settings could not be loaded; using the build-time default.",
             error instanceof Error ? error.message : "Invalid settings."
         );
     }
 }
 
 async function saveNewsApiUrl(value: string) {
-    await fs.mkdir(app.getPath("userData"), { recursive: true });
-    await fs.writeFile(getNewsApiConfigPath(), serializeStoredNewsApiConfig(value, validateNewsApiUrl), {
-        encoding: "utf8",
-        mode: 0o600,
-    });
-    if (!value.trim()) {
-        apiTargets.news = null;
-        return "";
+    const mode = !value.trim() && desktopCollectionMode === "remote" ? "local" : desktopCollectionMode;
+    return saveNewsApiSettings({ url: value, mode });
+}
+
+async function saveNewsApiSettings(settings: { url: string; mode: DesktopCollectionMode }) {
+    if (!isDesktopCollectionMode(settings.mode)) throw new Error("Invalid desktop collection mode.");
+    const trimmedUrl = settings.url.trim();
+    const checkedUrl = trimmedUrl ? validateNewsApiUrl(trimmedUrl) : null;
+    if (settings.mode === "remote" && !checkedUrl) {
+        throw new Error("远端模式需要配置数据源 API 地址。");
     }
-    const checked = validateNewsApiUrl(value.trim());
-    apiTargets.news = checked;
-    return checked.origin;
+
+    await fs.mkdir(app.getPath("userData"), { recursive: true });
+    await fs.writeFile(
+        getNewsApiConfigPath(),
+        serializeStoredNewsApiConfig(trimmedUrl, validateNewsApiUrl, settings.mode),
+        { encoding: "utf8", mode: 0o600 }
+    );
+    configuredNewsApiUrl = checkedUrl;
+    desktopCollectionMode = settings.mode;
+    applyNewsApiProxyTarget();
+    return configuredNewsApiUrl?.origin ?? "";
 }
 
 async function resetNewsApiUrl() {
     await fs.rm(getNewsApiConfigPath(), { force: true });
-    apiTargets.news = defaultNewsApiUrl;
-    return apiTargets.news.origin;
+    configuredNewsApiUrl = defaultNewsApiUrl;
+    desktopCollectionMode = "auto";
+    applyNewsApiProxyTarget();
+    return defaultNewsApiUrl.origin;
+}
+
+function applyNewsApiProxyTarget() {
+    apiTargets.news = desktopCollectionMode === "local" ? null : configuredNewsApiUrl;
 }
 
 async function decryptStoredSyncHubConfig(path: string) {
@@ -717,8 +742,9 @@ function installDesktopIpc(runtime: ElectronCrawlerPluginRuntime) {
     ipcMain.handle("desktop:news-api:get-url", (event) => {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop news API request.");
         return {
-            url: apiTargets.news?.origin ?? "",
+            url: configuredNewsApiUrl?.origin ?? "",
             defaultUrl: defaultNewsApiUrl.origin,
+            mode: desktopCollectionMode,
         };
     });
 
@@ -726,6 +752,21 @@ function installDesktopIpc(runtime: ElectronCrawlerPluginRuntime) {
         if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop news API request.");
         if (typeof value !== "string") throw new Error("A news API URL is required.");
         return saveNewsApiUrl(value);
+    });
+
+    ipcMain.handle("desktop:news-api:set-settings", async (event, value: unknown) => {
+        if (!isTrustedMainFrame(event)) throw new Error("Untrusted desktop news API settings request.");
+        if (
+            !value ||
+            typeof value !== "object" ||
+            Array.isArray(value) ||
+            typeof (value as { url?: unknown }).url !== "string" ||
+            !isDesktopCollectionMode((value as { mode?: unknown }).mode) ||
+            Object.keys(value).some((key) => key !== "url" && key !== "mode")
+        ) {
+            throw new Error("Invalid desktop news API settings.");
+        }
+        return saveNewsApiSettings(value as { url: string; mode: DesktopCollectionMode });
     });
 
     ipcMain.handle("desktop:news-api:reset-url", async (event) => {

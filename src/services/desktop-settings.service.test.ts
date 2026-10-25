@@ -3,6 +3,7 @@ import { it, vi, expect, describe, afterEach } from "vitest";
 import {
     saveDesktopNewsApiUrl,
     resetDesktopNewsApiUrl,
+    saveDesktopNewsApiSettings,
     readDesktopNewsApiSettings,
     isDesktopNewsApiConfigurable,
 } from "./desktop-settings.service";
@@ -18,8 +19,12 @@ describe("desktop settings service", () => {
             getNewsApiUrl: vi.fn(async () => ({
                 url: "https://news.example.com",
                 defaultUrl: "https://news.likanug.top",
+                mode: "auto" as const,
             })),
             setNewsApiUrl: vi.fn(async (url: string) => url),
+            setNewsApiSettings: vi.fn(
+                async ({ url, mode }: { url: string; mode: "auto" | "remote" | "local" }) => `${mode}:${url}`
+            ),
             resetNewsApiUrl: vi.fn(async () => "https://news.likanug.top"),
         };
         vi.stubEnv("LATESTNEWS_DESKTOP", "true");
@@ -29,13 +34,18 @@ describe("desktop settings service", () => {
         await expect(readDesktopNewsApiSettings()).resolves.toEqual({
             url: "https://news.example.com",
             defaultUrl: "https://news.likanug.top",
+            mode: "auto",
         });
         await expect(saveDesktopNewsApiUrl("https://news.example.test")).resolves.toBe("https://news.example.test");
         await expect(saveDesktopNewsApiUrl("")).resolves.toBe("");
+        await expect(saveDesktopNewsApiSettings("https://news.example.test", "remote")).resolves.toBe(
+            "remote:https://news.example.test"
+        );
         await expect(resetDesktopNewsApiUrl()).resolves.toBe("https://news.likanug.top");
         expect(bridge.getNewsApiUrl).toHaveBeenCalledOnce();
         expect(bridge.setNewsApiUrl).toHaveBeenCalledWith("https://news.example.test");
         expect(bridge.setNewsApiUrl).toHaveBeenCalledWith("");
+        expect(bridge.setNewsApiSettings).toHaveBeenCalledWith({ url: "https://news.example.test", mode: "remote" });
         expect(bridge.resetNewsApiUrl).toHaveBeenCalledOnce();
     });
 

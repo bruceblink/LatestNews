@@ -1,13 +1,15 @@
 import type { SourceResponse } from "@shared/types";
 import type { SourceMetadataItem } from "@shared/source-metadata";
 import type { SourceHealthSummary } from "@shared/source-health-types";
+import type { DesktopCollectionMode } from "@shared/desktop-collection-mode";
 
 declare global {
     interface Window {
         latestNewsDesktop?: {
             getLifecycleDiagnostics: () => Promise<unknown>;
-            getNewsApiUrl?: () => Promise<{ url: string; defaultUrl: string }>;
+            getNewsApiUrl?: () => Promise<{ url: string; defaultUrl: string; mode: DesktopCollectionMode }>;
             setNewsApiUrl?: (url: string) => Promise<string>;
+            setNewsApiSettings?: (settings: { url: string; mode: DesktopCollectionMode }) => Promise<string>;
             resetNewsApiUrl?: () => Promise<string>;
             startLogin: () => Promise<void>;
             setSyncHubApiKey: (apiKey: string) => Promise<void>;

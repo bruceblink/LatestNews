@@ -1,21 +1,48 @@
+import { isDesktopCollectionMode } from "../shared/desktop-collection-mode";
+
+import type { DesktopCollectionMode } from "../shared/desktop-collection-mode";
+
 export type NewsApiUrlValidator = (value: string) => URL;
 
-/** Parse a persisted desktop API configuration and apply the same URL policy as runtime requests. */
-export function parseStoredNewsApiConfig(raw: string, validate: NewsApiUrlValidator): URL | null {
+export interface StoredNewsApiConfig {
+    url: URL | null;
+    mode: DesktopCollectionMode;
+}
+
+/** Parse persisted URL and mode; older URL-only settings retain the existing auto behavior. */
+export function parseStoredNewsApiConfig(raw: string, validate: NewsApiUrlValidator): StoredNewsApiConfig {
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || !("url" in parsed)) {
         throw new Error("Invalid desktop news API configuration.");
     }
 
-    if (parsed.url === null || parsed.url === "") return null;
-    if (typeof parsed.url !== "string") throw new Error("Invalid desktop news API configuration.");
-    return validate(parsed.url);
+    const config = parsed as { url?: unknown; mode?: unknown };
+    const mode = config.mode === undefined ? "auto" : config.mode;
+    if (!isDesktopCollectionMode(mode)) throw new Error("Invalid desktop news API mode.");
+    let url: URL | null;
+    if (config.url === null || config.url === "") {
+        url = null;
+    } else if (typeof config.url === "string") {
+        url = validate(config.url);
+    } else {
+        throw new Error("Invalid desktop news API configuration.");
+    }
+    if (mode === "remote" && !url) throw new Error("Remote mode requires a configured news API URL.");
+    return { url, mode };
 }
 
-/** Serialize the validated origin, or null when the desktop uses local collection only. */
-export function serializeStoredNewsApiConfig(value: string, validate: NewsApiUrlValidator) {
+/** Serialize a validated origin independently from the selected collection mode. */
+export function serializeStoredNewsApiConfig(
+    value: string,
+    validate: NewsApiUrlValidator,
+    mode: DesktopCollectionMode = "auto"
+) {
     const trimmed = value.trim();
-    if (!trimmed) return `${JSON.stringify({ url: null })}\n`;
+    if (!isDesktopCollectionMode(mode)) throw new Error("Invalid desktop news API mode.");
+    if (!trimmed) {
+        if (mode === "remote") throw new Error("Remote mode requires a configured news API URL.");
+        return `${JSON.stringify({ url: null, mode })}\n`;
+    }
     const checked = validate(trimmed);
-    return `${JSON.stringify({ url: checked.origin })}\n`;
+    return `${JSON.stringify({ url: checked.origin, mode })}\n`;
 }

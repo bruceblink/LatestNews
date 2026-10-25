@@ -83,6 +83,7 @@ test("opens the shared settings route in the Electron renderer", async () => {
 
     await expect(page.getByRole("heading", { name: "设置", level: 1 })).toBeVisible();
     await expect(page.getByLabel("数据源 API URL")).toHaveValue(/^https?:\/\//);
+    await expect(page.getByLabel("采集模式")).toHaveValue("auto");
 
     const settings = await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.());
     expect(settings?.url).toMatch(/^https?:\/\//);
@@ -111,16 +112,62 @@ test("saves and resets the desktop API URL through the settings panel", async ()
         .toBe(defaultUrl);
 });
 
+test("switches remote and local modes and restores auto mode", async () => {
+    await page.goto("app://bundle/settings");
+
+    const mode = page.getByLabel("采集模式");
+    const defaultUrl = (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.defaultUrl;
+    expect(defaultUrl).toMatch(/^https?:\/\//);
+    await mode.selectOption("remote");
+    await page.getByRole("button", { name: "保存并刷新" }).click();
+    await expect
+        .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.mode)
+        .toBe("remote");
+    await expect
+        .poll(async () => JSON.parse(await readFile(join(userDataDirectory, "news-api-config.json"), "utf8")))
+        .toMatchObject({ url: defaultUrl, mode: "remote" });
+
+    await mode.selectOption("local");
+    await page.getByRole("button", { name: "保存并刷新" }).click();
+    await expect
+        .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.mode)
+        .toBe("local");
+    await expect
+        .poll(async () => JSON.parse(await readFile(join(userDataDirectory, "news-api-config.json"), "utf8")))
+        .toMatchObject({ url: defaultUrl, mode: "local" });
+
+    page.once("dialog", (dialog) => void dialog.accept());
+    await page.getByRole("button", { name: "恢复默认" }).click();
+    await expect
+        .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.mode)
+        .toBe("auto");
+
+    await page.getByLabel("数据源 API URL").fill("");
+    await mode.selectOption("remote");
+    await page.getByRole("button", { name: "保存并刷新" }).click();
+    await expect(page.getByText("远端模式需要配置数据源 API 地址。", { exact: true })).toBeVisible();
+    await expect
+        .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.mode)
+        .toBe("auto");
+    await expect
+        .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.url)
+        .toBe(defaultUrl);
+});
+
 test("saves an empty desktop API URL as local-only mode", async () => {
     await page.goto("app://bundle/settings");
 
     const input = page.getByLabel("数据源 API URL");
     await input.fill("");
+    await page.getByLabel("采集模式").selectOption("local");
     await page.getByRole("button", { name: "保存并刷新" }).click();
 
     await expect
         .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.url)
         .toBe("");
+    await expect
+        .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.mode)
+        .toBe("local");
     await expect(input).toHaveValue("");
 
     page.once("dialog", (dialog) => void dialog.accept());

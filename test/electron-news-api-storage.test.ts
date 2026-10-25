@@ -7,14 +7,24 @@ const validate = (value: string) => normalizeServiceUrl(value, { allowLocalHttp:
 
 describe("Electron persisted news API configuration", () => {
     it("parses and normalizes a valid origin", () => {
-        expect(parseStoredNewsApiConfig('{"url":"https://news.example.com/"}', validate)).toEqual(
-            new URL("https://news.example.com")
-        );
+        expect(parseStoredNewsApiConfig('{"url":"https://news.example.com/"}', validate)).toEqual({
+            url: new URL("https://news.example.com"),
+            mode: "auto",
+        });
     });
 
-    it("treats null or empty URLs as local-only configuration", () => {
-        expect(parseStoredNewsApiConfig('{"url":null}', validate)).toBeNull();
-        expect(parseStoredNewsApiConfig('{"url":""}', validate)).toBeNull();
+    it("reads legacy URL-only configuration as auto mode", () => {
+        expect(parseStoredNewsApiConfig('{"url":null}', validate)).toEqual({ url: null, mode: "auto" });
+        expect(parseStoredNewsApiConfig('{"url":""}', validate)).toEqual({ url: null, mode: "auto" });
+    });
+
+    it("parses local mode with a configured URL and rejects remote mode without one", () => {
+        expect(parseStoredNewsApiConfig('{"url":"https://news.example.com","mode":"local"}', validate)).toEqual({
+            url: new URL("https://news.example.com"),
+            mode: "local",
+        });
+        expect(() => parseStoredNewsApiConfig('{"url":null,"mode":"remote"}', validate)).toThrow();
+        expect(() => parseStoredNewsApiConfig('{"url":null,"mode":"invalid"}', validate)).toThrow();
     });
 
     it("rejects malformed payloads and unsafe URLs", () => {
@@ -25,12 +35,16 @@ describe("Electron persisted news API configuration", () => {
 
     it("serializes only the validated origin", () => {
         expect(serializeStoredNewsApiConfig(" https://news.example.com/ ", validate)).toBe(
-            '{"url":"https://news.example.com"}\n'
+            '{"url":"https://news.example.com","mode":"auto"}\n'
         );
         expect(() => serializeStoredNewsApiConfig("http://news.example.com", validate)).toThrow();
     });
 
-    it("serializes an empty URL as local-only configuration", () => {
-        expect(serializeStoredNewsApiConfig(" ", validate)).toBe('{"url":null}\n');
+    it("serializes mode independently and rejects remote mode without a URL", () => {
+        expect(serializeStoredNewsApiConfig("https://news.example.com", validate, "local")).toBe(
+            '{"url":"https://news.example.com","mode":"local"}\n'
+        );
+        expect(serializeStoredNewsApiConfig(" ", validate, "auto")).toBe('{"url":null,"mode":"auto"}\n');
+        expect(() => serializeStoredNewsApiConfig(" ", validate, "remote")).toThrow();
     });
 });

@@ -9,8 +9,9 @@ interface ImportMetaEnv {
 interface Window {
     latestNewsDesktop?: {
         getLifecycleDiagnostics: () => Promise<unknown>;
-        getNewsApiUrl?: () => Promise<{ url: string; defaultUrl: string }>;
+        getNewsApiUrl?: () => Promise<{ url: string; defaultUrl: string; mode: "auto" | "remote" | "local" }>;
         setNewsApiUrl?: (url: string) => Promise<string>;
+        setNewsApiSettings?: (settings: { url: string; mode: "auto" | "remote" | "local" }) => Promise<string>;
         resetNewsApiUrl?: () => Promise<string>;
         startLogin: () => Promise<void>;
         setSyncHubApiKey: (apiKey: string) => Promise<void>;

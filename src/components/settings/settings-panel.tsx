@@ -1,10 +1,11 @@
 import type { FormEvent } from "react";
+import type { DesktopCollectionMode } from "@shared/desktop-collection-mode";
 
 import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/useToast";
 import {
-    saveDesktopNewsApiUrl,
     resetDesktopNewsApiUrl,
+    saveDesktopNewsApiSettings,
     readDesktopNewsApiSettings,
     type DesktopNewsApiSettings,
     isDesktopNewsApiConfigurable,
@@ -21,6 +22,7 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
     const configurable = desktopBuild && isDesktopNewsApiConfigurable();
     const [settings, setSettings] = useState<DesktopNewsApiSettings>();
     const [url, setUrl] = useState("");
+    const [mode, setMode] = useState<DesktopCollectionMode>("auto");
     const [loading, setLoading] = useState(configurable);
     const [saving, setSaving] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string>();
@@ -33,6 +35,7 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                     if (cancelled) return;
                     setSettings(next);
                     setUrl(next.url);
+                    setMode(next.mode);
                 })
                 .catch((error: unknown) => {
                     if (cancelled) return;
@@ -52,9 +55,14 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
         event.preventDefault();
         setSaving(true);
         setErrorMessage(undefined);
+        if (mode === "remote" && !url.trim()) {
+            setErrorMessage("远端模式需要配置数据源 API 地址。");
+            setSaving(false);
+            return;
+        }
         try {
-            await saveDesktopNewsApiUrl(url);
-            toaster("数据源 API 地址已保存，页面即将刷新", { type: "success" });
+            await saveDesktopNewsApiSettings(url, mode);
+            toaster("数据源设置已保存，页面即将刷新", { type: "success" });
             window.setTimeout(() => window.location.reload(), 150);
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : "保存数据源 API 地址失败。");
@@ -82,7 +90,7 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                 <div>
                     <h1 className="m-0 text-2xl font-semibold text-zinc-800 dark:text-zinc-100">设置</h1>
                     <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        Web 和桌面端使用同一套配置面板。登录服务和 SyncHub 地址不受数据源地址影响。
+                        Web 和桌面端使用同一套配置面板。桌面端可以选择数据读取方式；登录服务和 SyncHub 不受影响。
                     </p>
                 </div>
             )}
@@ -120,8 +128,26 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                     />
                     <p className="mt-2 text-xs leading-5 op-65">
                         只填写服务根地址，例如 <code>https://news.example.com</code>。应用会自动请求该地址下的{" "}
-                        <code>/api</code> 路径。生产构建要求 HTTPS；本地开发允许 localhost HTTP。 留空表示不配置远端
-                        API，桌面端只使用已安装的本地采集插件。
+                        <code>/api</code> 路径。生产构建要求 HTTPS；本地开发允许 localhost HTTP。
+                    </p>
+
+                    <label className="mt-5 block text-sm font-medium" htmlFor="desktop-news-api-mode">
+                        采集模式
+                    </label>
+                    <select
+                        id="desktop-news-api-mode"
+                        value={mode}
+                        onChange={(event) => setMode(event.target.value as DesktopCollectionMode)}
+                        disabled={loading || saving}
+                        className="mt-2 w-full rounded-xl border border-neutral-500/20 bg-base px-3 py-2.5 text-sm outline-none transition-colors focus:border-cyan-500/60"
+                    >
+                        <option value="auto">自动：远端优先，网络错误或 5xx 时尝试本地来源</option>
+                        <option value="remote">远端：只使用远端 API</option>
+                        <option value="local">本地：只使用已安装的本地来源插件</option>
+                    </select>
+                    <p className="mt-2 text-xs leading-5 op-65">
+                        自动模式不会对 401、403、429 或普通客户端错误切换到本地。远端模式需要配置 API
+                        地址。本地模式不请求远端新闻 API。
                     </p>
 
                     {settings && (
