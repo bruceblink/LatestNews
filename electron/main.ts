@@ -856,6 +856,7 @@ async function openAuthenticationWindow() {
         parent: mainWindow ?? undefined,
         modal: mainWindow !== null,
         show: false,
+        autoHideMenuBar: true,
         title: "登录 LatestNews",
         icon: getWindowIconPath(),
         webPreferences: {
@@ -868,6 +869,8 @@ async function openAuthenticationWindow() {
         },
     });
 
+    window.removeMenu();
+    window.setMenuBarVisibility(false);
     authWindow = window;
     attachWindowLifecycle(window, "auth");
     window.once("ready-to-show", () => window.show());
@@ -942,6 +945,7 @@ async function createMainWindow() {
         minWidth: 820,
         minHeight: 620,
         show: false,
+        autoHideMenuBar: true,
         backgroundColor: "#18181b",
         icon: getWindowIconPath(),
         webPreferences: {
@@ -955,6 +959,8 @@ async function createMainWindow() {
         },
     });
 
+    window.removeMenu();
+    window.setMenuBarVisibility(false);
     mainWindow = window;
     attachWindowLifecycle(window, "main");
     attachMainWindowSecurity(window.webContents);

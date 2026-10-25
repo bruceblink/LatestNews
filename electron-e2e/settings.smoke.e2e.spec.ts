@@ -29,6 +29,24 @@ test.beforeAll(async () => {
     await page.waitForLoadState("load");
 });
 
+test("keeps the native menu bar removed after pressing Alt", async () => {
+    const before = await electronApp.evaluate(({ Menu, BrowserWindow }) => ({
+        hasApplicationMenu: Menu.getApplicationMenu() !== null,
+        windows: BrowserWindow.getAllWindows().map((window) => ({
+            menuVisible: window.isMenuBarVisible(),
+            autoHide: window.isMenuBarAutoHide(),
+        })),
+    }));
+    expect(before.hasApplicationMenu).toBe(false);
+    expect(before.windows.length).toBeGreaterThan(0);
+    expect(before.windows.every((window) => !window.menuVisible && window.autoHide)).toBe(true);
+    await page.keyboard.press("Alt");
+    const after = await electronApp.evaluate(({ BrowserWindow }) =>
+        BrowserWindow.getAllWindows().map((window) => window.isMenuBarVisible())
+    );
+    expect(after.every((visible) => !visible)).toBe(true);
+});
+
 test("installs and discovers all bundled sources in a fresh desktop profile", async () => {
     const sourceIds = await page.evaluate(() => window.latestNewsDesktop?.listCrawlerSources?.());
     expect(sourceIds?.sort()).toEqual(["freebuf", "hackernews", "juejin", "pcbeta-windows11"]);
