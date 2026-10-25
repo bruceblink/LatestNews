@@ -2,6 +2,8 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdir, access, copyFile, readFile, writeFile } from "node:fs/promises";
 
+import { verifyElectronDependencies } from "./verify-electron-dependencies.mjs";
+
 const projectRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const outputRoot = resolve(projectRoot, "out");
 const rootPackage = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
@@ -9,6 +11,7 @@ const rootPackage = JSON.parse(await readFile(resolve(projectRoot, "package.json
 for (const file of ["main/main.cjs", "preload/preload.cjs", "renderer/index.html"]) {
     await access(resolve(outputRoot, file));
 }
+await verifyElectronDependencies(outputRoot);
 
 const appManifest = {
     name: "latestnews-desktop",

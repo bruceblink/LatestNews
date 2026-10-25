@@ -59,6 +59,8 @@ export default defineConfig(({ mode }) => {
             },
             build: {
                 outDir: resolve(projectRoot, "out/main"),
+                // The packaged app has no node_modules; inline main-process dependencies.
+                externalizeDeps: false,
                 lib: {
                     entry: resolve(projectRoot, "electron/main.ts"),
                     formats: ["cjs"],
