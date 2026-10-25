@@ -1,5 +1,6 @@
 import type { SourceResponse } from "@shared/types";
 import type { SourceMetadataItem } from "@shared/source-metadata";
+import type { SourceHealthSummary } from "@shared/source-health-types";
 
 declare global {
     interface Window {
@@ -19,6 +20,7 @@ declare global {
             ) => Promise<{ status: number; bodyText: string }>;
             listCrawlerSources: () => Promise<string[]>;
             listCrawlerSourceMetadata?: () => Promise<SourceMetadataItem[]>;
+            getCrawlerSourceHealthSummary?: () => Promise<SourceHealthSummary>;
             fetchCrawlerSource: (sourceId: string) => Promise<SourceResponse | null>;
         };
     }

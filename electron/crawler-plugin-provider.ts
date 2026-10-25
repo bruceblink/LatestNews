@@ -13,6 +13,23 @@ import { registerRuntimeSourceCatalog, createRuntimeSourceMetadataItem } from ".
 import type { CrawlerItem } from "../crawler-platform/sdk/types";
 import type { ElectronCrawlerHostOptions } from "./crawler-host";
 import type { NewsItem, SourceID, SourceResponse } from "../shared/types";
+import type { SourceHealthEvent, SourceHealthSummary, SourceHealthSnapshot } from "../shared/source-health-types";
+
+const MAX_RECENT_HEALTH_EVENTS = 12;
+
+interface LocalSourceHealthRecord {
+    status: SourceHealthSnapshot["status"];
+    successCount: number;
+    errorCount: number;
+    consecutiveFailures: number;
+    cacheDegraded: boolean;
+    lastDurationMs?: number;
+    lastSuccessAt?: number;
+    lastErrorAt?: number;
+    lastErrorMessage?: string;
+    lastItemCount?: number;
+    recentEvents: SourceHealthEvent[];
+}
 
 export interface ElectronCrawlerPluginRuntimeOptions {
     userDataPath?: string;
@@ -71,13 +88,75 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
         const cache = new CrawlerCacheStore({
             path: options.cachePath ?? join(userDataPath, "crawler-cache.json"),
         });
+        const healthBySource = new Map<SourceID, LocalSourceHealthRecord>();
+        const sampleWindowStartedAt = Date.now();
+
+        const getHealthRecord = (sourceId: SourceID): LocalSourceHealthRecord => {
+            let record = healthBySource.get(sourceId);
+            if (!record) {
+                record = {
+                    status: "idle",
+                    successCount: 0,
+                    errorCount: 0,
+                    consecutiveFailures: 0,
+                    cacheDegraded: false,
+                    recentEvents: [],
+                };
+                healthBySource.set(sourceId, record);
+            }
+            return record;
+        };
 
         return {
             listSourceIds: provider.listSourceIds,
             listSourceMetadata: () => sourceMetadata,
             dispose: () => provider.dispose(),
+            async getHealthSummary(): Promise<SourceHealthSummary> {
+                const sources = await Promise.all(
+                    provider.listSourceIds().map(async (sourceId): Promise<SourceHealthSnapshot> => {
+                        // The provider returns only IDs admitted by the validated static catalog or plugin manifest.
+                        const typedSourceId = sourceId as SourceID;
+                        const record = getHealthRecord(typedSourceId);
+                        const cached = await cache.read(typedSourceId).catch(() => undefined);
+                        return {
+                            id: typedSourceId,
+                            name: dataSources[typedSourceId]?.name ?? sourceInfo.get(typedSourceId)?.name ?? sourceId,
+                            status: record.status,
+                            successCount: record.successCount,
+                            errorCount: record.errorCount,
+                            consecutiveFailures: record.consecutiveFailures,
+                            cacheDegraded: record.cacheDegraded,
+                            ...(record.lastDurationMs !== undefined ? { lastDurationMs: record.lastDurationMs } : {}),
+                            ...((record.lastSuccessAt ?? cached?.updatedTime)
+                                ? { lastSuccessAt: record.lastSuccessAt ?? cached?.updatedTime }
+                                : {}),
+                            ...(record.lastErrorAt !== undefined ? { lastErrorAt: record.lastErrorAt } : {}),
+                            ...(record.lastErrorMessage ? { lastErrorMessage: record.lastErrorMessage } : {}),
+                            ...(record.lastItemCount !== undefined || cached
+                                ? { lastItemCount: record.lastItemCount ?? cached?.items.length ?? 0 }
+                                : {}),
+                            recentEvents: [...record.recentEvents],
+                        };
+                    })
+                );
+                const healthy = sources.filter((source) => source.status === "healthy").length;
+                const failing = sources.filter((source) => source.status === "failing").length;
+                const idle = sources.filter((source) => source.status === "idle").length;
+                const cacheDegraded = sources.filter((source) => source.cacheDegraded).length;
+                return {
+                    updatedAt: Date.now(),
+                    total: sources.length,
+                    healthy,
+                    failing,
+                    idle,
+                    cacheDegraded,
+                    sampleWindowStartedAt,
+                    sources,
+                };
+            },
             async fetchSource(sourceId: SourceID): Promise<SourceResponse | null> {
                 const info = sourceInfo.get(sourceId);
+                const startedAt = Date.now();
                 try {
                     const items = await provider.collect(sourceId);
                     if (!items) return null;
@@ -94,12 +173,49 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                             console.warn("Desktop crawler cache write failed.", error);
                         });
                     }
+                    const previous = getHealthRecord(sourceId);
+                    healthBySource.set(sourceId, {
+                        ...previous,
+                        status: "healthy",
+                        successCount: previous.successCount + 1,
+                        consecutiveFailures: 0,
+                        cacheDegraded: false,
+                        lastDurationMs: Math.max(0, updatedTime - startedAt),
+                        lastSuccessAt: updatedTime,
+                        lastItemCount: response.items.length,
+                        recentEvents: appendHealthEvent(previous.recentEvents, {
+                            status: "healthy",
+                            occurredAt: updatedTime,
+                            durationMs: Math.max(0, updatedTime - startedAt),
+                            itemCount: response.items.length,
+                        }),
+                    });
                     return response;
                 } catch (error) {
                     const cached = await cache.read(sourceId);
+                    const failedAt = Date.now();
+                    const previous = getHealthRecord(sourceId);
+                    const errorMessage = sanitizeCrawlerHealthError(error);
+                    const durationMs = Math.max(0, failedAt - startedAt);
+                    healthBySource.set(sourceId, {
+                        ...previous,
+                        status: "failing",
+                        errorCount: previous.errorCount + 1,
+                        consecutiveFailures: previous.consecutiveFailures + 1,
+                        cacheDegraded: Boolean(cached),
+                        lastDurationMs: durationMs,
+                        lastErrorAt: failedAt,
+                        lastErrorMessage: errorMessage,
+                        recentEvents: appendHealthEvent(previous.recentEvents, {
+                            status: "failing",
+                            occurredAt: failedAt,
+                            durationMs,
+                            errorMessage,
+                        }),
+                    });
                     if (!cached) throw error;
                     const interval = info?.interval ?? 600_000;
-                    const age = Math.max(0, Date.now() - cached.updatedTime);
+                    const age = Math.max(0, failedAt - cached.updatedTime);
                     return {
                         status: age >= interval * 2 ? "stale-cache" : "degraded-cache",
                         id: sourceId,
@@ -118,12 +234,38 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
         return {
             listSourceIds: () => [],
             listSourceMetadata: () => [],
+            getHealthSummary: async (): Promise<SourceHealthSummary> => ({
+                updatedAt: Date.now(),
+                total: 0,
+                healthy: 0,
+                failing: 0,
+                idle: 0,
+                cacheDegraded: 0,
+                sources: [],
+            }),
             fetchSource: async () => null,
         };
     }
 }
 
 export type ElectronCrawlerPluginRuntime = Awaited<ReturnType<typeof createElectronCrawlerPluginRuntime>>;
+
+function appendHealthEvent(events: SourceHealthEvent[], event: SourceHealthEvent) {
+    return [...events, event].slice(-MAX_RECENT_HEALTH_EVENTS);
+}
+
+function sanitizeCrawlerHealthError(error: unknown) {
+    const message = error instanceof Error ? error.message : "本地采集失败。";
+    return (
+        message
+            .replace(/https?:\/\/[^\s"'<>]+/gi, "[上游地址]")
+            .replace(/\bBearer\s+[^\s,;]+/gi, "Bearer [已隐藏]")
+            .replace(/\b(token|authorization|cookie|password|api[_-]?key)\s*[:=]\s*[^\s,;]+/gi, "$1=[已隐藏]")
+            .replace(/[\r\n\t]+/g, " ")
+            .trim()
+            .slice(0, 240) || "本地采集失败。"
+    );
+}
 
 function readEnabledPluginIds(path: string) {
     try {

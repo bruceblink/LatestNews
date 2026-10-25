@@ -42,13 +42,21 @@
 - 首轮报告的 10 个来源均为 `insufficient-data`。此结果不证明源站失败，也不代表 7 天验收通过。
 - 补充只读检查：首页和 OpenAPI 返回 200；来源目录、来源健康、部署健康及旧来源 ID 接口返回未处理的 500。远端部署日志不可见，尚不能确定远端根因。
 
+### 2026-10-25 第二轮观察
+
+- 部署修复并确认来源接口恢复后，已启动新的 7 天低频观察。运行 ID 为 `2bb5df91-8c5e-4325-8369-ffaaa303878a`，目标为 `https://news.likanug.top`，计划 673 轮、间隔 15 分钟、单次超时 20 秒。
+- 工具提交为 `f10a813f9584c9db53942e11e7c2a0cfdd2db9f0`，开始时工作区干净，Node 为 `v24.15.0`。启动时间为 2026-10-25 09:18（UTC+08:00）。
+- 首轮 10 个来源中 7 个成功；FreeBuf、Hacker News 和 Bilibili 热搜接口报错。此结果不代表 7 天验收通过。
+- 截至 2026-10-25 09:34（UTC+08:00），已完成 2/673 轮，共 20 条记录。两轮均有 7 个来源成功、3 个来源失败，累计 14 条成功、6 条失败。第 2 轮中 FreeBuf、Hacker News 和 Bilibili 热搜返回 HTTP 500。观察窗口仍在运行。
+- 原始记录与日志分别为 `.data/source-quality/news-likanug-top-window-2026-10-25.jsonl` 和 `.data/source-quality/news-likanug-top-window-2026-10-25.log`，均由 Git 忽略。采样仍在运行。
+
 ## 运行说明
 
-先恢复部署接口，再在稳定的运行环境执行低频采样：
+在稳定的运行环境执行低频采样；当前 7 天任务已运行，完成后再生成窗口报告：
 
 ```bash
 pnpm source-quality:sample -- --origin https://news.likanug.top --samples 673 --output .data/source-quality/news-likanug-top-window.jsonl
-pnpm source-quality:report -- --input .data/source-quality/news-likanug-top-window.jsonl --origin https://news.likanug.top --from 2026-10-24T17:59:00+08:00
+pnpm source-quality:report -- --input .data/source-quality/news-likanug-top-window.jsonl --origin https://news.likanug.top --from 2026-10-25T09:18:58+08:00
 ```
 
-默认轮次间隔为 15 分钟，673 轮包含 672 次等待，实际跨度至少 7 天。命令需要稳定在线的运行环境；本轮没有启动长期任务或定时自动化。报告中的 `commit` 仅描述采样工具，远端部署版本需单独记录。
+默认轮次间隔为 15 分钟，673 轮包含 672 次等待，实际跨度至少 7 天。命令需要稳定在线的运行环境。报告中的 `commit` 仅描述采样工具，远端部署版本需单独记录。

@@ -21,6 +21,9 @@ import dataSources from "@shared/data-sources";
 import { resolveSourceBatchSelection } from "@shared/source-batch";
 import { getOrCreateInFlightRequest } from "@shared/in-flight-request";
 import { createSourceBatchResponse } from "@shared/source-batch-response";
+import { createSourceHealthSourcesResponse } from "@shared/source-health-api";
+import { registerRuntimeSourceCatalog } from "@shared/runtime-source-catalog";
+import { createSourceMetadataResponse, createSourceMetadataItemResponse } from "@shared/source-metadata";
 import { filterSourceItems, parseSourceItemsSince, normalizeSourceItemsLimit } from "@shared/source-items";
 import {
     sourceApi,
@@ -344,19 +347,80 @@ export function fetchNewsInsights(payload: NewsInsightsPayload): Promise<NewsIns
 }
 
 export function fetchSourceHealthSummary(): Promise<SourceHealthSummary> {
-    return myFetch(sourceApi.health);
+    return fetchDesktopPreferred(
+        () => myFetch(sourceApi.health),
+        async (bridge) => {
+            if (!bridge.getCrawlerSourceHealthSummary) throw new Error("当前桌面版本不支持读取本地采集健康状态。");
+            return bridge.getCrawlerSourceHealthSummary();
+        }
+    );
 }
 
 export function fetchSourceHealthSourcesV1(query?: SourceHealthSourcesQuery): Promise<SourceHealthSourcesResponse> {
-    return myFetch(sourceApi.sourceHealthV1, {
-        query,
-    });
+    return fetchDesktopPreferred(
+        () => myFetch(sourceApi.sourceHealthV1, { query }),
+        async (bridge) => {
+            if (!bridge.getCrawlerSourceHealthSummary) throw new Error("当前桌面版本不支持读取本地采集健康状态。");
+            return createSourceHealthSourcesResponse(await bridge.getCrawlerSourceHealthSummary(), query);
+        }
+    );
 }
 
 export function fetchSourceMetadata(): Promise<SourceMetadataResponse> {
-    return myFetch(sourceApi.sourcesV1);
+    return fetchDesktopPreferred(
+        () => myFetch(sourceApi.sourcesV1),
+        async (bridge) => {
+            await ensureDesktopRuntimeSourceCatalog(bridge);
+            return createSourceMetadataResponse();
+        }
+    );
 }
 
 export function fetchSourceMetadataItem(id: SourceID): Promise<SourceMetadataItemResponse> {
-    return myFetch(getSourceMetadataPath(id));
+    return fetchDesktopPreferred(
+        () => myFetch(getSourceMetadataPath(id)),
+        async (bridge) => {
+            await ensureDesktopRuntimeSourceCatalog(bridge);
+            const response = createSourceMetadataItemResponse({ sourceId: id });
+            if (!response) throw new Error(`本地来源目录不包含来源 ${id}。`);
+            return response;
+        }
+    );
+}
+
+async function fetchDesktopPreferred<T>(remote: () => Promise<T>, local: (bridge: DesktopBridge) => Promise<T>) {
+    const bridge = getDesktopBridge();
+    if (!bridge) return remote();
+    if (!(await isDesktopRemoteNewsApiConfigured())) return local(bridge);
+
+    try {
+        return await remote();
+    } catch (error) {
+        if (!shouldFallbackToLocal(error)) throw error;
+        return local(bridge);
+    }
+}
+
+type DesktopBridge = NonNullable<Window["latestNewsDesktop"]>;
+
+let desktopRuntimeCatalogPromise: Promise<void> | undefined;
+let desktopRuntimeCatalogBridge: DesktopBridge | undefined;
+
+async function ensureDesktopRuntimeSourceCatalog(bridge: DesktopBridge) {
+    if (bridge !== desktopRuntimeCatalogBridge) {
+        desktopRuntimeCatalogBridge = bridge;
+        desktopRuntimeCatalogPromise = undefined;
+    }
+    if (!bridge.listCrawlerSourceMetadata) return;
+
+    desktopRuntimeCatalogPromise ??= bridge
+        .listCrawlerSourceMetadata()
+        .then((sources) => {
+            registerRuntimeSourceCatalog(sources);
+        })
+        .catch((error: unknown) => {
+            desktopRuntimeCatalogPromise = undefined;
+            throw error;
+        });
+    await desktopRuntimeCatalogPromise;
 }

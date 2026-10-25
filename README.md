@@ -180,7 +180,7 @@ Docker 镜像发布到 `ghcr.io/bruceblink/latestnews`，支持 `linux/amd64` �
 
 当前优先级见 [开发总计划](./DEVELOPMENT_PLAN.md)，后续任务、依赖、指标和验收标准见 [性能、新闻源扩展与插件化计划](./docs/02-performance-sources-platform-plan.md)，当前执行切片见 [后续开发计划](./docs/08-next-development-plan.md)。
 
-近期记录：[采样窗口校验](./docs/09-source-quality-window-plan.md)、[Web 接口运行时修复](./docs/10-web-api-runtime-fix.md)、[桌面本地采集评估](./docs/11-desktop-local-collection-assessment.md)、[Cloudflare Pages Worker 构建修复](./docs/12-cloudflare-pages-worker-fix.md)、[桌面远端到本地采集回退](./docs/13-desktop-remote-local-fallback.md)、[桌面内置插件预置](./docs/16-desktop-builtin-plugin-plan.md)、[桌面菜单与独立包启动修复](./docs/17-desktop-menu-package-fix.md)、[Docker 原生依赖修复](./docs/18-docker-native-dependency-fix.md)。
+近期记录：[采样窗口校验](./docs/09-source-quality-window-plan.md)、[Web 接口运行时修复](./docs/10-web-api-runtime-fix.md)、[桌面本地采集评估](./docs/11-desktop-local-collection-assessment.md)、[Cloudflare Pages Worker 构建修复](./docs/12-cloudflare-pages-worker-fix.md)、[桌面远端到本地采集回退](./docs/13-desktop-remote-local-fallback.md)、[桌面内置插件预置](./docs/16-desktop-builtin-plugin-plan.md)、[桌面菜单与独立包启动修复](./docs/17-desktop-menu-package-fix.md)、[Docker 原生依赖修复](./docs/18-docker-native-dependency-fix.md)、[桌面本地来源详情与采集健康](./docs/19-desktop-local-source-details-health.md)。
 
 - 先建立可重复的性能基线，优化采集并发、缓存等待、首屏、轮询和内存。
 - 建立新闻源开发工具、清单校验与质量报告，分批接入高质量源，再支持 RSS/JSON 配置型接入。

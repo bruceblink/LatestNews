@@ -207,13 +207,13 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 - 质量报告同时检查默认 96 个样本和实际 7 天观察跨度，避免一天的数据因样本数量足够而显示达标。
 - 采样记录增加运行 ID、Git 提交、工作区状态、Node 版本和调度参数；报告支持按地址和时间筛选，并标明缺少运行信息的旧记录。
 - JSONL 解析校验状态、指标和运行信息。离线 CLI 测试使用本地 HTTP 服务验证采样、追加和报告流程。
-- 用户指定地址 `https://news.likanug.top` 的首轮采样已执行，10 个来源接口均为 HTTP 500。7 天窗口尚未开始长期运行，须先修复部署接口。
+- 用户指定地址 `https://news.likanug.top` 的首轮采样曾遇到 10 个接口 HTTP 500。部署修复后，第二轮 7 天观察已启动；当前记录见 [采样窗口计划](09-source-quality-window-plan.md)。
 - 实现、验证、首轮记录及回退范围见 [采样窗口校验与记录追溯](09-source-quality-window-plan.md)。
 
 ## 当前下一步
 
 F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针、F3-C 的统一设置入口和 F3-D 的 Playwright Web/Electron E2E 基线已完成；桌面设置桥接、配置持久化和保存/刷新/恢复默认流程的单元与 E2E 覆盖已补充。F4-A Source SDK、F4-B 三类代表适配器迁移、F5-A 运行期质量指标、重点源采样工具、初始阈值判定及窗口校验已完成。
 
-本地 Web 来源接口的 Day.js 加载问题和 Node 生产构建缺少前端入口问题已修复，见 [Web 接口运行时修复](10-web-api-runtime-fix.md)。Cloudflare Pages 的 Worker 模块布局、缓存导入和 PWA 预缓存问题见 [Worker 构建修复](12-cloudflare-pages-worker-fix.md)。后续生产日志确认的 Cheerio/Undici 初始化 HTTP 500 已由 `8b00a7b` 修复并部署。生产掘金、IT之家、v1 单源和批量接口均返回 HTTP 200，无效来源返回 HTTP 400，证据见 [新闻接口运行时修复](15-cloudflare-pages-source-runtime-fix.md)。部署健康接口仍报告缓存不可用，D1 持久缓存待单独配置核验；7 天采样和阈值复核尚未完成。
+本地 Web 来源接口的 Day.js 加载问题和 Node 生产构建缺少前端入口问题已修复，见 [Web 接口运行时修复](10-web-api-runtime-fix.md)。Cloudflare Pages 的 Worker 模块布局、缓存导入和 PWA 预缓存问题见 [Worker 构建修复](12-cloudflare-pages-worker-fix.md)。后续生产日志确认的 Cheerio/Undici 初始化 HTTP 500 已由 `8b00a7b` 修复并部署。生产掘金、IT之家、v1 单源和批量接口均返回 HTTP 200，无效来源返回 HTTP 400，证据见 [新闻接口运行时修复](15-cloudflare-pages-source-runtime-fix.md)。部署健康接口仍报告缓存不可用，D1 持久缓存待单独配置核验；7 天采样已于 2026-10-25 启动，尚未完成，当前轮次和首轮结果见 [采样记录](09-source-quality-window-plan.md)。
 
-用户提出的桌面本地采集方向已完成 [可行性评估](11-desktop-local-collection-assessment.md)。远端优先、网络或 5xx 回退本地、空地址仅本地模式和设置面板配置见 [桌面远端到本地采集回退](13-desktop-remote-local-fallback.md)；持久新闻缓存见 [独立实现记录](14-desktop-persistent-crawler-cache.md)；首批四个可信插件的构建预置、首次安装和已有配置保留见 [插件预置记录](16-desktop-builtin-plugin-plan.md)。本地来源详情、健康读取、独立模式选择和托盘后台刷新仍需按阶段推进。Windows 菜单与打包依赖修复见 [修复记录](17-desktop-menu-package-fix.md)。真实浏览器请求瀑布、真实 Windows 窗口证据和公网采样单独记录，不把 headless、进程输出或离线测试数据标为对应的真实环境通过。
+用户提出的桌面本地采集方向已完成 [可行性评估](11-desktop-local-collection-assessment.md)。远端优先、网络或 5xx 回退本地、空地址仅本地模式和设置面板配置见 [桌面远端到本地采集回退](13-desktop-remote-local-fallback.md)；持久新闻缓存见 [独立实现记录](14-desktop-persistent-crawler-cache.md)；首批四个可信插件的构建预置、首次安装和已有配置保留见 [插件预置记录](16-desktop-builtin-plugin-plan.md)。本地来源详情、来源目录与采集健康回退已完成，见 [实现记录](19-desktop-local-source-details-health.md)；独立模式选择和托盘后台刷新仍需按阶段推进。Windows 菜单与打包依赖修复见 [修复记录](17-desktop-menu-package-fix.md)。真实浏览器请求瀑布、真实 Windows 窗口证据和公网采样单独记录，不把 headless、进程输出或离线测试数据标为对应的真实环境通过。

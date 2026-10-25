@@ -48,8 +48,17 @@ test("keeps the native menu bar removed after pressing Alt", async () => {
 });
 
 test("installs and discovers all bundled sources in a fresh desktop profile", async () => {
-    const sourceIds = await page.evaluate(() => window.latestNewsDesktop?.listCrawlerSources?.());
+    const [sourceIds, metadata, health] = await page.evaluate(async () =>
+        Promise.all([
+            window.latestNewsDesktop?.listCrawlerSources?.(),
+            window.latestNewsDesktop?.listCrawlerSourceMetadata?.(),
+            window.latestNewsDesktop?.getCrawlerSourceHealthSummary?.(),
+        ])
+    );
     expect(sourceIds?.sort()).toEqual(["freebuf", "hackernews", "juejin", "pcbeta-windows11"]);
+    expect(metadata).toBeInstanceOf(Array);
+    expect(health).toMatchObject({ total: 4, healthy: 0, failing: 0, idle: 4 });
+    expect(health?.sources.every((source) => source.status === "idle")).toBe(true);
     const pluginRoot = join(userDataDirectory, "crawler-plugins");
     const settings = JSON.parse(await readFile(join(pluginRoot, "enabled.json"), "utf8"));
     expect(settings.enabledPluginIds.sort()).toEqual(builtinCrawlerPlugins.map((plugin) => plugin.id).sort());

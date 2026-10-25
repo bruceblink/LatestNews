@@ -2,12 +2,21 @@ import { it, vi, expect, describe, afterEach } from "vitest";
 
 import { sourceApi } from "../../shared/source-api";
 import { createDynamicSourceId } from "../../shared/dynamic-source-id";
-import { fetchSource, fetchSourceBatchV1, fetchSourceItemsV1, fetchEntireSourcesEnvelope } from "./source.service";
 import {
     clearRuntimeSourceCatalog,
     registerRuntimeSourceCatalog,
     createRuntimeSourceMetadataItem,
 } from "../../shared/runtime-source-catalog";
+import {
+    fetchSource,
+    fetchSourceBatchV1,
+    fetchSourceItemsV1,
+    fetchSourceMetadata,
+    fetchSourceMetadataItem,
+    fetchSourceHealthSummary,
+    fetchEntireSourcesEnvelope,
+    fetchSourceHealthSourcesV1,
+} from "./source.service";
 
 import type { SourceID, SourceResponse } from "../../shared/types";
 
@@ -216,17 +225,131 @@ describe("desktop local crawler routing", () => {
         await expect(fetchSourceBatchV1({ sources: ["pcbeta-windows11"] })).rejects.toBe(error);
         expect(bridge.fetchCrawlerSource).not.toHaveBeenCalled();
     });
+
+    it("serves built-in source metadata locally when the remote API is not configured", async () => {
+        const bridge = createDesktopBridge([], {}, "");
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+
+        await expect(fetchSourceMetadataItem("hackernews")).resolves.toMatchObject({
+            data: { id: "hackernews", name: expect.any(String) },
+            meta: { sourceId: "hackernews", canonicalSourceId: "hackernews", redirected: false },
+        });
+        expect(await fetchSourceMetadata()).toMatchObject({
+            data: { sources: expect.arrayContaining([expect.objectContaining({ id: "hackernews" })]) },
+        });
+        expect(mockMyFetch).not.toHaveBeenCalled();
+    });
+
+    it("loads dynamic source detail from the trusted desktop plugin catalog", async () => {
+        const metadata = createRuntimeSourceMetadataItem({
+            id: dynamicSourceId,
+            name: "Desktop Dynamic",
+            interval: 300_000,
+            column: "tech",
+            home: "https://example.com",
+        });
+        const bridge = createDesktopBridge([], {}, "", [metadata]);
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+
+        await expect(fetchSourceMetadataItem(dynamicSourceId)).resolves.toMatchObject({
+            data: { id: dynamicSourceId, name: "Desktop Dynamic", column: "tech" },
+        });
+        await expect(fetchSourceMetadata()).resolves.toMatchObject({
+            data: {
+                sources: expect.arrayContaining([expect.objectContaining({ id: dynamicSourceId })]),
+                columns: expect.arrayContaining([
+                    expect.objectContaining({ id: "tech", sourceIds: expect.arrayContaining([dynamicSourceId]) }),
+                ]),
+            },
+        });
+    });
+
+    it("uses local source metadata after a retryable server failure, but not a client error", async () => {
+        const bridge = createDesktopBridge([], {}, "https://news.example.com");
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+        mockMyFetch.mockRejectedValueOnce(Object.assign(new Error("unavailable"), { status: 503 }));
+
+        await expect(fetchSourceMetadataItem("hackernews")).resolves.toMatchObject({ data: { id: "hackernews" } });
+        expect(bridge.listCrawlerSourceMetadata).toHaveBeenCalledOnce();
+
+        const error = Object.assign(new Error("not found"), { status: 404 });
+        mockMyFetch.mockRejectedValueOnce(error);
+        await expect(fetchSourceMetadataItem("hackernews")).rejects.toBe(error);
+        expect(bridge.listCrawlerSourceMetadata).toHaveBeenCalledOnce();
+    });
+
+    it("uses local health summaries and applies the shared health filters", async () => {
+        const summary = createHealthSummary();
+        const bridge = createDesktopBridge([], {}, "", [], summary);
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+
+        await expect(fetchSourceHealthSummary()).resolves.toEqual(summary);
+        await expect(fetchSourceHealthSourcesV1({ status: "failing", keyword: "hacker" })).resolves.toMatchObject({
+            data: [expect.objectContaining({ id: "hackernews", status: "failing" })],
+            meta: { totalSourceCount: 2, returnedSourceCount: 1, filters: { status: "failing", keyword: "hacker" } },
+        });
+        expect(mockMyFetch).not.toHaveBeenCalled();
+    });
+
+    it("does not fall back to local health data for authorization failures", async () => {
+        const bridge = createDesktopBridge(["hackernews"], { hackernews: localSource });
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+        const error = Object.assign(new Error("unauthorized"), { status: 401 });
+        mockMyFetch.mockRejectedValue(error);
+
+        await expect(fetchSourceHealthSummary()).rejects.toBe(error);
+        expect(bridge.getCrawlerSourceHealthSummary).not.toHaveBeenCalled();
+    });
 });
 
 function createDesktopBridge(
     sourceIds: string[],
     sources: Partial<Record<SourceID, SourceResponse>>,
-    remoteUrl = "https://news.example.com"
+    remoteUrl = "https://news.example.com",
+    metadata: ReturnType<typeof createRuntimeSourceMetadataItem>[] = [],
+    health = createHealthSummary()
 ) {
     return {
         getNewsApiUrl: vi.fn(async () => ({ url: remoteUrl, defaultUrl: "https://news.example.com" })),
         listCrawlerSources: vi.fn(async () => sourceIds),
+        listCrawlerSourceMetadata: vi.fn(async () => metadata),
+        getCrawlerSourceHealthSummary: vi.fn(async () => health),
         fetchCrawlerSource: vi.fn(async (sourceId: string) => sources[sourceId as SourceID] ?? null),
+    };
+}
+
+function createHealthSummary() {
+    return {
+        updatedAt: 100,
+        total: 2,
+        healthy: 1,
+        failing: 1,
+        idle: 0,
+        cacheDegraded: 1,
+        sources: [
+            {
+                id: "hackernews" as SourceID,
+                name: "Hacker News",
+                status: "failing" as const,
+                successCount: 1,
+                errorCount: 1,
+                consecutiveFailures: 1,
+                cacheDegraded: true,
+                lastErrorAt: 100,
+                lastErrorMessage: "上游请求失败",
+                recentEvents: [],
+            },
+            {
+                id: "pcbeta-windows11" as SourceID,
+                name: "PCBeta",
+                status: "healthy" as const,
+                successCount: 1,
+                errorCount: 0,
+                consecutiveFailures: 0,
+                cacheDegraded: false,
+                recentEvents: [],
+            },
+        ],
     };
 }
 
