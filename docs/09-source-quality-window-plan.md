@@ -85,7 +85,7 @@
 
 ## 运行说明
 
-在稳定的运行环境执行低频采样；当前 7 天任务已运行，完成后再生成窗口报告：
+截至 2026-10-26，用户要求将公网采样后续处理，本轮不启动或继续采样。本地工作区未发现 `source-quality-sample` 进程；若从稳定运行环境恢复，先确认旧 JSONL 的最后记录时间和运行状态，再按需续跑并生成窗口报告：
 
 ```bash
 pnpm source-quality:sample -- --origin https://news.likanug.top --samples 673 --output .data/source-quality/news-likanug-top-window.jsonl

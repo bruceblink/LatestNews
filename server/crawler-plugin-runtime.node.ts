@@ -4,6 +4,7 @@ import process from "node:process";
 import { resolve } from "node:path";
 
 import { dataSources } from "../shared/data-sources";
+import { createConfiguredSourceRuntime } from "./configured-source-runtime.node";
 import { readEnabledCrawlerPluginIds } from "../crawler-platform/host/plugin-store";
 import { createNodeCrawlerPluginProvider } from "../crawler-platform/host/node-plugin-provider";
 import { registerRuntimeSourceCatalog, createRuntimeSourceMetadataItem } from "../shared/runtime-source-catalog";
@@ -29,6 +30,10 @@ if (enabledPluginIds.length === 0) {
     }
 }
 
+if (enabledPluginIds.includes("config")) {
+    throw new Error('Crawler plugin ID "config" is reserved for operator-configured sources.');
+}
+
 const pluginProvider =
     enabledPluginIds.length > 0
         ? createServerCrawlerPluginRuntime({
@@ -39,8 +44,28 @@ const pluginProvider =
           })
         : undefined;
 
-if (pluginProvider) {
-    registerRuntimeSourceCatalog(pluginProvider.listSources().map(createRuntimeSourceMetadataItem));
+let configuredSourceProvider: ReturnType<typeof createConfiguredSourceRuntime> | undefined;
+const configuredSourceManifest = process.env.LATESTNEWS_CONFIGURED_SOURCES?.trim();
+if (configuredSourceManifest) {
+    try {
+        configuredSourceProvider = createConfiguredSourceRuntime(
+            configuredSourceManifest,
+            process.env.LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS ?? ""
+        );
+    } catch (error) {
+        console.warn(
+            "Configured sources are invalid and remain disabled.",
+            error instanceof Error ? error.message : "Invalid configuration."
+        );
+    }
+}
+
+const runtimeSourceDefinitions = [
+    ...(pluginProvider?.listSources() ?? []),
+    ...(configuredSourceProvider?.listSources() ?? []),
+];
+if (runtimeSourceDefinitions.length > 0) {
+    registerRuntimeSourceCatalog(runtimeSourceDefinitions.map(createRuntimeSourceMetadataItem));
 }
 
 /** Keep plugin loading configurable so the server adapter can be tested with offline responses. */
@@ -67,15 +92,16 @@ export function createServerCrawlerPluginRuntime(options: NodeCrawlerPluginProvi
 }
 
 export function hasCrawlerPluginSource(id: SourceID) {
-    return pluginProvider?.hasSource(id) ?? false;
+    return (pluginProvider?.hasSource(id) ?? false) || (configuredSourceProvider?.hasSource(id) ?? false);
 }
 
-/** Ensure Node plugin metadata is registered before source discovery and resolution. */
+/** Ensure Node plugin and configured-source metadata is registered before discovery and resolution. */
 export function initializeCrawlerPluginCatalog() {
-    return pluginProvider?.listSources() ?? [];
+    return [...(pluginProvider?.listSources() ?? []), ...(configuredSourceProvider?.listSources() ?? [])];
 }
 
 /** Adapt plugin output to the existing NewsItem shape used by caches and API responses. */
 export async function fetchCrawlerPluginSource(id: SourceID): Promise<NewsItem[] | undefined> {
-    return pluginProvider?.fetchSource(id);
+    if (pluginProvider?.hasSource(id)) return pluginProvider.fetchSource(id);
+    return configuredSourceProvider?.fetchSource(id);
 }
