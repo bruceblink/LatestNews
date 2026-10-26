@@ -4,11 +4,11 @@
 
 ## 范围与状态
 
-Node 服务端现在可从环境变量读取运维维护的 RSS 与 JSON 来源清单。来源加入现有动态目录，由原有发现、详情、单源和批量 API 使用；不需要修改 Web 或 Electron renderer，也不需要重新打包客户端。配置默认关闭，变更后重启 Node 服务生效。
+Node 服务端现在可从环境变量读取运维维护的 RSS 与 JSON 来源清单。来源加入现有动态目录，由原有发现、详情、单源和批量 API 使用；不需要修改 Web 或 Electron renderer，也不需要重新打包客户端。配置默认关闭，变更后重启 Node 服务生效。离线 H3 路由集成测试已通过发现、详情、单源和批量接口；共用 Web/Electron 服务测试也确认动态来源 ID 继续走远端目录和条目 API。
 
 Cloudflare Pages 和 Vercel Edge 继续使用不含 Node DNS/HTTPS 适配器的运行时，不能启用任意 URL 配置源。Electron 的本地插件模式也不读取这份 Node 环境配置；Electron 若连接配置该清单的 Node API，则走现有远端来源目录。
 
-本切片未执行公网采样。完整 F5 验收仍需继续检查 Node API 端到端、Web/Electron 远端目录兼容，以及配置部署和回退流程。
+本地路由与 Web/Electron 远端服务契约已由 fixture 验证。本切片未执行公网采样，也未将配置部署到生产 Node 服务；生产环境的运行变量、CORS 和回退需在后续部署时单独确认。
 
 ## 配置
 
@@ -80,4 +80,4 @@ JSON 路径最多八段，只读取对象自有属性；不支持脚本、模板
 ./node_modules/.bin/eslint server/configured-source-runtime.node.ts server/configured-source-runtime.node.test.ts server/crawler-plugin-runtime.node.ts
 ```
 
-测试覆盖 RSS/JSON 字段映射、动态目录描述、停用项、私网解析拒绝、非白名单重定向、危险 JSON 路径、错误响应形状和配置大小上限。回退时清空 `LATESTNEWS_CONFIGURED_SOURCES` 并重启 Node 服务；动态目录移除对应 ID，已保存文章仍保留原有数据。
+测试覆盖 RSS/JSON 字段映射、动态目录描述、停用项、私网解析拒绝、非白名单重定向、危险 JSON 路径、错误响应形状和配置大小上限；H3 路由集成测试覆盖来源发现、详情、单源和批量接口；共用 Web/Electron 服务测试确认动态来源仍使用远端 API。回退时清空 `LATESTNEWS_CONFIGURED_SOURCES` 并重启 Node 服务；动态目录移除对应 ID，已保存文章仍保留原有数据。

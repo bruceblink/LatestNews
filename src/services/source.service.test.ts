@@ -1,7 +1,8 @@
 import { it, vi, expect, describe, afterEach } from "vitest";
 
-import { sourceApi } from "../../shared/source-api";
 import { createDynamicSourceId } from "../../shared/dynamic-source-id";
+import { sourceApi, getSourceItemsPath } from "../../shared/source-api";
+import { createSourceMetadataResponse } from "../../shared/source-metadata";
 import {
     clearRuntimeSourceCatalog,
     registerRuntimeSourceCatalog,
@@ -29,6 +30,7 @@ vi.mock("~/utils", () => ({ myFetch: mockMyFetch }));
 const remoteSource = createSource("hackernews", "Remote headline", "remote-1");
 const localSource = createSource("pcbeta-windows11", "Local headline", "local-1");
 const dynamicSourceId = createDynamicSourceId("org.latestnews.desktop-test", "latest");
+const configuredSourceId = createDynamicSourceId("config", "rss-feed");
 
 describe("desktop local crawler routing", () => {
     afterEach(() => {
@@ -264,6 +266,83 @@ describe("desktop local crawler routing", () => {
                 ]),
             },
         });
+    });
+
+    it("loads configured source metadata and items through the shared Web API client", async () => {
+        registerRuntimeSourceCatalog([
+            createRuntimeSourceMetadataItem({
+                id: configuredSourceId,
+                name: "Configured RSS",
+                interval: 300_000,
+                column: "tech",
+                home: "https://feeds.example.test",
+            }),
+        ]);
+        const metadata = createSourceMetadataResponse();
+        mockMyFetch.mockResolvedValueOnce(metadata);
+        const items = {
+            data: {
+                id: configuredSourceId,
+                name: "Configured RSS",
+                status: "success",
+                updatedTime: 100,
+                items: [{ id: "entry-1", title: "Configured headline", url: "https://publisher.example.test/1" }],
+            },
+            meta: {
+                generatedAt: 100,
+                sourceId: configuredSourceId,
+                status: "success",
+                itemCount: 1,
+                unfilteredItemCount: 1,
+            },
+            errors: [],
+        };
+        mockMyFetch.mockResolvedValueOnce(items);
+
+        await expect(fetchSourceMetadata()).resolves.toEqual(metadata);
+        await expect(fetchSourceItemsV1(configuredSourceId)).resolves.toEqual(items);
+        expect(mockMyFetch).toHaveBeenNthCalledWith(1, sourceApi.sourcesV1);
+        expect(mockMyFetch).toHaveBeenNthCalledWith(2, getSourceItemsPath(configuredSourceId), { query: undefined });
+    });
+
+    it("keeps configured sources on the remote API in Electron remote mode", async () => {
+        const bridge = createDesktopBridge([], {}, "https://news.example.com", [], createHealthSummary(), "remote");
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+        registerRuntimeSourceCatalog([
+            createRuntimeSourceMetadataItem({
+                id: configuredSourceId,
+                name: "Configured RSS",
+                interval: 300_000,
+                column: "tech",
+                home: "https://feeds.example.test",
+            }),
+        ]);
+        const metadata = createSourceMetadataResponse();
+        mockMyFetch.mockResolvedValueOnce(metadata);
+        const items = {
+            data: {
+                id: configuredSourceId,
+                name: "Configured RSS",
+                status: "success",
+                updatedTime: 100,
+                items: [{ id: "entry-1", title: "Configured headline", url: "https://publisher.example.test/1" }],
+            },
+            meta: {
+                generatedAt: 100,
+                sourceId: configuredSourceId,
+                status: "success",
+                itemCount: 1,
+                unfilteredItemCount: 1,
+            },
+            errors: [],
+        };
+        mockMyFetch.mockResolvedValueOnce(items);
+
+        await expect(fetchSourceMetadata()).resolves.toEqual(metadata);
+        await expect(fetchSourceItemsV1(configuredSourceId)).resolves.toEqual(items);
+        expect(bridge.fetchCrawlerSource).not.toHaveBeenCalled();
+        expect(mockMyFetch).toHaveBeenNthCalledWith(1, sourceApi.sourcesV1);
+        expect(mockMyFetch).toHaveBeenNthCalledWith(2, getSourceItemsPath(configuredSourceId), { query: undefined });
     });
 
     it("uses local source metadata after a retryable server failure, but not a client error", async () => {
