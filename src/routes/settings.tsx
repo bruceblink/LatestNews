@@ -9,5 +9,9 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
     useTitle(`${APP_TITLE} | 设置`);
-    return <SettingsPanel />;
+    return (
+        <div className="settings-page">
+            <SettingsPanel />
+        </div>
+    );
 }

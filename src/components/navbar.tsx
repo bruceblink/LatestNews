@@ -6,103 +6,68 @@ import { getTodayStart } from "~/utils/date";
 import { currentColumnIDAtom } from "~/atoms";
 import { fixedColumnIds } from "@shared/types";
 import { useHistory } from "~/hooks/useHistory";
-import { useSearchBar } from "~/hooks/useSearch.ts";
 import { Link, useRouterState } from "@tanstack/react-router";
+
+const columnIcons = {
+    focus: "i-ph:star-duotone",
+    hottest: "i-ph:fire-duotone",
+    realtime: "i-ph:lightning-duotone",
+};
 
 export function NavBar() {
     const currentId = useAtomValue(currentColumnIDAtom);
-    const { toggle } = useSearchBar();
     const { history } = useHistory();
-    const pathname = useRouterState({ select: (s) => s.location.pathname });
+    const pathname = useRouterState({ select: (state) => state.location.pathname });
     const isColumnActive = pathname === "/" || pathname.startsWith("/c/");
-    const isFeedActive = pathname === "/feed";
-    const isInsightsActive = pathname === "/insights";
-    const isHistoryActive = pathname === "/history";
-
     const todayCount = useMemo(() => {
         const start = getTodayStart();
         return history.filter((item) => item.readAt >= start).length;
     }, [history]);
 
     return (
-        <span
-            className={clsx([
-                "flex p-1 rounded-xl text-sm",
-                "bg-zinc-50/92 dark:bg-zinc-900/68 border border-zinc-200/90 dark:border-zinc-700/30",
-                "backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]",
-            ])}
-        >
-            {fixedColumnIds.map((columnId) => (
-                <Link
-                    key={columnId}
-                    to="/c/$column"
-                    params={{ column: columnId }}
-                    className={clsx(
-                        "px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
-                        isColumnActive && currentId === columnId
-                            ? "bg-white/95 dark:bg-zinc-800/85 text-zinc-900 dark:text-zinc-200 border border-zinc-300/85 dark:border-zinc-600/45"
-                            : "text-zinc-700 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/75 dark:hover:bg-zinc-800/55"
-                    )}
-                >
-                    {metadata[columnId].name}
-                </Link>
-            ))}
+        <nav className="primary-nav" aria-label="主导航">
+            {fixedColumnIds.map((columnId) => {
+                const active = isColumnActive && currentId === columnId;
+                return (
+                    <Link
+                        key={columnId}
+                        to="/c/$column"
+                        params={{ column: columnId }}
+                        className={clsx("nav-link", active && "is-active")}
+                        aria-current={active ? "page" : undefined}
+                    >
+                        <span className={columnIcons[columnId]} aria-hidden="true" />
+                        <span>{metadata[columnId].name}</span>
+                    </Link>
+                );
+            })}
+            <span className="nav-divider" aria-hidden="true" />
             <Link
                 to="/feed"
                 search={{ q: undefined, scope: undefined }}
-                className={clsx(
-                    "flex items-center gap-1.5 px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
-                    isFeedActive
-                        ? "bg-white/95 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 border border-zinc-300/80 dark:border-zinc-600/50"
-                        : "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
-                )}
+                className={clsx("nav-link", pathname === "/feed" && "is-active")}
+                aria-current={pathname === "/feed" ? "page" : undefined}
             >
-                <span className="i-ph:newspaper-duotone text-base" />
+                <span className="i-ph:newspaper-duotone" aria-hidden="true" />
                 <span>Feed</span>
             </Link>
             <Link
                 to="/insights"
-                className={clsx(
-                    "flex items-center gap-1.5 px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
-                    isInsightsActive
-                        ? "bg-white/95 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 border border-zinc-300/80 dark:border-zinc-600/50"
-                        : "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
-                )}
+                className={clsx("nav-link", pathname === "/insights" && "is-active")}
+                aria-current={pathname === "/insights" ? "page" : undefined}
             >
-                <span className="i-ph:chart-line-up-duotone text-base" />
+                <span className="i-ph:chart-line-up-duotone" aria-hidden="true" />
                 <span>洞察</span>
             </Link>
             <Link
                 to="/history"
-                className={clsx(
-                    "relative px-3 py-1 rounded-lg cursor-pointer transition-all text-sm",
-                    isHistoryActive
-                        ? "bg-white/95 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 border border-zinc-300/80 dark:border-zinc-600/50"
-                        : "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
-                )}
+                className={clsx("nav-link", pathname === "/history" && "is-active")}
+                aria-current={pathname === "/history" ? "page" : undefined}
             >
-                历史
-                {todayCount > 0 && (
-                    <span className="absolute -right-1 -top-1 min-w-4.5 h-4.5 rounded-full bg-red-500/92 dark:bg-blue-400/88 text-zinc-900 text-[10px] font-semibold leading-none flex items-center justify-center px-1 ring-1 ring-white/80 dark:ring-zinc-900/70 shadow-sm">
-                        {todayCount > 99 ? "99+" : todayCount}
-                    </span>
-                )}
+                <span className="i-ph:clock-counter-clockwise-duotone" aria-hidden="true" />
+                <span>历史</span>
+                {todayCount > 0 && <span className="nav-count">{todayCount > 99 ? "99+" : todayCount}</span>}
             </Link>
-            <button
-                type="button"
-                aria-label="打开搜索"
-                onClick={() => toggle(true)}
-                className={clsx(
-                    "flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm cursor-pointer transition-all",
-                    "text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/55"
-                )}
-            >
-                <span className="i-ph:magnifying-glass-duotone text-base" />
-                <span>搜索</span>
-                <kbd className="hidden rounded bg-zinc-200/80 px-1.5 py-0.5 text-[10px] leading-none text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500 sm:inline">
-                    Ctrl K
-                </kbd>
-            </button>
-        </span>
+        </nav>
     );
 }

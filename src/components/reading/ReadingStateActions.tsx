@@ -9,7 +9,7 @@ export function ReadingStateActions({ entry, className }: { entry: ReadingStateE
     const isFavorite = isFavoriteUrl(entry.url);
 
     return (
-        <div className={clsx("flex items-center gap-1", className)}>
+        <div className={clsx("reading-actions flex items-center gap-1", className)}>
             <StateButton
                 active={isLater}
                 label={isLater ? "移出稍后读" : "稍后读"}
@@ -45,6 +45,7 @@ function StateButton({
             type="button"
             title={label}
             aria-label={label}
+            aria-pressed={active === undefined ? undefined : active}
             className={clsx(
                 "flex h-8 w-8 items-center justify-center rounded-lg text-base transition-all",
                 active

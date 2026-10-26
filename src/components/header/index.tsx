@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { useAtomValue } from "jotai";
 import { useDark } from "~/hooks/useDark";
 import { Link } from "@tanstack/react-router";
+import { useSearchBar } from "~/hooks/useSearch";
 import { useRefetch } from "~/hooks/useRefetch.ts";
 import { useLoginState } from "~/hooks/useLogin.ts";
 import { Version, PROJECT_URL } from "@shared/consts";
@@ -17,24 +18,17 @@ import { SettingsButton } from "../settings/settings-button";
 
 function GoTop() {
     const { ok, fn: goToTop } = useAtomValue(goToTopAtom);
+    if (!ok) return null;
     return (
         <button
             type="button"
-            title="Go To Top"
-            className={clsx("i-ph:arrow-fat-up-duotone", ok ? "op-65 text-zinc-700 dark:text-zinc-300 btn" : "op-0")}
+            title="回到顶部"
+            aria-label="回到顶部"
+            className="icon-button back-to-top"
             onClick={goToTop}
-        />
-    );
-}
-
-function Github() {
-    return (
-        <button
-            type="button"
-            title="Github"
-            className="i-ph:github-logo-duotone btn text-zinc-600 dark:text-zinc-500/80 hover:text-zinc-900 dark:hover:text-zinc-300"
-            onClick={() => window.open(PROJECT_URL, "_blank", "noopener,noreferrer")}
-        />
+        >
+            <span className="i-ph:arrow-up-duotone" aria-hidden="true" />
+        </button>
     );
 }
 
@@ -42,87 +36,80 @@ function Refresh() {
     const currentSources = useAtomValue(currentSourcesAtom);
     const { refresh } = useRefetch();
     const refreshAll = useCallback(() => refresh(...currentSources), [refresh, currentSources]);
-
     const isFetching = useIsFetching({
         predicate: (query) => {
             const [type, id] = query.queryKey as ["source" | "entire", SourceID];
             return (type === "source" && currentSources.includes(id)) || type === "entire";
         },
     });
-
     return (
         <button
             type="button"
-            title="Refresh"
-            className={clsx(
-                "btn text-zinc-600 dark:text-zinc-500/80 hover:text-zinc-900 dark:hover:text-zinc-300",
-                isFetching
-                    ? "animate-spin i-ph:circle-dashed-duotone text-zinc-300"
-                    : "i-ph:arrow-counter-clockwise-duotone"
-            )}
+            title="刷新来源"
+            aria-label="刷新来源"
+            className="icon-button header-refresh"
             onClick={refreshAll}
-        />
+        >
+            <span className={clsx("i-ph:arrow-clockwise-duotone", isFetching && "animate-spin")} aria-hidden="true" />
+        </button>
     );
 }
 
 function ThemeToggle() {
     const { isDark, toggleDark } = useDark();
+    const label = isDark ? "切换到亮色主题" : "切换到暗色主题";
     return (
-        <button
-            type="button"
-            title={isDark ? "切换到亮色主题" : "切换到暗色主题"}
-            className={clsx(
-                "btn",
-                isDark
-                    ? "i-ph:sun-dim-duotone text-zinc-500/80 hover:text-zinc-300"
-                    : "i-ph:moon-stars-duotone text-zinc-700 hover:text-zinc-900"
-            )}
-            onClick={toggleDark}
-        />
+        <button type="button" title={label} aria-label={label} className="icon-button" onClick={toggleDark}>
+            <span className={isDark ? "i-ph:sun-duotone" : "i-ph:moon-stars-duotone"} aria-hidden="true" />
+        </button>
     );
 }
 
 export function Header() {
     const { enableLogin } = useLoginState();
+    const { toggle } = useSearchBar();
     return (
         <>
-            <span className="flex justify-self-start">
-                <Link to="/" className="flex gap-2 items-center group">
-                    <div
-                        className="h-9 w-9 bg-cover bg-center"
-                        title="logo"
-                        style={{ backgroundImage: "url(/icon.svg)" }}
-                    />
-                    <span className="text-xl font-brand line-height-none! tracking-tight">
-                        <p className="text-zinc-700 dark:text-neutral-200">Latest</p>
-                        <p className="mt--1">
-                            <span className="text-cyan-500 dark:text-cyan-400">N</span>
-                            <span className="text-zinc-700 dark:text-neutral-200">ews</span>
-                        </p>
+            <div className="header-brand">
+                <Link to="/" className="brand-link" aria-label="LatestNews 首页">
+                    <img className="brand-icon" src="/icon.svg" alt="" width="36" height="36" />
+                    <span className="brand-wordmark">
+                        Latest<span>News</span>
                     </span>
                 </Link>
                 <a
                     target="_blank"
                     rel="noopener noreferrer"
                     href={`${PROJECT_URL}/releases/tag/v${Version}`}
-                    className="btn text-xs ml-2 font-mono text-zinc-700 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-400 self-end mb-0.5"
+                    className="version-badge"
                 >
                     {`v${Version}`}
                 </a>
-            </span>
-            <span className="justify-self-center">
-                <span className="hidden md:(inline-block)">
-                    <NavBar />
-                </span>
-            </span>
-            <span className="justify-self-end flex gap-3 items-center text-xl text-zinc-600 dark:text-zinc-500/80">
+            </div>
+            <NavBar />
+            <div className="header-actions">
                 <GoTop />
+                <button type="button" aria-label="打开搜索" className="header-search" onClick={() => toggle(true)}>
+                    <span className="i-ph:magnifying-glass-duotone" aria-hidden="true" />
+                    <span className="search-label">搜索来源</span>
+                    <kbd aria-hidden="true">⌘ / Ctrl K</kbd>
+                </button>
+                <span className="action-divider" aria-hidden="true" />
                 {enableLogin.enable && <Refresh />}
                 <ThemeToggle />
                 <SettingsButton />
-                <Github />
+                <a
+                    className="icon-button header-github"
+                    href={PROJECT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="GitHub 仓库"
+                    aria-label="GitHub 仓库"
+                >
+                    <span className="i-ph:github-logo-duotone" aria-hidden="true" />
+                </a>
                 <Menu />
-            </span>
+            </div>
         </>
     );
 }

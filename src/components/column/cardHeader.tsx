@@ -27,10 +27,11 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
     const sourceStatusLabel = getSourceStatusLabel(data?.status);
 
     return (
-        <div className={clsx("flex justify-between mx-2 mt-0 mb-2 items-center")}>
-            <div className="flex gap-2 items-center">
+        <div className="news-card-header">
+            <div className="source-heading">
                 <a
-                    className="w-8 h-8 rounded-full bg-cover ring-1 ring-zinc-300 dark:ring-zinc-700/60"
+                    className="source-icon"
+                    aria-label={`${ds.name}网站`}
                     target="_blank"
                     rel="noopener noreferrer"
                     href={ds.home}
@@ -39,14 +40,9 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                         backgroundImage: `url(/icons/${id.split("-")[0]}.png)`,
                     }}
                 />
-                <span className="flex flex-col">
-                    <span className="flex items-center gap-2">
-                        <Link
-                            to="/source/$sourceId"
-                            params={{ sourceId: id }}
-                            className="text-base font-semibold text-zinc-800 transition-colors hover:text-cyan-700 dark:text-zinc-200/90 dark:hover:text-cyan-300"
-                            title={ds.desc}
-                        >
+                <span className="source-heading-text">
+                    <span className="source-name-line">
+                        <Link to="/source/$sourceId" params={{ sourceId: id }} className="source-name" title={ds.desc}>
                             {ds.name}
                         </Link>
                         {healthStatusLabel && (
@@ -82,19 +78,19 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                             </span>
                         )}
                     </span>
-                    <span className="text-xs text-zinc-600">
+                    <span className="source-updated">
                         <UpdatedTime isError={isError} updatedTime={data?.updatedTime} />
                     </span>
                 </span>
             </div>
-            <div className="flex gap-2 text-lg text-zinc-600/80 dark:text-zinc-500/60">
+            <div className="source-actions">
                 {enableLogin.enable && (
                     <button
                         title={isFetching ? "正在刷新" : "刷新数据"}
                         aria-label={isFetching ? "正在刷新" : "刷新数据"}
                         type="button"
                         className={clsx(
-                            "btn hover:text-zinc-800 dark:hover:text-cyan-400 i-ph:arrow-counter-clockwise-duotone",
+                            "source-action i-ph:arrow-counter-clockwise-duotone",
                             isFetching && "animate-spin i-ph:spinner-duotone"
                         )}
                         onClick={() => refresh(id)}
@@ -105,7 +101,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                     aria-label={isFocused ? "取消关注" : "加入关注"}
                     type="button"
                     className={clsx(
-                        "btn hover:text-zinc-800 dark:hover:text-cyan-400",
+                        "source-action",
                         isFocused ? "i-ph:star-fill text-zinc-700 dark:text-cyan-400" : "i-ph:star-duotone"
                     )}
                     onClick={toggleFocus}
@@ -114,7 +110,8 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 {setHandleRef && (
                     <div
                         ref={setHandleRef}
-                        className="btn hover:text-zinc-800 dark:hover:text-cyan-400 i-ph:dots-six-vertical-duotone cursor-grab"
+                        className="source-action drag-handle i-ph:dots-six-vertical-duotone"
+                        title="拖动排序"
                     />
                 )}
             </div>

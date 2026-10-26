@@ -92,7 +92,7 @@ function InsightsPage() {
     };
 
     return (
-        <section className="mx-auto flex max-w-6xl flex-col gap-4 px-1 md:px-4">
+        <section className="page-stack insights-page">
             <div className="flex flex-col gap-3 rounded-2xl bg-zinc-50/90 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="m-0 text-2xl font-bold text-zinc-800 dark:text-zinc-100">阅读洞察</h1>

@@ -9,7 +9,7 @@ import { useToast } from "~/hooks/useToast";
 import { useFocus } from "~/hooks/useFocus";
 import { Column } from "~/components/column";
 import dataSources from "@shared/data-sources";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
 import { rankActiveSourcesForHome } from "@shared/source-ranking-policy";
 
@@ -38,6 +38,7 @@ function IndexComponent() {
             {
                 id: "tech-brief",
                 name: "科技速览",
+                icon: "i-ph:cpu-duotone",
                 description: "覆盖科技、产品和开发社区的高频信息源。",
                 sources: uniqueSources([
                     ...metadata.tech.sources.slice(0, 4),
@@ -47,6 +48,7 @@ function IndexComponent() {
             {
                 id: "market-watch",
                 name: "财经追踪",
+                icon: "i-ph:chart-line-up-duotone",
                 description: "聚焦财经快讯、市场波动和投资讨论。",
                 sources: uniqueSources([
                     ...metadata.finance.sources.slice(0, 4),
@@ -56,6 +58,7 @@ function IndexComponent() {
             {
                 id: "global-digest",
                 name: "综合精选",
+                icon: "i-ph:compass-duotone",
                 description: "适合日常快速浏览，兼顾国内、国际和科技。",
                 sources: uniqueSources([
                     ...metadata.china.sources.slice(0, 2),
@@ -93,140 +96,176 @@ function IndexComponent() {
 
     return (
         <>
-            {activeSources.length > 0 && (
-                <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-50/90 dark:bg-zinc-900/68 border border-zinc-200/88 dark:border-zinc-700/32 p-4">
-                    <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                        <div>
-                            <h2 className="m-0 text-lg font-semibold text-zinc-800 dark:text-zinc-100">活跃源推荐</h2>
-                            <p className="m-0 mt-1 text-sm text-zinc-600 dark:text-zinc-500">
-                                优先展示最近更新稳定、内容量较高的数据源，可一键加入关注。
-                            </p>
-                        </div>
-                        <div className="text-xs text-zinc-600 dark:text-zinc-500">推荐结果每分钟更新一次</div>
+            <section className="home-intro" aria-labelledby="home-title">
+                <div>
+                    <div className="eyebrow">
+                        <span className="accent-dot" /> YOUR DAILY PERSPECTIVE
                     </div>
-                    <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                        {activeSources.map((source) => {
-                            const sourceMeta = dataSources[source.id];
-
-                            return (
-                                <article
-                                    key={source.id}
-                                    className="rounded-xl bg-white/82 dark:bg-zinc-800/60 border border-zinc-200/90 dark:border-zinc-700/30 p-3 transition-all hover:border-zinc-300/80 dark:hover:border-zinc-600/50 hover:bg-zinc-100/95 dark:hover:bg-zinc-800/70"
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex gap-3">
-                                            <a
-                                                className="mt-0.5 h-10 w-10 rounded-full bg-cover bg-center"
-                                                href={sourceMeta.home}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                title={sourceMeta.desc}
-                                                style={{
-                                                    backgroundImage: `url(/icons/${source.id.split("-")[0]}.png)`,
-                                                }}
-                                            />
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-semibold text-zinc-800 dark:text-zinc-100">
-                                                        {source.name}
-                                                    </span>
-                                                    {sourceMeta.title && (
-                                                        <span
-                                                            className={clsx(
-                                                                "rounded px-1.5 py-0.5 text-xs",
-                                                                `color-${sourceMeta.color} bg-zinc-100/90 dark:bg-zinc-800 op-90`
-                                                            )}
-                                                        >
-                                                            {sourceMeta.title}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                {sourceMeta.desc && (
-                                                    <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-500 line-clamp-1">
-                                                        {sourceMeta.desc}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            className={clsx(
-                                                "rounded-full px-3 py-1 text-xs transition-all",
-                                                isFocused(source.id)
-                                                    ? "bg-cyan-500 text-zinc-900 font-semibold"
-                                                    : "bg-cyan-500/14 text-cyan-800 dark:text-cyan-300 hover:bg-cyan-500/24"
-                                            )}
-                                            onClick={() => toggleFocus(source.id)}
-                                        >
-                                            {isFocused(source.id) ? "已关注" : "加入关注"}
-                                        </button>
-                                    </div>
-                                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
-                                        <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1">
-                                            近期返回 {source.lastItemCount ?? 0} 条
-                                        </span>
-                                        <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1">
-                                            成功 {source.successCount} 次
-                                        </span>
-                                        <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1">
-                                            状态 {source.status === "healthy" ? "稳定" : "待观察"}
-                                        </span>
-                                    </div>
-                                </article>
-                            );
-                        })}
-                    </div>
-                </section>
-            )}
-            <section className="mx-auto mb-5 max-w-6xl rounded-2xl bg-zinc-50/86 dark:bg-zinc-900/62 border border-zinc-200/88 dark:border-zinc-700/30 p-4">
-                <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                    <div>
-                        <h2 className="m-0 text-lg font-semibold text-zinc-800 dark:text-zinc-100">快速关注预设</h2>
-                        <p className="m-0 mt-1 text-sm text-zinc-600 dark:text-zinc-500">
-                            先用一组预设快速建立首页关注，再按自己的习惯继续微调。
-                        </p>
-                    </div>
-                    <div className="text-xs text-zinc-600 dark:text-zinc-500">可追加到当前关注栏，也可一键替换</div>
+                    <h1 id="home-title">
+                        资讯万千，<span>一览之间。</span>
+                    </h1>
+                    <p>汇集你关心的声音，留一点时间给有价值的阅读。</p>
                 </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                    {focusPresets.map((preset) => (
-                        <article
-                            key={preset.id}
-                            className="rounded-xl bg-white/82 dark:bg-zinc-800/60 border border-zinc-200/90 dark:border-zinc-700/30 p-4 transition-all hover:border-zinc-300/80 dark:hover:border-cyan-500/20 hover:bg-zinc-100/95 dark:hover:bg-zinc-800/70"
-                        >
-                            <div className="font-semibold text-zinc-800 dark:text-zinc-100">{preset.name}</div>
-                            <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-500">{preset.description}</div>
-                            <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
-                                {preset.sources.slice(0, 4).map((sourceId) => (
-                                    <span
-                                        key={sourceId}
-                                        className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1"
-                                    >
-                                        {dataSources[sourceId].name}
-                                    </span>
-                                ))}
-                            </div>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                <button
-                                    type="button"
-                                    className="rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400"
-                                    onClick={() => appendFocusPreset(preset.name, preset.sources)}
-                                >
-                                    追加
-                                </button>
-                                <button
-                                    type="button"
-                                    className="rounded-full bg-zinc-200/80 px-4 py-2 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 dark:bg-zinc-700/45 dark:text-zinc-300 dark:hover:bg-zinc-700/70"
-                                    onClick={() => replaceFocusPreset(preset.name, preset.sources)}
-                                >
-                                    替换
-                                </button>
-                            </div>
-                        </article>
-                    ))}
+                <div className="home-intro-aside">
+                    <span className="today-label">
+                        {new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "long" }).format(
+                            new Date()
+                        )}
+                    </span>
+                    <Link to="/feed" search={{ q: undefined, scope: undefined }} className="text-action">
+                        进入统一 Feed <span className="i-ph:arrow-up-right-duotone" aria-hidden="true" />
+                    </Link>
                 </div>
             </section>
-            <Column id={id} />
+            <details className="source-discovery">
+                <summary>
+                    <span className="discovery-icon i-ph:squares-four-duotone" aria-hidden="true" />
+                    <span className="discovery-summary-title">发现与管理来源</span>
+                    <span className="discovery-summary-description">精选组合，快速建立你的阅读清单</span>
+                    <span className="discovery-chevron i-ph:caret-down-duotone" aria-hidden="true" />
+                </summary>
+                <div className="discovery-content">
+                    {activeSources.length > 0 && (
+                        <section className="discovery-section">
+                            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                                <div>
+                                    <h2 className="m-0 text-lg font-semibold text-zinc-800 dark:text-zinc-100">
+                                        活跃源推荐
+                                    </h2>
+                                    <p className="m-0 mt-1 text-sm text-zinc-600 dark:text-zinc-500">
+                                        优先展示最近更新稳定、内容量较高的数据源，可一键加入关注。
+                                    </p>
+                                </div>
+                                <div className="text-xs text-zinc-600 dark:text-zinc-500">推荐结果每分钟更新一次</div>
+                            </div>
+                            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                {activeSources.map((source) => {
+                                    const sourceMeta = dataSources[source.id];
+
+                                    return (
+                                        <article key={source.id} className="recommendation-card">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex gap-3">
+                                                    <a
+                                                        className="mt-0.5 h-10 w-10 rounded-full bg-cover bg-center"
+                                                        href={sourceMeta.home}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        title={sourceMeta.desc}
+                                                        style={{
+                                                            backgroundImage: `url(/icons/${source.id.split("-")[0]}.png)`,
+                                                        }}
+                                                    />
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-semibold text-zinc-800 dark:text-zinc-100">
+                                                                {source.name}
+                                                            </span>
+                                                            {sourceMeta.title && (
+                                                                <span
+                                                                    className={clsx(
+                                                                        "rounded px-1.5 py-0.5 text-xs",
+                                                                        `color-${sourceMeta.color} bg-zinc-100/90 dark:bg-zinc-800 op-90`
+                                                                    )}
+                                                                >
+                                                                    {sourceMeta.title}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {sourceMeta.desc && (
+                                                            <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-500 line-clamp-1">
+                                                                {sourceMeta.desc}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className={clsx(
+                                                        "rounded-full px-3 py-1 text-xs transition-all",
+                                                        isFocused(source.id)
+                                                            ? "bg-cyan-500 text-zinc-900 font-semibold"
+                                                            : "bg-cyan-500/14 text-cyan-800 dark:text-cyan-300 hover:bg-cyan-500/24"
+                                                    )}
+                                                    onClick={() => toggleFocus(source.id)}
+                                                >
+                                                    {isFocused(source.id) ? "已关注" : "加入关注"}
+                                                </button>
+                                            </div>
+                                            <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
+                                                <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1">
+                                                    近期返回 {source.lastItemCount ?? 0} 条
+                                                </span>
+                                                <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1">
+                                                    成功 {source.successCount} 次
+                                                </span>
+                                                <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1">
+                                                    状态 {source.status === "healthy" ? "稳定" : "待观察"}
+                                                </span>
+                                            </div>
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
+                    <section className="discovery-section">
+                        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                            <div>
+                                <h2 className="m-0 text-lg font-semibold text-zinc-800 dark:text-zinc-100">
+                                    快速关注预设
+                                </h2>
+                                <p className="m-0 mt-1 text-sm text-zinc-600 dark:text-zinc-500">
+                                    先用一组预设快速建立首页关注，再按自己的习惯继续微调。
+                                </p>
+                            </div>
+                            <div className="text-xs text-zinc-600 dark:text-zinc-500">
+                                可追加到当前关注栏，也可一键替换
+                            </div>
+                        </div>
+                        <div className="mt-4 grid gap-3 md:grid-cols-3">
+                            {focusPresets.map((preset) => (
+                                <article key={preset.id} className="preset-card">
+                                    <div className="preset-title">
+                                        <span className={preset.icon} aria-hidden="true" />
+                                        {preset.name}
+                                    </div>
+                                    <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-500">
+                                        {preset.description}
+                                    </div>
+                                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
+                                        {preset.sources.slice(0, 4).map((sourceId) => (
+                                            <span
+                                                key={sourceId}
+                                                className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-1"
+                                            >
+                                                {dataSources[sourceId].name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            className="rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400"
+                                            onClick={() => appendFocusPreset(preset.name, preset.sources)}
+                                        >
+                                            追加
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="rounded-full bg-zinc-200/80 px-4 py-2 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 dark:bg-zinc-700/45 dark:text-zinc-300 dark:hover:bg-zinc-700/70"
+                                            onClick={() => replaceFocusPreset(preset.name, preset.sources)}
+                                        >
+                                            替换
+                                        </button>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    </section>
+                </div>
+            </details>
+            <Column id={id} isHome />
         </>
     );
 }

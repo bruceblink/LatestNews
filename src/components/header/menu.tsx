@@ -1,10 +1,10 @@
 import type { PrimitiveMetadata } from "@shared/types";
 
-import clsx from "clsx"; // function ThemeToggle() {
+import clsx from "clsx";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/useToast";
 import { PROJECT_URL } from "@shared/consts";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAtom, useSetAtom, useAtomValue } from "jotai";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
@@ -30,21 +30,19 @@ import {
     markPrimitiveMetadataSynced,
 } from "~/services/metadata.service.ts";
 
-// function ThemeToggle() {
-//   const { isDark, toggleDark } = useDark()
-//   return (
-//     <li onClick={toggleDark} className="cursor-pointer [&_*]:cursor-pointer transition-all">
-//       <span className={$("inline-block", isDark ? "i-ph-moon-stars-duotone" : "i-ph-sun-dim-duotone")} />
-//       <span>
-//         {isDark ? "浅色模式" : "深色模式"}
-//       </span>
-//     </li>
-//   )
-// }
-
 export function Menu() {
     const { loggedIn, userInfo, enableLogin } = useLoginState();
     const [shown, show] = useState(false);
+    const menuRef = useRef<HTMLSpanElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    useEffect(() => {
+        if (!shown) return undefined;
+        const dismiss = (event: PointerEvent) => {
+            if (event.target instanceof Node && !menuRef.current?.contains(event.target)) show(false);
+        };
+        document.addEventListener("pointerdown", dismiss);
+        return () => document.removeEventListener("pointerdown", dismiss);
+    }, [shown]);
     const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [syncing, setSyncing] = useState(false);
     const navigate = useNavigate();
@@ -243,14 +241,38 @@ export function Menu() {
     });
 
     return (
-        <span className="relative" onMouseEnter={() => show(true)} onMouseLeave={() => show(false)}>
-            <span className="flex items-center scale-90">
+        <span
+            className="header-menu"
+            ref={menuRef}
+            onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                    show(false);
+                    triggerRef.current?.focus();
+                }
+            }}
+            onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) show(false);
+            }}
+            onClickCapture={(event) => {
+                if (
+                    event.target instanceof Element &&
+                    event.target.closest("#dropdown-menu button, #dropdown-menu a")
+                ) {
+                    show(false);
+                }
+            }}
+        >
+            <span className="flex items-center">
                 {enableLogin && loggedIn && userInfo?.avatar ? (
                     <button
                         type="button"
+                        ref={triggerRef}
+                        onClick={() => show((value) => !value)}
+                        aria-expanded={shown}
+                        aria-controls={shown ? "dropdown-menu" : undefined}
                         title="打开用户菜单"
                         aria-label="打开用户菜单"
-                        className="h-6 w-6 rounded-full bg-cover"
+                        className="icon-button user-avatar bg-cover"
                         style={{
                             backgroundImage: `url(${userInfo.avatar}&s=24)`,
                         }}
@@ -258,17 +280,23 @@ export function Menu() {
                 ) : (
                     <button
                         type="button"
+                        ref={triggerRef}
+                        onClick={() => show((value) => !value)}
+                        aria-expanded={shown}
+                        aria-controls={shown ? "dropdown-menu" : undefined}
                         title="打开菜单"
                         aria-label="打开菜单"
-                        className="btn i-si:more-muted-horiz-circle-duotone"
-                    />
+                        className="icon-button"
+                    >
+                        <span className="i-ph:dots-three-outline-duotone" aria-hidden="true" />
+                    </button>
                 )}
             </span>
             {shown && (
-                <div className="absolute right-0 z-99 bg-transparent pt-4 top-4">
+                <div className="header-menu-position">
                     <motion.div
                         id="dropdown-menu"
-                        className={clsx(["w-200px", "bg-primary backdrop-blur-5 bg-op-70! rounded-lg shadow-xl"])}
+                        className="header-menu-panel"
                         initial={{
                             scale: 0.9,
                         }}
@@ -276,55 +304,67 @@ export function Menu() {
                             scale: 1,
                         }}
                     >
-                        <ol className="bg-base bg-op-70! backdrop-blur-md p-2 rounded-lg color-base text-base">
+                        <ol className="header-menu-items">
                             {enableLogin.enable &&
                                 (loggedIn ? (
-                                    <li onClick={logout}>
-                                        <span className="i-ph:sign-out-duotone inline-block" />
-                                        <span>退出登录</span>
+                                    <li>
+                                        <button type="button" onClick={logout}>
+                                            <span className="i-ph:sign-out-duotone inline-block" />
+                                            <span>退出登录</span>
+                                        </button>
                                     </li>
                                 ) : (
-                                    <li onClick={login}>
-                                        <span className="i-ph:sign-in-duotone inline-block" />
-                                        <span>Github 账号登录</span>
+                                    <li>
+                                        <button type="button" onClick={login}>
+                                            <span className="i-ph:sign-in-duotone inline-block" />
+                                            <span>Github 账号登录</span>
+                                        </button>
                                     </li>
                                 ))}
                             {enableLogin.enable && loggedIn && (
-                                <li onClick={() => void handleManualSync()}>
-                                    <span
-                                        className={clsx(
-                                            "inline-block",
-                                            syncing
-                                                ? "i-ph:spinner-gap-duotone animate-spin"
-                                                : "i-ph:cloud-arrow-up-duotone"
-                                        )}
-                                    />
-                                    <span>
-                                        {syncing
-                                            ? "同步中"
-                                            : hasPendingSyncChanges
-                                              ? "同步待保存更改"
-                                              : syncStatus.phase === "error"
-                                                ? "重试同步"
-                                                : "同步布局"}
-                                    </span>
+                                <li>
+                                    <button type="button" onClick={() => void handleManualSync()}>
+                                        <span
+                                            className={clsx(
+                                                "inline-block",
+                                                syncing
+                                                    ? "i-ph:spinner-gap-duotone animate-spin"
+                                                    : "i-ph:cloud-arrow-up-duotone"
+                                            )}
+                                        />
+                                        <span>
+                                            {syncing
+                                                ? "同步中"
+                                                : hasPendingSyncChanges
+                                                  ? "同步待保存更改"
+                                                  : syncStatus.phase === "error"
+                                                    ? "重试同步"
+                                                    : "同步布局"}
+                                        </span>
+                                    </button>
                                 </li>
                             )}
                             {enableLogin.enable && loggedIn && syncStatus.phase === "error" && (
-                                <li onClick={() => void handleRetrySync()}>
-                                    <span className="i-ph:arrows-clockwise-duotone inline-block" />
-                                    <span>立即重试同步</span>
+                                <li>
+                                    <button type="button" onClick={() => void handleRetrySync()}>
+                                        <span className="i-ph:arrows-clockwise-duotone inline-block" />
+                                        <span>立即重试同步</span>
+                                    </button>
                                 </li>
                             )}
                             {enableLogin.enable && loggedIn && (
                                 <>
-                                    <li onClick={() => void handleRestoreFromRemote()}>
-                                        <span className="i-ph:cloud-arrow-down-duotone inline-block" />
-                                        <span>使用云端恢复本地</span>
+                                    <li>
+                                        <button type="button" onClick={() => void handleRestoreFromRemote()}>
+                                            <span className="i-ph:cloud-arrow-down-duotone inline-block" />
+                                            <span>使用云端恢复本地</span>
+                                        </button>
                                     </li>
-                                    <li onClick={() => void handleRestoreToRemote()}>
-                                        <span className="i-ph:cloud-arrow-up-duotone inline-block" />
-                                        <span>使用本地覆盖云端</span>
+                                    <li>
+                                        <button type="button" onClick={() => void handleRestoreToRemote()}>
+                                            <span className="i-ph:cloud-arrow-up-duotone inline-block" />
+                                            <span>使用本地覆盖云端</span>
+                                        </button>
                                     </li>
                                 </>
                             )}
@@ -348,9 +388,11 @@ export function Menu() {
                                 </li>
                             )}
                             {syncHubConfigured && syncHubStatus.phase === "error" && (
-                                <li onClick={() => requestSyncHubRetry((current) => current + 1)}>
-                                    <span className="i-ph:arrows-clockwise-duotone inline-block" />
-                                    <span>重试 SyncHub</span>
+                                <li>
+                                    <button type="button" onClick={() => requestSyncHubRetry((current) => current + 1)}>
+                                        <span className="i-ph:arrows-clockwise-duotone inline-block" />
+                                        <span>重试 SyncHub</span>
+                                    </button>
                                 </li>
                             )}
                             {syncHubConfigured && (
@@ -371,25 +413,34 @@ export function Menu() {
                                     </div>
                                 </li>
                             )}
-                            <li onClick={handleResetLayout}>
-                                <span className="i-ph:arrows-counter-clockwise-duotone inline-block" />
-                                <span>重置布局</span>
+                            <li>
+                                <button type="button" onClick={handleResetLayout}>
+                                    <span className="i-ph:arrows-counter-clockwise-duotone inline-block" />
+                                    <span>重置布局</span>
+                                </button>
                             </li>
-                            <li onClick={() => void handleInstall()}>
-                                <span className="i-ph:device-mobile-speaker-duotone inline-block" />
-                                <span>{installPrompt ? "安装应用" : "安装指引"}</span>
+                            <li>
+                                <button type="button" onClick={() => void handleInstall()}>
+                                    <span className="i-ph:device-mobile-speaker-duotone inline-block" />
+                                    <span>{installPrompt ? "安装应用" : "安装指引"}</span>
+                                </button>
                             </li>
-                            <li onClick={goToHealthPage}>
-                                <span className="i-ph:heartbeat-duotone inline-block" />
-                                <span>数据源健康</span>
+                            <li>
+                                <button type="button" onClick={goToHealthPage}>
+                                    <span className="i-ph:heartbeat-duotone inline-block" />
+                                    <span>数据源健康</span>
+                                </button>
                             </li>
                             {/* <ThemeToggle /> */}
-                            <li
-                                onClick={() => window.open(PROJECT_URL, "_blank", "noopener,noreferrer")}
-                                className="cursor-pointer [&_*]:cursor-pointer transition-all"
-                            >
-                                <span className="i-ph:github-logo-duotone inline-block" />
-                                <span>Star on Github </span>
+                            <li>
+                                <button
+                                    type="button"
+                                    onClick={() => window.open(PROJECT_URL, "_blank", "noopener,noreferrer")}
+                                    className="cursor-pointer [&_*]:cursor-pointer transition-all"
+                                >
+                                    <span className="i-ph:github-logo-duotone inline-block" />
+                                    <span>Star on Github </span>
+                                </button>
                             </li>
                             <li className="flex gap-2 items-center">
                                 <a href={`${PROJECT_URL}`}>

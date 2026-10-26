@@ -176,8 +176,8 @@ function HealthPage() {
     };
 
     return (
-        <section className="mx-auto flex max-w-6xl flex-col gap-4 px-1 md:px-4">
-            <div className="flex flex-col gap-3 rounded-2xl bg-primary/6 p-4 shadow shadow-primary/10 md:flex-row md:items-center md:justify-between">
+        <section className="page-stack health-page">
+            <div className="surface-panel flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="m-0 text-2xl font-bold">数据源健康</h1>
                     <p className="m-0 mt-2 text-sm op-75">

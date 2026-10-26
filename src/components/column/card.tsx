@@ -45,15 +45,9 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
         return (
             <div
                 ref={ref}
-                className={clsx(
-                    "flex flex-col h-500px rounded-2xl p-4 cursor-default",
-                    "transition-opacity-300",
-                    isDragging && "op-50",
-                    healthStatus === "failing" && "ring-1 ring-red-500/30 saturate-85 op-90",
-                    healthStatus === "idle" && "ring-1 ring-neutral-500/20",
-                    `bg-${dataSources[id].color}-500 dark:bg-${dataSources[id].color} bg-op-9! dark:bg-op-6!`,
-                    "border border-zinc-300/65 dark:border-zinc-700/30"
-                )}
+                className={clsx("news-card", isDragging && "is-dragging")}
+                data-health={healthStatus}
+                aria-label={`${dataSources[id].name}新闻`}
                 style={{
                     transformOrigin: "50% 50%",
                     ...style,
@@ -82,11 +76,8 @@ function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
             />
 
             <OverlayScrollbar
-                className={clsx([
-                    "h-full p-2 overflow-y-auto rounded-xl bg-zinc-50/76 dark:bg-zinc-900/68",
-                    "border border-zinc-300/70 dark:border-zinc-800/65",
-                    isFetching && "animate-pulse",
-                ])}
+                className="news-card-scroll"
+                aria-busy={isFetching}
                 options={{
                     overflow: { x: "hidden" },
                 }}
@@ -321,45 +312,23 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
         [id, addHistory]
     );
     return (
-        <ol className="flex flex-col gap-2">
+        <ol className="news-list">
             {visibleItems?.map((item, i) => {
                 const isRead = readUrls.has(item.url);
 
                 return (
-                    <li
-                        key={item.id}
-                        title={item.extra?.hover}
-                        className={clsx(
-                            "flex gap-2 items-center items-stretch relative cursor-default transition-all",
-                            "hover:bg-zinc-300/40 dark:hover:bg-cyan-500/6 rounded-md pr-1 visited:(text-zinc-500 dark:text-zinc-500)",
-                            isRead && "bg-zinc-100/70 dark:bg-zinc-800/32"
-                        )}
-                    >
-                        <span
-                            className={clsx(
-                                "bg-zinc-200/65 dark:bg-zinc-700/25 text-zinc-700 dark:text-zinc-500 min-w-6 flex justify-center items-center rounded-md text-sm",
-                                isRead && "text-zinc-500 dark:text-zinc-600"
-                            )}
-                        >
-                            {i + 1}
-                        </span>
+                    <li key={item.id} title={item.extra?.hover} className={clsx("news-row", isRead && "is-read")}>
+                        <span className={clsx("news-rank", i < 3 && "is-leading")}>{i + 1}</span>
                         {!!item.extra?.diff && <DiffNumber diff={item.extra.diff} />}
                         <a
                             href={width < 768 ? item.mobileUrl || item.url : item.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="min-w-0 flex-1 self-start line-height-none"
+                            className="news-link"
                             onClick={() => handleClick(item)}
                         >
-                            <span
-                                className={clsx(
-                                    "mr-2 text-base text-zinc-800 dark:text-zinc-200/90",
-                                    isRead && "text-zinc-500 dark:text-zinc-500"
-                                )}
-                            >
-                                {item.title}
-                            </span>
-                            <span className="text-xs text-zinc-600 dark:text-zinc-500 truncate align-middle">
+                            <span className="news-title">{item.title}</span>
+                            <span className="news-meta">
                                 <ExtraInfo item={item} />
                                 {isRead && <ReadBadge />}
                             </span>
@@ -372,7 +341,7 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
                                 sourceId: id,
                                 sourceName,
                             }}
-                            className="ml-auto self-center"
+                            className="news-row-actions"
                         />
                     </li>
                 );
@@ -395,12 +364,12 @@ function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
         [id, addHistory]
     );
     return (
-        <ol className="border-s border-zinc-300/70 dark:border-zinc-700/60 flex flex-col ml-1">
+        <ol className="news-timeline">
             {visibleItems?.map((item) => {
                 const isRead = readUrls.has(item.url);
 
                 return (
-                    <li key={`${item.id}-${item.pubDate || item?.extra?.date || ""}`} className="flex flex-col">
+                    <li key={`${item.id}-${item.pubDate || item?.extra?.date || ""}`} className="timeline-entry">
                         <span className="flex items-center gap-1 text-zinc-700 dark:text-zinc-600 ml--1px">
                             <span className="">-</span>
                             <span className="text-xs text-zinc-600 dark:text-zinc-500">
@@ -415,7 +384,7 @@ function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
                         </span>
                         <a
                             className={clsx(
-                                "ml-2 px-1 hover:bg-zinc-300/40 dark:hover:bg-cyan-500/6 rounded-md visited:(text-zinc-500 dark:text-zinc-500)",
+                                "timeline-link",
                                 "cursor-pointer [&_*]:cursor-pointer transition-all",
                                 isRead && "bg-zinc-100/70 dark:bg-zinc-800/32"
                             )}

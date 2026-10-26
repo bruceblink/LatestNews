@@ -138,7 +138,7 @@ function SourceDetailPage() {
     }
 
     return (
-        <section className="mx-auto flex max-w-5xl flex-col gap-4 px-1 md:px-4">
+        <section className="page-stack source-page">
             <div className="rounded-2xl border border-zinc-200/88 bg-zinc-50/90 p-4 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="flex min-w-0 gap-4">

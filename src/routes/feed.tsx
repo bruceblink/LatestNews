@@ -158,8 +158,8 @@ function FeedPage() {
     };
 
     return (
-        <section className="mx-auto flex max-w-6xl flex-col gap-4 px-1 md:px-4">
-            <div className="rounded-2xl border border-zinc-200/88 bg-zinc-50/90 p-4 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
+        <section className="page-stack feed-page">
+            <div className="surface-panel feed-toolbar">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
                         <h1 className="m-0 text-2xl font-bold text-zinc-800 dark:text-zinc-100">统一 Feed</h1>
@@ -337,7 +337,7 @@ const FeedList = memo(function FeedListContent({
     onLoadMore: () => void;
 }) {
     return (
-        <section className="rounded-2xl border border-zinc-200/88 bg-zinc-50/88 p-3 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
+        <section className="surface-panel feed-list-panel">
             <div className="mb-2 flex items-center justify-between gap-2 px-1 text-xs text-zinc-500">
                 <span>
                     已显示 {items.length} / {availableCount} 条
@@ -350,15 +350,7 @@ const FeedList = memo(function FeedListContent({
                         const isRead = readUrls.has(item.url);
 
                         return (
-                            <article
-                                key={item.id}
-                                className={clsx(
-                                    "group rounded-xl border px-3 py-3 transition-all",
-                                    isRead
-                                        ? "border-zinc-200/75 bg-zinc-100/70 dark:border-zinc-800/70 dark:bg-zinc-800/34"
-                                        : "border-zinc-200/85 bg-white/84 hover:border-zinc-300/90 hover:bg-zinc-100/95 dark:border-zinc-700/32 dark:bg-zinc-800/54 dark:hover:border-zinc-600/55 dark:hover:bg-zinc-800/78"
-                                )}
-                            >
+                            <article key={item.id} className={clsx("feed-article group", isRead && "is-read")}>
                                 <div className="flex items-start justify-between gap-3">
                                     <a
                                         href={item.mobileUrl ?? item.url}
@@ -367,7 +359,7 @@ const FeedList = memo(function FeedListContent({
                                         className="min-w-0 flex-1"
                                         onClick={() => onRead(item)}
                                     >
-                                        <div className="line-clamp-2 text-sm font-medium leading-5 text-zinc-800 transition-colors group-hover:text-cyan-700 dark:text-zinc-200 dark:group-hover:text-cyan-300">
+                                        <div className="feed-article-title line-clamp-2">
                                             {item.title}
                                             {isRead && <ReadBadge />}
                                         </div>
@@ -383,7 +375,7 @@ const FeedList = memo(function FeedListContent({
                                         className="shrink-0"
                                     />
                                 </div>
-                                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
+                                <div className="feed-article-meta">
                                     <span>{item.sourceName}</span>
                                     <span>{item.categoryName}</span>
                                     {(item.publishedAt ?? item.responseUpdatedTime) && (

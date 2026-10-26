@@ -7,7 +7,6 @@ import clsx from "clsx";
 import { useSync } from "~/hooks/useSync.ts";
 import { Header } from "~/components/header";
 import { Footer } from "~/components/footer";
-import { isMobile } from "react-device-detect";
 import { Toast } from "~/components/common/toast";
 import { useSyncHub } from "~/hooks/useSyncHub.ts";
 import { useOnReload } from "~/hooks/useOnReload.ts";
@@ -42,43 +41,30 @@ function RootComponent() {
     return (
         <PWAStatusContext.Provider value={pwa}>
             <OfflineReadingSnapshotContext.Provider value={offlineReadingSnapshot}>
-                <GlobalOverlayScrollbar
-                    className={clsx([!isMobile && "px-4", "h-full overflow-x-auto", "md:(px-10)", "lg:(px-24)"])}
-                >
-                    <header
-                        className={clsx([
-                            "grid items-center py-3 px-5",
-                            "lg:(py-4)",
-                            "sticky top-0 z-10",
-                            "backdrop-blur-xl bg-zinc-50/92 dark:bg-[#0a0e1a]/82",
-                            "border-b border-zinc-200/80 dark:border-zinc-700/30",
-                        ])}
-                        style={{
-                            gridTemplateColumns: "50px auto 50px",
-                        }}
-                    >
-                        <Header />
+                <GlobalOverlayScrollbar className="app-scroll h-full">
+                    <a className="skip-link" href="#main-content">
+                        跳到主要内容
+                    </a>
+                    <header className="app-header">
+                        <div className="header-inner">
+                            <Header />
+                        </div>
                     </header>
-                    <PwaStatusBanner
-                        isOffline={pwa.isOffline}
-                        needRefresh={pwa.needRefresh}
-                        offlineReady={pwa.offlineReady}
-                        justRecovered={pwa.justRecovered}
-                        onUpdate={pwa.applyUpdate}
-                    />
-                    <main
-                        className={clsx([
-                            "mt-2",
-                            "min-h-[calc(100vh-180px)]",
-                            "md:(min-h-[calc(100vh-175px)])",
-                            "lg:(min-h-[calc(100vh-194px)])",
-                        ])}
-                    >
-                        <Outlet />
-                    </main>
-                    <footer className="py-6 flex flex-col items-center justify-center text-sm text-rose-900/45 dark:text-cyan-500/40 font-mono border-t border-rose-900/10 dark:border-cyan-500/8">
-                        <Footer />
-                    </footer>
+                    <div className="app-content">
+                        <PwaStatusBanner
+                            isOffline={pwa.isOffline}
+                            needRefresh={pwa.needRefresh}
+                            offlineReady={pwa.offlineReady}
+                            justRecovered={pwa.justRecovered}
+                            onUpdate={pwa.applyUpdate}
+                        />
+                        <main id="main-content" className="app-main" tabIndex={-1}>
+                            <Outlet />
+                        </main>
+                        <footer className="app-footer">
+                            <Footer />
+                        </footer>
+                    </div>
                 </GlobalOverlayScrollbar>
                 <Toast />
                 <SearchBar />

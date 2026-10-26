@@ -1,8 +1,10 @@
 import type { FormEvent } from "react";
 import type { DesktopCollectionMode } from "@shared/desktop-collection-mode";
 
+import { useAtom } from "jotai";
 import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/useToast";
+import { colorSchemeAtom } from "~/hooks/useDark";
 import {
     resetDesktopNewsApiUrl,
     readDesktopPreferences,
@@ -21,6 +23,7 @@ interface SettingsPanelProps {
 /** Shared settings surface used by the standalone header button and the settings route. */
 export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
     const toaster = useToast();
+    const [colorScheme, setColorScheme] = useAtom(colorSchemeAtom);
     const desktopBuild = import.meta.env.LATESTNEWS_DESKTOP === true;
     const configurable = desktopBuild && isDesktopNewsApiConfigurable();
     const trayConfigurable = desktopBuild && isDesktopTrayBackgroundConfigurable();
@@ -126,7 +129,7 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
     };
 
     return (
-        <section className="space-y-5">
+        <section className="settings-panel space-y-5">
             {showTitle && (
                 <div>
                     <h1 className="m-0 text-2xl font-semibold text-zinc-800 dark:text-zinc-100">设置</h1>
@@ -136,8 +139,45 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                 </div>
             )}
 
+            <section className="settings-group" aria-labelledby="appearance-title">
+                <div className="settings-group-heading">
+                    <span className="i-ph:palette-duotone" aria-hidden="true" />
+                    <div>
+                        <h2 id="appearance-title">外观主题</h2>
+                        <p>选择适合你的阅读氛围。</p>
+                    </div>
+                </div>
+                <div className="theme-options" role="group" aria-label="外观主题">
+                    {(
+                        [
+                            { id: "light", label: "浅色", icon: "i-ph:sun-duotone" },
+                            { id: "dark", label: "深色", icon: "i-ph:moon-stars-duotone" },
+                            { id: "auto", label: "跟随系统", icon: "i-ph:desktop-duotone" },
+                        ] as const
+                    ).map((theme) => (
+                        <button
+                            type="button"
+                            key={theme.id}
+                            className="theme-option"
+                            aria-pressed={colorScheme === theme.id}
+                            onClick={() => setColorScheme(theme.id)}
+                        >
+                            <span className={`theme-preview theme-preview-${theme.id}`} aria-hidden="true">
+                                <span />
+                                <span />
+                                <span />
+                            </span>
+                            <span className="theme-option-label">
+                                <span className={theme.icon} aria-hidden="true" />
+                                {theme.label}
+                                <span className="theme-check i-ph:check-circle-fill" aria-hidden="true" />
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </section>
             {!desktopBuild && (
-                <div className="rounded-2xl bg-neutral-500/8 p-5 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
+                <div className="settings-info">
                     当前运行在 Web 版本。数据源地址由构建变量 <code>VITE_NEWS_API_URL</code>{" "}
                     决定；桌面版本可以在此面板保存自定义地址。
                 </div>
@@ -150,10 +190,7 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
             )}
 
             {configurable && (
-                <form
-                    className="rounded-2xl bg-base/70 p-5 shadow shadow-primary/8 backdrop-blur-sm"
-                    onSubmit={(event) => void handleSave(event)}
-                >
+                <form className="settings-group" onSubmit={(event) => void handleSave(event)}>
                     <label className="block text-sm font-medium" htmlFor="desktop-news-api-url">
                         数据源 API URL
                     </label>
@@ -224,7 +261,7 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
             )}
 
             {trayConfigurable && (
-                <div className="rounded-2xl bg-base/70 p-5 shadow shadow-primary/8 backdrop-blur-sm">
+                <div className="settings-group">
                     <label className="flex items-start gap-3 text-sm font-medium" htmlFor="desktop-tray-background">
                         <input
                             id="desktop-tray-background"
