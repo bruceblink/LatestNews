@@ -30,9 +30,12 @@ import {
     markPrimitiveMetadataSynced,
 } from "~/services/metadata.service.ts";
 
+import { InstallationGuide } from "./installation-guide";
+
 export function Menu() {
     const { loggedIn, userInfo, enableLogin } = useLoginState();
     const [shown, show] = useState(false);
+    const [installationOpen, setInstallationOpen] = useState(false);
     const menuRef = useRef<HTMLSpanElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
     useEffect(() => {
@@ -43,7 +46,6 @@ export function Menu() {
         document.addEventListener("pointerdown", dismiss);
         return () => document.removeEventListener("pointerdown", dismiss);
     }, [shown]);
-    const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [syncing, setSyncing] = useState(false);
     const navigate = useNavigate();
     const toaster = useToast();
@@ -60,27 +62,6 @@ export function Menu() {
 
     const hasPendingSyncChanges = loggedIn && primitiveMetadata.action === "manual";
 
-    useEffect(() => {
-        const handleBeforeInstallPrompt = (event: Event) => {
-            const promptEvent = event as BeforeInstallPromptEvent;
-            promptEvent.preventDefault();
-            setInstallPrompt(promptEvent);
-        };
-
-        const handleAppInstalled = () => {
-            setInstallPrompt(null);
-            toaster("应用已安装，可以像客户端一样从桌面或主屏启动", { type: "success" });
-        };
-
-        window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-        window.addEventListener("appinstalled", handleAppInstalled);
-
-        return () => {
-            window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-            window.removeEventListener("appinstalled", handleAppInstalled);
-        };
-    }, [toaster]);
-
     const handleResetLayout = () => {
         if (!window.confirm("确认重置当前布局到默认配置吗？")) return;
 
@@ -88,21 +69,6 @@ export function Menu() {
         toaster(loggedIn ? "布局已重置，稍后会自动同步到云端" : "布局已重置为默认配置", {
             type: "success",
         });
-    };
-
-    const handleInstall = async () => {
-        if (!installPrompt) {
-            toaster("当前环境暂不支持安装，请使用支持 PWA 安装的浏览器打开", { type: "info" });
-            return;
-        }
-
-        await installPrompt.prompt();
-        const { outcome } = await installPrompt.userChoice;
-        setInstallPrompt(null);
-
-        if (outcome === "accepted") {
-            toaster("安装请求已确认，稍后可从桌面或主屏启动", { type: "success" });
-        }
     };
 
     const goToHealthPage = () => {
@@ -254,10 +220,9 @@ export function Menu() {
                 if (!event.currentTarget.contains(event.relatedTarget)) show(false);
             }}
             onClickCapture={(event) => {
-                if (
-                    event.target instanceof Element &&
-                    event.target.closest("#dropdown-menu button, #dropdown-menu a")
-                ) {
+                if (!(event.target instanceof Element)) return;
+                const action = event.target.closest("#dropdown-menu button, #dropdown-menu a");
+                if (action && !action.hasAttribute("data-open-installation-guide")) {
                     show(false);
                 }
             }}
@@ -419,10 +384,17 @@ export function Menu() {
                                     <span>重置布局</span>
                                 </button>
                             </li>
-                            <li>
-                                <button type="button" onClick={() => void handleInstall()}>
-                                    <span className="i-ph:device-mobile-speaker-duotone inline-block" />
-                                    <span>{installPrompt ? "安装应用" : "安装指引"}</span>
+                            <li className="block! p-0!">
+                                <button
+                                    type="button"
+                                    data-open-installation-guide
+                                    onClick={() => {
+                                        show(false);
+                                        setInstallationOpen(true);
+                                    }}
+                                >
+                                    <span className="i-ph:download-simple-duotone inline-block" aria-hidden="true" />
+                                    <span>安装与下载</span>
                                 </button>
                             </li>
                             <li>
@@ -460,6 +432,7 @@ export function Menu() {
                     </motion.div>
                 </div>
             )}
+            <InstallationGuide open={installationOpen} onOpenChange={setInstallationOpen} triggerRef={triggerRef} />
         </span>
     );
 }

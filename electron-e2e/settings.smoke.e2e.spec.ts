@@ -91,6 +91,26 @@ test("opens the shared settings route in the Electron renderer", async () => {
     expect(settings?.defaultUrl).toMatch(/^https?:\/\//);
 });
 
+test("shows desktop update instructions without a PWA install action", async () => {
+    const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+    await page.goto("app://bundle/settings");
+    await page.getByRole("button", { name: "打开菜单", exact: true }).click();
+    await page.getByRole("button", { name: "安装与下载", exact: true }).click();
+    const guide = page.getByRole("dialog", { name: "安装与下载" });
+    await expect(guide).toContainText(`当前为桌面版 v${version}。`);
+    await expect(guide.getByRole("heading", { name: "更新桌面客户端" })).toBeVisible();
+    await expect(guide.getByRole("link", { name: "查看已发布版本" })).toHaveAttribute(
+        "href",
+        "https://github.com/bruceblink/latestnews/releases/latest"
+    );
+    await expect(guide.getByRole("button", { name: "安装浏览器应用", exact: true })).toHaveCount(0);
+    await guide.getByRole("tab", { name: "浏览器应用", exact: true }).click();
+    await expect(guide.getByRole("link", { name: "https://news.likanug.top" })).toBeVisible();
+    await expect(guide.getByLabel("浏览器环境")).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(guide).not.toBeVisible();
+});
+
 test("saves and resets the desktop API URL through the settings panel", async () => {
     await page.goto("app://bundle/settings");
 

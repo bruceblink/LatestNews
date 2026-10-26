@@ -121,3 +121,104 @@ test("loads the settings route directly", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "设置", level: 1 })).toBeVisible();
     await expect(page.getByText("Web 和桌面端使用同一套配置面板")).toBeVisible();
 });
+
+async function openInstallationGuide(page: Page) {
+    const menu = page.getByRole("button", { name: "打开菜单", exact: true });
+    await menu.focus();
+    await page.keyboard.press("Enter");
+    await page.getByRole("button", { name: "安装与下载", exact: true }).click();
+    return page.getByRole("dialog", { name: "安装与下载" });
+}
+
+test("opens installation instructions by keyboard and restores focus when closed", async ({ page }) => {
+    await installApiMocks(page);
+    await page.goto("/");
+    const guide = await openInstallationGuide(page);
+    await expect(guide).toBeVisible();
+    await expect(guide.getByRole("link", { name: "查看已发布版本" })).toHaveAttribute(
+        "href",
+        "https://github.com/bruceblink/latestnews/releases/latest"
+    );
+    await guide.getByLabel("操作系统").selectOption("macos");
+    await expect(guide).toContainText("macOS-arm64.dmg / macOS-x64.dmg");
+    await guide.getByLabel("操作系统").selectOption("linux");
+    await expect(guide).toContainText("Linux-x86_64.AppImage");
+    await guide.getByRole("tab", { name: "桌面客户端", exact: true }).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(guide.getByRole("tab", { name: "浏览器应用", exact: true })).toBeFocused();
+    await expect(guide.getByRole("tabpanel", { name: "浏览器应用" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(guide).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "打开菜单", exact: true })).toBeFocused();
+});
+
+test.describe("mobile installation", () => {
+    test.use({ hasTouch: true });
+
+    test("keeps installation steps readable in a narrow touch viewport", async ({ page }) => {
+        await page.setViewportSize({ width: 375, height: 812 });
+        await installApiMocks(page);
+        await page.goto("/");
+        await page.getByRole("button", { name: "打开菜单", exact: true }).tap();
+        await page.getByRole("button", { name: "安装与下载", exact: true }).tap();
+        const guide = page.getByRole("dialog", { name: "安装与下载" });
+        await guide.getByRole("tab", { name: "浏览器应用", exact: true }).tap();
+        await guide.getByLabel("浏览器环境").selectOption("ios");
+        await expect(guide).toContainText("添加到主屏幕");
+        expect(await guide.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+        await guide.getByRole("button", { name: "关闭安装与下载" }).tap();
+        await expect(guide).not.toBeVisible();
+    });
+});
+
+for (const outcome of ["accepted", "dismissed", "error"] as const) {
+    test(`handles the one-use browser installation request: ${outcome}`, async ({ page }) => {
+        const errors: Error[] = [];
+        page.on("pageerror", (error) => errors.push(error));
+        await installApiMocks(page);
+        await page.goto("/");
+        const guide = await openInstallationGuide(page);
+        await guide.getByRole("tab", { name: "浏览器应用", exact: true }).click();
+        await page.evaluate((result) => {
+            const event = new Event("beforeinstallprompt", { cancelable: true });
+            Object.assign(event, {
+                prompt: async () => {
+                    if (result === "error") throw new Error("Installation prompt unavailable");
+                },
+                userChoice: Promise.resolve({ outcome: result, platform: "web" }),
+            });
+            window.dispatchEvent(event);
+        }, outcome);
+        await guide.getByRole("button", { name: "安装浏览器应用", exact: true }).click();
+        const messages = {
+            accepted: "已确认安装请求",
+            dismissed: "已取消安装",
+            error: "未能打开安装窗口",
+        };
+        await expect(guide).toContainText(messages[outcome]);
+        await expect(guide.getByRole("button", { name: "安装浏览器应用", exact: true })).toHaveCount(0);
+        expect(errors).toEqual([]);
+        if (outcome === "accepted") {
+            await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")));
+            await expect(guide).toContainText("当前已在浏览器应用中运行，或已完成安装。");
+            await expect(guide.getByLabel("浏览器环境")).toHaveCount(0);
+        }
+    });
+}
+
+test("recognizes an already running standalone browser app", async ({ page }) => {
+    await page.addInitScript(() => {
+        const matchMedia = window.matchMedia.bind(window);
+        window.matchMedia = (query) => {
+            const result = matchMedia(query);
+            if (query === "(display-mode: standalone)") Object.defineProperty(result, "matches", { value: true });
+            return result;
+        };
+    });
+    await installApiMocks(page);
+    await page.goto("/");
+    const guide = await openInstallationGuide(page);
+    await guide.getByRole("tab", { name: "浏览器应用", exact: true }).click();
+    await expect(guide).toContainText("当前已在浏览器应用中运行，或已完成安装。");
+    await expect(guide.getByRole("button", { name: "安装浏览器应用", exact: true })).toHaveCount(0);
+});

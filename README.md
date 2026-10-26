@@ -2,20 +2,74 @@
 
 ![LatestNews logo](./public/icon.svg)
 
-更干净地阅读实时热点，聚合你真正关心的新闻源。
+支持 Web 与桌面端的实时资讯阅读器，聚合你真正关心的新闻源。
 
-[在线体验](https://news.likanug.top) · [贡献指南](./CONTRIBUTING.md) · [反馈问题](https://github.com/bruceblink/LatestNews/issues)
+[打开 Web 版](https://news.likanug.top) · [下载桌面版](https://github.com/bruceblink/LatestNews/releases/latest) · [安装步骤](#安装与使用) · [反馈问题](https://github.com/bruceblink/LatestNews/issues)
 
 ## 项目简介
 
-LatestNews 是一个以中文资讯聚合为核心的实时阅读应用，提供更轻量的页面结构、更明确的个性化布局，以及适合长期维护的数据源治理能力。项目基于 React、Vite 和 Nitro 构建，前后端同仓，支持 Web/PWA、Docker 部署和复用同一前端的 Electron 桌面应用。
+LatestNews 是一个以中文资讯聚合为核心的实时阅读应用。Web 与 Electron 桌面端共用页面、阅读功能和设置面板，支持自定义布局、统一 Feed、阅读历史、收藏和来源健康诊断。服务端支持 Node、Docker 和 Cloudflare Pages 部署。
 
-当前版本重点关注以下方向：
+当前源码版本为 `0.7.1`，在 `v0.7.0` 基础上迭代。Web 可在网站部署后即时更新；桌面端使用 GitHub Releases 中实际发布的安装包。源码版本号不表示同版本安装包已经发布。
 
-- 实时热点与高频新闻源的稳定聚合
-- 基于 GitHub 登录的布局同步
-- 面向移动端的 PWA 使用体验
-- 数据源健康监控与抓取质量治理
+| 使用方式 | 安装要求 | 新闻来源 | 更新方式 |
+| --- | --- | --- | --- |
+| Web | 浏览器直接打开，无需安装 | 远端新闻服务 | 随网站部署更新 |
+| 浏览器应用（Progressive Web App / PWA） | 通过浏览器安装到桌面或主屏幕 | 与当前网站相同 | 随网站更新，收到新版本提示后刷新 |
+| Electron 桌面端 | Windows、macOS 或 Linux 安装包 | 远端、本地插件或自动回退 | 下载安装同一架构的新版本 |
+
+## 安装与使用
+
+### Web 与浏览器应用
+
+直接打开 [news.likanug.top](https://news.likanug.top) 即可阅读。页面右上角菜单中的 **安装与下载** 提供桌面下载入口与浏览器安装步骤。浏览器提供原生安装请求时，面板还会显示 **安装浏览器应用** 按钮。
+
+| 设备与浏览器 | 安装步骤 |
+| --- | --- |
+| 电脑 Chrome | 浏览器菜单 → 投放、保存和分享 → 将网页安装为应用；部分网站也会显示地址栏安装图标 |
+| 电脑 Edge | 浏览器菜单 → 应用 → 将此站点作为应用安装 |
+| Android Chrome | 浏览器菜单 → 添加到主屏幕或安装应用 → 按提示确认 |
+| iPhone / iPad Safari | 分享 → 添加到主屏幕 → 添加；如果显示“作为 Web App 打开”，将其打开 |
+| Mac Safari | 支持此功能的版本可从“文件”菜单选择“添加到程序坞” |
+
+浏览器菜单名称可能因版本而异。没有安装入口时，可以直接使用网页，或换用上述浏览器。微信等内置浏览器可先选择“在浏览器中打开”。安装步骤参考 [Chrome 帮助](https://support.google.com/chrome/answer/9658361?hl=zh-Hans)、[Edge 帮助](https://support.microsoft.com/en-us/edge/install-manage-or-uninstall-apps-in-microsoft-edge) 和 [Apple 帮助](https://support.apple.com/zh-cn/guide/iphone/iphea86e5236/ios)。
+
+Web 无需等待桌面 Release 即可部署更新。已打开的网页可能仍在使用旧资源；收到新版本提示时刷新即可。离线模式只能读取已缓存的内容，获取新新闻仍需联网。
+
+### 桌面客户端
+
+1. 打开 [最新已发布版本](https://github.com/bruceblink/LatestNews/releases/latest)，在 **Assets** 中选择对应系统和架构的安装包。也可在 [全部版本](https://github.com/bruceblink/LatestNews/releases) 中查看历史版本和变更记录。
+2. 按下表完成安装。使用安装包无需预先安装 Node.js 或 pnpm。
+3. 启动 LatestNews。右上角齿轮打开设置，菜单中的 **安装与下载** 可查看后续已发布版本。
+
+以下文件名中的 `<版本>` 以下载页面为准。`x64`、`x86_64` 和 `amd64` 均表示常见的 Intel / AMD 64 位架构；`arm64` 表示 ARM 64 位架构。
+
+| 系统与架构 | 安装包 | 安装方式 |
+| --- | --- | --- |
+| Windows x64 | `LatestNews-<版本>-Windows-x64.exe` | 运行安装程序，选择安装目录，从桌面或开始菜单启动 |
+| Windows ARM64 | `LatestNews-<版本>-Windows-arm64.exe` | 在系统设置的“系统信息”中确认 ARM64 后，运行安装程序 |
+| macOS Apple Silicon | `LatestNews-<版本>-macOS-arm64.dmg` | 打开 DMG，将应用拖入“应用程序”后启动 |
+| macOS Intel | `LatestNews-<版本>-macOS-x64.dmg` | 在“关于本机”确认 Intel 处理器后，按 DMG 步骤安装 |
+| Linux x64 | `LatestNews-<版本>-Linux-x86_64.AppImage` 或 `LatestNews-<版本>-Linux-amd64.deb` | AppImage 需先在文件属性中允许作为程序执行；Debian / Ubuntu 可用软件安装器安装 DEB |
+| Linux ARM64 | `LatestNews-<版本>-Linux-arm64.AppImage` 或 `LatestNews-<版本>-Linux-arm64.deb` | 按对应的 AppImage 或 DEB 步骤安装 |
+
+macOS Release 也提供 ZIP 包。桌面包目前没有代码签名，macOS 包没有公证。仅从本仓库的 Releases 获取安装包；如果系统阻止启动，请先核对下载来源和系统提示。
+
+### 桌面首次配置与更新
+
+`0.7.x` 桌面端默认使用自动采集模式，新闻服务为 `https://news.likanug.top`。设置支持三种采集模式：
+
+- **自动**：优先请求远端；网络、超时或服务端错误时，对可用的本地插件来源回退。
+- **远端**：使用配置的新闻 API。可填写自建服务根地址。
+- **本地**：只使用已安装的本地来源插件。安装包预置 Pcbeta、FreeBuf、掘金和 Hacker News，首次启动会安装缺失包。
+
+本地插件采集仍需联网。采集失败时可以回退到已有的持久新闻缓存；没有缓存的来源无法离线读取。新闻 API 配置不改变认证服务或 SyncHub 地址。
+
+托盘后台刷新默认关闭。启用后，关闭窗口会保留托盘并继续刷新本地来源。完全退出时使用托盘菜单的退出操作。
+
+桌面端当前通过安装包更新：先完全退出应用，再安装同一系统与架构的新版本。PWA 的网页更新不会替换 Electron 安装包。本次桌面版本为 `v0.7.1`，后续版本以它为迭代基线。Web 版本可在网站部署后即时更新，不需要等待桌面安装包发布。具体版本包含的功能以对应 Release 变更记录为准。
+
+安装入口改进记录见 [Web 与桌面安装指引更新](./docs/23-installation-guide-update.md)。
 
 ## 当前能力
 
@@ -29,25 +83,29 @@ LatestNews 是一个以中文资讯聚合为核心的实时阅读应用，提供
 - 支持缓存、限频抓取与登录用户强制刷新
 - 支持通过 `https://sync.likanug.app` 和 LatestNews API Key 同步阅读历史、收藏与偏好，也可覆盖服务地址接入自建 SyncHub
 - Web 与 Electron 共用独立的设置按钮和配置面板；桌面端可以覆盖新闻数据源 API 根地址
+- 桌面端支持自动、远端和本地采集模式，预置四个可信来源插件，并保存本地新闻缓存
+- 桌面端可选关闭到托盘及后台刷新本地来源
 
 ## 技术栈
 
-- 前端：React 18、Vite 7、TanStack Router、TanStack Query、Jotai、UnoCSS
+- 前端：React 18、Vite 8、TanStack Router、TanStack Query、Jotai、UnoCSS
 - 服务端：Nitro、H3、better-sqlite3、db0
 - 抓取与解析：Cheerio、ofetch、fast-xml-parser
 - 工程化：TypeScript、ESLint、Vitest、Commitlint、GitHub Actions
 
-## 快速开始
+## 源码开发
 
 ### 环境要求
 
-- Node.js 22+
-- pnpm 10+
+- 推荐 Node.js 24；使用 Node.js 22 时需为 22.12 或更高版本，详见 [Vite 环境要求](https://vite.dev/guide/)
+- 使用 `package.json` 指定的 pnpm 版本，当前为 `10.30.3`
+
+这些工具仅用于源码开发和构建。在线阅读与桌面安装包不需要这些工具。
 
 ### 本地开发
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 pnpm dev
 ```
 
@@ -55,7 +113,7 @@ pnpm dev
 
 ### Electron 桌面开发
 
-Electron 桌面端复用同一份 `index.html`、React 入口、路由、页面和 service。应用界面从安装包中的本地资源加载。新闻数据默认请求 `https://news.likanug.top`，登录默认请求 `https://api.likanug.top`。
+Electron 桌面端复用同一份 React 入口、路由、页面和 service。应用界面从安装包中的本地资源加载。新闻数据默认请求 `https://news.likanug.top`，登录默认请求 `https://api.likanug.top`。默认自动模式可对本地插件支持的来源回退采集。
 
 ```bash
 pnpm electron:dev
@@ -161,11 +219,11 @@ docker compose -f docker-compose.yml up -d
 | `pnpm test:electron` | 检查桌面 API 转发和资源隔离规则 |
 | `pnpm performance:electron-lifecycle` | 构建并探测桌面启动、`/feed` 切页、最小化恢复和窗口关闭 |
 
-## 0.6.0 发布产物
+## 发布产物
 
-[GitHub Releases](https://github.com/bruceblink/LatestNews/releases) 提供 Windows x64/ARM64、macOS Intel/Apple Silicon 和 Linux x64/ARM64 桌面包，也提供 Web Node 部署包。桌面安装包目前没有代码签名；macOS 包也没有公证。
+[GitHub Releases](https://github.com/bruceblink/LatestNews/releases) 提供 Windows、macOS 和 Linux 的 x64/ARM64 桌面包，以及 `LatestNews-<版本>-Web.zip` Node 部署包。普通用户使用上方的 [Web 入口或桌面安装步骤](#安装与使用)；自托管使用 [部署运维文档](./docs/deployment.md)。
 
-Docker 镜像发布到 `ghcr.io/bruceblink/latestnews`，支持 `linux/amd64` 和 `linux/arm64`。使用 Compose 时可将镜像版本固定为 `ghcr.io/bruceblink/latestnews:0.6.0`。
+Docker 镜像发布到 `ghcr.io/bruceblink/latestnews`，支持 `linux/amd64` 和 `linux/arm64`。使用 Compose 时将镜像固定为已发布的版本，例如 `ghcr.io/bruceblink/latestnews:<版本>`。Web 站点部署与桌面安装包独立交付，不必等待所有平台完成打包后才更新网站。
 
 ## 项目结构
 
