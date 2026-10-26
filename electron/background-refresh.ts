@@ -163,7 +163,7 @@ export function createDesktopBackgroundRefresh(options: DesktopBackgroundRefresh
 
         let trackedRun: Promise<void>;
         for (const sourceId of selected) runningSourceIds.add(sourceId);
-        trackedRun = refreshInBatches(selected, sourceById, currentGeneration).finally(() => {
+        trackedRun = refreshInBatches(selected, sourceById, currentGeneration, true).finally(() => {
             for (const sourceId of selected) runningSourceIds.delete(sourceId);
             if (runningPromise === trackedRun) runningPromise = undefined;
             scheduleNext();
@@ -191,10 +191,18 @@ export function createDesktopBackgroundRefresh(options: DesktopBackgroundRefresh
     async function refreshInBatches(
         sourceIds: readonly string[],
         sourceById: ReadonlyMap<string, BackgroundRefreshSource>,
-        currentGeneration: number
+        currentGeneration: number,
+        respectPause = false
     ) {
         for (let index = 0; index < sourceIds.length; index += MAX_CONCURRENT_REFRESHES) {
-            if (!enabled || currentGeneration !== generation) return;
+            if (
+                !enabled ||
+                currentGeneration !== generation ||
+                options.canRefresh?.() === false ||
+                (respectPause && pausedReasons.size > 0)
+            ) {
+                return;
+            }
             const batch = sourceIds.slice(index, index + MAX_CONCURRENT_REFRESHES);
             await Promise.all(
                 batch.map(async (sourceId) => {

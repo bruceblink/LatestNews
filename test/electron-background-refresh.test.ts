@@ -170,6 +170,38 @@ describe("desktop background refresh", () => {
         expect(scheduler.snapshot()).toMatchObject({ enabled: false, paused: false, running: false });
     });
 
+    it.each(["window-visible", "system-suspend", "remote-mode"])(
+        "does not start queued background sources after %s",
+        async (reason) => {
+            vi.useFakeTimers();
+            let finishBatch!: () => void;
+            const gate = new Promise<void>((resolve) => {
+                finishBatch = resolve;
+            });
+            let canRefresh = true;
+            const refreshSource = vi.fn(async (_sourceId: string) => gate);
+            const scheduler = createDesktopBackgroundRefresh({
+                listSources: () => ["a", "b", "c", "d"].map((id) => ({ id, interval: 30_000 })),
+                refreshSource,
+                canRefresh: () => canRefresh,
+            });
+            scheduler.start();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(refreshSource).toHaveBeenCalledTimes(2);
+            if (reason === "remote-mode") canRefresh = false;
+            else scheduler.pause(reason);
+            finishBatch();
+            await vi.waitFor(() => expect(scheduler.snapshot().running).toBe(false));
+            expect(refreshSource).toHaveBeenCalledTimes(2);
+            canRefresh = true;
+            if (reason === "remote-mode") scheduler.start();
+            else scheduler.resume(reason);
+            await vi.advanceTimersByTimeAsync(0);
+            expect(refreshSource.mock.calls.map(([id]) => id)).toEqual(["a", "b", "c", "d"]);
+            scheduler.dispose();
+        }
+    );
+
     it("does not start another batch after the scheduler stops", async () => {
         vi.useFakeTimers();
         let finishBatch!: () => void;
