@@ -1,11 +1,11 @@
 import clsx from "clsx";
-import { useMemo } from "react";
 import { useAtomValue } from "jotai";
 import { metadata } from "@shared/metadata";
 import { getTodayStart } from "~/utils/date";
 import { currentColumnIDAtom } from "~/atoms";
 import { fixedColumnIds } from "@shared/types";
 import { useHistory } from "~/hooks/useHistory";
+import { useRef, useMemo, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 
 const columnIcons = {
@@ -15,6 +15,7 @@ const columnIcons = {
 };
 
 export function NavBar() {
+    const navRef = useRef<HTMLElement>(null);
     const currentId = useAtomValue(currentColumnIDAtom);
     const { history } = useHistory();
     const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -24,8 +25,13 @@ export function NavBar() {
         return history.filter((item) => item.readAt >= start).length;
     }, [history]);
 
+    useEffect(() => {
+        const activeLink = navRef.current?.querySelector<HTMLElement>('[aria-current="page"]');
+        activeLink?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }, [currentId, pathname]);
+
     return (
-        <nav className="primary-nav" aria-label="主导航">
+        <nav ref={navRef} className="primary-nav" aria-label="主导航">
             {fixedColumnIds.map((columnId) => {
                 const active = isColumnActive && currentId === columnId;
                 return (

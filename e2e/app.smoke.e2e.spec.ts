@@ -122,6 +122,40 @@ test("loads the settings route directly", async ({ page }) => {
     await expect(page.getByText("Web 和桌面端使用同一套配置面板")).toBeVisible();
 });
 
+test("shows an actionable empty state for a new reading history", async ({ page }) => {
+    await installApiMocks(page);
+    await page.goto("/history");
+
+    await expect(page.getByRole("heading", { name: "还没有阅读记录" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "浏览热门资讯" })).toHaveAttribute("href", "/c/hottest");
+});
+
+test("keeps mobile feed filters compact without horizontal overflow", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await installApiMocks(page);
+    await page.goto("/feed");
+
+    const layout = await page.locator(".feed-filters").evaluate((element) => ({
+        columns: getComputedStyle(element).gridTemplateColumns.split(" ").length,
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: window.innerWidth,
+    }));
+
+    expect(layout.columns).toBe(2);
+    expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+});
+
+test("scrolls a selected mobile navigation link into view", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await installApiMocks(page);
+    await page.goto("/");
+    await page.getByRole("link", { name: "历史", exact: true }).click();
+
+    await expect(page).toHaveURL(/\/history$/);
+    await expect(page.getByRole("link", { name: "历史", exact: true })).toHaveAttribute("aria-current", "page");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 async function openInstallationGuide(page: Page) {
     const menu = page.getByRole("button", { name: "打开菜单", exact: true });
     await menu.focus();

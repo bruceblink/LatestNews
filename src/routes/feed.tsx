@@ -186,8 +186,8 @@ function FeedPage() {
                             )}
                         </div>
                     </div>
-                    <div className="flex flex-col gap-2 md:items-end">
-                        <div className="flex flex-wrap gap-2">
+                    <div className="feed-toolbar-actions">
+                        <div className="feed-mode-switch">
                             {scopeOptions.map((option) => (
                                 <button
                                     key={option.id}
@@ -198,6 +198,7 @@ function FeedPage() {
                                             ? "bg-cyan-500 text-zinc-900 font-semibold"
                                             : "bg-zinc-200/75 text-zinc-700 hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-400 dark:hover:bg-zinc-700/75"
                                     )}
+                                    aria-pressed={scope === option.id}
                                     onClick={() => setScope(option.id)}
                                 >
                                     <span className={option.icon} />
@@ -207,7 +208,7 @@ function FeedPage() {
                         </div>
                         <button
                             type="button"
-                            className="inline-flex items-center gap-2 rounded-full bg-zinc-200/75 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-300 dark:hover:bg-zinc-700/75"
+                            className="feed-refresh inline-flex items-center gap-2 rounded-full bg-zinc-200/75 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-300 dark:hover:bg-zinc-700/75"
                             onClick={() => void refetch()}
                         >
                             <span className={clsx("i-ph:arrow-clockwise-duotone", isFetching && "animate-spin")} />
@@ -216,7 +217,7 @@ function FeedPage() {
                     </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_160px_160px_130px_auto]">
+                <div className="feed-filters mt-4 grid gap-3 lg:grid-cols-[1fr_160px_160px_130px_auto]">
                     <label className="relative block">
                         <span className="i-ph:magnifying-glass-duotone absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
                         <input
@@ -228,6 +229,7 @@ function FeedPage() {
                     </label>
                     <select
                         value={sourceId}
+                        aria-label="筛选来源"
                         onChange={(event) => setSourceId(event.currentTarget.value as SourceID | "all")}
                         className="h-10 rounded-xl border border-zinc-200/90 bg-white/86 px-3 text-sm outline-none focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
                     >
@@ -240,6 +242,7 @@ function FeedPage() {
                     </select>
                     <select
                         value={categoryId}
+                        aria-label="筛选分类"
                         onChange={(event) => setCategoryId(event.currentTarget.value as UnifiedFeedCategoryID | "all")}
                         className="h-10 rounded-xl border border-zinc-200/90 bg-white/86 px-3 text-sm outline-none focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
                     >
@@ -251,6 +254,7 @@ function FeedPage() {
                     </select>
                     <select
                         value={since}
+                        aria-label="筛选时间范围"
                         onChange={(event) => setSince(event.currentTarget.value as UnifiedFeedSince)}
                         className="h-10 rounded-xl border border-zinc-200/90 bg-white/86 px-3 text-sm outline-none focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
                     >

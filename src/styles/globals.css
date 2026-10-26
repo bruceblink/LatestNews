@@ -235,6 +235,11 @@ a {
     gap: 3px;
     padding: 5px;
     min-width: 0;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+}
+.primary-nav::-webkit-scrollbar {
+    display: none;
 }
 .nav-link {
     display: inline-flex;
@@ -804,6 +809,127 @@ a {
 .history-page {
     max-width: 1020px;
 }
+.history-sync-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 16px;
+}
+.history-sync-heading {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: flex-start;
+    gap: 10px;
+}
+.history-sync-heading > span {
+    margin-top: 2px;
+    color: var(--accent-bright);
+    font-size: 20px;
+}
+.history-sync-heading h2,
+.history-sync-heading p {
+    margin: 0;
+}
+.history-sync-heading h2 {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 650;
+}
+.history-sync-heading p {
+    margin-top: 3px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+.history-sync-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    min-width: 0;
+}
+.history-sync-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+.history-sync-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.history-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.history-empty-state {
+    display: flex;
+    min-height: 210px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 30px 20px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 18px;
+    background: var(--surface-soft);
+    color: var(--text-secondary);
+    text-align: center;
+}
+.history-empty-state > span:first-child {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    color: var(--accent-bright);
+    font-size: 24px;
+}
+.history-empty-state h2,
+.history-empty-state p {
+    margin: 0;
+}
+.history-empty-state h2 {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 650;
+}
+.history-empty-state p {
+    max-width: 36em;
+    font-size: 13px;
+    line-height: 1.7;
+}
+.history-empty-action {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 0 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    border-radius: 11px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    transition:
+        background 0.15s,
+        border-color 0.15s;
+}
+.history-empty-action:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent-soft) 75%, var(--surface));
+}
+.history-empty-state button {
+    cursor: pointer;
+}
 .app-main .surface-panel {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -818,6 +944,17 @@ a {
 }
 .feed-toolbar {
     padding: 26px !important;
+}
+.feed-toolbar-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+.feed-mode-switch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 .feed-article {
     padding: 18px 8px;
@@ -1286,8 +1423,81 @@ a {
     .feed-toolbar {
         padding: 18px !important;
     }
+    .feed-toolbar-actions {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .feed-mode-switch {
+        display: grid;
+        min-width: 0;
+        flex: 1;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 4px;
+    }
+    .feed-mode-switch > button {
+        justify-content: center;
+        gap: 4px;
+        padding: 7px 5px;
+        font-size: 12px;
+    }
+    .feed-refresh {
+        min-height: 34px;
+        align-self: flex-start;
+        flex-shrink: 0;
+        padding-inline: 10px;
+    }
+    .feed-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .feed-filters > label {
+        grid-column: 1 / -1;
+    }
+    .feed-filters > select {
+        min-width: 0;
+        width: 100%;
+    }
+    .feed-filters > button {
+        grid-column: 2;
+    }
     .feed-article-title {
         font-size: 14px;
+    }
+    .history-page-header {
+        align-items: flex-start;
+    }
+    .history-heading-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .history-sync-panel {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+    .history-sync-fields {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+    .history-sync-actions > button {
+        min-height: 40px;
+        flex: 1;
+    }
+    .history-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 4px;
+    }
+    .history-tab-button {
+        min-width: 0;
+        padding-inline: 4px;
+        white-space: nowrap;
+        font-size: 12px;
+    }
+    .history-empty-state {
+        min-height: 190px;
+        padding: 26px 16px;
     }
     .settings-dialog {
         padding: 20px;
