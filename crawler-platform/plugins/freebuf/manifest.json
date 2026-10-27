@@ -10,6 +10,15 @@
   "permissions": {
     "network": [{ "origin": "https://www.freebuf.com", "methods": ["GET"] }]
   },
+  "limits": {
+    "maxExecutionMs": 15000,
+    "maxRequestsPerRun": 16,
+    "maxRequestBodyBytes": 16384,
+    "maxResponseBytes": 2097152,
+    "maxResponseBytesPerRun": 8388608,
+    "maxItems": 30,
+    "maxOutputBytes": 262144
+  },
   "sources": [
     {
       "id": "freebuf",

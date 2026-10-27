@@ -11,6 +11,153 @@ import type {
 } from "../crawler-platform/host/process-host";
 
 describe("process crawler host", () => {
+    it("enforces manifest request and response budgets at the network broker", async () => {
+        const connection = new FakeCrawlerConnection();
+        let requestCount = 0;
+        const host = new ProcessCrawlerHost({
+            target: "node",
+            workerPath: "unused-worker.mjs",
+            spawn: () => connection,
+            timeoutMs: 1000,
+            requestHandler: async () => {
+                requestCount += 1;
+                return { status: 200, headers: {}, body: "{}" };
+            },
+        });
+        const manifest = {
+            ...jsonExamplePlugin.manifest,
+            id: "org.latestnews.example-budget",
+            limits: {
+                ...jsonExamplePlugin.manifest.limits,
+                maxRequestsPerRun: 1,
+                maxRequestBodyBytes: 2,
+            },
+        };
+
+        const collection = host.collect({
+            manifest,
+            entryPath: "unused-plugin.mjs",
+            sourceId: "latest",
+            context: createContext(new AbortController().signal),
+        });
+        connection.emitMessage({
+            type: "http-request",
+            requestId: 1,
+            request: { url: "https://json.example.test/news.json" },
+        });
+        await delay(0);
+        expect(requestCount).toBe(1);
+        expect(connection.sentMessages).toContainEqual({
+            type: "http-response",
+            requestId: 1,
+            response: { status: 200, headers: {}, body: "{}" },
+        });
+
+        connection.emitMessage({
+            type: "http-request",
+            requestId: 2,
+            request: { url: "https://json.example.test/news.json" },
+        });
+        await delay(0);
+        expect(requestCount).toBe(1);
+        expect(connection.sentMessages).toContainEqual(
+            expect.objectContaining({ type: "http-error", requestId: 2, code: "RESOURCE_LIMIT" })
+        );
+
+        connection.emitMessage({ type: "result", items: [] });
+        await expect(collection).resolves.toEqual([]);
+    });
+
+    it("rejects oversized request bodies before invoking the network handler", async () => {
+        const connection = new FakeCrawlerConnection();
+        let requestCount = 0;
+        const host = new ProcessCrawlerHost({
+            target: "node",
+            workerPath: "unused-worker.mjs",
+            spawn: () => connection,
+            timeoutMs: 1000,
+            requestHandler: async () => {
+                requestCount += 1;
+                return { status: 200, headers: {}, body: "{}" };
+            },
+        });
+        const manifest = {
+            ...jsonExamplePlugin.manifest,
+            id: "org.latestnews.example-body-budget",
+            limits: {
+                ...jsonExamplePlugin.manifest.limits,
+                maxRequestBodyBytes: 2,
+            },
+        };
+
+        const collection = host.collect({
+            manifest,
+            entryPath: "unused-plugin.mjs",
+            sourceId: "latest",
+            context: createContext(new AbortController().signal),
+        });
+        connection.emitMessage({
+            type: "http-request",
+            requestId: 1,
+            request: { url: "https://json.example.test/news.json", body: "too large" },
+        });
+        await delay(0);
+
+        expect(requestCount).toBe(0);
+        expect(connection.sentMessages).toContainEqual(
+            expect.objectContaining({ type: "http-error", requestId: 1, code: "RESOURCE_LIMIT" })
+        );
+        connection.emitMessage({ type: "result", items: [] });
+        await expect(collection).resolves.toEqual([]);
+    });
+
+    it("caps cumulative response bytes across one run", async () => {
+        const connection = new FakeCrawlerConnection();
+        let requestCount = 0;
+        const host = new ProcessCrawlerHost({
+            target: "node",
+            workerPath: "unused-worker.mjs",
+            spawn: () => connection,
+            timeoutMs: 1000,
+            requestHandler: async () => {
+                requestCount += 1;
+                return { status: 200, headers: {}, body: "x".repeat(requestCount < 3 ? 1024 : 1) };
+            },
+        });
+        const manifest = {
+            ...jsonExamplePlugin.manifest,
+            id: "org.latestnews.example-response-budget",
+            limits: {
+                ...jsonExamplePlugin.manifest.limits,
+                maxRequestsPerRun: 3,
+                maxResponseBytes: 1024,
+                maxResponseBytesPerRun: 2048,
+            },
+        };
+
+        const collection = host.collect({
+            manifest,
+            entryPath: "unused-plugin.mjs",
+            sourceId: "latest",
+            context: createContext(new AbortController().signal),
+        });
+        for (const requestId of [1, 2, 3]) {
+            connection.emitMessage({
+                type: "http-request",
+                requestId,
+                request: { url: "https://json.example.test/news.json" },
+            });
+            await delay(0);
+        }
+
+        expect(requestCount).toBe(3);
+        expect(connection.sentMessages).toContainEqual(
+            expect.objectContaining({ type: "http-error", requestId: 3, code: "RESOURCE_LIMIT" })
+        );
+        connection.emitMessage({ type: "result", items: [] });
+        await expect(collection).resolves.toEqual([]);
+    });
+
     it("aborts pending HTTP work and terminates a worker that ignores cancellation", async () => {
         const connection = new FakeCrawlerConnection();
         const contextController = new AbortController();

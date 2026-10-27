@@ -1,8 +1,10 @@
+import { utf8ByteLength } from "../sdk/limits";
 import { CrawlerPlatformError } from "../core/errors";
 import { normalizeCrawlerItems } from "../core/output";
 import { parseCrawlerPluginManifest } from "../sdk/manifest";
+import { assertCrawlerNetworkPermission } from "../sdk/network";
 
-import type { CrawlerPluginManifest, CrawlerNetworkPermission } from "../sdk/manifest";
+import type { CrawlerPluginManifest } from "../sdk/manifest";
 import type { CrawlerItem, CrawlerTarget, CrawlerContext, CrawlerHttpRequest, CrawlerHttpResponse } from "../sdk/types";
 
 export type CrawlerWorkerResponse =
@@ -84,9 +86,16 @@ export class ProcessCrawlerHost {
         const sourceKey = `${manifest.id}/${sourceId}` as const;
         const connection = this.options.spawn();
         this.connections.add(connection);
-        const timeoutMs = this.options.timeoutMs ?? 15000;
-        const maxResponseBytes = this.options.maxResponseBytes ?? 2 * 1024 * 1024;
+        const timeoutMs = Math.min(
+            this.options.timeoutMs ?? manifest.limits.maxExecutionMs,
+            manifest.limits.maxExecutionMs
+        );
+        const maxResponseBytes = Math.min(
+            this.options.maxResponseBytes ?? manifest.limits.maxResponseBytes,
+            manifest.limits.maxResponseBytes
+        );
         const cancelGraceMs = this.options.cancelGraceMs ?? 150;
+        const usage = { requestCount: 0, responseBytes: 0 };
 
         return new Promise<CrawlerItem[]>((resolve, reject) => {
             let settled = false;
@@ -133,6 +142,7 @@ export class ProcessCrawlerHost {
                         manifest,
                         signal: requestController.signal,
                         maxResponseBytes,
+                        usage,
                     }).catch((error: unknown) => {
                         if (!settled) {
                             finish(
@@ -146,7 +156,14 @@ export class ProcessCrawlerHost {
                 }
                 if (message.type === "result") {
                     try {
-                        finish(undefined, normalizeCrawlerItems(message.items, { sourceKey }));
+                        finish(
+                            undefined,
+                            normalizeCrawlerItems(message.items, {
+                                sourceKey,
+                                maxItems: manifest.limits.maxItems,
+                                maxBytes: manifest.limits.maxOutputBytes,
+                            })
+                        );
                     } catch (error) {
                         connection.kill();
                         finish(error);
@@ -194,6 +211,7 @@ export class ProcessCrawlerHost {
         manifest,
         signal,
         maxResponseBytes,
+        usage,
     }: {
         request: CrawlerHttpRequest;
         requestId: number;
@@ -201,15 +219,37 @@ export class ProcessCrawlerHost {
         manifest: CrawlerPluginManifest;
         signal: AbortSignal;
         maxResponseBytes: number;
+        usage: { requestCount: number; responseBytes: number };
     }) {
         try {
-            assertNetworkPermission(manifest.permissions.network, request);
+            assertCrawlerNetworkPermission(manifest.permissions.network, request);
+            const requestBodyBytes = request.body === undefined ? 0 : utf8ByteLength(request.body);
+            if (requestBodyBytes > manifest.limits.maxRequestBodyBytes) {
+                throw new CrawlerPlatformError(
+                    "RESOURCE_LIMIT",
+                    `Request body exceeds ${manifest.limits.maxRequestBodyBytes} bytes.`
+                );
+            }
+            if (usage.requestCount >= manifest.limits.maxRequestsPerRun) {
+                throw new CrawlerPlatformError(
+                    "RESOURCE_LIMIT",
+                    `Plugin ${manifest.id} exceeded ${manifest.limits.maxRequestsPerRun} requests per run.`
+                );
+            }
+            usage.requestCount += 1;
             const response = await this.options.requestHandler(request, signal);
             if (signal.aborted) return;
-            const byteLength = new TextEncoder().encode(response.body).byteLength;
+            const byteLength = utf8ByteLength(response.body);
             if (byteLength > maxResponseBytes) {
-                throw new CrawlerPlatformError("HTTP_FAILED", `Response exceeds ${maxResponseBytes} bytes.`);
+                throw new CrawlerPlatformError("RESOURCE_LIMIT", `Response exceeds ${maxResponseBytes} bytes.`);
             }
+            if (usage.responseBytes + byteLength > manifest.limits.maxResponseBytesPerRun) {
+                throw new CrawlerPlatformError(
+                    "RESOURCE_LIMIT",
+                    `Plugin response data exceeds ${manifest.limits.maxResponseBytesPerRun} bytes per run.`
+                );
+            }
+            usage.responseBytes += byteLength;
             connection.send({ type: "http-response", requestId, response });
         } catch (error) {
             if (signal.aborted) return;
@@ -221,24 +261,5 @@ export class ProcessCrawlerHost {
                 message: error instanceof Error ? error.message : "HTTP request failed.",
             });
         }
-    }
-}
-
-function assertNetworkPermission(permissions: readonly CrawlerNetworkPermission[], request: CrawlerHttpRequest) {
-    let url: URL;
-    try {
-        url = new URL(request.url);
-    } catch {
-        throw new CrawlerPlatformError("NETWORK_PERMISSION_DENIED", "Request URL is invalid.");
-    }
-
-    const method = request.method ?? "GET";
-    const allowed =
-        url.protocol === "https:" &&
-        !url.username &&
-        !url.password &&
-        permissions.some((permission) => permission.origin === url.origin && permission.methods.includes(method));
-    if (!allowed) {
-        throw new CrawlerPlatformError("NETWORK_PERMISSION_DENIED", `Request ${method} ${url.origin} is not allowed.`);
     }
 }

@@ -1,6 +1,8 @@
+import { utf8ByteLength } from "../sdk/limits";
 import { CrawlerPlatformError } from "./errors";
 import { normalizeCrawlerItems } from "./output";
 import { parseCrawlerPluginManifest } from "../sdk/manifest";
+import { assertCrawlerNetworkPermission } from "../sdk/network";
 
 import type { CrawlerPlugin, CrawlerContext, CrawlerSourceKey, CrawlerSourceDescriptor } from "../sdk/types";
 
@@ -64,37 +66,56 @@ export class CrawlerPluginRegistry {
         });
 
         if (context.signal.aborted) throw new CrawlerPlatformError("CANCELLED", `Collection for ${key} was cancelled.`);
-        return normalizeCrawlerItems(result, { sourceKey: key });
+        return normalizeCrawlerItems(result, {
+            sourceKey: key,
+            maxItems: registered.plugin.manifest.limits.maxItems,
+            maxBytes: registered.plugin.manifest.limits.maxOutputBytes,
+        });
     }
 }
 
 function createScopedContext(plugin: CrawlerPlugin, context: CrawlerContext): CrawlerContext {
+    const usage = { requestCount: 0, responseBytes: 0 };
     return {
         ...context,
         http: {
             request(request) {
-                let origin: string;
-                try {
-                    origin = new URL(request.url).origin;
-                } catch {
-                    throw new CrawlerPlatformError("NETWORK_PERMISSION_DENIED", "Request URL is invalid.");
-                }
-
-                const method = request.method ?? "GET";
-                const permitted = plugin.manifest.permissions.network.some(
-                    (permission) => permission.origin === origin && permission.methods.includes(method)
-                );
-                if (!permitted) {
-                    throw new CrawlerPlatformError(
-                        "NETWORK_PERMISSION_DENIED",
-                        `Plugin ${plugin.manifest.id} cannot request ${method} ${origin}.`
-                    );
-                }
+                assertCrawlerNetworkPermission(plugin.manifest.permissions.network, request);
                 if (context.signal.aborted) {
                     throw new CrawlerPlatformError("CANCELLED", `Request for ${plugin.manifest.id} was cancelled.`);
                 }
+                const requestBodyBytes = request.body === undefined ? 0 : utf8ByteLength(request.body);
+                if (requestBodyBytes > plugin.manifest.limits.maxRequestBodyBytes) {
+                    throw new CrawlerPlatformError(
+                        "RESOURCE_LIMIT",
+                        `Request body exceeds ${plugin.manifest.limits.maxRequestBodyBytes} bytes.`
+                    );
+                }
+                if (usage.requestCount >= plugin.manifest.limits.maxRequestsPerRun) {
+                    throw new CrawlerPlatformError(
+                        "RESOURCE_LIMIT",
+                        `Plugin ${plugin.manifest.id} exceeded ${plugin.manifest.limits.maxRequestsPerRun} requests per run.`
+                    );
+                }
+                usage.requestCount += 1;
 
-                return context.http.request(request);
+                return context.http.request(request).then((response) => {
+                    const responseBytes = utf8ByteLength(response.body);
+                    if (responseBytes > plugin.manifest.limits.maxResponseBytes) {
+                        throw new CrawlerPlatformError(
+                            "RESOURCE_LIMIT",
+                            `Response exceeds ${plugin.manifest.limits.maxResponseBytes} bytes.`
+                        );
+                    }
+                    if (usage.responseBytes + responseBytes > plugin.manifest.limits.maxResponseBytesPerRun) {
+                        throw new CrawlerPlatformError(
+                            "RESOURCE_LIMIT",
+                            `Plugin response data exceeds ${plugin.manifest.limits.maxResponseBytesPerRun} bytes per run.`
+                        );
+                    }
+                    usage.responseBytes += responseBytes;
+                    return response;
+                });
             },
         },
     };

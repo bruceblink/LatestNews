@@ -9,6 +9,7 @@ export type CrawlerErrorCode =
     | "INVALID_PLUGIN"
     | "NETWORK_PERMISSION_DENIED"
     | "QUEUE_FULL"
+    | "RESOURCE_LIMIT"
     | "SOURCE_NOT_FOUND"
     | "TARGET_UNSUPPORTED"
     | "TIMEOUT"

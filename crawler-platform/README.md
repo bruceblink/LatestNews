@@ -25,6 +25,26 @@ pnpm crawler bundle crawler-platform/examples/json --out out/plugins/example-jso
 
 `bundle` writes `plugin.mjs`, a normalized `manifest.json`, and `artifact.json` with SHA-256 digests. It refuses to overwrite an existing output directory and refuses output inside the plugin source directory.
 
+## Manifest resource limits
+
+The optional `limits` object is normalized by the SDK. Older manifests remain valid and receive these defaults:
+
+```json
+{
+  "limits": {
+    "maxExecutionMs": 15000,
+    "maxRequestsPerRun": 16,
+    "maxRequestBodyBytes": 16384,
+    "maxResponseBytes": 2097152,
+    "maxResponseBytesPerRun": 8388608,
+    "maxItems": 30,
+    "maxOutputBytes": 262144
+  }
+}
+```
+
+The Node and Electron process hosts enforce the limits before forwarding a request or accepting a result. The in-process registry used by SDK tests applies the same request, response, and output budgets. Hosts may impose a stricter deployment limit, but never widen the manifest. Exceeding a budget returns `RESOURCE_LIMIT` to the plugin. The current `trusted-js` runtime still assumes operator-reviewed code; these limits and the child process are execution boundaries, not a sandbox for unknown code.
+
 ## Package catalog and lifecycle
 
 `crawler-platform/catalog.json` is a local, reviewed catalog. Each entry names a plugin ID, version, and source directory relative to that catalog file. The CLI checks catalog paths, manifest identity, and version before it builds a package. It does not run plugin code during installation.

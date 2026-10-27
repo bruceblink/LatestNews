@@ -304,6 +304,20 @@ describe("crawler plugin SDK and core", () => {
                 sources: [...jsonExamplePlugin.manifest.sources, jsonExamplePlugin.manifest.sources[0]],
             })
         ).toThrowError(CrawlerPlatformError);
+        const legacyManifest = Object.fromEntries(
+            Object.entries(jsonExamplePlugin.manifest).filter(([key]) => key !== "limits")
+        );
+        expect(parseCrawlerPluginManifest(legacyManifest).limits).toEqual(jsonExamplePlugin.manifest.limits);
+        expect(() =>
+            parseCrawlerPluginManifest({
+                ...jsonExamplePlugin.manifest,
+                limits: {
+                    ...jsonExamplePlugin.manifest.limits,
+                    maxResponseBytes: 4096,
+                    maxResponseBytesPerRun: 2048,
+                },
+            })
+        ).toThrowError(CrawlerPlatformError);
     });
 
     it("rejects duplicate plugin IDs and requests outside declared origins", async () => {
@@ -339,6 +353,34 @@ describe("crawler plugin SDK and core", () => {
                 })
             )
         ).rejects.toMatchObject({ code: "TARGET_UNSUPPORTED" });
+    });
+
+    it("applies the same network budgets to the in-process registry", async () => {
+        const registry = new CrawlerPluginRegistry();
+        const manifest = {
+            ...jsonExamplePlugin.manifest,
+            id: "org.latestnews.example-registry-budget",
+            limits: {
+                ...jsonExamplePlugin.manifest.limits,
+                maxRequestsPerRun: 1,
+            },
+        };
+        const plugin = defineCrawlerPlugin(manifest, {
+            async collect(context) {
+                await context.http.request({ url: "https://json.example.test/news.json" });
+                return context.http.request({ url: "https://json.example.test/news.json" });
+            },
+        });
+        registry.register(plugin);
+
+        await expect(
+            registry.collect(
+                "org.latestnews.example-registry-budget/latest",
+                createContext({
+                    "https://json.example.test/news.json": jsonResponse("{}"),
+                })
+            )
+        ).rejects.toMatchObject({ code: "RESOURCE_LIMIT" });
     });
 
     it("deduplicates canonical URLs and enforces output limits", () => {

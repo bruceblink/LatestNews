@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { CrawlerPlatformError } from "../core/errors";
+import { defaultCrawlerPluginLimits } from "./limits";
 import { createDynamicSourceId } from "../../shared/dynamic-source-id";
 
 const pluginIdPattern = /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/;
@@ -33,6 +34,53 @@ const networkPermissionSchema = z
         }
     });
 
+const crawlerPluginLimitsSchema = z
+    .object({
+        maxExecutionMs: z.number().int().min(1_000).max(120_000).default(defaultCrawlerPluginLimits.maxExecutionMs),
+        maxRequestsPerRun: z.number().int().min(1).max(64).default(defaultCrawlerPluginLimits.maxRequestsPerRun),
+        maxRequestBodyBytes: z
+            .number()
+            .int()
+            .min(0)
+            .max(64 * 1024)
+            .default(defaultCrawlerPluginLimits.maxRequestBodyBytes),
+        maxResponseBytes: z
+            .number()
+            .int()
+            .min(1_024)
+            .max(defaultCrawlerPluginLimits.maxResponseBytes)
+            .default(defaultCrawlerPluginLimits.maxResponseBytes),
+        maxResponseBytesPerRun: z
+            .number()
+            .int()
+            .min(1_024)
+            .max(defaultCrawlerPluginLimits.maxResponseBytesPerRun)
+            .default(defaultCrawlerPluginLimits.maxResponseBytesPerRun),
+        maxItems: z
+            .number()
+            .int()
+            .min(1)
+            .max(defaultCrawlerPluginLimits.maxItems)
+            .default(defaultCrawlerPluginLimits.maxItems),
+        maxOutputBytes: z
+            .number()
+            .int()
+            .min(1_024)
+            .max(defaultCrawlerPluginLimits.maxOutputBytes)
+            .default(defaultCrawlerPluginLimits.maxOutputBytes),
+    })
+    .strict()
+    .default(defaultCrawlerPluginLimits)
+    .superRefine((limits, context) => {
+        if (limits.maxResponseBytesPerRun < limits.maxResponseBytes) {
+            context.addIssue({
+                code: "custom",
+                path: ["maxResponseBytesPerRun"],
+                message: "The per-run response limit must be at least the per-response limit.",
+            });
+        }
+    });
+
 export const crawlerPluginManifestSchema = z
     .object({
         manifestVersion: z.literal(1),
@@ -48,6 +96,7 @@ export const crawlerPluginManifestSchema = z
                 network: z.array(networkPermissionSchema).max(32),
             })
             .strict(),
+        limits: crawlerPluginLimitsSchema,
         sources: z.array(sourceSchema).min(1).max(64),
     })
     .strict()
@@ -80,6 +129,7 @@ export const crawlerPluginManifestSchema = z
     });
 
 export type CrawlerPluginManifest = z.infer<typeof crawlerPluginManifestSchema>;
+export type CrawlerPluginLimits = CrawlerPluginManifest["limits"];
 export type CrawlerSourceManifest = CrawlerPluginManifest["sources"][number];
 export type CrawlerNetworkPermission = CrawlerPluginManifest["permissions"]["network"][number];
 
