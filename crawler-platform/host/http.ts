@@ -1,4 +1,5 @@
 import { CrawlerPlatformError } from "../core/errors";
+import { utf8HeadersByteLength, defaultCrawlerPluginLimits } from "../sdk/limits";
 
 import type { CrawlerHttpRequest, CrawlerHttpResponse } from "../sdk/types";
 
@@ -17,9 +18,19 @@ export async function requestCrawlerHttp(request: CrawlerHttpRequest, signal: Ab
             signal,
         });
         if (![301, 302, 303, 307, 308].includes(response.status)) {
+            const headers = Object.fromEntries(
+                [...response.headers.entries()].filter(([name]) => name.toLowerCase() !== "set-cookie")
+            );
+            if (utf8HeadersByteLength(headers) > defaultCrawlerPluginLimits.maxResponseHeadersBytes) {
+                await response.body?.cancel();
+                throw new CrawlerPlatformError(
+                    "RESOURCE_LIMIT",
+                    `Upstream response headers exceed ${defaultCrawlerPluginLimits.maxResponseHeadersBytes} bytes.`
+                );
+            }
             return {
                 status: response.status,
-                headers: Object.fromEntries(response.headers.entries()),
+                headers,
                 body: await readBoundedText(response, signal),
             } satisfies CrawlerHttpResponse;
         }

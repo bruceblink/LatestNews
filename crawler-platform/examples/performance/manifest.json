@@ -14,7 +14,9 @@
         "maxExecutionMs": 15000,
         "maxRequestsPerRun": 16,
         "maxRequestBodyBytes": 16384,
+        "maxRequestHeadersBytes": 16384,
         "maxResponseBytes": 2097152,
+        "maxResponseHeadersBytes": 16384,
         "maxResponseBytesPerRun": 8388608,
         "maxItems": 30,
         "maxOutputBytes": 262144

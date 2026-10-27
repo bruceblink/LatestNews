@@ -5,7 +5,7 @@ import { CrawlerPlatformError } from "../core/errors";
 import { createCrawlerTaskQueue } from "./task-queue";
 import { parseCrawlerPluginManifest } from "../sdk/manifest";
 import { createDynamicSourceId } from "../../shared/dynamic-source-id";
-import { verifyCrawlerPluginArtifact, resolveInstalledPluginPackage } from "./plugin-package";
+import { parseCrawlerJson, verifyCrawlerPluginArtifact, resolveInstalledPluginPackage } from "./plugin-package";
 
 import type { CrawlerPluginManifest } from "../sdk/manifest";
 import type { CrawlerItem, CrawlerTarget, CrawlerContext, CrawlerHttpResponse } from "../sdk/types";
@@ -143,7 +143,9 @@ function loadPluginSources(options: CrawlerPluginProviderOptions, enabledIds: Re
         const resolvedPackage = resolveInstalledPluginPackage(candidate.searchRoot, candidate.name);
         const packageRoot = resolvedPackage.packageRoot;
         const manifestPath = resolvePluginFile(packageRoot, "manifest.json");
-        const manifest = parseCrawlerPluginManifest(JSON.parse(readFileSync(manifestPath, "utf8")) as unknown);
+        const manifest = parseCrawlerPluginManifest(
+            parseCrawlerJson(readFileSync(manifestPath, "utf8"), "plugin manifest")
+        );
         verifyCrawlerPluginArtifact(packageRoot, manifest, { required: resolvedPackage.versioned });
         if (!enabledIds.has(manifest.id)) continue;
         if (candidate.name !== manifest.id) {

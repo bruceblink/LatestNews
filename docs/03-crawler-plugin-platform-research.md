@@ -192,6 +192,17 @@ RSS/Atom 首先提供受限声明式入口或现成 helper。JSON/HTML 仍可使
   "permissions": {
     "network": [{ "origin": "https://example.com", "methods": ["GET"] }]
   },
+  "limits": {
+    "maxExecutionMs": 15000,
+    "maxRequestsPerRun": 16,
+    "maxRequestBodyBytes": 16384,
+    "maxRequestHeadersBytes": 16384,
+    "maxResponseBytes": 2097152,
+    "maxResponseHeadersBytes": 16384,
+    "maxResponseBytesPerRun": 8388608,
+    "maxItems": 30,
+    "maxOutputBytes": 262144
+  },
   "sources": [
     {
       "id": "latest",

@@ -212,7 +212,7 @@ F2-C 至 F2-E 组成 `0.7.0` 的稳定性范围。F3 需要浏览器和 Windows 
 
 ## 当前下一步
 
-F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针、F3-C 的统一设置入口和 F3-D 的 Playwright Web/Electron E2E 基线已完成；桌面设置桥接、配置持久化和保存/刷新/恢复默认流程的单元与 E2E 覆盖已补充。F4-A Source SDK、F4-B 三类代表适配器迁移、F5-A 运行期质量指标、重点源采样工具、初始阈值判定及窗口校验已完成。配置型 RSS/JSON Node 实现、离线 H3 来源 API 路由和 Web/Electron 远端服务契约测试已完成；生产配置验证仍待部署时确认，详见 [配置型来源记录](22-configured-source-rss-json.md)。当前进入 F6-A：清单资源预算、共享网络权限检查和跨宿主离线验收；外部插件试点仍等待真实需求和独立适配器证据，公网采样继续延后，详见[插件化架构排期](24-crawler-plugin-architecture-roadmap.md)。
+F2-C、F2-D 已完成，F2-E 已完成入口核对。F3-A 已消除批量来源加载后的逐源重复请求，并启用路由自动代码分割。F3-B 的自动化生命周期探针、F3-C 的统一设置入口和 F3-D 的 Playwright Web/Electron E2E 基线已完成；桌面设置桥接、配置持久化和保存/刷新/恢复默认流程的单元与 E2E 覆盖已补充。F4-A Source SDK、F4-B 三类代表适配器迁移、F5-A 运行期质量指标、重点源采样工具、初始阈值判定及窗口校验已完成。配置型 RSS/JSON Node 实现、离线 H3 来源 API 路由和 Web/Electron 远端服务契约测试已完成；生产配置验证仍待部署时确认，详见 [配置型来源记录](22-configured-source-rss-json.md)。当前继续推进 F6-A：清单资源预算、共享网络权限、worker 协议错误映射、注册表超时取消和跨宿主离线验收；外部插件试点仍等待真实需求和独立适配器证据，公网采样继续延后，详见[插件化架构排期](24-crawler-plugin-architecture-roadmap.md)。
 
 本地 Web 来源接口的 Day.js 加载问题和 Node 生产构建缺少前端入口问题已修复，见 [Web 接口运行时修复](10-web-api-runtime-fix.md)。Cloudflare Pages 的 Worker 模块布局、缓存导入和 PWA 预缓存问题见 [Worker 构建修复](12-cloudflare-pages-worker-fix.md)。后续生产日志确认的 Cheerio/Undici 初始化 HTTP 500 已由 `8b00a7b` 修复并部署。生产掘金、IT之家、v1 单源和批量接口均返回 HTTP 200，无效来源返回 HTTP 400，证据见 [新闻接口运行时修复](15-cloudflare-pages-source-runtime-fix.md)。部署健康接口仍报告缓存不可用，D1 持久缓存待单独配置核验。用户已要求公网采样后续再处理，本轮未启动采样；历史记录见 [采样窗口计划](09-source-quality-window-plan.md)。
 

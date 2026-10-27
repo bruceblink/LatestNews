@@ -1,4 +1,4 @@
-import { parseCrawlerPluginManifest } from "./manifest";
+import { parseCrawlerPluginManifest, freezeCrawlerPluginManifest } from "./manifest";
 
 import type { CrawlerPlugin, CrawlerPluginImplementation } from "./types";
 
@@ -7,7 +7,7 @@ export function defineCrawlerPlugin(manifest: unknown, implementation: CrawlerPl
     const parsedManifest = parseCrawlerPluginManifest(manifest);
 
     return Object.freeze({
-        manifest: Object.freeze(parsedManifest),
+        manifest: freezeCrawlerPluginManifest(parsedManifest),
         collect: implementation.collect,
     });
 }

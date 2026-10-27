@@ -16,6 +16,14 @@ const maxManifestBytes = 64 * 1024;
 const maxArtifactBytes = 16 * 1024;
 const maxPluginBytes = 10 * 1024 * 1024;
 
+export function parseCrawlerJson(text: string, label: string): unknown {
+    try {
+        return JSON.parse(text) as unknown;
+    } catch {
+        throw new CrawlerPlatformError("INVALID_ARTIFACT", `${label} is not valid JSON.`);
+    }
+}
+
 const pluginArtifactSchema = z
     .object({
         artifactVersion: z.literal(1),
@@ -92,7 +100,7 @@ export function resolveInstalledPluginPackage(pluginRoot: string, pluginId: stri
     assertPathWithin(pluginDirectory, realpathSync(activationPath));
 
     const activationText = readBoundedText(activationPath, maxManifestBytes, "activation pointer");
-    const parsed = activationPointerSchema.safeParse(JSON.parse(activationText) as unknown);
+    const parsed = activationPointerSchema.safeParse(parseCrawlerJson(activationText, "Plugin activation pointer"));
     if (!parsed.success) {
         throw new CrawlerPlatformError("INVALID_ARTIFACT", `Plugin ${pluginId} has an invalid active.json pointer.`);
     }
@@ -102,7 +110,7 @@ export function resolveInstalledPluginPackage(pluginRoot: string, pluginId: stri
     const manifestPath = resolve(packageRoot, "manifest.json");
     assertPathWithin(packageRoot, realpathSync(manifestPath));
     const manifestText = readBoundedText(manifestPath, maxManifestBytes, "plugin manifest");
-    const manifest = parseCrawlerPluginManifest(JSON.parse(manifestText) as unknown);
+    const manifest = parseCrawlerPluginManifest(parseCrawlerJson(manifestText, "Plugin manifest"));
     if (manifest.id !== pluginId || manifest.version !== parsed.data.activeVersion) {
         throw new CrawlerPlatformError(
             "INVALID_ARTIFACT",
@@ -137,7 +145,7 @@ export function verifyCrawlerPluginArtifact(
 
     assertPathWithin(packageRoot, realpathSync(artifactPath));
     const artifactText = readBoundedText(artifactPath, maxArtifactBytes, "plugin artifact");
-    const artifactResult = pluginArtifactSchema.safeParse(JSON.parse(artifactText) as unknown);
+    const artifactResult = pluginArtifactSchema.safeParse(parseCrawlerJson(artifactText, "Plugin artifact"));
     if (!artifactResult.success) {
         throw new CrawlerPlatformError("INVALID_ARTIFACT", "Plugin artifact metadata is invalid.");
     }

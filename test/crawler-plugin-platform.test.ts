@@ -2,7 +2,7 @@ import type { SourceID } from "@shared/types";
 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { it, expect, describe } from "vitest";
+import { it, vi, expect, describe } from "vitest";
 import { rm, mkdtemp, readFile } from "node:fs/promises";
 
 import { generateUrlHashId } from "../server/utils/source";
@@ -308,6 +308,14 @@ describe("crawler plugin SDK and core", () => {
             Object.entries(jsonExamplePlugin.manifest).filter(([key]) => key !== "limits")
         );
         expect(parseCrawlerPluginManifest(legacyManifest).limits).toEqual(jsonExamplePlugin.manifest.limits);
+        expect(
+            parseCrawlerPluginManifest({
+                ...jsonExamplePlugin.manifest,
+                permissions: {
+                    network: [{ origin: "https://json.example.test/", methods: ["GET"] }],
+                },
+            }).permissions.network[0]?.origin
+        ).toBe("https://json.example.test");
         expect(() =>
             parseCrawlerPluginManifest({
                 ...jsonExamplePlugin.manifest,
@@ -318,6 +326,23 @@ describe("crawler plugin SDK and core", () => {
                 },
             })
         ).toThrowError(CrawlerPlatformError);
+    });
+
+    it("deep-freezes the manifest so runtime code cannot widen its limits", () => {
+        const plugin = defineCrawlerPlugin(
+            { ...jsonExamplePlugin.manifest, id: "org.latestnews.example-frozen" },
+            {
+                async collect() {
+                    return [];
+                },
+            }
+        );
+
+        expect(Object.isFrozen(plugin.manifest)).toBe(true);
+        expect(Object.isFrozen(plugin.manifest.limits)).toBe(true);
+        expect(() => {
+            plugin.manifest.limits.maxRequestsPerRun = 64;
+        }).toThrow();
     });
 
     it("rejects duplicate plugin IDs and requests outside declared origins", async () => {
@@ -381,6 +406,43 @@ describe("crawler plugin SDK and core", () => {
                 })
             )
         ).rejects.toMatchObject({ code: "RESOURCE_LIMIT" });
+    });
+
+    it("cancels and times out in-process plugins using the manifest execution budget", async () => {
+        const registry = new CrawlerPluginRegistry();
+        const controller = new AbortController();
+        let observedSignal: AbortSignal | undefined;
+        const manifest = {
+            ...jsonExamplePlugin.manifest,
+            id: "org.latestnews.example-registry-timeout",
+            limits: { ...jsonExamplePlugin.manifest.limits, maxExecutionMs: 1000 },
+        };
+        const plugin = defineCrawlerPlugin(manifest, {
+            async collect(context) {
+                observedSignal = context.signal;
+                await new Promise<void>(() => undefined);
+                return [];
+            },
+        });
+        registry.register(plugin);
+
+        const cancelled = registry.collect("org.latestnews.example-registry-timeout/latest", {
+            ...createContext({}),
+            signal: controller.signal,
+        });
+        controller.abort();
+        await expect(cancelled).rejects.toMatchObject({ code: "CANCELLED" });
+        expect(observedSignal?.aborted).toBe(true);
+
+        vi.useFakeTimers();
+        try {
+            const timedOut = registry.collect("org.latestnews.example-registry-timeout/latest", createContext({}));
+            const timeoutExpectation = expect(timedOut).rejects.toMatchObject({ code: "TIMEOUT" });
+            await vi.advanceTimersByTimeAsync(1000);
+            await timeoutExpectation;
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it("deduplicates canonical URLs and enforces output limits", () => {

@@ -4,7 +4,7 @@ import { rm, mkdir, rename, mkdtemp } from "node:fs/promises";
 
 import { builtinCrawlerPlugins } from "../crawler-platform/builtin-plugins";
 import { parseCrawlerPluginManifest } from "../crawler-platform/sdk/manifest";
-import { verifyCrawlerPluginArtifact } from "../crawler-platform/host/plugin-package";
+import { parseCrawlerJson, verifyCrawlerPluginArtifact } from "../crawler-platform/host/plugin-package";
 import { installCrawlerPluginPackage, listInstalledCrawlerPlugins } from "../crawler-platform/host/plugin-store";
 
 export interface BuiltinCrawlerPluginSeedResult {
@@ -31,7 +31,7 @@ export async function seedBuiltinCrawlerPlugins(
     // Verify all shipped identities before changing the user's store. Hashes detect corruption, not trust.
     for (const bundle of bundlePaths) {
         const manifest = parseCrawlerPluginManifest(
-            JSON.parse(readFileSync(join(bundle.path, "manifest.json"), "utf8")) as unknown
+            parseCrawlerJson(readFileSync(join(bundle.path, "manifest.json"), "utf8"), "plugin manifest")
         );
         if (manifest.id !== bundle.id || !manifest.targets.includes("electron")) {
             throw new Error(`Bundled plugin ${bundle.id} has an unexpected identity or target.`);

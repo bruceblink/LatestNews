@@ -7,8 +7,9 @@ import { cp, rm, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { CrawlerPlatformError } from "../crawler-platform/core/errors";
 import { parseCrawlerPluginCatalog } from "../crawler-platform/sdk/catalog";
 import { runCrawlerCli, bundlePluginPackage } from "../crawler-platform/cli";
+import { parseCrawlerPluginManifest } from "../crawler-platform/sdk/manifest";
 import { createCrawlerPluginProvider } from "../crawler-platform/host/plugin-provider";
-import { resolveInstalledPluginPackage } from "../crawler-platform/host/plugin-package";
+import { verifyCrawlerPluginArtifact, resolveInstalledPluginPackage } from "../crawler-platform/host/plugin-package";
 import {
     pinCrawlerPluginVersion,
     setCrawlerPluginEnabled,
@@ -132,6 +133,38 @@ describe("crawler plugin package lifecycle", () => {
             );
             expect(() => resolveInstalledPluginPackage(join(store, "packages"), pluginId)).toThrowError(
                 CrawlerPlatformError
+            );
+        } finally {
+            await rm(root, { recursive: true, force: true });
+        }
+    });
+
+    it("normalizes malformed package metadata into invalid artifact errors", async () => {
+        const root = await mkdtemp(join(tmpdir(), "latestnews-plugin-malformed-json-"));
+        try {
+            const bundleDirectory = join(root, "bundle");
+            const store = join(root, "store");
+            await bundlePluginPackage(sourceDirectory, bundleDirectory);
+            await installCrawlerPluginPackage(bundleDirectory, store, { action: "install" });
+
+            await writeFile(join(store, "packages", pluginId, "active.json"), "not json", "utf8");
+            expect(() => resolveInstalledPluginPackage(join(store, "packages"), pluginId)).toThrowError(
+                expect.objectContaining({ code: "INVALID_ARTIFACT" })
+            );
+
+            const freshStore = join(root, "fresh-store");
+            await installCrawlerPluginPackage(bundleDirectory, freshStore, { action: "install" });
+            const resolved = resolveInstalledPluginPackage(join(freshStore, "packages"), pluginId);
+            await writeFile(
+                join(freshStore, "packages", pluginId, "versions", "0.1.0", "artifact.json"),
+                "not json",
+                "utf8"
+            );
+            const manifest = parseCrawlerPluginManifest(
+                JSON.parse(await readFile(join(resolved.packageRoot, "manifest.json"), "utf8")) as unknown
+            );
+            expect(() => verifyCrawlerPluginArtifact(resolved.packageRoot, manifest, { required: true })).toThrowError(
+                expect.objectContaining({ code: "INVALID_ARTIFACT" })
             );
         } finally {
             await rm(root, { recursive: true, force: true });

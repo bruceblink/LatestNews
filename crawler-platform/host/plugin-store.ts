@@ -7,6 +7,7 @@ import { statSync, lstatSync, existsSync, readdirSync, readFileSync, realpathSyn
 import { CrawlerPlatformError } from "../core/errors";
 import { parseCrawlerPluginManifest } from "../sdk/manifest";
 import {
+    parseCrawlerJson,
     createCrawlerPluginArtifact,
     verifyCrawlerPluginArtifact,
     resolveInstalledPluginPackage,
@@ -60,7 +61,9 @@ export function readEnabledCrawlerPluginIds(settingsPath: string): string[] {
     if (!stats.isFile() || stats.size > MAX_SETTINGS_BYTES) {
         throw new CrawlerPlatformError("INVALID_ARTIFACT", "enabled.json is not a valid bounded settings file.");
     }
-    const result = enabledSettingsSchema.safeParse(JSON.parse(readFileSync(settingsPath, "utf8")) as unknown);
+    const result = enabledSettingsSchema.safeParse(
+        parseCrawlerJson(readFileSync(settingsPath, "utf8"), "enabled.json")
+    );
     if (!result.success) {
         throw new CrawlerPlatformError("INVALID_ARTIFACT", "enabled.json contains invalid or duplicate plugin IDs.");
     }
@@ -376,7 +379,7 @@ function readPluginManifest(packageRoot: string) {
     const canonicalManifestPath = realpathSync(join(canonicalRoot, "manifest.json"));
     assertPathWithin(canonicalRoot, canonicalManifestPath);
     const text = readBoundedFile(canonicalManifestPath, 64 * 1024, "plugin manifest");
-    const manifest = parseCrawlerPluginManifest(JSON.parse(text) as unknown);
+    const manifest = parseCrawlerPluginManifest(parseCrawlerJson(text, "plugin manifest"));
     return { manifest, text };
 }
 

@@ -35,7 +35,9 @@ The optional `limits` object is normalized by the SDK. Older manifests remain va
     "maxExecutionMs": 15000,
     "maxRequestsPerRun": 16,
     "maxRequestBodyBytes": 16384,
+    "maxRequestHeadersBytes": 16384,
     "maxResponseBytes": 2097152,
+    "maxResponseHeadersBytes": 16384,
     "maxResponseBytesPerRun": 8388608,
     "maxItems": 30,
     "maxOutputBytes": 262144
@@ -43,7 +45,7 @@ The optional `limits` object is normalized by the SDK. Older manifests remain va
 }
 ```
 
-The Node and Electron process hosts enforce the limits before forwarding a request or accepting a result. The in-process registry used by SDK tests applies the same request, response, and output budgets. Hosts may impose a stricter deployment limit, but never widen the manifest. Exceeding a budget returns `RESOURCE_LIMIT` to the plugin. The current `trusted-js` runtime still assumes operator-reviewed code; these limits and the child process are execution boundaries, not a sandbox for unknown code.
+The Node and Electron process hosts enforce the limits before forwarding a request or accepting a result. The in-process registry used by SDK tests applies the same request, response, and output budgets and aborts work at the manifest execution deadline. Hosts may impose a stricter deployment limit, but never widen the manifest. Credential headers such as `Authorization`, `Cookie`, and API key headers are reserved for a future host-managed credential capability. Exceeding a budget returns `RESOURCE_LIMIT` to the plugin. The current `trusted-js` runtime still assumes operator-reviewed code; these limits and the child process are execution boundaries, not a sandbox for unknown code.
 
 ## Package catalog and lifecycle
 

@@ -1,8 +1,8 @@
 import { utf8ByteLength } from "../sdk/limits";
-import { CrawlerPlatformError } from "../core/errors";
 import { normalizeCrawlerItems } from "../core/output";
 import { parseCrawlerPluginManifest } from "../sdk/manifest";
-import { assertCrawlerNetworkPermission } from "../sdk/network";
+import { isCrawlerErrorCode, CrawlerPlatformError } from "../core/errors";
+import { assertCrawlerHttpResponse, assertCrawlerNetworkPermission } from "../sdk/network";
 
 import type { CrawlerPluginManifest } from "../sdk/manifest";
 import type { CrawlerItem, CrawlerTarget, CrawlerContext, CrawlerHttpRequest, CrawlerHttpResponse } from "../sdk/types";
@@ -20,6 +20,10 @@ interface StartMessage {
     sourceId: string;
     parameters?: unknown;
     now: number;
+    limits: Pick<
+        CrawlerPluginManifest["limits"],
+        "maxRequestsPerRun" | "maxRequestBodyBytes" | "maxRequestHeadersBytes"
+    >;
 }
 
 export interface CrawlerProcessConnection {
@@ -56,6 +60,7 @@ export interface ProcessCrawlerCollection {
 /** Execute a trusted plugin in a short-lived child process and broker its network calls. */
 export class ProcessCrawlerHost {
     private readonly connections = new Set<CrawlerProcessConnection>();
+    private readonly activeCollections = new Map<CrawlerProcessConnection, (error: CrawlerPlatformError) => void>();
     private closed = false;
 
     constructor(private readonly options: ProcessCrawlerHostOptions) {}
@@ -64,7 +69,10 @@ export class ProcessCrawlerHost {
     dispose() {
         if (this.closed) return;
         this.closed = true;
-        for (const connection of this.connections) connection.kill();
+        const cancellation = new CrawlerPlatformError("CANCELLED", "Crawler host is closing.");
+        const connections = [...this.connections];
+        for (const finish of [...this.activeCollections.values()]) finish(cancellation);
+        for (const connection of connections) connection.kill();
         this.connections.clear();
     }
 
@@ -84,7 +92,18 @@ export class ProcessCrawlerHost {
         }
 
         const sourceKey = `${manifest.id}/${sourceId}` as const;
-        const connection = this.options.spawn();
+        let connection: CrawlerProcessConnection;
+        try {
+            connection = this.options.spawn();
+        } catch (error) {
+            return Promise.reject(
+                error instanceof CrawlerPlatformError
+                    ? error
+                    : new CrawlerPlatformError("WORKER_EXIT", `Plugin ${manifest.id} worker could not start.`, {
+                          cause: error,
+                      })
+            );
+        }
         this.connections.add(connection);
         const timeoutMs = Math.min(
             this.options.timeoutMs ?? manifest.limits.maxExecutionMs,
@@ -112,6 +131,7 @@ export class ProcessCrawlerHost {
                 removeMessageListener();
                 removeExitListener();
                 this.connections.delete(connection);
+                this.activeCollections.delete(connection);
             };
 
             const finish = (error?: unknown, items?: CrawlerItem[]) => {
@@ -121,6 +141,7 @@ export class ProcessCrawlerHost {
                 if (error) reject(error);
                 else resolve(items ?? []);
             };
+            this.activeCollections.set(connection, (error) => finish(error));
 
             const abort = () => {
                 try {
@@ -170,7 +191,12 @@ export class ProcessCrawlerHost {
                     }
                     return;
                 }
-                finish(new CrawlerPlatformError("INVALID_PLUGIN", message.message));
+                if (message.type === "failure") {
+                    const code = isCrawlerErrorCode(message.code) ? message.code : "INVALID_PLUGIN";
+                    finish(new CrawlerPlatformError(code, message.message || "Plugin execution failed."));
+                    return;
+                }
+                finish(new CrawlerPlatformError("INVALID_PLUGIN", "Plugin worker sent an invalid message."));
             });
 
             const removeExitListener = connection.onExit((code, signal) => {
@@ -192,15 +218,34 @@ export class ProcessCrawlerHost {
                 return;
             }
 
-            connection.send({
-                type: "start",
-                entryPath,
-                pluginId: manifest.id,
-                pluginVersion: manifest.version,
-                sourceId,
-                ...(parameters !== undefined ? { parameters } : {}),
-                now: context.now(),
-            });
+            try {
+                connection.send({
+                    type: "start",
+                    entryPath,
+                    pluginId: manifest.id,
+                    pluginVersion: manifest.version,
+                    sourceId,
+                    ...(parameters !== undefined ? { parameters } : {}),
+                    now: context.now(),
+                    limits: {
+                        maxRequestsPerRun: manifest.limits.maxRequestsPerRun,
+                        maxRequestBodyBytes: manifest.limits.maxRequestBodyBytes,
+                        maxRequestHeadersBytes: manifest.limits.maxRequestHeadersBytes,
+                    },
+                });
+            } catch (error) {
+                finish(
+                    error instanceof CrawlerPlatformError
+                        ? error
+                        : new CrawlerPlatformError(
+                              "WORKER_EXIT",
+                              `Plugin ${manifest.id} worker stopped accepting messages.`,
+                              {
+                                  cause: error,
+                              }
+                          )
+                );
+            }
         });
     }
 
@@ -222,7 +267,11 @@ export class ProcessCrawlerHost {
         usage: { requestCount: number; responseBytes: number };
     }) {
         try {
-            assertCrawlerNetworkPermission(manifest.permissions.network, request);
+            assertCrawlerNetworkPermission(
+                manifest.permissions.network,
+                request,
+                manifest.limits.maxRequestHeadersBytes
+            );
             const requestBodyBytes = request.body === undefined ? 0 : utf8ByteLength(request.body);
             if (requestBodyBytes > manifest.limits.maxRequestBodyBytes) {
                 throw new CrawlerPlatformError(
@@ -239,10 +288,11 @@ export class ProcessCrawlerHost {
             usage.requestCount += 1;
             const response = await this.options.requestHandler(request, signal);
             if (signal.aborted) return;
+            assertCrawlerHttpResponse(response, {
+                maxBodyBytes: maxResponseBytes,
+                maxHeaderBytes: manifest.limits.maxResponseHeadersBytes,
+            });
             const byteLength = utf8ByteLength(response.body);
-            if (byteLength > maxResponseBytes) {
-                throw new CrawlerPlatformError("RESOURCE_LIMIT", `Response exceeds ${maxResponseBytes} bytes.`);
-            }
             if (usage.responseBytes + byteLength > manifest.limits.maxResponseBytesPerRun) {
                 throw new CrawlerPlatformError(
                     "RESOURCE_LIMIT",

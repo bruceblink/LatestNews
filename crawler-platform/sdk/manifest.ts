@@ -24,7 +24,11 @@ const sourceSchema = z
 
 const networkPermissionSchema = z
     .object({
-        origin: z.string().url().refine(isAllowedOrigin, "Expected an HTTPS origin without a path or credentials."),
+        origin: z
+            .string()
+            .url()
+            .refine(isAllowedOrigin, "Expected an HTTPS origin without a path or credentials.")
+            .transform((value) => value.replace(/\/$/, "")),
         methods: z.array(z.enum(["GET", "HEAD", "POST"])).min(1),
     })
     .strict()
@@ -44,12 +48,24 @@ const crawlerPluginLimitsSchema = z
             .min(0)
             .max(64 * 1024)
             .default(defaultCrawlerPluginLimits.maxRequestBodyBytes),
+        maxRequestHeadersBytes: z
+            .number()
+            .int()
+            .min(1_024)
+            .max(64 * 1024)
+            .default(defaultCrawlerPluginLimits.maxRequestHeadersBytes),
         maxResponseBytes: z
             .number()
             .int()
             .min(1_024)
             .max(defaultCrawlerPluginLimits.maxResponseBytes)
             .default(defaultCrawlerPluginLimits.maxResponseBytes),
+        maxResponseHeadersBytes: z
+            .number()
+            .int()
+            .min(1_024)
+            .max(64 * 1024)
+            .default(defaultCrawlerPluginLimits.maxResponseHeadersBytes),
         maxResponseBytesPerRun: z
             .number()
             .int()
@@ -133,6 +149,11 @@ export type CrawlerPluginLimits = CrawlerPluginManifest["limits"];
 export type CrawlerSourceManifest = CrawlerPluginManifest["sources"][number];
 export type CrawlerNetworkPermission = CrawlerPluginManifest["permissions"]["network"][number];
 
+/** Freeze validated metadata deeply so plugin code cannot widen its own in-process budget. */
+export function freezeCrawlerPluginManifest(manifest: CrawlerPluginManifest): CrawlerPluginManifest {
+    return deepFreeze(manifest);
+}
+
 /** Validate plugin metadata before the host loads any plugin code. */
 export function parseCrawlerPluginManifest(input: unknown): CrawlerPluginManifest {
     const result = crawlerPluginManifestSchema.safeParse(input);
@@ -176,4 +197,11 @@ function isSafeRelativeEntry(value: string) {
     if (value.startsWith("/") || value.includes("\\") || value.includes(":") || value.includes("\0")) return false;
     const segments = value.split("/");
     return segments.every((segment) => segment !== "" && segment !== "." && segment !== "..");
+}
+
+function deepFreeze<T>(value: T): T {
+    if (typeof value !== "object" || value === null || Object.isFrozen(value)) return value;
+    Object.freeze(value);
+    for (const child of Object.values(value as Record<string, unknown>)) deepFreeze(child);
+    return value;
 }
