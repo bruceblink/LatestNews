@@ -249,8 +249,21 @@ function readVerifiedBundle(packageDirectory: string) {
 async function installBundleVersion(pluginDirectory: string, bundle: ReturnType<typeof readVerifiedBundle>) {
     const versionsDirectory = join(pluginDirectory, "versions");
     const versionDirectory = join(versionsDirectory, bundle.manifest.version);
+    if (existsSync(versionsDirectory)) {
+        const versionsStat = lstatSync(versionsDirectory);
+        if (!versionsStat.isDirectory() || versionsStat.isSymbolicLink()) {
+            throw new CrawlerPlatformError(
+                "INVALID_ARTIFACT",
+                "Plugin versions directory must be a regular directory."
+            );
+        }
+    }
     await mkdir(versionsDirectory, { recursive: true });
     if (existsSync(versionDirectory)) {
+        const versionStat = lstatSync(versionDirectory);
+        if (!versionStat.isDirectory() || versionStat.isSymbolicLink()) {
+            throw new CrawlerPlatformError("INVALID_ARTIFACT", "Installed plugin version must be a regular directory.");
+        }
         const installed = readVerifiedBundle(versionDirectory);
         assertSameArtifact(installed.artifact, bundle.artifact);
         return;
@@ -342,6 +355,10 @@ function findCurrentPlugin(storeRoot: string, pluginId: string): CurrentPlugin |
 function findCurrentPluginInRoot(searchRoot: string, pluginId: string): CurrentPlugin | undefined {
     const directory = join(searchRoot, pluginId);
     if (!existsSync(directory)) return undefined;
+    const directoryStat = lstatSync(directory);
+    if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink()) {
+        throw new CrawlerPlatformError("INVALID_ARTIFACT", `Plugin directory ${pluginId} must be a regular directory.`);
+    }
     const resolved = resolveInstalledPluginPackage(searchRoot, pluginId);
     const manifest = readManifest(resolved.packageRoot);
     if (manifest.id !== pluginId) {
