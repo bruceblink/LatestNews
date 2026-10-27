@@ -345,6 +345,13 @@ describe("crawler plugin SDK and core", () => {
         }).toThrow();
     });
 
+    it("rejects registry entries without a collect function", () => {
+        const registry = new CrawlerPluginRegistry();
+        expect(() => registry.register({ manifest: jsonExamplePlugin.manifest } as never)).toThrowError(
+            expect.objectContaining({ code: "INVALID_PLUGIN" })
+        );
+    });
+
     it("rejects duplicate plugin IDs and requests outside declared origins", async () => {
         const registry = new CrawlerPluginRegistry();
         registry.register(jsonExamplePlugin);

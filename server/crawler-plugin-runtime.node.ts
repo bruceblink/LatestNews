@@ -7,7 +7,11 @@ import { dataSources } from "../shared/data-sources";
 import { createConfiguredSourceRuntime } from "./configured-source-runtime.node";
 import { readEnabledCrawlerPluginIds } from "../crawler-platform/host/plugin-store";
 import { createNodeCrawlerPluginProvider } from "../crawler-platform/host/node-plugin-provider";
-import { registerRuntimeSourceCatalog, createRuntimeSourceMetadataItem } from "../shared/runtime-source-catalog";
+import {
+    clearRuntimeSourceCatalog,
+    registerRuntimeSourceCatalog,
+    createRuntimeSourceMetadataItem,
+} from "../shared/runtime-source-catalog";
 
 import type { NodeCrawlerPluginProviderOptions } from "../crawler-platform/host/node-plugin-provider";
 
@@ -31,18 +35,26 @@ if (enabledPluginIds.length === 0) {
 }
 
 if (enabledPluginIds.includes("config")) {
-    throw new Error('Crawler plugin ID "config" is reserved for operator-configured sources.');
+    console.warn('Crawler plugin ID "config" is reserved; local crawler plugins remain disabled.');
+    enabledPluginIds = [];
 }
 
-const pluginProvider =
-    enabledPluginIds.length > 0
-        ? createServerCrawlerPluginRuntime({
-              pluginDirectory,
-              enabledPluginIds,
-              acceptedSourceIds: new Set(Object.keys(dataSources)),
-              workerPath: resolve(process.cwd(), "crawler-platform/runtime/worker-entry.mjs"),
-          })
-        : undefined;
+let pluginProvider: ReturnType<typeof createServerCrawlerPluginRuntime> | undefined;
+if (enabledPluginIds.length > 0) {
+    try {
+        pluginProvider = createServerCrawlerPluginRuntime({
+            pluginDirectory,
+            enabledPluginIds,
+            acceptedSourceIds: new Set(Object.keys(dataSources)),
+            workerPath: resolve(process.cwd(), "crawler-platform/runtime/worker-entry.mjs"),
+        });
+    } catch (error) {
+        console.warn(
+            "Node crawler plugins are invalid and remain disabled; built-in sources stay available.",
+            error instanceof Error ? error.message : "Invalid plugin settings."
+        );
+    }
+}
 
 let configuredSourceProvider: ReturnType<typeof createConfiguredSourceRuntime> | undefined;
 const configuredSourceManifest = process.env.LATESTNEWS_CONFIGURED_SOURCES?.trim();
@@ -65,7 +77,24 @@ const runtimeSourceDefinitions = [
     ...(configuredSourceProvider?.listSources() ?? []),
 ];
 if (runtimeSourceDefinitions.length > 0) {
-    registerRuntimeSourceCatalog(runtimeSourceDefinitions.map(createRuntimeSourceMetadataItem));
+    try {
+        registerRuntimeSourceCatalog(runtimeSourceDefinitions.map(createRuntimeSourceMetadataItem));
+    } catch (error) {
+        console.warn(
+            "Crawler plugin source metadata conflicts; local crawler plugins remain disabled.",
+            error instanceof Error ? error.message : "Invalid runtime source metadata."
+        );
+        pluginProvider?.dispose();
+        pluginProvider = undefined;
+        try {
+            registerRuntimeSourceCatalog(
+                (configuredSourceProvider?.listSources() ?? []).map(createRuntimeSourceMetadataItem)
+            );
+        } catch {
+            configuredSourceProvider = undefined;
+            clearRuntimeSourceCatalog();
+        }
+    }
 }
 
 /** Keep plugin loading configurable so the server adapter can be tested with offline responses. */

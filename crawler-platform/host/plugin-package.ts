@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import { sep, join, resolve, relative, isAbsolute } from "node:path";
-import { statSync, lstatSync, existsSync, readFileSync, realpathSync } from "node:fs";
+import { statSync, lstatSync, existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 
 import { CrawlerPlatformError } from "../core/errors";
 import { parseCrawlerPluginManifest } from "../sdk/manifest";
@@ -173,6 +173,8 @@ export function verifyCrawlerPluginArtifact(
         throw new CrawlerPlatformError("INVALID_ARTIFACT", "Plugin package SHA-256 does not match artifact.json.");
     }
 
+    if (required) assertVersionedPackageFiles(packageRoot);
+
     return artifact;
 }
 
@@ -218,4 +220,17 @@ function assertPathWithin(root: string, candidate: string) {
 
 function sameTargets(left: string[], right: readonly string[]) {
     return left.length === right.length && left.every((target) => right.includes(target));
+}
+
+function assertVersionedPackageFiles(packageRoot: string) {
+    const allowedFiles = new Set(["manifest.json", "plugin.mjs", "artifact.json"]);
+    for (const entry of readdirSync(packageRoot, { withFileTypes: true })) {
+        const filePath = join(packageRoot, entry.name);
+        if (!allowedFiles.has(entry.name) || !entry.isFile() || lstatSync(filePath).isSymbolicLink()) {
+            throw new CrawlerPlatformError(
+                "INVALID_ARTIFACT",
+                `Versioned plugin package contains unsupported file ${entry.name}.`
+            );
+        }
+    }
 }

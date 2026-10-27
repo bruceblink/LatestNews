@@ -38,6 +38,12 @@ function createNodeWorker(workerPath: string): CrawlerProcessConnection {
         serialization: "advanced",
         stdio: ["ignore", "ignore", "ignore", "ipc"],
     });
+    child.on("error", () => {
+        // Prevent an IPC error from becoming an unhandled EventEmitter error.
+        // The exit listener on the process host will turn the failed worker into
+        // a bounded CrawlerPlatformError.
+        terminateChild(child);
+    });
 
     return {
         send(message: CrawlerWorkerCommand) {
@@ -61,6 +67,14 @@ function createNodeWorker(workerPath: string): CrawlerProcessConnection {
 }
 
 function terminateChild(child: ChildProcess) {
-    if (child.connected) child.disconnect();
-    child.kill();
+    try {
+        if (child.connected) child.disconnect();
+    } catch {
+        // The IPC channel may already be closed.
+    }
+    try {
+        child.kill();
+    } catch {
+        // The child may have exited between the disconnect and kill calls.
+    }
 }

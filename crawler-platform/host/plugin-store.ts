@@ -57,8 +57,8 @@ interface CurrentPlugin {
 /** Read an existing enabled.json file and reject ambiguous or duplicate plugin IDs. */
 export function readEnabledCrawlerPluginIds(settingsPath: string): string[] {
     if (!existsSync(settingsPath)) return [];
-    const stats = statSync(settingsPath);
-    if (!stats.isFile() || stats.size > MAX_SETTINGS_BYTES) {
+    const stats = lstatSync(settingsPath);
+    if (!stats.isFile() || stats.isSymbolicLink() || stats.size > MAX_SETTINGS_BYTES) {
         throw new CrawlerPlatformError("INVALID_ARTIFACT", "enabled.json is not a valid bounded settings file.");
     }
     const result = enabledSettingsSchema.safeParse(
@@ -415,7 +415,17 @@ async function writeJsonAtomically(path: string, value: unknown) {
     const temporaryPath = join(dirname(path), `.${basename(path)}.${randomUUID()}.tmp`);
     try {
         await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, { encoding: "utf8", flag: "wx" });
-        await rename(temporaryPath, path);
+        try {
+            await rename(temporaryPath, path);
+        } catch (error) {
+            const code = (error as NodeJS.ErrnoException).code;
+            if (code !== "EEXIST" && code !== "EPERM" && code !== "ENOTEMPTY") throw error;
+            // Windows cannot replace an existing file with rename(). Remove the
+            // old pointer as a compatibility fallback, then publish the fully
+            // written temporary file from the same directory.
+            await rm(path, { force: true });
+            await rename(temporaryPath, path);
+        }
     } finally {
         if (existsSync(temporaryPath)) await rm(temporaryPath, { force: true });
     }

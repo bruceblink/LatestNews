@@ -134,6 +134,17 @@ describe("crawler plugin package lifecycle", () => {
             expect(() => resolveInstalledPluginPackage(join(store, "packages"), pluginId)).toThrowError(
                 CrawlerPlatformError
             );
+
+            await writeFile(
+                pointerPath,
+                `${JSON.stringify({ formatVersion: 1, activeVersion: "0.1.0", history: [] })}\n`,
+                "utf8"
+            );
+            const extraFile = join(store, "packages", pluginId, "versions", "0.1.0", "extra.mjs");
+            await writeFile(extraFile, "export default 1;", "utf8");
+            expect(() => createProvider(store, [pluginId])).toThrowError(
+                expect.objectContaining({ code: "INVALID_ARTIFACT" })
+            );
         } finally {
             await rm(root, { recursive: true, force: true });
         }
@@ -166,6 +177,34 @@ describe("crawler plugin package lifecycle", () => {
             expect(() => verifyCrawlerPluginArtifact(resolved.packageRoot, manifest, { required: true })).toThrowError(
                 expect.objectContaining({ code: "INVALID_ARTIFACT" })
             );
+        } finally {
+            await rm(root, { recursive: true, force: true });
+        }
+    });
+
+    it("rejects collection after a provider is disposed without creating a host", async () => {
+        const root = await mkdtemp(join(tmpdir(), "latestnews-plugin-provider-dispose-"));
+        try {
+            const bundleDirectory = join(root, "bundle");
+            const store = join(root, "store");
+            await bundlePluginPackage(sourceDirectory, bundleDirectory);
+            await installCrawlerPluginPackage(bundleDirectory, store, { action: "install", enable: true });
+
+            let hostCreations = 0;
+            const provider = createCrawlerPluginProvider({
+                pluginDirectory: join(store, "packages"),
+                enabledPluginIds: [pluginId],
+                acceptedSourceIds: new Set(),
+                target: "node",
+                workerPath,
+                createHost: () => {
+                    hostCreations += 1;
+                    return { collect: async () => [] };
+                },
+            });
+            provider.dispose();
+            await expect(provider.collect(`ext.${pluginId}.latest`)).rejects.toMatchObject({ code: "CANCELLED" });
+            expect(hostCreations).toBe(0);
         } finally {
             await rm(root, { recursive: true, force: true });
         }

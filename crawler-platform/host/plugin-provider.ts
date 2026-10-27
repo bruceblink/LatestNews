@@ -74,6 +74,7 @@ export function createCrawlerPluginProvider(options: CrawlerPluginProviderOption
         queueTimeoutMs: options.queueTimeoutMs ?? 30000,
     });
     let host: CrawlerPluginExecutionHost | undefined;
+    let disposed = false;
 
     return {
         hasSource(sourceId: string) {
@@ -97,10 +98,15 @@ export function createCrawlerPluginProvider(options: CrawlerPluginProviderOption
             }));
         },
         dispose() {
+            if (disposed) return;
+            disposed = true;
             queue.close();
             host?.dispose?.();
         },
         async collect(sourceId: string) {
+            if (disposed) {
+                throw new CrawlerPlatformError("CANCELLED", "Crawler plugin provider is disposed.");
+            }
             const source = sources.get(sourceId);
             if (!source) return undefined;
             host ??= options.createHost();

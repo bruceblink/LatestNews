@@ -11,6 +11,18 @@ import type {
 } from "../crawler-platform/host/process-host";
 
 describe("process crawler host", () => {
+    it("rejects invalid host resource options", () => {
+        const base = {
+            target: "node" as const,
+            workerPath: "unused-worker.mjs",
+            spawn: () => new FakeCrawlerConnection(),
+            requestHandler: async () => ({ status: 200, headers: {}, body: "{}" }),
+        };
+        expect(() => new ProcessCrawlerHost({ ...base, timeoutMs: 0 })).toThrow(RangeError);
+        expect(() => new ProcessCrawlerHost({ ...base, maxResponseBytes: 0 })).toThrow(RangeError);
+        expect(() => new ProcessCrawlerHost({ ...base, cancelGraceMs: -1 })).toThrow(RangeError);
+    });
+
     it("preserves worker failure codes and cleans up when the worker cannot start", async () => {
         const connection = new FakeCrawlerConnection();
         const host = new ProcessCrawlerHost({

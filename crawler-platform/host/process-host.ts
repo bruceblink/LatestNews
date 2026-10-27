@@ -63,7 +63,23 @@ export class ProcessCrawlerHost {
     private readonly activeCollections = new Map<CrawlerProcessConnection, (error: CrawlerPlatformError) => void>();
     private closed = false;
 
-    constructor(private readonly options: ProcessCrawlerHostOptions) {}
+    constructor(private readonly options: ProcessCrawlerHostOptions) {
+        if (options.timeoutMs !== undefined && (!Number.isInteger(options.timeoutMs) || options.timeoutMs < 1)) {
+            throw new RangeError("timeoutMs must be a positive integer.");
+        }
+        if (
+            options.maxResponseBytes !== undefined &&
+            (!Number.isInteger(options.maxResponseBytes) || options.maxResponseBytes < 1)
+        ) {
+            throw new RangeError("maxResponseBytes must be a positive integer.");
+        }
+        if (
+            options.cancelGraceMs !== undefined &&
+            (!Number.isInteger(options.cancelGraceMs) || options.cancelGraceMs < 0)
+        ) {
+            throw new RangeError("cancelGraceMs must be a nonnegative integer.");
+        }
+    }
 
     /** Stop active workers when the owning application is closing. */
     dispose() {
@@ -72,7 +88,13 @@ export class ProcessCrawlerHost {
         const cancellation = new CrawlerPlatformError("CANCELLED", "Crawler host is closing.");
         const connections = [...this.connections];
         for (const finish of [...this.activeCollections.values()]) finish(cancellation);
-        for (const connection of connections) connection.kill();
+        for (const connection of connections) {
+            try {
+                connection.kill();
+            } catch {
+                // A worker may have exited between cancellation and disposal.
+            }
+        }
         this.connections.clear();
     }
 
@@ -120,7 +142,11 @@ export class ProcessCrawlerHost {
             let settled = false;
             const requestController = new AbortController();
             const timeout = setTimeout(() => {
-                connection.kill();
+                try {
+                    connection.kill();
+                } catch {
+                    // The worker may have exited while the timeout was firing.
+                }
                 finish(new CrawlerPlatformError("TIMEOUT", `Plugin ${manifest.id} exceeded ${timeoutMs} ms.`));
             }, timeoutMs);
 
@@ -149,7 +175,13 @@ export class ProcessCrawlerHost {
                 } catch {
                     // The worker may have exited while the host was processing the abort.
                 }
-                setTimeout(() => connection.kill(), cancelGraceMs);
+                setTimeout(() => {
+                    try {
+                        connection.kill();
+                    } catch {
+                        // The worker may have exited after receiving cancellation.
+                    }
+                }, cancelGraceMs);
                 finish(new CrawlerPlatformError("CANCELLED", `Collection for ${sourceKey} was cancelled.`));
             };
 
@@ -186,7 +218,11 @@ export class ProcessCrawlerHost {
                             })
                         );
                     } catch (error) {
-                        connection.kill();
+                        try {
+                            connection.kill();
+                        } catch {
+                            // The worker may have exited after sending malformed output.
+                        }
                         finish(error);
                     }
                     return;

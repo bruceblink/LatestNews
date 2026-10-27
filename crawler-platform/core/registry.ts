@@ -18,6 +18,9 @@ export class CrawlerPluginRegistry {
     private readonly sources = new Map<CrawlerSourceKey, RegisteredSource>();
 
     register(plugin: CrawlerPlugin): void {
+        if (!plugin || typeof plugin.collect !== "function") {
+            throw new CrawlerPlatformError("INVALID_PLUGIN", "A crawler plugin must provide a collect function.");
+        }
         const manifest = freezeCrawlerPluginManifest(parseCrawlerPluginManifest(plugin.manifest));
         if (this.plugins.has(manifest.id)) {
             throw new CrawlerPlatformError("DUPLICATE_PLUGIN", `Plugin ${manifest.id} is already registered.`);
