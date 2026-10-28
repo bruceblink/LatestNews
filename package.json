@@ -4,7 +4,10 @@
     "version": "0.7.1",
     "private": true,
     "license": "AGPL-3.0-only",
-    "packageManager": "pnpm@10.30.3",
+    "packageManager": "pnpm@12.15.0",
+    "engines": {
+        "node": ">=22.23.0"
+    },
     "author": {
         "name": "likanug",
         "email": "likanug.g@qq.com",
@@ -143,27 +146,6 @@
         "vitest": "^3.2.7",
         "workbox-build": "^7.4.1",
         "workbox-window": "^7.4.1"
-    },
-    "pnpm": {
-        "patchedDependencies": {
-            "dayjs": "patches/dayjs.patch"
-        },
-        "overrides": {
-            "cross-spawn": ">=7.0.6",
-            "picomatch": "^4.0.2"
-        },
-        "onlyBuiltDependencies": [
-            "@napi-rs/pinyin",
-            "@parcel/watcher",
-            "@swc/core",
-            "esbuild",
-            "better-sqlite3",
-            "sharp",
-            "simple-git-hooks",
-            "unrs-resolver",
-            "workerd",
-            "electron"
-        ]
     },
     "simple-git-hooks": {
         "pre-commit": "npx lint-staged",

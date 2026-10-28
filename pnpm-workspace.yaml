@@ -1,0 +1,13 @@
+overrides:
+  cross-spawn: ">=7.0.6"
+  picomatch: ^4.0.2
+
+patchedDependencies:
+  dayjs: patches/dayjs.patch
+
+allowBuilds:
+  '@swc/core': true
+  electron-winstaller: true
+  esbuild: true
+  simple-git-hooks: true
+  unrs-resolver: true

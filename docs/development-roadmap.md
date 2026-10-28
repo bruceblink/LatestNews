@@ -74,7 +74,7 @@ R1、R2 的代码交付已完成；M3（离线）和 M4（联邦）的实现已�
 
 问题：仓库现有验证运行于 nightly，缺少 `pull_request` 检查；tag 的镜像和 release 流程没有依赖同一验证门禁。
 
-范围：`.github/workflows/*`、可复用本地冒烟脚本及贡献说明。固定 Node 22 验证线，使用 `packageManager` 指定的 pnpm 10.30.3，冻结安装并保留补丁/完整性校验。
+范围：`.github/workflows/*`、可复用本地冒烟脚本及贡献说明。固定 Node 22 LTS 验证线，使用 `packageManager` 指定的 pnpm 12.15.0，冻结安装并保留补丁/完整性校验。
 
 验收：
 

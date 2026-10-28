@@ -8,7 +8,7 @@ WORKDIR /usr/src
 # Native SQLite must also build when a matching musl prebuilt binary is unavailable.
 RUN apk add --no-cache python3 make g++
 RUN corepack enable
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches ./patches
 # The web server build does not use the Electron runtime binary.
 ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
