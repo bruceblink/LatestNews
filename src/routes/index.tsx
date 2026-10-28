@@ -148,6 +148,7 @@ function IndexComponent() {
                                                 <div className="flex gap-3">
                                                     <a
                                                         className="mt-0.5 h-10 w-10 rounded-full bg-cover bg-center"
+                                                        aria-label={`${source.name}网站`}
                                                         href={sourceMeta.home}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
@@ -187,6 +188,7 @@ function IndexComponent() {
                                                             ? "bg-cyan-500 text-zinc-900 font-semibold"
                                                             : "bg-cyan-500/14 text-cyan-800 dark:text-cyan-300 hover:bg-cyan-500/24"
                                                     )}
+                                                    aria-pressed={isFocused(source.id)}
                                                     onClick={() => toggleFocus(source.id)}
                                                 >
                                                     {isFocused(source.id) ? "已关注" : "加入关注"}

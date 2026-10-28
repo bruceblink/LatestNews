@@ -621,7 +621,10 @@ html.dark .app-header {
     border: 1px solid var(--border);
     background: var(--surface-soft);
     border-radius: 12px;
-    transition: border-color 0.2s;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s,
+        transform 0.2s;
     min-width: 0;
 }
 .recommendation-card:focus-within,
@@ -632,6 +635,8 @@ html.dark .app-header {
 .recommendation-card:hover,
 .preset-card:hover {
     border-color: var(--border-strong);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
 }
 .preset-title {
     display: flex;
@@ -1141,6 +1146,16 @@ html.dark .app-header {
 }
 .feed-toolbar {
     padding: 26px !important;
+}
+.source-detail-hero {
+    box-shadow: var(--shadow);
+}
+.source-item-article:focus-within {
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.source-not-found {
+    border: 1px dashed var(--border-strong);
 }
 .insights-hero {
     padding: 22px 24px !important;
@@ -1711,6 +1726,16 @@ html.dark .app-header {
         padding: 16px;
         min-height: 75px;
     }
+    .source-actions {
+        gap: 3px;
+        margin-right: -4px;
+    }
+    .source-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        font-size: 19px;
+    }
     .news-title {
         font-size: 14px;
     }
@@ -1803,6 +1828,8 @@ html.dark .app-header {
         padding: 26px 16px;
     }
     .settings-dialog {
+        width: calc(100vw - 24px);
+        max-height: calc(100dvh - 24px);
         padding: 20px;
         border-radius: 16px;
     }
@@ -1831,8 +1858,8 @@ html.dark .app-header {
         padding: 20px 0;
     }
     .back-to-top {
-        right: 16px;
-        bottom: 16px;
+        right: max(16px, env(safe-area-inset-right));
+        bottom: max(16px, env(safe-area-inset-bottom));
     }
 }
 @media (max-width: 360px) {

@@ -286,7 +286,7 @@ function ExtraInfo({ item }: { item: NewsItem }) {
                 }}
                 className="h-4 inline mt--1"
                 onError={(e) => (e.currentTarget.style.display = "none")}
-                alt={url}
+                alt=""
             />
         );
     }
@@ -295,7 +295,7 @@ function ExtraInfo({ item }: { item: NewsItem }) {
 function ReadBadge() {
     return (
         <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-zinc-200/75 px-1.5 py-0.5 text-[10px] leading-none text-zinc-500 dark:bg-zinc-800/70 dark:text-zinc-500">
-            <span className="i-ph:check-duotone text-xs" />
+            <span className="i-ph:check-duotone text-xs" aria-hidden="true" />
             <span>已读</span>
         </span>
     );

@@ -123,7 +123,7 @@ function SourceDetailPage() {
     if (!metadataItem) {
         return (
             <section className="mx-auto max-w-5xl px-1 md:px-4">
-                <div className="rounded-2xl bg-zinc-50/88 p-8 text-center text-sm text-zinc-600 shadow shadow-primary/6 dark:bg-zinc-900/68 dark:text-zinc-500">
+                <div className="source-not-found rounded-2xl bg-zinc-50/88 p-8 text-center text-sm text-zinc-600 shadow shadow-primary/6 dark:bg-zinc-900/68 dark:text-zinc-500">
                     未找到这个数据源。
                     <Link
                         to="/feed"
@@ -139,11 +139,12 @@ function SourceDetailPage() {
 
     return (
         <section className="page-stack source-page">
-            <div className="rounded-2xl border border-zinc-200/88 bg-zinc-50/90 p-4 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
+            <div className="source-detail-hero rounded-2xl border border-zinc-200/88 bg-zinc-50/90 p-4 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="flex min-w-0 gap-4">
                         <a
                             className="h-14 w-14 shrink-0 rounded-2xl bg-cover bg-center ring-1 ring-zinc-300/85 dark:ring-zinc-700/65"
+                            aria-label={`打开${metadataItem.name}源站`}
                             href={metadataItem.home}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -192,14 +193,15 @@ function SourceDetailPage() {
                         <button
                             type="button"
                             className={clsx(
-                                "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-all",
+                                "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60",
                                 isFocused
                                     ? "bg-cyan-500 text-zinc-900 font-semibold"
                                     : "bg-cyan-500/14 text-cyan-800 hover:bg-cyan-500/24 dark:text-cyan-300"
                             )}
+                            aria-pressed={isFocused}
                             onClick={toggleFocus}
                         >
-                            <span className={isFocused ? "i-ph:star-fill" : "i-ph:star-duotone"} />
+                            <span className={isFocused ? "i-ph:star-fill" : "i-ph:star-duotone"} aria-hidden="true" />
                             <span>{isFocused ? "已关注" : "加入关注"}</span>
                         </button>
                         {metadataItem.home && (
@@ -209,13 +211,15 @@ function SourceDetailPage() {
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 rounded-full bg-zinc-200/75 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-300 dark:hover:bg-zinc-700/75"
                             >
-                                <span className="i-ph:arrow-square-out-duotone" />
+                                <span className="i-ph:arrow-square-out-duotone" aria-hidden="true" />
                                 <span>源站</span>
                             </a>
                         )}
                         <button
                             type="button"
-                            className="inline-flex items-center gap-2 rounded-full bg-zinc-200/75 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-300 dark:hover:bg-zinc-700/75"
+                            className="inline-flex items-center gap-2 rounded-full bg-zinc-200/75 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 disabled:cursor-wait disabled:opacity-60 dark:bg-zinc-800/65 dark:text-zinc-300 dark:hover:bg-zinc-700/75"
+                            disabled={itemsQuery.isFetching || isClearingCache}
+                            aria-busy={itemsQuery.isFetching}
                             onClick={() => void itemsQuery.refetch()}
                         >
                             <span
@@ -223,18 +227,22 @@ function SourceDetailPage() {
                                     "i-ph:arrow-clockwise-duotone",
                                     itemsQuery.isFetching && "animate-spin"
                                 )}
+                                aria-hidden="true"
                             />
                             <span>{itemsQuery.isFetching ? "刷新中" : "刷新"}</span>
                         </button>
                         <button
                             type="button"
-                            className="inline-flex items-center gap-2 rounded-full bg-amber-500/12 px-3 py-1.5 text-sm text-amber-800 transition-all hover:bg-amber-500/18 dark:text-amber-300"
+                            className="inline-flex items-center gap-2 rounded-full bg-amber-500/12 px-3 py-1.5 text-sm text-amber-800 transition-all hover:bg-amber-500/18 disabled:cursor-wait disabled:opacity-60 dark:text-amber-300"
+                            disabled={isClearingCache || itemsQuery.isFetching}
+                            aria-busy={isClearingCache}
                             onClick={() => void handleClearCacheRefresh()}
                         >
                             <span
                                 className={clsx(
                                     isClearingCache ? "i-ph:spinner-gap-duotone animate-spin" : "i-ph:trash-duotone"
                                 )}
+                                aria-hidden="true"
                             />
                             <span>{isClearingCache ? "清理中" : "清缓存刷新"}</span>
                         </button>
@@ -258,7 +266,10 @@ function SourceDetailPage() {
                     <PanelTitle icon="i-ph:newspaper-duotone" title="最近更新" />
                     <div className="mt-4 flex flex-col gap-2">
                         {itemsQuery.isError && (
-                            <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+                            <div
+                                className="rounded-xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+                                role="alert"
+                            >
                                 加载失败{itemsQuery.error instanceof Error ? `：${itemsQuery.error.message}` : ""}
                             </div>
                         )}
@@ -269,7 +280,7 @@ function SourceDetailPage() {
                                     <article
                                         key={item.id}
                                         className={clsx(
-                                            "group rounded-xl border px-3 py-3 transition-all",
+                                            "source-item-article group rounded-xl border px-3 py-3 transition-all",
                                             isRead
                                                 ? "border-zinc-200/75 bg-zinc-100/70 dark:border-zinc-800/70 dark:bg-zinc-800/34"
                                                 : "border-zinc-200/85 bg-white/84 hover:border-zinc-300/90 hover:bg-zinc-100/95 dark:border-zinc-700/32 dark:bg-zinc-800/54 dark:hover:border-zinc-600/55 dark:hover:bg-zinc-800/78"
@@ -360,7 +371,10 @@ function HealthPanel({ health }: { health?: SourceHealthSnapshot }) {
                 />
             </div>
             {health?.lastErrorMessage && (
-                <div className="mt-3 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                <div
+                    className="mt-3 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
+                    role="alert"
+                >
                     {health.lastErrorMessage}
                 </div>
             )}
@@ -428,7 +442,7 @@ function MetricCard({ label, value, icon }: { label: string; value: number | str
         <div className="rounded-2xl border border-zinc-200/88 bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
             <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-500">
                 <span>{label}</span>
-                <span className={clsx("text-lg text-cyan-600 dark:text-cyan-300", icon)} />
+                <span className={clsx("text-lg text-cyan-600 dark:text-cyan-300", icon)} aria-hidden="true" />
             </div>
             <div className="mt-2 text-2xl font-bold text-zinc-800 dark:text-zinc-100">{value}</div>
         </div>
@@ -438,7 +452,7 @@ function MetricCard({ label, value, icon }: { label: string; value: number | str
 function PanelTitle({ icon, title }: { icon: string; title: string }) {
     return (
         <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-100">
-            <span className={clsx("text-lg text-cyan-600 dark:text-cyan-300", icon)} />
+            <span className={clsx("text-lg text-cyan-600 dark:text-cyan-300", icon)} aria-hidden="true" />
             <h2 className="m-0 text-base font-semibold">{title}</h2>
         </div>
     );
@@ -447,7 +461,7 @@ function PanelTitle({ icon, title }: { icon: string; title: string }) {
 function InfoPill({ icon, label }: { icon: string; label: string }) {
     return (
         <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-zinc-100/80 px-2.5 py-1 text-zinc-700 dark:border-zinc-700/45 dark:bg-zinc-800/65 dark:text-zinc-400">
-            <span className={icon} />
+            <span className={icon} aria-hidden="true" />
             <span>{label}</span>
         </span>
     );
@@ -477,7 +491,7 @@ function HealthBadge({ health }: { health?: SourceHealthSnapshot }) {
 function ReadBadge() {
     return (
         <span className="ml-2 inline-flex items-center gap-0.5 rounded bg-zinc-200/75 px-1.5 py-0.5 text-[10px] leading-none text-zinc-500 dark:bg-zinc-800/70 dark:text-zinc-500">
-            <span className="i-ph:check-duotone text-xs" />
+            <span className="i-ph:check-duotone text-xs" aria-hidden="true" />
             <span>已读</span>
         </span>
     );
