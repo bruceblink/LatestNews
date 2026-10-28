@@ -58,7 +58,7 @@
 - 修复自动后台刷新启动后，窗口显示或系统休眠仍继续启动后续批次的问题。每批开始前重新检查暂停状态；正在执行的批次按原有超时边界结束，恢复后只刷新尚未完成或已到期的来源。
 - 自动和手动刷新均在每批开始前重新检查采集模式，切换为 `remote` 后不再启动下一批本地请求。窗口可见时仍允许用户显式手动刷新。
 - 新增窗口显示、系统休眠和远端模式切换三个回归用例，验证首批执行期间改变状态后后续批次停止，以及恢复后未刷新来源正常执行。
-- 验证环境：Linux、Node 22 LTS、锁文件指定 pnpm 12.15.0。初始预装依赖与锁文件不一致，使用 `CI=true corepack pnpm install --frozen-lockfile` 恢复后完成检查，未修改锁文件。
+- 验证环境：Linux、Node 24.19.0、锁文件指定 pnpm 10.30.3。初始预装依赖与锁文件不一致，使用 `CI=true corepack pnpm install --frozen-lockfile` 恢复后完成检查，未修改锁文件。
 - `pnpm check`：lint、Web/Node 类型检查及 78 个测试文件、399 个测试通过；`pnpm typecheck:electron` 和 `LATESTNEWS_SKIP_FAVICON_FETCH=true pnpm electron:build` 通过。
 - 未执行真实系统托盘点击、Windows 窗口或公网刷新验收；上述原生交互与 7 天采样窗口仍保持待验收状态。本切片不增加外部服务，Docker 集成测试不适用。
 - 回退范围：本次批次前状态检查及对应回归测试；不修改缓存、偏好设置或插件协议。
