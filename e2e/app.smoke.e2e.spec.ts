@@ -114,6 +114,45 @@ test("renders the web shell and opens the shared settings panel", async ({ page 
     await expect(page.getByText("当前运行在 Web 版本。数据源地址由构建变量")).toBeVisible();
 });
 
+test("keeps the source search dialog centered in the viewport", async ({ page }) => {
+    await installApiMocks(page);
+    await page.goto("/c/focus");
+    await page.evaluate(() => {
+        const scroller = document.querySelector<HTMLElement>(".app-scroll");
+        const content = scroller?.firstElementChild as HTMLElement | null;
+        if (content) content.style.minHeight = "1800px";
+    });
+    await page.getByRole("button", { name: "发现来源", exact: true }).click();
+
+    const scrollState = await page.evaluate(() => {
+        const scroller = document.querySelector<HTMLElement>(".app-scroll");
+        if (scroller) scroller.scrollTop = 400;
+        return { scrollTop: scroller?.scrollTop ?? 0 };
+    });
+
+    const dialog = page.locator("[cmdk-dialog]");
+    await expect(dialog).toBeVisible();
+    const layout = await dialog.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return {
+            position: style.position,
+            top: rect.top,
+            bottom: rect.bottom,
+            viewportHeight: innerHeight,
+            scrollTop: document.querySelector<HTMLElement>(".app-scroll")?.scrollTop ?? 0,
+            centerOffset: Math.abs((rect.top + rect.bottom) / 2 - innerHeight / 2),
+        };
+    });
+
+    expect(layout.position).toBe("fixed");
+    expect(scrollState.scrollTop).toBeGreaterThan(0);
+    expect(layout.scrollTop).toBe(scrollState.scrollTop);
+    expect(layout.top).toBeGreaterThanOrEqual(0);
+    expect(layout.bottom).toBeLessThanOrEqual(layout.viewportHeight);
+    expect(layout.centerOffset).toBeLessThanOrEqual(2);
+});
+
 test("loads the settings route directly", async ({ page }) => {
     await installApiMocks(page);
     await page.goto("/settings");
