@@ -62,6 +62,9 @@ body {
     font-size: 14px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    background-image:
+        radial-gradient(circle at 12% -10%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 34rem),
+        radial-gradient(circle at 95% 8%, color-mix(in srgb, var(--accent-bright) 5%, transparent), transparent 28rem);
 }
 button,
 input,
@@ -120,6 +123,10 @@ a {
     border-bottom: 1px solid var(--border);
     background: var(--header-bg);
     backdrop-filter: blur(18px);
+    box-shadow: 0 1px 0 rgb(26 42 64 / 2%), 0 8px 24px rgb(26 42 64 / 3%);
+}
+html.dark .app-header {
+    box-shadow: 0 1px 0 rgb(0 0 0 / 12%), 0 8px 24px rgb(0 0 0 / 12%);
 }
 .header-inner {
     max-width: 1544px;
@@ -347,6 +354,9 @@ a {
     align-items: center;
     padding: 10px 2px 30px;
 }
+.home-intro > div:first-child {
+    min-width: 0;
+}
 .eyebrow {
     display: flex;
     align-items: center;
@@ -411,6 +421,8 @@ a {
     border: 1px solid var(--border);
     border-radius: 13px;
     background: var(--surface);
+    box-shadow: var(--shadow);
+    overflow: hidden;
 }
 .source-discovery > summary {
     display: flex;
@@ -425,6 +437,9 @@ a {
 }
 .source-discovery > summary:hover {
     background: var(--surface-soft);
+}
+.source-discovery > summary:focus-visible {
+    outline-offset: -3px;
 }
 .discovery-icon {
     color: var(--accent);
@@ -468,6 +483,11 @@ a {
     border-radius: 12px;
     transition: border-color 0.2s;
     min-width: 0;
+}
+.recommendation-card:focus-within,
+.preset-card:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .recommendation-card:hover,
 .preset-card:hover {
@@ -936,6 +956,10 @@ a {
     border-radius: 15px;
     box-shadow: var(--shadow);
     padding: 24px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.app-main .surface-panel:focus-within {
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
 }
 .page-stack h1 {
     color: var(--text-primary);
@@ -1339,6 +1363,7 @@ a {
         align-items: flex-start;
         padding: 2px 0 24px;
         gap: 16px;
+        flex-direction: column;
     }
     .home-intro h1 {
         font-size: 27px;
@@ -1354,7 +1379,11 @@ a {
         letter-spacing: 1.4px;
     }
     .home-intro-aside {
-        display: none;
+        align-items: flex-start;
+        gap: 7px;
+    }
+    .today-label {
+        font-size: 11px;
     }
     .source-discovery {
         margin-bottom: 26px;
@@ -1368,6 +1397,10 @@ a {
     }
     .discovery-content {
         padding: 16px;
+    }
+    .recommendation-card,
+    .preset-card {
+        padding: 14px;
     }
     .column-heading {
         gap: 12px;
