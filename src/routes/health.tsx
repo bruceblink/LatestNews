@@ -211,6 +211,7 @@ function HealthPage() {
                                 ? "bg-green-500/10 text-green-700 dark:text-green-300"
                                 : "bg-neutral-500/8 op-75"
                         )}
+                        aria-pressed={autoRefreshEnabled}
                         onClick={() => setAutoRefreshEnabled((prev) => !prev)}
                     >
                         {autoRefreshEnabled ? "自动刷新中" : "自动刷新已关闭"}
@@ -263,6 +264,7 @@ function HealthPage() {
                                     ? "bg-primary/15 text-primary-700 shadow shadow-primary/10 dark:text-primary-300"
                                     : "bg-neutral-500/8 op-80 hover:bg-neutral-500/12"
                             )}
+                            aria-pressed={statusFilter === value}
                             onClick={() => setStatusFilter(value)}
                         >
                             {label}
@@ -286,6 +288,7 @@ function HealthPage() {
                     <label className="flex items-center gap-2 rounded-full bg-neutral-500/8 px-3 py-1.5 text-sm md:w-72">
                         <span className="i-ph:magnifying-glass-duotone text-base" />
                         <input
+                            aria-label="搜索数据源名称或 ID"
                             value={keyword}
                             onChange={(event) => setKeyword(event.target.value)}
                             placeholder="搜索数据源名称或 ID"

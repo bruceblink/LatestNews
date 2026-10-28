@@ -25,6 +25,9 @@ export function Toast() {
                 left: center,
             }}
             className="absolute top-4 z-99 flex flex-col gap-2"
+            aria-label="通知"
+            aria-live="polite"
+            aria-relevant="additions text"
         >
             {toastItems.map((k) => (
                 <Item key={k.id} info={k} />
@@ -74,6 +77,7 @@ function Item({ info }: { info: ToastItem }) {
     return (
         <li
             className={clsx("bg-base rounded-lg shadow-xl relative")}
+            role={info.type === "error" ? "alert" : "status"}
             onMouseEnter={() => setHoverd(true)}
             onMouseLeave={() => setHoverd(false)}
         >
@@ -86,12 +90,13 @@ function Item({ info }: { info: ToastItem }) {
                 {hoverd ? (
                     <button
                         type="button"
-                        title="Close"
+                        title="关闭通知"
+                        aria-label="关闭通知"
                         className={`i-ph:x-circle color-${color}-500 i-ph:info`}
                         onClick={() => hidden(false)}
                     />
                 ) : (
-                    <span className={`i-ph:info color-${color}-500 `} />
+                    <span className={`i-ph:info color-${color}-500 `} aria-hidden="true" />
                 )}
                 <div className="flex justify-between w-full">
                     <span className="op-90 dark:op-100">{info.msg}</span>
