@@ -2,33 +2,17 @@ import type { ToastItem } from "~/atoms/types";
 
 import clsx from "clsx";
 import { Timer } from "~/utils";
+import { useMount } from "react-use";
 import { toastAtom } from "~/hooks/useToast";
 import { useSetAtom, useAtomValue } from "jotai";
-import { useMount, useWindowSize } from "react-use";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useRef, useMemo, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 
-const WIDTH = 320;
 export function Toast() {
-    const { width } = useWindowSize();
-    const center = useMemo(() => {
-        const t = (width - WIDTH) / 2;
-        return t > width * 0.9 ? width * 0.9 : t;
-    }, [width]);
     const toastItems = useAtomValue(toastAtom);
     const [parent] = useAutoAnimate({ duration: 200 });
     return (
-        <ol
-            ref={parent}
-            style={{
-                width: WIDTH,
-                left: center,
-            }}
-            className="absolute top-4 z-99 flex flex-col gap-2"
-            aria-label="通知"
-            aria-live="polite"
-            aria-relevant="additions text"
-        >
+        <ol ref={parent} className="toast-stack" aria-label="通知" aria-live="polite" aria-relevant="additions text">
             {toastItems.map((k) => (
                 <Item key={k.id} info={k} />
             ))}
@@ -65,39 +49,33 @@ function Item({ info }: { info: ToastItem }) {
         return () => timer.current?.clear();
     });
 
-    const [hoverd, setHoverd] = useState(false);
+    const [hovered, setHovered] = useState(false);
     useEffect(() => {
-        if (hoverd) {
+        if (hovered) {
             timer.current?.pause();
         } else {
             timer.current?.resume();
         }
-    }, [hoverd]);
+    }, [hovered]);
 
     return (
         <li
-            className={clsx("bg-base rounded-lg shadow-xl relative")}
+            className={clsx("toast-item bg-base rounded-lg shadow-xl relative")}
             role={info.type === "error" ? "alert" : "status"}
-            onMouseEnter={() => setHoverd(true)}
-            onMouseLeave={() => setHoverd(false)}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            onFocus={() => setHovered(true)}
+            onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) setHovered(false);
+            }}
         >
             <div
                 className={clsx(
                     `bg-${color}-500 dark:bg-${color} bg-op-40! p2 backdrop-blur-5 rounded-lg w-full`,
-                    "flex items-center gap-2"
+                    "toast-item-content flex items-center gap-2"
                 )}
             >
-                {hoverd ? (
-                    <button
-                        type="button"
-                        title="关闭通知"
-                        aria-label="关闭通知"
-                        className={`i-ph:x-circle color-${color}-500 i-ph:info`}
-                        onClick={() => hidden(false)}
-                    />
-                ) : (
-                    <span className={`i-ph:info color-${color}-500 `} aria-hidden="true" />
-                )}
+                <span className={`i-ph:info color-${color}-500`} aria-hidden="true" />
                 <div className="flex justify-between w-full">
                     <span className="op-90 dark:op-100">{info.msg}</span>
                     {info.action && (
@@ -110,6 +88,13 @@ function Item({ info }: { info: ToastItem }) {
                         </button>
                     )}
                 </div>
+                <button
+                    type="button"
+                    title="关闭通知"
+                    aria-label="关闭通知"
+                    className={`toast-dismiss i-ph:x-circle-duotone color-${color}-500`}
+                    onClick={() => hidden(false)}
+                />
             </div>
         </li>
     );

@@ -72,6 +72,12 @@ button,
 input,
 select,
 textarea {
+    box-sizing: border-box;
+}
+button,
+input,
+select,
+textarea {
     font: inherit;
 }
 button,
@@ -310,10 +316,13 @@ html.dark .app-header {
 }
 .app-content {
     max-width: 1544px;
+    width: 100%;
     padding: 0 36px;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 .app-main {
+    position: relative;
     padding: 32px 0 48px;
     min-height: calc(100vh - 166px);
 }
@@ -338,6 +347,120 @@ html.dark .app-header {
 }
 .app-footer a:hover {
     color: var(--accent);
+}
+.toast-stack {
+    position: fixed;
+    top: max(16px, env(safe-area-inset-top));
+    left: 50%;
+    z-index: 99;
+    display: flex;
+    width: min(360px, calc(100vw - 32px));
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
+    gap: 8px;
+    list-style: none;
+    pointer-events: none;
+    transform: translateX(-50%);
+}
+.toast-item {
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--border-strong) 70%, transparent);
+    box-shadow: var(--dialog-shadow);
+    pointer-events: auto;
+}
+.toast-item-content {
+    min-height: 48px;
+    padding: 10px 12px;
+}
+.toast-item-content > span {
+    flex-shrink: 0;
+}
+.toast-item-content > div {
+    min-width: 0;
+    align-items: center;
+    gap: 10px;
+}
+.toast-item-content > div > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+}
+.toast-item-content > div > button {
+    flex-shrink: 0;
+    border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+    border-radius: 6px;
+    padding: 3px 8px;
+    transition: background 0.15s;
+}
+.toast-item-content > div > button:hover {
+    background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.toast-item-content > button {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 7px;
+    transition: background 0.15s;
+}
+.toast-item-content > button:hover,
+.toast-item-content > button:focus-visible {
+    background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.toast-item[role="alert"] {
+    border-color: color-mix(in srgb, #ef4444 30%, var(--border));
+}
+.app-footer-credit {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.app-footer-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    transition:
+        color 0.15s,
+        background 0.15s;
+}
+.app-footer-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.toast-dismiss {
+    display: inline-flex;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    opacity: 0.72;
+    transition:
+        opacity 0.15s,
+        background 0.15s,
+        border-color 0.15s;
+}
+.toast-dismiss:hover {
+    opacity: 1;
+    border-color: var(--border);
+    background: var(--surface-hover);
+}
+.toast-item-content button:focus-visible {
+    outline-offset: 2px;
+}
+@media (max-width: 767px) {
+    .toast-stack {
+        top: max(12px, env(safe-area-inset-top));
+        width: calc(100vw - 24px);
+    }
 }
 .back-to-top {
     position: fixed;
@@ -657,13 +780,26 @@ html.dark .app-header {
     color: var(--text-muted);
 }
 .source-action {
+    display: inline-flex;
     width: 18px;
     height: 18px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: inherit;
     font-size: 18px;
-    transition: color 0.15s;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 .source-action:hover {
     color: var(--accent);
+    background: var(--surface-hover);
+    border-color: var(--border);
+}
+.source-action:focus-visible {
+    color: var(--accent);
+    background: var(--accent-soft);
 }
 .drag-handle {
     cursor: grab;
@@ -672,6 +808,7 @@ html.dark .app-header {
     min-height: 0;
     flex: 1;
     overflow: auto;
+    overscroll-behavior: contain;
     padding: 3px 8px 8px;
 }
 .news-list {
@@ -751,6 +888,9 @@ html.dark .app-header {
     position: absolute;
     bottom: 7px;
     right: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
 }
 .news-row-actions button {
     height: 25px;
@@ -909,6 +1049,15 @@ html.dark .app-header {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    box-shadow: var(--shadow);
+}
+.history-tab-button {
+    min-height: 36px;
+    font-weight: 550;
+}
+.history-tab-button[aria-pressed="true"] {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+    font-weight: 650;
 }
 .history-empty-state {
     display: flex;
@@ -993,6 +1142,28 @@ html.dark .app-header {
 .feed-toolbar {
     padding: 26px !important;
 }
+.insights-hero {
+    padding: 22px 24px !important;
+}
+.insights-metric-card {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s,
+        transform 0.2s;
+}
+.insights-metric-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--dialog-shadow);
+    transform: translateY(-2px);
+}
+.feed-toolbar button:disabled,
+.insights-hero button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
 .feed-toolbar-actions {
     display: flex;
     flex-direction: column;
@@ -1015,6 +1186,24 @@ html.dark .app-header {
 }
 .feed-article:hover {
     background: var(--surface-soft);
+}
+.feed-article:focus-within {
+    background: var(--surface-soft);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.feed-mode-switch > button,
+.feed-refresh,
+.feed-filters > button {
+    border: 1px solid transparent;
+}
+.feed-mode-switch > button[aria-pressed="true"] {
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.feed-mode-switch > button:active,
+.feed-refresh:active,
+.feed-filters > button:active,
+.history-tab-button:active {
+    transform: translateY(1px);
 }
 .feed-article-title {
     font-size: 15px;
@@ -1054,6 +1243,43 @@ html.dark .app-header {
 }
 .settings-panel > div:first-child > p {
     line-height: 1.8;
+}
+.settings-panel code {
+    padding: 2px 5px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--surface-soft);
+    color: var(--accent);
+    font-size: 0.92em;
+}
+.settings-panel input:not([type="checkbox"]),
+.settings-panel select {
+    border-color: var(--border);
+    background: var(--surface-soft);
+    color: var(--text-primary);
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s,
+        background 0.15s;
+}
+.settings-panel input:not([type="checkbox"]):hover,
+.settings-panel select:hover {
+    border-color: var(--border-strong);
+    background: var(--surface);
+}
+.settings-panel input:not([type="checkbox"]):focus-visible,
+.settings-panel select:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+    outline: none;
+}
+.settings-panel input:not([type="checkbox"]):disabled,
+.settings-panel select:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+.settings-panel [aria-busy="true"] {
+    cursor: progress;
 }
 .settings-group {
     border: 1px solid var(--border);
@@ -1184,6 +1410,8 @@ html.dark .app-header {
     max-height: min(88dvh, 850px);
     width: min(92vw, 660px);
     overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
     border: 1px solid var(--border);
     border-radius: 20px;
     background: var(--surface);
@@ -1254,6 +1482,14 @@ html.dark .app-header {
 }
 .header-menu-items > li:last-child {
     padding: 10px;
+}
+
+@media (min-width: 1280px) {
+    .feed-page > .grid > aside {
+        position: sticky;
+        top: 100px;
+        align-self: start;
+    }
 }
 
 ::-webkit-scrollbar {
@@ -1461,7 +1697,8 @@ html.dark .app-header {
         gap: 18px;
     }
     .news-card {
-        height: 500px;
+        height: min(500px, calc(100dvh - 220px));
+        min-height: 430px;
     }
     .news-row-actions button {
         height: 32px;

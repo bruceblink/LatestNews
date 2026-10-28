@@ -9,23 +9,18 @@ export function Footer() {
                 href={`${PROJECT_URL}/blob/main/LICENSE`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn text-sm ml-1 font-mono"
+                className="app-footer-link"
             >
                 GNU AGPL v3.0
             </a>
-            <span>
+            <span className="app-footer-credit">
                 <span>
-                    <a
-                        href={PROJECT_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn text-sm ml-1 font-mono"
-                    >
+                    <a href={PROJECT_URL} target="_blank" rel="noopener noreferrer" className="app-footer-link">
                         {`${APP_TITLE} `}
                     </a>
                     © {dayjs().year()} By{" "}
                 </span>
-                <a href={Author.url} target="_blank" rel="noopener noreferrer" className="btn text-sm ml-1 font-mono">
+                <a href={Author.url} target="_blank" rel="noopener noreferrer" className="app-footer-link">
                     {Author.name}
                 </a>
             </span>

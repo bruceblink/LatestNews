@@ -190,7 +190,11 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
             )}
 
             {configurable && (
-                <form className="settings-group" onSubmit={(event) => void handleSave(event)}>
+                <form
+                    className="settings-group"
+                    aria-busy={loading || saving}
+                    onSubmit={(event) => void handleSave(event)}
+                >
                     <label className="block text-sm font-medium" htmlFor="desktop-news-api-url">
                         数据源 API URL
                     </label>
@@ -201,10 +205,12 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                         onChange={(event) => setUrl(event.target.value)}
                         placeholder="https://news.example.com"
                         autoComplete="off"
+                        aria-describedby="desktop-news-api-url-help"
+                        aria-invalid={Boolean(errorMessage)}
                         disabled={loading || saving}
                         className="mt-2 w-full rounded-xl border border-neutral-500/20 bg-base px-3 py-2.5 text-sm outline-none transition-colors focus:border-cyan-500/60"
                     />
-                    <p className="mt-2 text-xs leading-5 op-65">
+                    <p id="desktop-news-api-url-help" className="mt-2 text-xs leading-5 op-65">
                         只填写服务根地址，例如 <code>https://news.example.com</code>。应用会自动请求该地址下的{" "}
                         <code>/api</code> 路径。生产构建要求 HTTPS；本地开发允许 localhost HTTP。
                     </p>
@@ -235,7 +241,10 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                     )}
 
                     {errorMessage && (
-                        <div className="mt-3 rounded-xl bg-red-500/8 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                        <div
+                            className="mt-3 rounded-xl bg-red-500/8 px-3 py-2 text-sm text-red-700 dark:text-red-300"
+                            role="alert"
+                        >
                             {errorMessage}
                         </div>
                     )}
@@ -279,7 +288,10 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                     </p>
                     {traySaving && <p className="mt-2 pl-6 text-xs op-65">正在保存…</p>}
                     {trayErrorMessage && (
-                        <div className="mt-3 rounded-xl bg-red-500/8 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                        <div
+                            className="mt-3 rounded-xl bg-red-500/8 px-3 py-2 text-sm text-red-700 dark:text-red-300"
+                            role="alert"
+                        >
                             {trayErrorMessage}
                         </div>
                     )}
