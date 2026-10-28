@@ -488,11 +488,41 @@ html.dark .app-header {
 }
 
 .home-intro {
+    position: relative;
+    isolation: isolate;
     display: flex;
     justify-content: space-between;
     gap: 24px;
     align-items: center;
-    padding: 10px 2px 30px;
+    min-height: 188px;
+    margin-bottom: 24px;
+    padding: 28px 30px 30px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border));
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 96% -20%, color-mix(in srgb, var(--accent-bright) 20%, transparent), transparent 31%),
+        linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 70%, var(--surface)), var(--surface) 58%, var(--surface-soft));
+    box-shadow: var(--shadow);
+}
+.home-intro::before {
+    position: absolute;
+    inset: auto -10% -72% 42%;
+    z-index: -1;
+    height: 180px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+    content: "";
+    filter: blur(10px);
+    pointer-events: none;
+}
+.home-intro > div:first-child,
+.home-intro-aside {
+    position: relative;
+    z-index: 1;
+}
+.home-intro > div:first-child {
+    max-width: 700px;
 }
 .home-intro > div:first-child {
     min-width: 0;
@@ -511,12 +541,13 @@ html.dark .app-header {
     height: 6px;
     background: var(--accent);
     border-radius: 50%;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .home-intro h1 {
     margin: 12px 0 8px;
-    font-size: clamp(26px, 2.5vw, 36px);
+    font-size: clamp(28px, 3vw, 40px);
     font-weight: 750;
-    line-height: 1.4;
+    line-height: 1.28;
     letter-spacing: -1.3px;
 }
 .home-intro h1 > span {
@@ -524,34 +555,64 @@ html.dark .app-header {
 }
 .home-intro p {
     margin: 0;
+    max-width: 38em;
     font-size: 13px;
     color: var(--text-secondary);
 }
 .home-intro-aside {
     display: flex;
+    flex-shrink: 0;
     flex-direction: column;
     align-items: flex-end;
     gap: 12px;
 }
 .today-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 62%, transparent);
     font-size: 12px;
     color: var(--text-secondary);
+}
+.today-label::before {
+    width: 5px;
+    height: 5px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    content: "";
 }
 .text-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
+    min-height: 34px;
+    padding: 7px 10px;
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--accent-soft) 68%, var(--surface));
     color: var(--accent);
     font-size: 12px;
     font-weight: 550;
     white-space: nowrap;
-    border-radius: 7px;
-    padding: 5px 2px;
-    transition: opacity 0.15s;
+    transition:
+        background 0.15s,
+        border-color 0.15s,
+        box-shadow 0.15s,
+        transform 0.15s;
 }
 .text-action:hover {
-    opacity: 0.75;
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+    background: var(--surface);
+    box-shadow: 0 5px 14px color-mix(in srgb, var(--accent) 10%, transparent);
+    transform: translateY(-1px);
+}
+.text-action:active {
+    transform: translateY(0);
 }
 .text-action > span {
     font-size: 16px;
@@ -730,6 +791,11 @@ html.dark .app-header {
     padding: 18px 18px 15px;
     border-bottom: 1px solid var(--border);
     min-height: 79px;
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface-soft) 70%, var(--surface)),
+        var(--surface)
+    );
 }
 .source-heading {
     display: flex;
@@ -746,7 +812,19 @@ html.dark .app-header {
     background-color: var(--surface-soft);
     background-size: cover;
     background-position: center;
-    box-shadow: 0 0 0 1px rgb(128 128 128 / 10%);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--border-strong) 55%, transparent),
+        0 4px 10px color-mix(in srgb, var(--text-primary) 8%, transparent);
+    transition:
+        box-shadow 0.18s,
+        transform 0.18s;
+}
+.source-icon:hover,
+.source-icon:focus-visible {
+    box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent),
+        0 6px 14px color-mix(in srgb, var(--accent) 12%, transparent);
+    transform: scale(1.04);
 }
 .source-heading-text {
     min-width: 0;
@@ -1645,9 +1723,12 @@ html.dark .app-header {
     }
     .home-intro {
         align-items: flex-start;
-        padding: 2px 0 24px;
+        min-height: 0;
+        margin-bottom: 18px;
+        padding: 20px 18px 18px;
         gap: 16px;
         flex-direction: column;
+        border-radius: 16px;
     }
     .home-intro h1 {
         font-size: 27px;
