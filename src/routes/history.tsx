@@ -201,12 +201,13 @@ function HistoryPage() {
                         type="button"
                         className={clsx(
                             "flex items-center gap-2 rounded-full px-3 py-1.5 transition-all",
-                            "bg-red-500/8 text-red-700 dark:text-red-300 hover:bg-red-500/14",
-                            activeHistory.length === 0 && "op-40 pointer-events-none"
+                            "bg-red-500/8 text-red-700 hover:bg-red-500/14 dark:text-red-300",
+                            activeHistory.length === 0 && "opacity-40"
                         )}
+                        disabled={activeHistory.length === 0}
                         onClick={handleClearAll}
                     >
-                        <span className="i-ph:trash-duotone" />
+                        <span className="i-ph:trash-duotone" aria-hidden="true" />
                         <span>清空历史</span>
                     </button>
                 </div>

@@ -209,9 +209,14 @@ function FeedPage() {
                         <button
                             type="button"
                             className="feed-refresh inline-flex items-center gap-2 rounded-full bg-zinc-200/75 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-300 dark:hover:bg-zinc-700/75"
+                            disabled={isFetching}
+                            aria-busy={isFetching}
                             onClick={() => void refetch()}
                         >
-                            <span className={clsx("i-ph:arrow-clockwise-duotone", isFetching && "animate-spin")} />
+                            <span
+                                className={clsx("i-ph:arrow-clockwise-duotone", isFetching && "animate-spin")}
+                                aria-hidden="true"
+                            />
                             <span>{isFetching ? "刷新中" : "刷新"}</span>
                         </button>
                     </div>
@@ -515,7 +520,7 @@ function SignalPill({ icon, label, tone = "neutral" }: { icon: string; label: st
                     : "border-zinc-200/80 bg-zinc-100/80 text-zinc-700 dark:border-zinc-700/45 dark:bg-zinc-800/65 dark:text-zinc-400"
             )}
         >
-            <span className={icon} />
+            <span className={icon} aria-hidden="true" />
             <span>{label}</span>
         </span>
     );

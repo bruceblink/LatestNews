@@ -93,7 +93,7 @@ function InsightsPage() {
 
     return (
         <section className="page-stack insights-page">
-            <div className="flex flex-col gap-3 rounded-2xl bg-zinc-50/90 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68 md:flex-row md:items-center md:justify-between">
+            <div className="surface-panel insights-hero flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="m-0 text-2xl font-bold text-zinc-800 dark:text-zinc-100">阅读洞察</h1>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
@@ -116,9 +116,10 @@ function InsightsPage() {
                                         ? "bg-cyan-500 text-zinc-900 font-semibold"
                                         : "bg-zinc-200/75 text-zinc-700 hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-400 dark:hover:bg-zinc-700/75"
                                 )}
+                                aria-pressed={scope === option.id}
                                 onClick={() => setScope(option.id)}
                             >
-                                <span className={option.icon} />
+                                <span className={option.icon} aria-hidden="true" />
                                 <span>{option.label}</span>
                             </button>
                         ))}
@@ -126,9 +127,14 @@ function InsightsPage() {
                     <button
                         type="button"
                         className="inline-flex items-center gap-2 rounded-full bg-zinc-200/75 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-300 dark:hover:bg-zinc-700/75"
+                        disabled={isFetching}
+                        aria-busy={isFetching}
                         onClick={() => void refetch()}
                     >
-                        <span className={clsx("i-ph:arrow-clockwise-duotone", isFetching && "animate-spin")} />
+                        <span
+                            className={clsx("i-ph:arrow-clockwise-duotone", isFetching && "animate-spin")}
+                            aria-hidden="true"
+                        />
                         <span>{isFetching ? "刷新中" : "刷新"}</span>
                     </button>
                 </div>
@@ -806,7 +812,7 @@ function FeedFilterLink({ q, scope, label }: { q: string; scope: InsightScope; l
 
 function MetricCard({ label, value, icon }: { label: string; value: number; icon: string }) {
     return (
-        <div className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+        <div className="insights-metric-card rounded-2xl p-4">
             <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-500">
                 <span>{label}</span>
                 <span className={clsx("text-lg text-cyan-600 dark:text-cyan-300", icon)} />
