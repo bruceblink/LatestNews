@@ -1240,6 +1240,14 @@ html.dark .app-header {
 .header-menu-items > li > button:hover {
     background: var(--surface-hover);
 }
+.header-menu-items > li > button:disabled {
+    cursor: wait;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+.header-menu-items > li > button:disabled:hover {
+    background: transparent;
+}
 .header-menu-items > li > button > span:first-child {
     color: var(--text-secondary);
     font-size: 18px;

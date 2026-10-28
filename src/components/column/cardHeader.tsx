@@ -88,9 +88,11 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                     <button
                         title={isFetching ? "正在刷新" : "刷新数据"}
                         aria-label={isFetching ? "正在刷新" : "刷新数据"}
+                        aria-busy={isFetching}
+                        disabled={isFetching}
                         type="button"
                         className={clsx(
-                            "source-action i-ph:arrow-counter-clockwise-duotone",
+                            "source-action i-ph:arrow-counter-clockwise-duotone disabled:cursor-wait disabled:opacity-60",
                             isFetching && "animate-spin i-ph:spinner-duotone"
                         )}
                         onClick={() => refresh(id)}
@@ -99,6 +101,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 <button
                     title={isFocused ? "取消关注" : "加入关注"}
                     aria-label={isFocused ? "取消关注" : "加入关注"}
+                    aria-pressed={isFocused}
                     type="button"
                     className={clsx(
                         "source-action",
@@ -112,6 +115,8 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                         ref={setHandleRef}
                         className="source-action drag-handle i-ph:dots-six-vertical-duotone"
                         title="拖动排序"
+                        aria-label="拖动排序"
+                        role="button"
                     />
                 )}
             </div>

@@ -288,7 +288,12 @@ export function Menu() {
                                 ))}
                             {enableLogin.enable && loggedIn && (
                                 <li>
-                                    <button type="button" onClick={() => void handleManualSync()}>
+                                    <button
+                                        type="button"
+                                        disabled={syncing}
+                                        aria-busy={syncing}
+                                        onClick={() => void handleManualSync()}
+                                    >
                                         <span
                                             className={clsx(
                                                 "inline-block",
@@ -311,7 +316,12 @@ export function Menu() {
                             )}
                             {enableLogin.enable && loggedIn && syncStatus.phase === "error" && (
                                 <li>
-                                    <button type="button" onClick={() => void handleRetrySync()}>
+                                    <button
+                                        type="button"
+                                        disabled={syncing}
+                                        aria-busy={syncing}
+                                        onClick={() => void handleRetrySync()}
+                                    >
                                         <span className="i-ph:arrows-clockwise-duotone inline-block" />
                                         <span>立即重试同步</span>
                                     </button>
@@ -320,13 +330,23 @@ export function Menu() {
                             {enableLogin.enable && loggedIn && (
                                 <>
                                     <li>
-                                        <button type="button" onClick={() => void handleRestoreFromRemote()}>
+                                        <button
+                                            type="button"
+                                            disabled={syncing}
+                                            aria-busy={syncing}
+                                            onClick={() => void handleRestoreFromRemote()}
+                                        >
                                             <span className="i-ph:cloud-arrow-down-duotone inline-block" />
                                             <span>使用云端恢复本地</span>
                                         </button>
                                     </li>
                                     <li>
-                                        <button type="button" onClick={() => void handleRestoreToRemote()}>
+                                        <button
+                                            type="button"
+                                            disabled={syncing}
+                                            aria-busy={syncing}
+                                            onClick={() => void handleRestoreToRemote()}
+                                        >
                                             <span className="i-ph:cloud-arrow-up-duotone inline-block" />
                                             <span>使用本地覆盖云端</span>
                                         </button>

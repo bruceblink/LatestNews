@@ -122,7 +122,11 @@ function CardState({
     const message = getCardStateMessage({ sourceStatus, healthStatus, isError, isFetching, error });
 
     return (
-        <div className="min-h-[360px] flex flex-col items-center justify-center px-5 py-8 text-center">
+        <div
+            className="min-h-[360px] flex flex-col items-center justify-center px-5 py-8 text-center"
+            role={isFetching ? "status" : isError ? "alert" : "status"}
+            aria-live={isError ? "assertive" : "polite"}
+        >
             <div
                 className={clsx(
                     "mb-4 flex h-12 w-12 items-center justify-center rounded-full text-2xl",
@@ -133,7 +137,10 @@ function CardState({
                           : `bg-${ds.color}-500/12 color-${ds.color}-500 dark:color-${ds.color}`
                 )}
             >
-                <span className={clsx(isFetching ? "i-ph:spinner-duotone animate-spin" : message.icon)} />
+                <span
+                    className={clsx(isFetching ? "i-ph:spinner-duotone animate-spin" : message.icon)}
+                    aria-hidden="true"
+                />
             </div>
             <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{message.title}</div>
             <div className="mt-2 max-w-58 text-xs leading-5 text-zinc-600 dark:text-zinc-500">
@@ -142,10 +149,11 @@ function CardState({
             {(isError || healthStatus === "failing" || sourceStatus === "empty") && (
                 <button
                     type="button"
-                    className="mt-5 rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400"
+                    className="mt-5 rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400 disabled:cursor-wait disabled:opacity-60"
+                    disabled={isFetching}
                     onClick={() => refresh(id)}
                 >
-                    重新获取
+                    {isFetching ? "获取中..." : "重新获取"}
                 </button>
             )}
         </div>
