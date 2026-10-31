@@ -29,6 +29,78 @@ Start from [example.env.server](../example.env.server) and configure secrets onl
 | `LATESTNEWS_UPSTREAM_ENDPOINT` | No | Runtime | Optional upstream collector hint exposed by `/api/v1/node`. |
 | `LATESTNEWS_DOWNSTREAM_ENDPOINT` | No | Runtime | Optional downstream consumer hint exposed by `/api/v1/node`. |
 | `PRODUCTHUNT_API_TOKEN` | Source only | Runtime | Required only when enabling the Product Hunt source. |
+| `LATESTNEWS_CRAWLER_PLUGIN_IDS` | 否 | Node 运行时 | 非空时覆盖本地 `enabled.json` 的启用插件列表。 |
+| `LATESTNEWS_CRAWLER_PLUGIN_DIR` | 否 | Node 运行时 | 插件存储目录，默认 `.data/crawler-plugins`。 |
+| `LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS` | 配置型来源需要 | Node 运行时 | 允许请求的精确 HTTPS 主机名，以逗号分隔。 |
+| `LATESTNEWS_CONFIGURED_SOURCES` | 否 | Node 运行时 | 运维维护的版本化 JSON 来源清单；未设置时不启用配置型来源。 |
+
+## 配置型 RSS/JSON 来源
+
+Node 服务可以从运维配置加载 RSS 和受限 JSON 来源。它们通过现有来源目录、详情、单源、批量和 Feed API 提供数据，客户端无需新增来源专属代码。配置默认关闭，变更后重启 Node 服务生效。
+
+Cloudflare Pages 和其他 Edge 部署不运行这套 Node DNS/HTTPS 适配器。Web 可通过 `VITE_NEWS_API_URL` 连接配置该清单的 Node API，同时在 Node 设置精确的 `LATESTNEWS_WEB_ORIGINS`。Electron 连接该 Node API 时通过远端目录读取；本地插件模式不读取这份服务端配置。更多可信插件操作见[插件开发工具](../crawler-platform/README.md)。
+
+先设置主机白名单，再将下面 JSON 作为 `LATESTNEWS_CONFIGURED_SOURCES` 的完整值保存到部署平台或本地运行配置：
+
+```text
+LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS=feeds.example.com,api.example.com
+```
+
+```json
+{
+  "version": 1,
+  "sources": [
+    {
+      "key": "engineering-blog",
+      "name": "工程博客",
+      "type": "rss",
+      "endpoint": "https://feeds.example.com/engineering.xml",
+      "enabled": true,
+      "intervalMs": 900000,
+      "column": "tech"
+    },
+    {
+      "key": "engineering-api",
+      "name": "工程资讯",
+      "type": "json",
+      "endpoint": "https://api.example.com/news",
+      "enabled": true,
+      "intervalMs": 900000,
+      "column": "tech",
+      "mapping": {
+        "itemsPath": "data.items",
+        "titlePath": "title",
+        "urlPath": "url",
+        "idPath": "id",
+        "publishedAtPath": "publishedAt",
+        "mobileUrlPath": "mobileUrl"
+      }
+    }
+  ]
+}
+```
+
+使用 Compose 时，将变量加入对应服务的 `environment`；仅在宿主 `.env` 中定义变量不会自动传入容器：
+
+```yaml
+services:
+  latestnews:
+    environment:
+      LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS: ${LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS:-}
+      LATESTNEWS_CONFIGURED_SOURCES: ${LATESTNEWS_CONFIGURED_SOURCES:-}
+```
+
+清单上限为 128 KiB、32 个来源。来源 ID 为 `ext.config.<key>`；`key` 最多 48 个字符，以小写字母或数字开头，后续允许小写字母、数字、下划线和连字符。`intervalMs` 为 30 秒至 24 小时。可选的 `column`、`title`、`description` 和 `home` 用于来源展示。JSON 路径最多八段，只读取对象自有属性，不执行脚本、模板、数组索引表达式或原型属性。
+
+网络和失败行为：
+
+- 只允许精确白名单内的 HTTPS 主机，不接受 IP 字面量、URL 凭据、非默认端口或通配符白名单。
+- DNS 的全部 A 记录必须为公网 IPv4；连接固定到已验证地址，保留原主机的 TLS SNI 和 HTTP Host。当前不支持只有 IPv6 地址的来源。
+- 最多跟随三次重定向，每次重新检查目标、白名单与 DNS。单次传输超时为 8 秒，调度任务执行上限为 12 秒，每个 origin 最多并发两个任务。
+- 不发送用户认证、Cookie 或自定义凭据头。只接受未压缩响应，响应体上限为 2 MiB，每个来源最多处理 30 条，并限制标题、URL、条目 ID 和日期字段长度。
+- 清单无效时记录错误并保持配置型来源关闭，静态来源和其他已启用插件仍按原配置运行。将来源的 `enabled` 设为 `false` 后重启，可停用该来源；清空清单后重启可关闭全部配置型来源。
+
+配置清单由运维维护，不应暴露为匿名可写 API。来源发现、配置停用和客户端已保存数据的完整兼容验收，以及生产 CORS 与部署验证，按[主线开发计划](../DEVELOPMENT_PLAN.md)执行；本配置说明不表示这些验收已通过。
 
 ## Docker
 

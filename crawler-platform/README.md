@@ -104,3 +104,11 @@ pnpm crawler rollback org.latestnews.pcbeta --root <userData>/crawler-plugins
 `<userData>` is Electron's application data directory. Set `LATESTNEWS_CRAWLER_PLUGIN_DIR` to override the `crawler-plugins` root. The desktop package stores `worker-entry.mjs` outside `app.asar` under `resources/crawler-platform/runtime/`. If plugin settings or a package are invalid, the app logs the problem and continues in remote API mode. The app has no plugin installation screen yet.
 
 The current `trusted-js` runtime is for code reviewed and trusted by the operator. The child process limits accidental environment leakage and isolates crashes, but it is not a security sandbox for untrusted code. Network permissions apply to requests made through the host API. They do not stop trusted plugin code from using other Node.js APIs directly.
+
+## 桌面缓存和退出行为
+
+Electron 主进程将本地插件成功返回的非空条目写入 `<userData>/crawler-cache.json`。文件上限为 2 MiB，最多保存 64 个来源、每源 100 条。缓存按版本读取；无效文件按空缓存处理。写入先生成同目录临时文件，再重命名替换；写入失败会记录错误，当前已成功的采集结果仍返回客户端。
+
+有效空结果返回 `empty`，并保留上一次非空缓存。插件失败且存在缓存时，缓存年龄不足来源刷新间隔两倍的结果为 `degraded-cache`，达到两倍后为 `stale-cache`；没有缓存时保留采集错误。桌面缓存与 Node SQLite、Pages D1、浏览器离线快照分别存储，不上传至 SyncHub。
+
+托盘后台模式默认关闭。启用后，关闭主窗口将保留托盘；后台只刷新已启用的本地来源。显示窗口、系统休眠或切换到远端模式时暂停自动批次；恢复后不补跑每个错过的周期。通过托盘完全退出时停止调度并释放 worker。原生托盘菜单、升级保留数据和各系统实际窗口的验收状态统一见[主线开发计划](../DEVELOPMENT_PLAN.md)。

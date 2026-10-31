@@ -182,13 +182,15 @@ Public current v1 endpoints remain public according to their deployment setting.
 - R4-D 使用专用下游 bearer namespace、per-node scopes 和审计 key ID。配置只保存非可逆 verifier，支持双 key 轮换，并对接受、拒绝和限流请求发出脱敏审计事件。
 - Browser clients never receive federation credentials. They continue to call this node's normal public or deployment-protected API.
 
-## Delivery Sequence And Test Matrix
+## 兼容与验证要求
 
-| Slice | Implementation boundary | Required evidence |
-| --- | --- | --- |
-| R4-A | This contract only. | `git diff --check`; existing `/api/v1/node` and OpenAPI tests remain green. |
-| R4-B | Server-side read-only upstream client plus URL policy. | Fixtures for valid manifest, missing endpoint, incompatible version, private/loopback address, DNS-rebound result, timeout, non-JSON and 5xx; `pnpm typecheck`; Node-server local API probe. |
-| R4-C | Per-origin circuit breaker and degraded health summary. 已完成。 | Deterministic timer tests for opening, half-open probe, recovery and local-data fallback. |
-| R4-D | Downstream auth, scope checks, audit fields and rate limits. 已完成。 | Auth missing/invalid/rotated key tests, scope-denial tests, rate-limit tests, secret-redaction review and Node-server HTTP probe. |
+`/api/v1/node` 保持既有字段兼容。修改上游请求、熔断或下游鉴权时，验证下表中的接口行为。开发顺序和未完成部署验收统一在[主线开发计划](../DEVELOPMENT_PLAN.md)维护。
 
-No slice may modify existing `/api/v1/node` fields incompatibly. Any new network path must have focused tests before it is connected to Feed or public v1 responses.
+| 接口范围 | 验证要求 |
+| --- | --- |
+| 节点发现 | 节点清单与 OpenAPI 字段、能力声明和错误结构保持兼容 |
+| 上游只读客户端 | 验证有效清单、缺失端点、版本不兼容、私网与回环地址、DNS 地址变化、超时、非 JSON 和 5xx |
+| 熔断与降级 | 验证打开、半开并发限制、成功恢复、失败重新打开和本地数据回退 |
+| 下游鉴权与审计 | 验证凭据缺失、无效与轮换、scope 拒绝、限流和日志脱敏；实际审计接收单独验收 |
+
+新增网络请求路径应在接入 Feed 或公开 v1 响应前完成对应测试。构建和本地响应成功不能代替双节点、凭据轮换和部署验收。

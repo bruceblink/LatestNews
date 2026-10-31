@@ -69,8 +69,6 @@ macOS Release 也提供 ZIP 包。桌面包目前没有代码签名，macOS 包�
 
 桌面端当前通过安装包更新：先完全退出应用，再安装同一系统与架构的新版本。PWA 的网页更新不会替换 Electron 安装包。本次桌面版本为 `v0.7.2`，后续版本以它为迭代基线。Web 版本可在网站部署后即时更新，不需要等待桌面安装包发布。具体版本包含的功能以对应 Release 变更记录为准。
 
-安装入口改进记录见 [Web 与桌面安装指引更新](./docs/23-installation-guide-update.md)。
-
 ## 当前能力
 
 - 实时拉取并聚合多类中文热点与资讯源
@@ -230,21 +228,13 @@ Docker 镜像发布到 `ghcr.io/bruceblink/latestnews`，支持 `linux/amd64` �
 - [src](./src)：前端页面、组件、状态和 hooks
 - [server](./server)：Nitro API、抓取逻辑、数据库与中间件
 - [shared](./shared)：前后端共享常量、类型和数据源定义
-- [docs](./docs)：开发路线、API、部署和外部接入文档
+- [docs](./docs)：API、部署和节点联邦接口说明
 - [scripts](./scripts)：资源预处理和数据源辅助脚本
 - [public](./public)：静态资源、图标和 PWA 相关文件
 
 ## 路线方向
 
-当前优先级见 [开发总计划](./DEVELOPMENT_PLAN.md)，后续任务、依赖、指标和验收标准见 [性能、新闻源扩展与插件化计划](./docs/02-performance-sources-platform-plan.md)，当前执行切片见 [后续开发计划](./docs/08-next-development-plan.md)。
-
-近期记录：[采样窗口校验](./docs/09-source-quality-window-plan.md)、[Web 接口运行时修复](./docs/10-web-api-runtime-fix.md)、[桌面本地采集评估](./docs/11-desktop-local-collection-assessment.md)、[Cloudflare Pages Worker 构建修复](./docs/12-cloudflare-pages-worker-fix.md)、[桌面远端到本地采集回退](./docs/13-desktop-remote-local-fallback.md)、[桌面内置插件预置](./docs/16-desktop-builtin-plugin-plan.md)、[桌面菜单与独立包启动修复](./docs/17-desktop-menu-package-fix.md)、[Docker 原生依赖修复](./docs/18-docker-native-dependency-fix.md)、[桌面本地来源详情与采集健康](./docs/19-desktop-local-source-details-health.md)、[Electron 采集模式切换](./docs/20-desktop-collection-modes.md)、[Electron 托盘后台刷新](./docs/21-desktop-tray-background-refresh.md)。
-
-- 先建立可重复的性能基线，优化采集并发、缓存等待、首屏、轮询和内存。
-- 建立新闻源开发工具、清单校验与质量报告，分批接入高质量源，再支持 RSS/JSON 配置型接入。
-- 有独立发布需求后试点采集插件；第三方 UI 与插件市场暂不排期。
-- Web 与 Electron 继续共用前端；交付与未关闭验收项见 [多平台计划](./docs/01-web-electron-plan.md)。
-- [历史执行路线](./docs/development-roadmap.md) 保留原任务背景；登录同步、离线和真实安装验收继续跟踪。
+开发顺序、当前任务、验收条件、回退边界和延期事项统一在[主线开发计划](./DEVELOPMENT_PLAN.md)维护。已完成切片与旧计划通过 Git 历史追溯。
 
 ## 致谢
 
