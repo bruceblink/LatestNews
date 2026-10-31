@@ -17,7 +17,8 @@ const appManifest = {
     name: "latestnews-desktop",
     productName: "LatestNews",
     version: rootPackage.version,
-    license: rootPackage.license,
+    // The packaged Electron app contains the GPLv3 client/desktop components only.
+    license: "GPL-3.0-only",
     description: rootPackage.description,
     homepage: rootPackage.homepage,
     private: true,
@@ -29,4 +30,9 @@ const appManifest = {
 await mkdir(outputRoot, { recursive: true });
 await writeFile(resolve(outputRoot, "package.json"), `${JSON.stringify(appManifest, null, 2)}\n`, "utf8");
 await copyFile(resolve(projectRoot, "LICENSE"), resolve(outputRoot, "LICENSE"));
+await copyFile(resolve(projectRoot, "LICENSE.md"), resolve(outputRoot, "LICENSE.md"));
+await mkdir(resolve(outputRoot, "LICENSES"), { recursive: true });
+for (const licenseFile of ["GPL-3.0-only.txt", "AGPL-3.0-only.txt"]) {
+    await copyFile(resolve(projectRoot, "LICENSES", licenseFile), resolve(outputRoot, "LICENSES", licenseFile));
+}
 console.info("Prepared a minimal Electron app manifest without server dependencies.");

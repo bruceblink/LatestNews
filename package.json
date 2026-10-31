@@ -3,7 +3,7 @@
     "type": "module",
     "version": "0.7.2",
     "private": true,
-    "license": "AGPL-3.0-only",
+    "license": "SEE LICENSE IN LICENSE.md",
     "packageManager": "pnpm@12.15.0",
     "engines": {
         "node": ">=22.23.0"

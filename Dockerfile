@@ -44,6 +44,10 @@ RUN apk add --no-cache libstdc++
 COPY --from=builder /usr/src/dist/output ./output
 # Node crawler workers run as child processes and need this source runtime beside the server bundle.
 COPY --from=builder /usr/src/crawler-platform/runtime/worker-entry.mjs ./crawler-platform/runtime/worker-entry.mjs
+# Keep the license scope and complete texts with the server image.
+COPY --from=builder /usr/src/LICENSE ./LICENSE
+COPY --from=builder /usr/src/LICENSE.md ./LICENSE.md
+COPY --from=builder /usr/src/LICENSES ./LICENSES
 
 # Exercise the shipped binding for each target architecture before an image can be published.
 RUN node -e "const Database = require('./output/server/node_modules/better-sqlite3'); const db = new Database(':memory:'); if (db.prepare('SELECT 1 AS ok').get().ok !== 1) throw new Error('SQLite runtime check failed'); db.close();"

@@ -6,12 +6,12 @@ export function Footer() {
     return (
         <>
             <a
-                href={`${PROJECT_URL}/blob/main/LICENSE`}
+                href={`${PROJECT_URL}/blob/main/LICENSE.md`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="app-footer-link"
             >
-                GNU AGPL v3.0
+                GPLv3 / AGPLv3 · 无担保
             </a>
             <span className="app-footer-credit">
                 <span>

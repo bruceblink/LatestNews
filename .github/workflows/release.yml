@@ -164,6 +164,9 @@ jobs:
         run: |
           mkdir -p release-web
           cp -R dist/output release-web/output
+          cp LICENSE LICENSE.md release-web/
+          mkdir -p release-web/LICENSES
+          cp LICENSES/*.txt release-web/LICENSES/
           printf 'LatestNews %s Web deployment package\n\nRun with Node.js 22 or newer:\n  node output/server/index.mjs\n' "${GITHUB_REF_NAME#v}" > release-web/README.txt
           cd release-web
           zip -r "../LatestNews-${GITHUB_REF_NAME#v}-Web.zip" .

@@ -256,4 +256,12 @@ Docker 镜像发布到 `ghcr.io/bruceblink/latestnews`，支持 `linux/amd64` �
 
 ## License
 
-[GNU Affero General Public License v3.0](./LICENSE)
+LatestNews 采用按模块划分的 GPLv3 + AGPLv3 许可结构：
+
+- Web/PWA 客户端、Electron、共享层和插件平台使用
+  [GNU GPLv3-only](./LICENSES/GPL-3.0-only.txt)。
+- Node/Nitro 服务端和服务端部署配置使用
+  [GNU AGPLv3-only](./LICENSES/AGPL-3.0-only.txt)。
+
+复制或再发布组件前，请先阅读[许可范围说明](./LICENSE.md)。第三方依赖、数据源内容、
+商标和带有单独声明的文件继续适用原始条款。

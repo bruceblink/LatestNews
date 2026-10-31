@@ -241,4 +241,8 @@ Please follow the existing code style in the project. The project uses TypeScrip
 
 ## License
 
-By contributing to this project, you agree that your contributions will be licensed under the project's license.
+By contributing to this project, you agree that your contributions will follow
+the license scope in [LICENSE.md](./LICENSE.md): client, desktop, shared, and
+crawler-platform code uses GPLv3-only; server code and server deployment
+configuration use AGPLv3-only. Keep third-party notices and file-specific
+license headers unchanged.
