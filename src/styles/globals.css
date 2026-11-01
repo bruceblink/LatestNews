@@ -321,6 +321,38 @@ html.dark .app-header {
     margin: 0 auto;
     box-sizing: border-box;
 }
+.update-notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin: 12px 0;
+    padding: 10px 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--text-primary);
+}
+.update-notice-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.update-notice-actions button,
+.update-notice-actions a {
+    padding: 5px 12px;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-weight: 600;
+}
+.update-notice-error {
+    display: block;
+    color: #c43836;
+}
 .app-main {
     position: relative;
     padding: 32px 0 48px;

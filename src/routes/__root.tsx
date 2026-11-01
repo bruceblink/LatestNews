@@ -14,6 +14,7 @@ import { SearchBar } from "~/components/common/search-bar";
 import { usePWA, PWAStatusContext } from "~/hooks/usePWA.ts";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { DesktopUpdateNotice } from "~/components/desktop-update-notice";
 import { GlobalOverlayScrollbar } from "~/components/common/overlay-scrollbar";
 import { Outlet, Navigate, createRootRouteWithContext } from "@tanstack/react-router";
 import { OfflineReadingSnapshotContext, usePersistOfflineReadingSnapshot } from "~/hooks/useOfflineReadingSnapshot.ts";
@@ -51,6 +52,7 @@ function RootComponent() {
                         </div>
                     </header>
                     <div className="app-content">
+                        <DesktopUpdateNotice />
                         <PwaStatusBanner
                             isOffline={pwa.isOffline}
                             needRefresh={pwa.needRefresh}
@@ -104,7 +106,7 @@ function PwaStatusBanner({
     const title = needRefresh ? "发现新版本" : isOffline ? "当前处于离线模式" : "网络已恢复";
 
     const description = needRefresh
-        ? "刷新后可获取最新修复和内容体验。"
+        ? "新版本已准备就绪。刷新前请保存当前输入。"
         : isOffline
           ? offlineReady
               ? "你仍可以浏览已缓存页面、阅读历史与最近的 Feed 快照。"
@@ -112,7 +114,11 @@ function PwaStatusBanner({
           : "已切回在线内容拉取策略，稍后会自动补齐最新资讯。";
 
     return (
-        <section className="mb-3 flex flex-col gap-2 rounded-xl bg-blue-500/6 dark:bg-cyan-500/5 px-4 py-3 shadow shadow-blue-500/10 dark:shadow-cyan-500/10 border border-blue-500/20 dark:border-cyan-500/15 md:flex-row md:items-center md:justify-between">
+        <section
+            className="mb-3 flex flex-col gap-2 rounded-xl bg-blue-500/6 dark:bg-cyan-500/5 px-4 py-3 shadow shadow-blue-500/10 dark:shadow-cyan-500/10 border border-blue-500/20 dark:border-cyan-500/15 md:flex-row md:items-center md:justify-between"
+            role="status"
+            data-test-id="web-update-notice"
+        >
             <div className="flex items-start gap-3">
                 <span className={clsx("mt-0.5 text-lg", iconClass)} />
                 <div>

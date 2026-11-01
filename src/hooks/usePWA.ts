@@ -1,4 +1,3 @@
-import { myFetch } from "~/utils";
 import { delay } from "@shared/utils.ts";
 import { Version, PROJECT_URL } from "@shared/consts";
 import { useRegisterSW } from "virtual:pwa-register/react";
@@ -23,19 +22,57 @@ export function usePWAStatus() {
 
 export function usePWA() {
     const toaster = useToast();
+    const registrationRef = useRef<ServiceWorkerRegistration>();
+    const [activatedUpdate, setActivatedUpdate] = useState(false);
     const {
-        updateServiceWorker,
         offlineReady: [offlineReady],
         needRefresh: [needRefresh],
-    } = useRegisterSW();
+    } = useRegisterSW({
+        onRegisteredSW: (_url, registration) => {
+            registrationRef.current = registration;
+            if (registration && navigator.onLine) {
+                void registration.update().catch((error: unknown) => console.warn("[pwa] Update check failed.", error));
+            }
+        },
+        onNeedReload: () => setActivatedUpdate(true),
+        onRegisterError: (error: unknown) => console.warn("[pwa] Service worker registration failed.", error),
+    });
     const [isOffline, setIsOffline] = useState(() => ("onLine" in navigator ? !navigator.onLine : false));
     const [justRecovered, setJustRecovered] = useState(false);
     const recoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const applyUpdate = useCallback(async () => {
-        await updateServiceWorker();
-        localStorage.setItem("updated", "1");
-    }, [updateServiceWorker]);
+        try {
+            localStorage.setItem("updated", "1");
+        } catch {
+            // Updating must still work when browser storage is blocked.
+        }
+        const waiting = registrationRef.current?.waiting;
+        if (!waiting) {
+            window.location.reload();
+            return;
+        }
+        navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload(), { once: true });
+        waiting.postMessage({ type: "SKIP_WAITING" });
+    }, []);
+
+    useEffect(() => {
+        const check = () => {
+            if (document.visibilityState === "visible" && navigator.onLine) {
+                void registrationRef.current
+                    ?.update()
+                    .catch((error: unknown) => console.warn("[pwa] Update check failed.", error));
+            }
+        };
+        const interval = window.setInterval(check, 60 * 60 * 1000);
+        window.addEventListener("online", check);
+        document.addEventListener("visibilitychange", check);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener("online", check);
+            document.removeEventListener("visibilitychange", check);
+        };
+    }, []);
 
     useEffect(() => {
         const handleOffline = () => {
@@ -76,33 +113,6 @@ export function usePWA() {
     }, [offlineReady, toaster]);
 
     useEffect(() => {
-        let cancelled = false;
-
-        const showUpdateToast = async () => {
-            if (!needRefresh) return;
-            if ("onLine" in navigator && !navigator.onLine) return;
-
-            await delay(1000);
-            const resp = await myFetch<{ v?: string }>("/latest");
-            if (cancelled || !resp.v || resp.v === Version) return;
-
-            toaster("有更新，5 秒后自动更新", {
-                action: {
-                    label: "立刻更新",
-                    onClick: applyUpdate,
-                },
-                onDismiss: applyUpdate,
-            });
-        };
-
-        void showUpdateToast();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [applyUpdate, needRefresh, toaster]);
-
-    useEffect(() => {
         void (async () => {
             await delay(1000);
             if (!localStorage.getItem("updated")) return;
@@ -121,7 +131,7 @@ export function usePWA() {
 
     return {
         isOffline,
-        needRefresh,
+        needRefresh: needRefresh || activatedUpdate,
         offlineReady,
         justRecovered,
         applyUpdate,

@@ -113,6 +113,22 @@ test("persists the automatic update preference and keeps development builds offl
     }
 });
 
+test("shows desktop updates on every route and exposes the download action", async () => {
+    await electronApp.evaluate(({ BrowserWindow }) => {
+        BrowserWindow.getAllWindows()[0].webContents.send("desktop:updates:changed", {
+            currentVersion: "0.7.2",
+            autoCheck: true,
+            status: "available",
+            availableVersion: "0.7.4",
+        });
+    });
+    const notice = page.getByTestId("desktop-update-notice");
+    await expect(notice).toContainText("发现新版本 0.7.4");
+    await expect(notice.getByRole("button", { name: "下载更新" })).toBeVisible();
+    await notice.getByRole("link", { name: "更新设置" }).click();
+    await expect(page.getByTestId("desktop-updates")).toBeVisible();
+});
+
 test("shows desktop update instructions without a PWA install action", async () => {
     const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
     await page.goto("app://bundle/settings");

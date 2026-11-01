@@ -56,7 +56,12 @@ export function DesktopUpdates() {
     };
     const buttonClass = "rounded-full bg-neutral-500/10 px-4 py-2 text-sm disabled:op-45";
     return (
-        <section className="settings-group" data-test-id="desktop-updates" aria-label="应用更新">
+        <section
+            id="desktop-update-settings"
+            className="settings-group"
+            data-test-id="desktop-updates"
+            aria-label="应用更新"
+        >
             <h2 className="text-lg font-semibold">应用更新</h2>
             {state && (
                 <>
