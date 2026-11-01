@@ -263,7 +263,7 @@ export function InstallationGuide({ open, onOpenChange, triggerRef }: Installati
                             <span aria-hidden="true" className="i-ph:arrow-up-right h-4 w-4" />
                         </a>
                         <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                            桌面端需下载安装包更新。更新前请完全退出应用；已启用托盘时，从托盘菜单退出，再安装同一架构的新版本。
+                            桌面端可在设置的“应用更新”中检查和下载更新。下载完成后保存工作，选择“退出并安装”。差分下载不可用时会下载完整包；也可从发布页手动安装同一架构的新版本。
                         </p>
                     </section>
 

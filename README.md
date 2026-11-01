@@ -234,7 +234,7 @@ Docker 镜像发布到 `ghcr.io/bruceblink/latestnews`，支持 `linux/amd64` �
 
 ## 路线方向
 
-开发顺序、当前任务、验收条件、回退边界和延期事项统一在[主线开发计划](./DEVELOPMENT_PLAN.md)维护。已完成切片与旧计划通过 Git 历史追溯。
+开发顺序、当前任务、验收条件、回退边界和延期事项统一在[主线开发计划](./DEVELOPMENT_PLAN.md)维护。已完成切片与旧计划通过 Git 历史追溯。桌面更新的使用、差分下载条件和发布文件见[桌面应用更新](docs/04-desktop-updates.md)。
 
 ## 致谢
 

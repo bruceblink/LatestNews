@@ -91,6 +91,28 @@ test("opens the shared settings route in the Electron renderer", async () => {
     expect(settings?.defaultUrl).toMatch(/^https?:\/\//);
 });
 
+test("persists the automatic update preference and keeps development builds offline", async () => {
+    await page.goto("app://bundle/settings");
+    const card = page.getByTestId("desktop-updates");
+    await expect(card.getByRole("heading", { name: "应用更新" })).toBeVisible();
+    const automatic = card.getByLabel("自动检查更新");
+    await expect(automatic).toBeChecked();
+    await automatic.uncheck();
+    await expect
+        .poll(async () =>
+            readFile(join(userDataDirectory, "app-update-preferences.json"), "utf8").then(
+                (raw) => JSON.parse(raw).autoCheck,
+                () => undefined
+            )
+        )
+        .toBe(false);
+    await page.reload();
+    await expect(automatic).not.toBeChecked();
+    if (process.env.LATESTNEWS_ELECTRON_PACKAGED_TEST !== "1") {
+        await expect(card.getByRole("button", { name: "检查更新", exact: true })).toBeDisabled();
+    }
+});
+
 test("shows desktop update instructions without a PWA install action", async () => {
     const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
     await page.goto("app://bundle/settings");

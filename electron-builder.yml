@@ -4,7 +4,14 @@ asar: true
 directories:
   buildResources: ../build
   output: ../release
-electronVersion: 44.8.0
+electronVersion: 44.9.0
+publish:
+  provider: github
+  owner: bruceblink
+  repo: latestnews
+  channel: latest
+detectUpdateChannel: false
+generateUpdatesFilesForAllChannels: false
 npmRebuild: false
 extraResources:
   - from: ../build/icon.png

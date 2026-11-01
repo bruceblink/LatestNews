@@ -131,6 +131,8 @@ jobs:
             release/*.zip
             release/*.AppImage
             release/*.deb
+            release/*.yml
+            release/*.blockmap
           if-no-files-found: error
           retention-days: 14
 
@@ -246,14 +248,31 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: desktop-*
-          path: release-assets
-          merge-multiple: true
+          path: desktop-inputs
+          merge-multiple: false
 
       - name: Download Web release package
         uses: actions/download-artifact@v4
         with:
           name: web-${{ github.ref_name }}
           path: release-assets
+
+      - name: Set up pnpm for update metadata
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.15.0
+
+      - name: Set up Node.js for update metadata
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install metadata dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Merge and verify update metadata and checksums
+        run: node scripts/prepare-update-assets.mjs desktop-inputs release-assets
 
       - name: Publish GitHub release and assets
         uses: softprops/action-gh-release@v2

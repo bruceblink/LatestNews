@@ -1,11 +1,13 @@
 import type { SourceResponse } from "@shared/types";
 import type { SourceMetadataItem } from "@shared/source-metadata";
+import type { DesktopUpdateBridge } from "@shared/desktop-updates";
 import type { SourceHealthSummary } from "@shared/source-health-types";
 import type { DesktopCollectionMode } from "@shared/desktop-collection-mode";
 
 declare global {
     interface Window {
         latestNewsDesktop?: {
+            updates?: DesktopUpdateBridge;
             getLifecycleDiagnostics: () => Promise<unknown>;
             getDesktopPreferences?: () => Promise<{ trayBackgroundEnabled: boolean }>;
             setTrayBackgroundEnabled?: (enabled: boolean) => Promise<{ trayBackgroundEnabled: boolean }>;

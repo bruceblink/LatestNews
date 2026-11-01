@@ -20,6 +20,7 @@ import {
     type IpcMainInvokeEvent,
 } from "electron";
 
+import { registerUpdateIpc } from "./updates/update-ipc";
 import { createDesktopBackgroundRefresh } from "./background-refresh";
 import { isDesktopCollectionMode } from "../shared/desktop-collection-mode";
 import { createElectronCrawlerPluginRuntime } from "./crawler-plugin-provider";
@@ -120,6 +121,7 @@ let crawlerRuntime: ElectronCrawlerPluginRuntime | null = null;
 let desktopTray: Tray | null = null;
 let desktopPreferences = defaultDesktopPreferences;
 let backgroundRefresh: ReturnType<typeof createDesktopBackgroundRefresh> | null = null;
+let updateIpc: Awaited<ReturnType<typeof registerUpdateIpc>> | null = null;
 let isQuitting = false;
 let isHidingMainWindow = false;
 let lifecycleProbeActive = false;
@@ -152,6 +154,8 @@ if (!hasSingleInstanceLock) {
         if (isQuitting) return;
         isQuitting = true;
         lifecycle.record("app-before-quit");
+        updateIpc?.shutdown();
+        updateIpc = null;
         disposeTrayBackgroundMode();
         crawlerRuntime?.dispose?.();
     });
@@ -190,6 +194,10 @@ if (!hasSingleInstanceLock) {
                 );
             }
             backgroundRefresh?.pause("window-visible");
+            updateIpc = await registerUpdateIpc({
+                getMainWindow: () => mainWindow,
+                trustedRendererUrl: () => trustedRendererUrl,
+            });
             await createMainWindow();
             syncBackgroundRefreshState();
             if (process.env.LATESTNEWS_ELECTRON_LIFECYCLE_PROBE === "1") void runLifecycleProbe();
@@ -617,7 +625,12 @@ async function persistDesktopPreferences() {
 }
 
 function shouldKeepBackgroundAlive() {
-    return desktopPreferences.trayBackgroundEnabled && !isQuitting && !lifecycleProbeActive;
+    return (
+        desktopPreferences.trayBackgroundEnabled &&
+        !isQuitting &&
+        !lifecycleProbeActive &&
+        updateIpc?.getState().status !== "installing"
+    );
 }
 
 async function installTrayMode(runtime: ElectronCrawlerPluginRuntime) {
@@ -765,6 +778,7 @@ function showMainWindow() {
 }
 
 function hideMainWindowToTray(window: BrowserWindow) {
+    if (updateIpc?.getState().status === "installing") return false;
     if (!desktopPreferences.trayBackgroundEnabled || isQuitting || isHidingMainWindow) return false;
     if (authWindow && !authWindow.isDestroyed()) return false;
     if (process.platform === "darwin" && desktopTray === null) return false;

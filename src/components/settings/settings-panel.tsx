@@ -16,6 +16,8 @@ import {
     isDesktopTrayBackgroundConfigurable,
 } from "~/services/desktop-settings.service";
 
+import { DesktopUpdates } from "./desktop-updates";
+
 interface SettingsPanelProps {
     showTitle?: boolean;
 }
@@ -269,6 +271,7 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
                 </form>
             )}
 
+            {desktopBuild && <DesktopUpdates />}
             {trayConfigurable && (
                 <div className="settings-group">
                     <label className="flex items-start gap-3 text-sm font-medium" htmlFor="desktop-tray-background">

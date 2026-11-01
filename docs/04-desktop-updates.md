@@ -1,0 +1,42 @@
+# 桌面应用更新
+
+更新日期：2026-11-01。执行状态统一在[主线开发计划](../DEVELOPMENT_PLAN.md)维护。
+
+## 使用方法
+
+正式安装版在启动约 3 秒后检查新版本。同一进程内成功检查后间隔 24 小时再检查；失败后每小时重试。设置中的“应用更新”可关闭自动检查，也可手动检查。开发运行不联网检查。
+
+发现新版本后，用户选择下载。界面显示下载进度，可取消并重试。下载并通过校验后，用户保存工作，再选择“退出并安装”。主进程再次询问，默认取消。普通退出不会安装更新。
+
+## 下载和平台范围
+
+差分下载（Differential download）复用本机旧文件中的相同数据块，只下载变更块，再重建完整包并验证 SHA-512。它减少网络传输量，不缩小磁盘上的完整安装包。
+
+| 安装格式 | 更新方式 | 前提 |
+| --- | --- | --- |
+| Windows NSIS | 尝试块差分；失败时下载完整 EXE | 本机保留旧安装包缓存；Release 包含旧、新 `.blockmap` |
+| macOS | 更新 ZIP 的块差分或完整下载 | 当前应用和新应用均有有效代码签名；DMG 供手动安装，不能替代更新 ZIP |
+| Linux AppImage | 从运行中的 AppImage 复用数据块 | `APPIMAGE` 指向可读取的旧文件；发布包包含分块信息 |
+| Linux DEB | 完整包更新 | 系统包管理器及所需安装权限 |
+
+第一次更新、缓存被删除、旧包与清单不一致或 Range 请求失败时，可能下载完整包。不能保证每次节省流量。取消会停止本次操作；错误不执行安装。
+
+本次改动不提供签名证书或 macOS 公证。无签名的 macOS 构建不能作为自动安装验收通过的证据。Windows 未签名包仍可能出现系统提示；SHA-512 和 HTTPS 不替代发布者签名。
+
+## 实现和发布
+
+只有主窗口的可信主帧可请求固定 IPC 动作。Renderer 和采集插件不能传入更新地址、安装路径或命令。更新由主进程的 `electron-updater` 执行；来源固定为 `bruceblink/latestnews` 的正式 GitHub Release，通道为 `latest`，不启用降级。退出安装时绕过关闭到托盘逻辑，正常退出时清理采集进程。
+
+`app-update-preferences.json` 只保存检查开关。用户数据、收藏和插件数据不写入更新缓存。应用每次启动重新检查，因此重启不会因为只有检查时间而丢失新版本提示。
+
+Release 必须包含安装包、`latest.yml`、`latest-mac.yml`、`latest-linux.yml`、`latest-linux-arm64.yml` 及 EXE/ZIP 对应的 `.blockmap`。Windows 与 macOS 的 x64/ARM64 清单由 `scripts/prepare-update-assets.mjs` 合并，保留全部架构文件；Linux 清单按架构分开。上一版本清单和文件保留在原标签下。发布前核对文件、版本、大小、SHA-512 和分块文件，并生成 `SHA256SUMS.txt`。普通构建命令继续使用 `--publish never`。
+
+版本来自根 `package.json`，使用 SemVer，例如 `0.7.3`。发布标签为对应的 `v0.7.3`。打包清单从根版本生成，更新时禁止降级。
+
+## 验证与回退
+
+`pnpm test --run` 包含更新控制器和多架构发布文件测试。`pnpm test:e2e:electron` 验证设置和持久化。真实旧版下载、取消、完整包回退、差分下载、退出安装、重启版本及数据保留要用隔离用户目录记录；构建通过不等于升级通过。
+
+撤回更新代码或关闭检查不会删除用户数据。已安装版本、已发布文件和更新缓存不随 Git 回退自动撤销。
+
+参考：[Electron Builder 自动更新](https://www.electron.build/auto-update.html)、[发布配置](https://www.electron.build/publish.html)。

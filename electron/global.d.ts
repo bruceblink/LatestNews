@@ -1,29 +1,34 @@
-declare const __LATESTNEWS_DESKTOP_API_URL__: string;
-declare const __LATESTNEWS_DESKTOP_AUTH_API_URL__: string;
-declare const __LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL__: string;
+import type { DesktopUpdateBridge } from "../shared/desktop-updates";
 
-interface ImportMetaEnv {
-    readonly LATESTNEWS_DESKTOP: boolean;
-}
+declare global {
+    const __LATESTNEWS_DESKTOP_API_URL__: string;
+    const __LATESTNEWS_DESKTOP_AUTH_API_URL__: string;
+    const __LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL__: string;
 
-interface Window {
-    latestNewsDesktop?: {
-        getLifecycleDiagnostics: () => Promise<unknown>;
-        getDesktopPreferences?: () => Promise<{ trayBackgroundEnabled: boolean }>;
-        setTrayBackgroundEnabled?: (enabled: boolean) => Promise<{ trayBackgroundEnabled: boolean }>;
-        showMainWindow?: () => Promise<void>;
-        getNewsApiUrl?: () => Promise<{ url: string; defaultUrl: string; mode: "auto" | "remote" | "local" }>;
-        setNewsApiUrl?: (url: string) => Promise<string>;
-        setNewsApiSettings?: (settings: { url: string; mode: "auto" | "remote" | "local" }) => Promise<string>;
-        resetNewsApiUrl?: () => Promise<string>;
-        startLogin: () => Promise<void>;
-        setSyncHubApiKey: (apiKey: string) => Promise<void>;
-        clearSyncHubApiKey: () => Promise<void>;
-        verifySyncHub: (endpoint: string, apiKey?: string) => Promise<{ status: number; bodyText: string }>;
-        requestSyncHub: (
-            collection: string,
-            method: string,
-            body?: string
-        ) => Promise<{ status: number; bodyText: string }>;
-    };
+    interface ImportMetaEnv {
+        readonly LATESTNEWS_DESKTOP: boolean;
+    }
+
+    interface Window {
+        latestNewsDesktop?: {
+            updates?: DesktopUpdateBridge;
+            getLifecycleDiagnostics: () => Promise<unknown>;
+            getDesktopPreferences?: () => Promise<{ trayBackgroundEnabled: boolean }>;
+            setTrayBackgroundEnabled?: (enabled: boolean) => Promise<{ trayBackgroundEnabled: boolean }>;
+            showMainWindow?: () => Promise<void>;
+            getNewsApiUrl?: () => Promise<{ url: string; defaultUrl: string; mode: "auto" | "remote" | "local" }>;
+            setNewsApiUrl?: (url: string) => Promise<string>;
+            setNewsApiSettings?: (settings: { url: string; mode: "auto" | "remote" | "local" }) => Promise<string>;
+            resetNewsApiUrl?: () => Promise<string>;
+            startLogin: () => Promise<void>;
+            setSyncHubApiKey: (apiKey: string) => Promise<void>;
+            clearSyncHubApiKey: () => Promise<void>;
+            verifySyncHub: (endpoint: string, apiKey?: string) => Promise<{ status: number; bodyText: string }>;
+            requestSyncHub: (
+                collection: string,
+                method: string,
+                body?: string
+            ) => Promise<{ status: number; bodyText: string }>;
+        };
+    }
 }

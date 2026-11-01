@@ -65,6 +65,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: latestnews-windows-${{ github.sha }}
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release/*.yml
+            release/*.blockmap
           if-no-files-found: error
           retention-days: 14

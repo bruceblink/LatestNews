@@ -1,10 +1,24 @@
 import { ipcRenderer, contextBridge } from "electron";
 
+import type { DesktopUpdateState } from "../shared/desktop-updates";
 import type { DesktopCollectionMode } from "../shared/desktop-collection-mode";
 
 contextBridge.exposeInMainWorld(
     "latestNewsDesktop",
     Object.freeze({
+        updates: Object.freeze({
+            getState: () => ipcRenderer.invoke("desktop:updates:state"),
+            setAutoCheck: (enabled: boolean) => ipcRenderer.invoke("desktop:updates:auto-check", enabled),
+            check: () => ipcRenderer.invoke("desktop:updates:check"),
+            download: () => ipcRenderer.invoke("desktop:updates:download"),
+            cancel: () => ipcRenderer.invoke("desktop:updates:cancel"),
+            install: () => ipcRenderer.invoke("desktop:updates:install"),
+            onState: (callback: (state: DesktopUpdateState) => void) => {
+                const listener = (_event: Electron.IpcRendererEvent, state: DesktopUpdateState) => callback(state);
+                ipcRenderer.on("desktop:updates:changed", listener);
+                return () => ipcRenderer.removeListener("desktop:updates:changed", listener);
+            },
+        }),
         getLifecycleDiagnostics: () => ipcRenderer.invoke("desktop:lifecycle:diagnostics"),
         getDesktopPreferences: () => ipcRenderer.invoke("desktop:preferences:get"),
         setTrayBackgroundEnabled: (enabled: boolean) =>
