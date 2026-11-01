@@ -131,7 +131,7 @@ jobs:
             release/*.zip
             release/*.AppImage
             release/*.deb
-            release/*.yml
+            release/latest*.yml
             release/*.blockmap
           if-no-files-found: error
           retention-days: 14

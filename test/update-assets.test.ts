@@ -20,6 +20,7 @@ it("merges multi-architecture metadata, verifies assets and rejects corrupt down
             for (const arch of architectures) {
                 const directory = join(input, `${platform}-${arch}`);
                 await mkdir(directory, { recursive: true });
+                await writeFile(join(directory, "builder-debug.yml"), "debug: packaging log\n");
                 const file = `LatestNews-1.0.1-${platform}-${arch}.${extension}`;
                 const content = Buffer.from(`${platform}-${arch}`);
                 await writeFile(join(directory, file), content);
@@ -47,6 +48,7 @@ it("merges multi-architecture metadata, verifies assets and rejects corrupt down
             expect(info.files.some((file: { url: string }) => file.url.includes("-arm64."))).toBe(true);
         }
         expect(await readFile(join(output, "SHA256SUMS.txt"), "utf8")).toContain("latest-linux-arm64.yml");
+        await expect(readFile(join(output, "builder-debug.yml"))).rejects.toMatchObject({ code: "ENOENT" });
         await writeFile(join(input, "Windows-x64", "LatestNews-1.0.1-Windows-x64.exe"), "bad");
         await expect(prepareUpdateAssets(input, output, "1.0.1")).rejects.toThrow("mismatch");
     } finally {

@@ -15,6 +15,7 @@ export async function prepareUpdateAssets(inputRoot, outputRoot, version) {
         const root = join(inputRoot, directory);
         for (const name of (await readdir(root)).sort()) {
             if (!/\.(exe|dmg|zip|AppImage|deb|blockmap|yml)$/.test(name)) continue;
+            if (name.endsWith(".yml") && !/^latest(?:-[a-z0-9]+)*\.yml$/.test(name)) continue;
             const path = join(root, name);
             if (name.endsWith(".yml")) {
                 const info = parse(await readFile(path, "utf8"));
