@@ -4,7 +4,7 @@ import process from "node:process";
 import { resolve } from "node:path";
 
 import { dataSources } from "../shared/data-sources";
-import { createConfiguredSourceRuntime } from "./configured-source-runtime.node";
+import { createConfiguredSourceRuntime } from "./configured-source-runtime.node.ts";
 import { readEnabledCrawlerPluginIds } from "../crawler-platform/host/plugin-store";
 import { createNodeCrawlerPluginProvider } from "../crawler-platform/host/node-plugin-provider";
 import {

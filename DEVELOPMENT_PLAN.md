@@ -53,7 +53,7 @@ Windows x64 集成使用本次源码构建的旧版本基线 `0.7.2`，并非旧
 | 许可和校验和 | 有模块说明和各产物复制步骤；本次为 Release 增加更新文件核对及 `SHA256SUMS.txt` | 许可复制步骤属于标签之后的主线变更；需检查真实发布产物 |
 | UI 自动化 | 有搜索框居中、安装引导、移动布局、设置与采集模式覆盖 | Web 页面用例大量使用固定 API 响应；另有真实本地 Nitro 目录、健康和无效 ID smoke |
 | 端到端缺口 | 真实认证、同步、PWA 缓存内容恢复、Electron Service Worker 隔离和完整动态来源阅读流程仍需验收 | 不能仅由设置页 smoke、进程探针或局部路由测试确认 |
-| 插件宿主 | 清单预算、网络检查、包校验和错误映射已有实现 | E2E 工作流已加入 Electron/Docker host smoke 和报告上传；资源与退出实测待由 CI 运行记录确认 |
+| 插件宿主 | 清单预算、网络检查、包校验和错误映射已有实现；本地 Electron host smoke 已通过 | E2E 工作流已加入 Electron/Docker host smoke 和报告上传；CI 资源与退出记录、Docker smoke 仍待运行 |
 | 配置型来源 | Node RSS/JSON 实现与本地路由测试已存在 | 生产配置、浏览器 CORS、保存文章与目录变化的完整流程待确认 |
 | 历史观察 | 七天公网采样已按用户要求延后；历史记录不足以判定来源达标 | 恢复条件见第 8 节；本轮未探测生产新闻接口或 D1 状态 |
 
@@ -169,6 +169,8 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 
 2026-11-03 实现结果：`.github/workflows/e2e.yml` 新增 `Crawler host smoke` job，在 Ubuntu 24.04 中安装 Electron 运行时、Xvfb 和 Docker，依次执行 `pnpm test:crawler:electron` 与 `pnpm test:crawler:docker`，并上传两份运行报告。首次 CI 运行结果、资源指标和清理记录仍待观察。
 
+2026-11-04 验收结果：首次执行 `corepack pnpm@12.16.1 test:crawler:electron` 时发现 `server/crawler-plugin-runtime.node.ts` 使用无扩展名 `.node` 导入，Node `24.15.0`/`tsx` 无法解析实际的 `.node.ts` 文件；改为显式 `.node.ts` 后重跑通过。Node 与 Electron 对同一插件包及动态插件输出的 SHA-256 一致，Node 用时 236 ms、Electron 用时 350 ms，检测到 Browser、GPU、NetworkService 和 NodeService，测试结束无残留 Electron 进程。Docker smoke 和 CI 运行记录仍待执行。
+
 验收：Node/Electron 加载同一插件包并得到一致有效输出；插件失败不阻塞内置或远端可用来源；任务停止后没有遗留进程。Docker 验收使用本地实际容器，进程 smoke 与真实窗口结论分别记录。凭据引用和新重试协议等新增能力等 N5 有需求后再设计。
 
 ### N3-B：动态来源与配置型来源的完整流程
@@ -244,6 +246,6 @@ N3 回退：按来源停用、插件版本回退或清空配置型清单并重�
 
 只在本文件更新任务状态、后续顺序、验收结果和未完成项。每个切片记录一条简明结果：日期、提交、执行环境、已完成检查、未执行项和回退条件。已完成任务移出待办表；保留影响后续判断的简短结论，详细变更与旧日志通过 Git 提交历史追溯。
 
-当前记录：2026-11-04 已同步 `origin/main` 至 `600589e`，本地 `main` 包含后续 10 个提交。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 下的安装、lint、类型检查、Node/Pages 构建和静态 Web 构建已通过，Web Chromium E2E 为 15/15，通过 Pages 构建不会留下被过滤的生成来源清单。Node 22、Electron E2E 和六平台产物检查仍待执行。N1-B 已加入 Electron/Web 许可证束核对、版本源码入口和 Docker 文件存在检查；实际六平台发布产物、摘要和 Docker 远端镜像仍待下一次发布运行核对。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 的共享界面和更新提示证据，Electron 真实窗口和跨页面阅读状态仍待执行。N2-B 已取得 PWA 等待更新、接受更新和离线重载证据，真实 Feed 快照离线恢复及 Electron Service Worker 隔离仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2 的其余验收。
+当前记录：2026-11-04 已同步 `origin/main` 至 `600589e`，本地 `main` 包含后续 11 个提交。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 下的安装、lint、类型检查、Node/Pages 构建和静态 Web 构建已通过，Web Chromium E2E 为 15/15，通过 Pages 构建不会留下被过滤的生成来源清单。Node 22、Electron E2E 和六平台产物检查仍待执行。N1-B 已加入 Electron/Web 许可证束核对、版本源码入口和 Docker 文件存在检查；实际六平台发布产物、摘要和 Docker 远端镜像仍待下一次发布运行核对。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 的共享界面和更新提示证据，Electron 真实窗口和跨页面阅读状态仍待执行。N2-B 已取得 PWA 等待更新、接受更新和离线重载证据，真实 Feed 快照离线恢复及 Electron Service Worker 隔离仍待执行。N3-A 的本地 Electron host smoke 已通过，Docker smoke 和 CI 运行记录仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3 的其余验收。
 
 参考资料仅说明现有用法和接口：[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)、[贡献指南](CONTRIBUTING.md)、[开源协议](LICENSE.md)。
