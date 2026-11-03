@@ -1,7 +1,13 @@
 import type { ReactNode } from "react";
 import type { SourceID } from "@shared/types";
 import type { OfflineFeedSnapshot } from "@shared/offline-feed-snapshot";
-import type { UnifiedFeedItem, UnifiedFeedScope, UnifiedFeedSince, UnifiedFeedCategoryID } from "@shared/unified-feed";
+import type {
+    UnifiedFeedItem,
+    UnifiedFeedScope,
+    UnifiedFeedSince,
+    UnifiedFeedSearch,
+    UnifiedFeedCategoryID,
+} from "@shared/unified-feed";
 
 import clsx from "clsx";
 import { useTitle } from "react-use";
@@ -59,6 +65,7 @@ function FeedPage() {
     useTitle(`${APP_TITLE} | 统一 Feed`);
 
     const search = Route.useSearch();
+    const navigate = Route.useNavigate();
     const focusSources = useAtomValue(focusSourcesAtom);
     const { history, addHistory } = useHistory();
     const { hiddenUrls } = useReadingState();
@@ -69,13 +76,23 @@ function FeedPage() {
     const [since, setSince] = useState<UnifiedFeedSince>(search.since ?? "24h");
     const [offlineSnapshot, setOfflineSnapshot] = useState<OfflineFeedSnapshot>();
 
+    const updateSearch = useCallback(
+        (patch: Partial<UnifiedFeedSearch>, replace = false) => {
+            void navigate({
+                replace,
+                search: (previous) => normalizeUnifiedFeedSearch({ ...previous, ...patch }),
+            });
+        },
+        [navigate]
+    );
+
     useEffect(() => {
         setKeyword(search.q ?? "");
-        if (search.scope) setScope(search.scope);
+        setScope(search.scope ?? (focusSources.length ? "focus" : "hottest"));
         setSourceId(search.source ?? "all");
         setCategoryId(search.category ?? "all");
         setSince(search.since ?? "24h");
-    }, [search.category, search.q, search.scope, search.since, search.source]);
+    }, [focusSources.length, search.category, search.q, search.scope, search.since, search.source]);
 
     const sources = useMemo(() => getUnifiedFeedScopeSources(scope, focusSources), [focusSources, scope]);
     const sinceValue = useMemo(() => getSinceValue(since), [since]);
@@ -150,13 +167,6 @@ function FeedPage() {
         [addHistory]
     );
 
-    const resetFilters = () => {
-        setKeyword("");
-        setSourceId("all");
-        setCategoryId("all");
-        setSince("24h");
-    };
-
     return (
         <section className="page-stack feed-page">
             <div className="surface-panel feed-toolbar">
@@ -199,7 +209,7 @@ function FeedPage() {
                                             : "bg-zinc-200/75 text-zinc-700 hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-400 dark:hover:bg-zinc-700/75"
                                     )}
                                     aria-pressed={scope === option.id}
-                                    onClick={() => setScope(option.id)}
+                                    onClick={() => updateSearch({ scope: option.id })}
                                 >
                                     <span className={option.icon} />
                                     <span>{option.label}</span>
@@ -227,7 +237,7 @@ function FeedPage() {
                         <span className="i-ph:magnifying-glass-duotone absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
                         <input
                             value={keyword}
-                            onChange={(event) => setKeyword(event.currentTarget.value)}
+                            onChange={(event) => updateSearch({ q: event.currentTarget.value }, true)}
                             placeholder="搜索标题、来源或分类"
                             className="h-10 w-full rounded-xl border border-zinc-200/90 bg-white/86 pl-9 pr-3 text-sm outline-none transition-all focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
                         />
@@ -235,7 +245,10 @@ function FeedPage() {
                     <select
                         value={sourceId}
                         aria-label="筛选来源"
-                        onChange={(event) => setSourceId(event.currentTarget.value as SourceID | "all")}
+                        onChange={(event) => {
+                            const value = event.currentTarget.value as SourceID | "all";
+                            updateSearch({ source: value === "all" ? undefined : value });
+                        }}
                         className="h-10 rounded-xl border border-zinc-200/90 bg-white/86 px-3 text-sm outline-none focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
                     >
                         <option value="all">全部来源</option>
@@ -248,7 +261,10 @@ function FeedPage() {
                     <select
                         value={categoryId}
                         aria-label="筛选分类"
-                        onChange={(event) => setCategoryId(event.currentTarget.value as UnifiedFeedCategoryID | "all")}
+                        onChange={(event) => {
+                            const value = event.currentTarget.value as UnifiedFeedCategoryID | "all";
+                            updateSearch({ category: value === "all" ? undefined : value });
+                        }}
                         className="h-10 rounded-xl border border-zinc-200/90 bg-white/86 px-3 text-sm outline-none focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
                     >
                         {categoryOptions.map((category) => (
@@ -260,7 +276,7 @@ function FeedPage() {
                     <select
                         value={since}
                         aria-label="筛选时间范围"
-                        onChange={(event) => setSince(event.currentTarget.value as UnifiedFeedSince)}
+                        onChange={(event) => updateSearch({ since: event.currentTarget.value as UnifiedFeedSince })}
                         className="h-10 rounded-xl border border-zinc-200/90 bg-white/86 px-3 text-sm outline-none focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
                     >
                         {sinceOptions.map((option) => (
@@ -273,7 +289,9 @@ function FeedPage() {
                         type="button"
                         className="h-10 rounded-xl bg-zinc-200/75 px-4 text-sm text-zinc-700 transition-all enabled:hover:bg-zinc-300/80 disabled:cursor-not-allowed disabled:opacity-45 dark:bg-zinc-800/65 dark:text-zinc-300 dark:enabled:hover:bg-zinc-700/75"
                         disabled={!hasActiveFilters}
-                        onClick={resetFilters}
+                        onClick={() =>
+                            updateSearch({ q: undefined, source: undefined, category: undefined, since: undefined })
+                        }
                     >
                         重置
                     </button>
@@ -309,8 +327,8 @@ function FeedPage() {
                         sources={feedView.sourceSummaries}
                         selectedCategory={categoryId}
                         selectedSource={sourceId}
-                        onSelectCategory={setCategoryId}
-                        onSelectSource={setSourceId}
+                        onSelectCategory={(value) => updateSearch({ category: value === "all" ? undefined : value })}
+                        onSelectSource={(value) => updateSearch({ source: value === "all" ? undefined : value })}
                     />
                 </div>
             )}
