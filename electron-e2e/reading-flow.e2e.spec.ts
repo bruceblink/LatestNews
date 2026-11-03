@@ -184,7 +184,7 @@ test("keeps reading history and saved states across Electron source and history 
     await page.reload();
     await expect(page.getByText(fixtureItem.title, { exact: true })).toBeVisible();
 
-    await electronApp.close();
+    await closeElectronApp();
     await launchElectronApp();
     await page.goto("app://bundle/history");
     await expect(page.getByText(fixtureItem.title, { exact: true })).toBeVisible();
@@ -192,7 +192,7 @@ test("keeps reading history and saved states across Electron source and history 
 
 test.afterAll(async () => {
     try {
-        await electronApp?.close();
+        await closeElectronApp();
     } finally {
         await new Promise<void>((resolveClosed) => apiServer?.close(() => resolveClosed()));
         if (userDataDirectory)
@@ -234,4 +234,21 @@ async function launchElectronApp() {
     });
     page = await electronApp.firstWindow();
     await page.waitForLoadState("load");
+}
+
+async function closeElectronApp() {
+    if (!electronApp) return;
+    const closePromise = electronApp.close();
+    const closedGracefully = await Promise.race([
+        closePromise.then(
+            () => true,
+            () => true
+        ),
+        new Promise<boolean>((resolveClosed) => setTimeout(() => resolveClosed(false), 5000)),
+    ]);
+    if (!closedGracefully) {
+        // Xvfb can leave app.quit waiting on a hidden window; force the test process to finish cleanup.
+        await electronApp.evaluate(({ app }) => app.exit(0)).catch(() => undefined);
+    }
+    await closePromise.catch(() => undefined);
 }

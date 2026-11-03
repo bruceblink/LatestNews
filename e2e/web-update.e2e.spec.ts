@@ -6,7 +6,7 @@ import { sep, extname, resolve } from "node:path";
 
 test("keeps the current page until a waiting Web update is accepted", async ({ page }) => {
     test.skip(!process.env.LATESTNEWS_PWA_TEST_ROOT, "Requires a prepared production build.");
-    const root = process.env.LATESTNEWS_PWA_TEST_ROOT ?? fileURLToPath(new URL("../dist/", import.meta.url));
+    const root = resolve(process.env.LATESTNEWS_PWA_TEST_ROOT ?? fileURLToPath(new URL("../dist/", import.meta.url)));
     const mime: Record<string, string> = {
         ".html": "text/html",
         ".js": "application/javascript",
