@@ -115,9 +115,13 @@ export function usePWA() {
     useEffect(() => {
         void (async () => {
             await delay(1000);
-            if (!localStorage.getItem("updated")) return;
+            if (!hasUpdateMarker()) return;
 
-            localStorage.removeItem("updated");
+            try {
+                localStorage.removeItem("updated");
+            } catch {
+                // A blocked storage area must not prevent the app from starting after an update.
+            }
             toaster("更新成功，赶快体验吧", {
                 action: {
                     label: "查看更新",
@@ -136,4 +140,12 @@ export function usePWA() {
         justRecovered,
         applyUpdate,
     } satisfies PWAState;
+}
+
+function hasUpdateMarker() {
+    try {
+        return localStorage.getItem("updated") === "1";
+    } catch {
+        return false;
+    }
 }
