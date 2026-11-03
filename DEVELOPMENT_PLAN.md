@@ -135,6 +135,8 @@ macOS/Linux 的构建与真实安装分别记录。缺少设备时列出平台�
 
 验收：断网可读取已有快照，缺少数据时说明原因；恢复网络后更新但不清空本地阅读状态。PWA 更新后旧快照可兼容读取或明确失效；Electron 不注册 Web Service Worker。
 
+2026-11-03 实现结果：`90909de` 让 PWA 更新成功标记在受限或禁用 `localStorage` 时安全读取和清理，更新后的启动流程不会因存储异常中断。离线重载、Service Worker 更新、过期快照和 Electron 隔离仍需浏览器与真实窗口验收。
+
 ### N2-C：验证认证与 SyncHub 恢复流程
 
 文件入口：`src/hooks/useLogin.ts`、`src/hooks/useSync.ts`、`src/hooks/useSyncHub.ts`、`src/services/metadata.service.ts`、`src/services/synchub.service.ts`、`electron/synchub-storage.ts`。
