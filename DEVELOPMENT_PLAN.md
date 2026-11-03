@@ -89,7 +89,7 @@ N1–N4 的编码与验收估算为 14–19 个工作日，另留 3–5 日回�
 
 2026-11-03 核对结果：官方 npm 注册表的稳定版为 pnpm `12.16.1`、Vite `8.3.5`。根 `package.json`、锁文件、Release/Electron/E2E/Nightly 工作流和 README 已统一到 pnpm `12.16.1`；GitHub Actions 与 `.nvmrc` 已统一使用 Node `22.23.4`。Vite 的 Node 要求为 `^20.19.0 || >=22.12.0`，与项目 Node 最低版本 `22.23.0` 兼容。已用 pnpm `12.16.1` 完成锁文件解析和供应链策略检查；干净安装、代码检查、构建和 E2E 仍待执行。
 
-2026-11-04 检查结果：使用 pnpm `12.16.1` 完成冻结锁文件安装、全仓库 lint、Node/应用/Electron 类型检查、Node 生产构建和 Pages 构建。Pages 构建新增包装器，构建期间使用 Pages 来源清单，结束后恢复已跟踪的生成文件；成功和失败路径均保留构建前内容。新增静态 Web 生产构建入口供 PWA E2E 读取 `index.html`；本机 Node `24.15.0` 下 Web Chromium E2E 为 17/17、Electron E2E 为 10/10 通过。随后使用便携 Node `22.23.4` 和 pnpm `12.16.1` 重新完成冻结安装、lint、两项类型检查、Node 构建和 Pages 构建，全部退出码为 0。Node 22 下的 Windows x64 NSIS 包也已生成。六平台产物检查仍未执行；两组构建均有 4 个外部图标请求超时并使用已有默认图标。
+2026-11-04 检查结果：使用 pnpm `12.16.1` 完成冻结锁文件安装、全仓库 lint、Node/应用/Electron 类型检查、Node 生产构建和 Pages 构建。Pages 构建新增包装器，构建期间使用 Pages 来源清单，结束后恢复已跟踪的生成文件；成功和失败路径均保留构建前内容。新增静态 Web 生产构建入口供 PWA E2E 读取 `index.html`；本机 Node `24.15.0` 下 Web Chromium E2E 为 17/17、Electron E2E 为 10/10 通过。随后使用便携 Node `22.23.4` 和 pnpm `12.16.1` 重新完成冻结安装、lint、两项类型检查、Node 构建和 Pages 构建，全部退出码为 0。Node 22 下的 Windows x64 NSIS 包也已生成。远端发布运行 `41259777389` 的 Windows x64、Windows ARM64、Linux x64、Linux ARM64、macOS Intel、macOS Apple Silicon、Web 和 Docker 构建 job 均成功；发布运行 `41266229300` 成功复用这些产物。两组构建均有 4 个外部图标请求超时并使用已有默认图标。
 
 ### N1-B：验证发布产物、许可和版本源码入口
 
@@ -105,9 +105,11 @@ N1–N4 的编码与验收估算为 14–19 个工作日，另留 3–5 日回�
 
 回退：撤回新增的检查或复制逻辑；保留已发布文件和对应版本源码，不改写旧标签。
 
-2026-11-04 本地产物结果：运行 `corepack pnpm@12.16.1 electron:build` 后，`node scripts/verify-license-bundle.mjs out electron` 和 `node scripts/verify-electron-dependencies.mjs out` 均通过。`out/package.json` 标记 `GPL-3.0-only`，主入口为 `main/main.cjs`；4 个外部图标请求超时并使用已有默认图标。六平台桌面包、Web 发布 ZIP、摘要合并和 Docker 镜像仍待发布运行核对。
+2026-11-04 本地产物结果：运行 `corepack pnpm@12.16.1 electron:build` 后，`node scripts/verify-license-bundle.mjs out electron` 和 `node scripts/verify-electron-dependencies.mjs out` 均通过。`out/package.json` 标记 `GPL-3.0-only`，主入口为 `main/main.cjs`；4 个外部图标请求超时并使用已有默认图标。远端发布运行已核对六平台桌面产物、Web 发布 ZIP、摘要合并和 Docker 构建 job。
 
-2026-11-04 Node 22 Windows 结果：在 Node `22.23.4`、pnpm `12.16.1` 下完成 Electron staging 和 NSIS 打包。`release/validation-node22/LatestNews-0.7.4-Windows-x64.exe` 大小为 139,723,981 字节，并生成对应 blockmap 与 `latest.yml`；清单中的版本为 `0.7.4`，安装包 SHA-512 已写入更新清单。未配置代码签名证书，Windows 包和卸载程序保持未签名；六平台资产仍待发布 CI。
+2026-11-04 Node 22 Windows 结果：在 Node `22.23.4`、pnpm `12.16.1` 下完成 Electron staging 和 NSIS 打包。`release/validation-node22/LatestNews-0.7.4-Windows-x64.exe` 大小为 139,723,981 字节，并生成对应 blockmap 与 `latest.yml`；清单中的版本为 `0.7.4`，安装包 SHA-512 已写入更新清单。未配置代码签名证书，Windows 包和卸载程序保持未签名。远端 `v0.7.4` 发布包含 22 个资产，21 个资产条目与 `SHA256SUMS.txt` 全部匹配。
+
+2026-11-04 发布产物结果：下载 `v0.7.4` 的 `LatestNews-0.7.4-Web.zip`，大小为 10,423,425 字节，SHA-256 为 `2178a73066ebfb93fc2cae4ae8f25e6b40a4dc2eb83f54b83d8915273a2a7c69`。解压后运行 `node scripts/verify-license-bundle.mjs` 通过，包含 `LICENSE`、`LICENSE.md` 和两份 `LICENSES/*.txt`；包内 README 使用版本标签源码链接和 Node 22 启动入口。Docker 镜像构建 job 已成功，但本机没有 Docker 命令，镜像拉取、版本标签和容器连接仍待执行。
 
 ### N1-C：Windows 安装、升级与托盘验收
 
@@ -252,7 +254,7 @@ N3 回退：按来源停用、插件版本回退或清空配置型清单并重�
 
 ## 10. 下一次开发从哪里开始
 
-先补齐 **N1-A** 的六平台产物证据，再核对 **N1-B** 的 Web 发布包、摘要和 Docker 版本；随后完成 N1-C 的图标、托盘菜单和卸载检查。本次已统一 Electron 运行时，并完成自动更新发布及 Windows x64 升级，不重复安排这些变更。
+**N1-A** 的六平台产物、Web 包、发布资产和校验和已完成远端核对。下一步继续核对 **N1-B** 的 Docker 标签、摘要和实际连接；随后完成 N1-C 的图标、托盘菜单和卸载检查。本次已统一 Electron 运行时，并完成自动更新发布及 Windows x64 升级，不重复安排这些变更。
 
 如果 N1-C 缺 Windows 交互条件，可先做 N2-A 的本地流程检查；如果 N2-C 缺真实服务，则继续 N2-A/N2-B 或 N3-A。外部未完成项始终保留，不随其他任务通过而自动关闭。
 
@@ -260,6 +262,6 @@ N3 回退：按来源停用、插件版本回退或清空配置型清单并重�
 
 只在本文件更新任务状态、后续顺序、验收结果和未完成项。每个切片记录一条简明结果：日期、提交、执行环境、已完成检查、未执行项和回退条件。已完成任务移出待办表；保留影响后续判断的简短结论，详细变更与旧日志通过 Git 提交历史追溯。
 
-当前记录：2026-11-04 已同步 `origin/main` 至 `600589e`，本地 `main` 包含后续 23 个提交。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 和便携 Node `22.23.4` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium E2E 17/17 和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 工具链和 Windows x64 NSIS 包证据已完成，六平台产物检查仍待执行。N1-B 的 Electron staging 许可证束和桌面依赖检查已通过，Node 22 包含 blockmap 与 `latest.yml`；实际六平台发布产物、Web 发布 ZIP、摘要和 Docker 远端镜像仍待下一次发布运行核对。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载、过期不渲染和 Electron 不注册 Service Worker 证据。N3-A 的本地 Electron host smoke 已通过，Docker smoke 因本机缺少 Docker 命令而未执行，CI 运行记录仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3 的其余验收。
+当前记录：2026-11-04 已同步 `origin/main` 至 `600589e`，本地 `main` 包含后续 24 个提交。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 和便携 Node `22.23.4` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium E2E 17/17 和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 工具链和 Windows x64 NSIS 包证据已完成；远端运行 `41259777389` 已成功完成六平台桌面、Web 和 Docker 构建，`v0.7.4` 发布运行 `41266229300` 成功，22 个资产及 21 条校验和已核对。N1-B 的 Electron staging 许可证束、桌面依赖和 Web ZIP 许可证检查已通过；Docker 镜像本机拉取和实际连接仍待执行。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载、过期不渲染和 Electron 不注册 Service Worker 证据。N3-A 的本地 Electron host smoke 已通过，Docker smoke 因本机缺少 Docker 命令而未执行；远端 Docker 构建 job 已成功，容器连接仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3 的其余验收。
 
 参考资料仅说明现有用法和接口：[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)、[贡献指南](CONTRIBUTING.md)、[开源协议](LICENSE.md)。
