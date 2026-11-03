@@ -124,20 +124,7 @@ test.beforeAll(async () => {
     apiOrigin = `http://127.0.0.1:${port}`;
 
     userDataDirectory = await mkdtemp(join(tmpdir(), "latestnews-playwright-electron-reading-"));
-    const env = { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: "true" };
-    delete env.LATESTNEWS_CRAWLER_PLUGIN_DIR;
-    electronApp = await _electron.launch({
-        args: [
-            "--no-sandbox",
-            `--user-data-dir=${userDataDirectory}`,
-            ...(process.env.LATESTNEWS_ELECTRON_PACKAGED_TEST === "1" ? [] : ["."]),
-        ],
-        env,
-        executablePath: process.env.LATESTNEWS_ELECTRON_EXECUTABLE,
-        timeout: 60_000,
-    });
-    page = await electronApp.firstWindow();
-    await page.waitForLoadState("load");
+    await launchElectronApp();
     await page.goto("app://bundle/settings");
     await page.getByLabel("数据源 API URL").fill(apiOrigin);
     await page.getByRole("button", { name: "保存并刷新" }).click();
@@ -171,6 +158,11 @@ test("keeps reading history and saved states across Electron source and history 
 
     await page.reload();
     await expect(page.getByText(fixtureItem.title, { exact: true })).toBeVisible();
+
+    await electronApp.close();
+    await launchElectronApp();
+    await page.goto("app://bundle/history");
+    await expect(page.getByText(fixtureItem.title, { exact: true })).toBeVisible();
 });
 
 test.afterAll(async () => {
@@ -200,4 +192,21 @@ function listen(server: ReturnType<typeof createServer>) {
             resolvePort(address.port);
         });
     });
+}
+
+async function launchElectronApp() {
+    const env = { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: "true" };
+    delete env.LATESTNEWS_CRAWLER_PLUGIN_DIR;
+    electronApp = await _electron.launch({
+        args: [
+            "--no-sandbox",
+            `--user-data-dir=${userDataDirectory}`,
+            ...(process.env.LATESTNEWS_ELECTRON_PACKAGED_TEST === "1" ? [] : ["."]),
+        ],
+        env,
+        executablePath: process.env.LATESTNEWS_ELECTRON_EXECUTABLE,
+        timeout: 60_000,
+    });
+    page = await electronApp.firstWindow();
+    await page.waitForLoadState("load");
 }
