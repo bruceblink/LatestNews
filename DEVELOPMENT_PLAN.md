@@ -53,7 +53,7 @@ Windows x64 集成使用本次源码构建的旧版本基线 `0.7.2`，并非旧
 | 许可和校验和 | 有模块说明和各产物复制步骤；本次为 Release 增加更新文件核对及 `SHA256SUMS.txt` | 许可复制步骤属于标签之后的主线变更；需检查真实发布产物 |
 | UI 自动化 | 有搜索框居中、安装引导、移动布局、设置与采集模式覆盖 | Web 页面用例大量使用固定 API 响应；另有真实本地 Nitro 目录、健康和无效 ID smoke |
 | 端到端缺口 | 真实认证、同步、PWA 离线更新、完整动态来源阅读流程仍需验收 | 不能仅由设置页 smoke、进程探针或局部路由测试确认 |
-| 插件宿主 | 清单预算、网络检查、包校验和错误映射已有实现 | 工作流尚未直接调用 `test:crawler:electron`、`test:crawler:docker`；资源与退出实测待补 |
+| 插件宿主 | 清单预算、网络检查、包校验和错误映射已有实现 | E2E 工作流已加入 Electron/Docker host smoke 和报告上传；资源与退出实测待由 CI 运行记录确认 |
 | 配置型来源 | Node RSS/JSON 实现与本地路由测试已存在 | 生产配置、浏览器 CORS、保存文章与目录变化的完整流程待确认 |
 | 历史观察 | 七天公网采样已按用户要求延后；历史记录不足以判定来源达标 | 恢复条件见第 8 节；本轮未探测生产新闻接口或 D1 状态 |
 
@@ -154,6 +154,8 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 文件入口：`crawler-platform/sdk/`、`crawler-platform/host/`、`crawler-platform/runtime/`、`scripts/crawler/`、`.github/workflows/e2e.yml`、`.github/workflows/electron-desktop.yml`。
 
 将现有 `pnpm test:crawler:electron` 与 `pnpm test:crawler:docker` 接入适合的平台 CI。补充同包输出、超时、超大响应、取消、进程退出、损坏包和回退场景，保存插件版本、包 SHA-256、资源上限和清理结果。独立进程的职责是隔离故障；当前 `trusted-js` 继续只运行维护者审查过的代码。
+
+2026-11-03 实现结果：`.github/workflows/e2e.yml` 新增 `Crawler host smoke` job，在 Ubuntu 24.04 中安装 Electron 运行时、Xvfb 和 Docker，依次执行 `pnpm test:crawler:electron` 与 `pnpm test:crawler:docker`，并上传两份运行报告。首次 CI 运行结果、资源指标和清理记录仍待观察。
 
 验收：Node/Electron 加载同一插件包并得到一致有效输出；插件失败不阻塞内置或远端可用来源；任务停止后没有遗留进程。Docker 验收使用本地实际容器，进程 smoke 与真实窗口结论分别记录。凭据引用和新重试协议等新增能力等 N5 有需求后再设计。
 
