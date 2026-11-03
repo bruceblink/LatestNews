@@ -20,6 +20,8 @@ export interface OfflineFeedSnapshot {
     since?: number | string;
 }
 
+export type OfflineFeedSnapshotState = "fresh" | "stale" | "invalid";
+
 export function createOfflineFeedSnapshot(
     payload: OfflineFeedSnapshotPayload,
     response: SourceBatchResponse,
@@ -57,8 +59,29 @@ export function selectOfflineFeedSnapshot(
     const key = createOfflineFeedSnapshotKey(payload);
 
     return snapshots
-        .filter((snapshot) => snapshot.key === key && isFreshOfflineFeedSnapshot(snapshot, now, maxAgeMs))
+        .filter((snapshot) => snapshot.key === key && getOfflineFeedSnapshotState(snapshot, now, maxAgeMs) === "fresh")
         .sort((left, right) => right.savedAt - left.savedAt)[0];
+}
+
+/** Distinguishes expired feed data from malformed data so the UI can explain why offline content is unavailable. */
+export function getOfflineFeedSnapshotState(
+    snapshot: OfflineFeedSnapshot,
+    now = Date.now(),
+    maxAgeMs = DEFAULT_OFFLINE_FEED_SNAPSHOT_MAX_AGE_MS
+): OfflineFeedSnapshotState {
+    if (
+        snapshot.version !== OFFLINE_FEED_SNAPSHOT_VERSION ||
+        !Number.isFinite(snapshot.savedAt) ||
+        snapshot.savedAt > now + 60 * 1000 ||
+        !Array.isArray(snapshot.sourceIds) ||
+        snapshot.sourceIds.length === 0 ||
+        !snapshot.response ||
+        !Array.isArray(snapshot.response.data)
+    ) {
+        return "invalid";
+    }
+
+    return now - snapshot.savedAt > maxAgeMs ? "stale" : "fresh";
 }
 
 export function isFreshOfflineFeedSnapshot(
@@ -66,14 +89,7 @@ export function isFreshOfflineFeedSnapshot(
     now = Date.now(),
     maxAgeMs = DEFAULT_OFFLINE_FEED_SNAPSHOT_MAX_AGE_MS
 ) {
-    return (
-        snapshot.version === OFFLINE_FEED_SNAPSHOT_VERSION &&
-        Number.isFinite(snapshot.savedAt) &&
-        snapshot.savedAt <= now + 60 * 1000 &&
-        now - snapshot.savedAt <= maxAgeMs &&
-        snapshot.sourceIds.length > 0 &&
-        Array.isArray(snapshot.response.data)
-    );
+    return getOfflineFeedSnapshotState(snapshot, now, maxAgeMs) === "fresh";
 }
 
 export function normalizeOfflineFeedSnapshotSources(sources: SourceID[]): SourceID[] {

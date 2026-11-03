@@ -1,10 +1,15 @@
 import type { SourceBatchResponse } from "@shared/source-api";
-import type { OfflineFeedSnapshot, OfflineFeedSnapshotPayload } from "@shared/offline-feed-snapshot";
+import type {
+    OfflineFeedSnapshot,
+    OfflineFeedSnapshotState,
+    OfflineFeedSnapshotPayload,
+} from "@shared/offline-feed-snapshot";
 
 import {
     createOfflineFeedSnapshot,
     selectOfflineFeedSnapshot,
-    isFreshOfflineFeedSnapshot,
+    getOfflineFeedSnapshotState,
+    createOfflineFeedSnapshotKey,
     OFFLINE_FEED_SNAPSHOT_VERSION,
 } from "@shared/offline-feed-snapshot";
 
@@ -15,6 +20,13 @@ const MAX_OFFLINE_FEED_SNAPSHOTS = 12;
 interface OfflineFeedSnapshotStore {
     version: typeof STORE_VERSION;
     snapshots: OfflineFeedSnapshot[];
+}
+
+export type OfflineFeedSnapshotAvailability = OfflineFeedSnapshotState | "missing";
+
+export interface OfflineFeedSnapshotReadResult {
+    state: OfflineFeedSnapshotAvailability;
+    snapshot?: OfflineFeedSnapshot;
 }
 
 export function saveOfflineFeedSnapshot(
@@ -49,10 +61,31 @@ export function readOfflineFeedSnapshot(
     payload: OfflineFeedSnapshotPayload,
     now = Date.now()
 ): OfflineFeedSnapshot | undefined {
-    return selectOfflineFeedSnapshot(readOfflineFeedSnapshotStore(now).snapshots, payload, now);
+    return selectOfflineFeedSnapshot(readOfflineFeedSnapshotStore().snapshots, payload, now);
 }
 
-function readOfflineFeedSnapshotStore(now = Date.now()): OfflineFeedSnapshotStore {
+/** Reads the newest matching fresh or stale snapshot without treating expired content as current data. */
+export function readOfflineFeedSnapshotStatus(
+    payload: OfflineFeedSnapshotPayload,
+    now = Date.now()
+): OfflineFeedSnapshotReadResult {
+    const snapshots = readOfflineFeedSnapshotStore().snapshots;
+    const key = createOfflineFeedSnapshotKey(payload);
+    const matchingSnapshots = snapshots
+        .filter((snapshot) => snapshot.key === key)
+        .sort((left, right) => right.savedAt - left.savedAt);
+    if (!matchingSnapshots.length) return { state: "missing" };
+
+    const freshSnapshot = matchingSnapshots.find((snapshot) => getOfflineFeedSnapshotState(snapshot, now) === "fresh");
+    if (freshSnapshot) return { state: "fresh", snapshot: freshSnapshot };
+
+    const staleSnapshot = matchingSnapshots.find((snapshot) => getOfflineFeedSnapshotState(snapshot, now) === "stale");
+    if (staleSnapshot) return { state: "stale", snapshot: staleSnapshot };
+
+    return { state: "invalid" };
+}
+
+function readOfflineFeedSnapshotStore(): OfflineFeedSnapshotStore {
     const storage = getLocalStorage();
     if (!storage) return createEmptyStore();
 
@@ -65,9 +98,7 @@ function readOfflineFeedSnapshotStore(now = Date.now()): OfflineFeedSnapshotStor
 
         return {
             version: STORE_VERSION,
-            snapshots: parsed.snapshots
-                .filter(isStoredOfflineFeedSnapshot)
-                .filter((snapshot) => isFreshOfflineFeedSnapshot(snapshot, now)),
+            snapshots: parsed.snapshots.filter(isStoredOfflineFeedSnapshot),
         };
     } catch {
         return createEmptyStore();

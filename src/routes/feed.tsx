@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import type { SourceID } from "@shared/types";
-import type { OfflineFeedSnapshot } from "@shared/offline-feed-snapshot";
 import type {
     UnifiedFeedItem,
     UnifiedFeedScope,
@@ -24,7 +23,11 @@ import { getUnifiedFeedCacheKey } from "@shared/source-api";
 import { fetchUnifiedFeed } from "~/services/source.service";
 import { memo, useMemo, useState, useEffect, useCallback } from "react";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
-import { readOfflineFeedSnapshot, saveOfflineFeedSnapshot } from "~/services/offline-feed-snapshot.service";
+import {
+    saveOfflineFeedSnapshot,
+    readOfflineFeedSnapshotStatus,
+    type OfflineFeedSnapshotReadResult,
+} from "~/services/offline-feed-snapshot.service";
 import {
     unifiedFeedPageSize,
     createUnifiedFeedView,
@@ -74,7 +77,9 @@ function FeedPage() {
     const [sourceId, setSourceId] = useState<SourceID | "all">(search.source ?? "all");
     const [categoryId, setCategoryId] = useState<UnifiedFeedCategoryID | "all">(search.category ?? "all");
     const [since, setSince] = useState<UnifiedFeedSince>(search.since ?? "24h");
-    const [offlineSnapshot, setOfflineSnapshot] = useState<OfflineFeedSnapshot>();
+    const [offlineSnapshotStatus, setOfflineSnapshotStatus] = useState<OfflineFeedSnapshotReadResult>({
+        state: "missing",
+    });
 
     const updateSearch = useCallback(
         (patch: Partial<UnifiedFeedSearch>, replace = false) => {
@@ -121,15 +126,18 @@ function FeedPage() {
     });
 
     useEffect(() => {
-        setOfflineSnapshot(readOfflineFeedSnapshot(offlineSnapshotPayload));
+        setOfflineSnapshotStatus(readOfflineFeedSnapshotStatus(offlineSnapshotPayload));
     }, [offlineSnapshotPayload]);
 
     useEffect(() => {
         if (!data) return;
-        setOfflineSnapshot(saveOfflineFeedSnapshot(offlineSnapshotPayload, data));
+        const snapshot = saveOfflineFeedSnapshot(offlineSnapshotPayload, data);
+        if (snapshot) setOfflineSnapshotStatus({ state: "fresh", snapshot });
     }, [data, offlineSnapshotPayload]);
 
+    const offlineSnapshot = offlineSnapshotStatus.state === "fresh" ? offlineSnapshotStatus.snapshot : undefined;
     const isOfflineSnapshotActive = !data && Boolean(offlineSnapshot);
+    const isOfflineSnapshotStale = !data && offlineSnapshotStatus.state === "stale";
     const activeResponse = data ?? offlineSnapshot?.response;
     const loadedResponses = useMemo(() => activeResponse?.data ?? [], [activeResponse]);
     const sourceOptionView = useMemo(() => createUnifiedFeedView(loadedResponses), [loadedResponses]);
@@ -188,6 +196,8 @@ function FeedPage() {
                             )}
                             {isOfflineSnapshotActive && offlineSnapshot ? (
                                 <SnapshotSignalPill savedAt={offlineSnapshot.savedAt} />
+                            ) : isOfflineSnapshotStale && offlineSnapshotStatus.snapshot ? (
+                                <ExpiredSnapshotSignalPill savedAt={offlineSnapshotStatus.snapshot.savedAt} />
                             ) : (
                                 <SignalPill
                                     icon="i-ph:clock-clockwise-duotone"
@@ -316,6 +326,10 @@ function FeedPage() {
             </div>
 
             {isOfflineSnapshotActive && offlineSnapshot && <OfflineSnapshotNotice savedAt={offlineSnapshot.savedAt} />}
+
+            {isOfflineSnapshotStale && offlineSnapshotStatus.snapshot && (
+                <ExpiredOfflineSnapshotNotice savedAt={offlineSnapshotStatus.snapshot.savedAt} />
+            )}
 
             {isError && !isOfflineSnapshotActive && (
                 <div className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
@@ -573,12 +587,30 @@ function SnapshotSignalPill({ savedAt }: { savedAt: number }) {
     return <SignalPill icon="i-ph:hard-drives-duotone" label={`${relativeTime ?? "刚刚"}的快照`} tone="warning" />;
 }
 
+function ExpiredSnapshotSignalPill({ savedAt }: { savedAt: number }) {
+    const relativeTime = useRelativeTime(savedAt);
+
+    return (
+        <SignalPill icon="i-ph:warning-circle-duotone" label={`${relativeTime ?? "较早"}的快照已过期`} tone="warning" />
+    );
+}
+
 function OfflineSnapshotNotice({ savedAt }: { savedAt: number }) {
     const relativeTime = useRelativeTime(savedAt);
 
     return (
         <div className="rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
             当前展示{relativeTime ?? "刚刚"}保存的 Feed 快照，网络恢复后会自动切回最新内容。
+        </div>
+    );
+}
+
+function ExpiredOfflineSnapshotNotice({ savedAt }: { savedAt: number }) {
+    const relativeTime = useRelativeTime(savedAt);
+
+    return (
+        <div className="rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
+            已保存的 Feed 快照（{relativeTime ?? "较早"}）已过期，当前没有可用的离线内容。请恢复网络后刷新。
         </div>
     );
 }
