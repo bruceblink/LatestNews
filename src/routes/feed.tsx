@@ -209,7 +209,10 @@ function FeedPage() {
                                             : "bg-zinc-200/75 text-zinc-700 hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-400 dark:hover:bg-zinc-700/75"
                                     )}
                                     aria-pressed={scope === option.id}
-                                    onClick={() => updateSearch({ scope: option.id })}
+                                    onClick={() => {
+                                        setScope(option.id);
+                                        updateSearch({ scope: option.id });
+                                    }}
                                 >
                                     <span className={option.icon} />
                                     <span>{option.label}</span>
@@ -237,7 +240,11 @@ function FeedPage() {
                         <span className="i-ph:magnifying-glass-duotone absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
                         <input
                             value={keyword}
-                            onChange={(event) => updateSearch({ q: event.currentTarget.value }, true)}
+                            onChange={(event) => {
+                                const value = event.currentTarget.value;
+                                setKeyword(value);
+                                updateSearch({ q: value }, true);
+                            }}
                             placeholder="搜索标题、来源或分类"
                             className="h-10 w-full rounded-xl border border-zinc-200/90 bg-white/86 pl-9 pr-3 text-sm outline-none transition-all focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
                         />
@@ -247,6 +254,7 @@ function FeedPage() {
                         aria-label="筛选来源"
                         onChange={(event) => {
                             const value = event.currentTarget.value as SourceID | "all";
+                            setSourceId(value);
                             updateSearch({ source: value === "all" ? undefined : value });
                         }}
                         className="h-10 rounded-xl border border-zinc-200/90 bg-white/86 px-3 text-sm outline-none focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
@@ -263,6 +271,7 @@ function FeedPage() {
                         aria-label="筛选分类"
                         onChange={(event) => {
                             const value = event.currentTarget.value as UnifiedFeedCategoryID | "all";
+                            setCategoryId(value);
                             updateSearch({ category: value === "all" ? undefined : value });
                         }}
                         className="h-10 rounded-xl border border-zinc-200/90 bg-white/86 px-3 text-sm outline-none focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
@@ -276,7 +285,11 @@ function FeedPage() {
                     <select
                         value={since}
                         aria-label="筛选时间范围"
-                        onChange={(event) => updateSearch({ since: event.currentTarget.value as UnifiedFeedSince })}
+                        onChange={(event) => {
+                            const value = event.currentTarget.value as UnifiedFeedSince;
+                            setSince(value);
+                            updateSearch({ since: value });
+                        }}
                         className="h-10 rounded-xl border border-zinc-200/90 bg-white/86 px-3 text-sm outline-none focus:border-cyan-500/55 dark:border-zinc-700/40 dark:bg-zinc-800/64"
                     >
                         {sinceOptions.map((option) => (
@@ -289,9 +302,13 @@ function FeedPage() {
                         type="button"
                         className="h-10 rounded-xl bg-zinc-200/75 px-4 text-sm text-zinc-700 transition-all enabled:hover:bg-zinc-300/80 disabled:cursor-not-allowed disabled:opacity-45 dark:bg-zinc-800/65 dark:text-zinc-300 dark:enabled:hover:bg-zinc-700/75"
                         disabled={!hasActiveFilters}
-                        onClick={() =>
-                            updateSearch({ q: undefined, source: undefined, category: undefined, since: undefined })
-                        }
+                        onClick={() => {
+                            setKeyword("");
+                            setSourceId("all");
+                            setCategoryId("all");
+                            setSince("24h");
+                            updateSearch({ q: undefined, source: undefined, category: undefined, since: undefined });
+                        }}
                     >
                         重置
                     </button>
@@ -327,8 +344,14 @@ function FeedPage() {
                         sources={feedView.sourceSummaries}
                         selectedCategory={categoryId}
                         selectedSource={sourceId}
-                        onSelectCategory={(value) => updateSearch({ category: value === "all" ? undefined : value })}
-                        onSelectSource={(value) => updateSearch({ source: value === "all" ? undefined : value })}
+                        onSelectCategory={(value) => {
+                            setCategoryId(value);
+                            updateSearch({ category: value === "all" ? undefined : value });
+                        }}
+                        onSelectSource={(value) => {
+                            setSourceId(value);
+                            updateSearch({ source: value === "all" ? undefined : value });
+                        }}
                     />
                 </div>
             )}
