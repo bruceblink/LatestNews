@@ -194,7 +194,7 @@ test.afterAll(async () => {
     try {
         await closeElectronApp();
     } finally {
-        await new Promise<void>((resolveClosed) => apiServer?.close(() => resolveClosed()));
+        await closeApiServer();
         if (userDataDirectory)
             await rm(userDataDirectory, { recursive: true, force: true, maxRetries: 8, retryDelay: 250 });
     }
@@ -248,4 +248,13 @@ async function closeElectronApp() {
         await electronApp.evaluate(({ app }) => app.exit(0)).catch(() => undefined);
         await Promise.race([closePromise, new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000))]);
     }
+}
+
+async function closeApiServer() {
+    if (!apiServer) return;
+    apiServer.closeAllConnections();
+    await Promise.race([
+        new Promise<void>((resolveClosed) => apiServer.close(() => resolveClosed())),
+        new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000)),
+    ]);
 }

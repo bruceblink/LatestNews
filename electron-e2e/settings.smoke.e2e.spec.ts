@@ -70,13 +70,27 @@ test("installs and discovers all bundled sources in a fresh desktop profile", as
 
 test.afterAll(async () => {
     try {
-        await electronApp?.close();
+        await closeElectronApp();
     } finally {
         if (userDataDirectory) {
             await rm(userDataDirectory, { recursive: true, force: true, maxRetries: 8, retryDelay: 250 });
         }
     }
 });
+
+async function closeElectronApp() {
+    if (!electronApp) return;
+    const closePromise = electronApp.close().catch(() => undefined);
+    const closedGracefully = await Promise.race([
+        closePromise.then(() => true),
+        new Promise<boolean>((resolveClosed) => setTimeout(() => resolveClosed(false), 5000)),
+    ]);
+    if (!closedGracefully) {
+        // Xvfb can leave app.quit waiting on a hidden window; force the test process to finish cleanup.
+        await electronApp.evaluate(({ app }) => app.exit(0)).catch(() => undefined);
+        await Promise.race([closePromise, new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000))]);
+    }
+}
 
 test("opens the shared settings route in the Electron renderer", async () => {
     await page.goto("app://bundle/settings");
