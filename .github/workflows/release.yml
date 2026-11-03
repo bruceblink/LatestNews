@@ -41,12 +41,12 @@ jobs:
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 12.15.0
+          version: 12.16.1
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.23.4
           cache: pnpm
 
       - name: Check tag and package version
@@ -119,12 +119,12 @@ jobs:
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 12.15.0
+          version: 12.16.1
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.23.4
           architecture: ${{ matrix.arch }}
           cache: pnpm
 
@@ -135,6 +135,9 @@ jobs:
 
       - name: Build Electron application
         run: pnpm electron:build
+
+      - name: Verify Electron license bundle
+        run: node scripts/verify-license-bundle.mjs out electron
 
       - name: Package desktop application
         run: pnpm exec electron-builder --projectDir out --config ../electron-builder.yml --${{ matrix.platform }} --${{ matrix.arch_flag }} --publish never
@@ -169,12 +172,12 @@ jobs:
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 12.15.0
+          version: 12.16.1
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.23.4
           cache: pnpm
 
       - name: Install dependencies
@@ -190,7 +193,8 @@ jobs:
           cp LICENSE LICENSE.md release-web/
           mkdir -p release-web/LICENSES
           cp LICENSES/*.txt release-web/LICENSES/
-          printf 'LatestNews %s Web deployment package\n\nRun with Node.js 22 or newer:\n  node output/server/index.mjs\n' "${RELEASE_TAG#v}" > release-web/README.txt
+          printf 'LatestNews %s Web deployment package\n\nSource code: https://github.com/bruceblink/LatestNews/tree/%s\nBuild and deployment: https://github.com/bruceblink/LatestNews/blob/%s/docs/deployment.md\n\nRun with Node.js 22 or newer:\n  node output/server/index.mjs\n\nLicense: LICENSE.md and LICENSES/\n' "${RELEASE_TAG#v}" "${RELEASE_TAG}" "${RELEASE_TAG}" > release-web/README.txt
+          node scripts/verify-license-bundle.mjs release-web
           cd release-web
           zip -r "../LatestNews-${RELEASE_TAG#v}-Web.zip" .
 
@@ -318,12 +322,12 @@ jobs:
       - name: Set up pnpm for update metadata
         uses: pnpm/action-setup@v4
         with:
-          version: 12.15.0
+          version: 12.16.1
 
       - name: Set up Node.js for update metadata
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.23.4
           cache: pnpm
 
       - name: Install metadata dependencies

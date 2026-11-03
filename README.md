@@ -96,7 +96,7 @@ macOS Release 也提供 ZIP 包。桌面包目前没有代码签名，macOS 包�
 ### 环境要求
 
 - 使用 Node.js 22 LTS（当前最低要求为 22.23.0），详见 [Vite 环境要求](https://vite.dev/guide/)
-- 使用 `package.json` 指定的 pnpm 版本，当前为 `12.15.0`
+- 使用 `package.json` 指定的 pnpm 版本，当前为 `12.16.1`
 
 这些工具仅用于源码开发和构建。在线阅读与桌面安装包不需要这些工具。
 

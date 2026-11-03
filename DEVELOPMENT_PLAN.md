@@ -87,13 +87,16 @@ N1–N4 的编码与验收估算为 14–19 个工作日，另留 3–5 日回�
 
 回退：撤回本切片的工具链与构建配置变更，恢复上一组已验证依赖；不改业务数据格式。
 
+2026-11-03 核对结果：官方 npm 注册表的稳定版为 pnpm `12.16.1`、Vite `8.3.5`。根 `package.json`、锁文件、Release/Electron/E2E/Nightly 工作流和 README 已统一到 pnpm `12.16.1`；GitHub Actions 与 `.nvmrc` 已统一使用 Node `22.23.4`。Vite 的 Node 要求为 `^20.19.0 || >=22.12.0`，与项目 Node 最低版本 `22.23.0` 兼容。已用 pnpm `12.16.1` 完成锁文件解析和供应链策略检查；干净安装、代码检查、构建和 E2E 仍待执行。
+
 ### N1-B：验证发布产物、许可和版本源码入口
 
-文件入口：`LICENSE.md`、`LICENSES/`、`scripts/prepare-electron-package.mjs`、`scripts/verify-electron-dependencies.mjs`、`.github/workflows/release.yml`、`Dockerfile`、`src/components/footer.tsx`。
+文件入口：`LICENSE.md`、`LICENSES/`、`scripts/prepare-electron-package.mjs`、`scripts/verify-license-bundle.mjs`、`scripts/verify-electron-dependencies.mjs`、`.github/workflows/release.yml`、`Dockerfile`、`src/components/footer.tsx`。
 
 - 检查 Electron 包、Web ZIP 和 Docker 镜像中的范围说明与完整许可证文本。核对文件历史、原许可证、贡献者和复用代码的授权，以及第三方声明。涉及的授权无法确认时，记录具体范围，并在确认前保持发布事项待完成。
 - 检查桌面主进程、renderer、worker 和预置插件的实际构建输入；许可范围应与进入产物的代码一致。
 - 为每个桌面包和 Web 包生成 `SHA256SUMS.txt`，重新计算并核对；校验和文件不包含自身。用户下载说明链接到同一标签的源代码和构建说明；源码入口不能只指向随时变化的 `main`。
+- 在 Electron staging 目录和 Web 发布目录核对完整许可证文件的 SHA-256；桌面包附带带版本标签的 `README.txt`，Web 包附带同样的源码和部署文档入口。Docker 最终镜像在构建阶段检查四份许可证文件存在且非空。
 - 保留从标签提交范围生成双语发布说明的流程；发布后核对桌面资产、Web 包、Docker 版本标签与摘要。
 
 验收：许可证路径及内容可在实际产物中读取；摘要全部匹配；版本、变更范围和源码链接一致。已有 `v0.7.2` 标签与资产保持原状，改进从下一版本生效。
@@ -225,6 +228,6 @@ N3 回退：按来源停用、插件版本回退或清空配置型清单并重�
 
 只在本文件更新任务状态、后续顺序、验收结果和未完成项。每个切片记录一条简明结果：日期、提交、执行环境、已完成检查、未执行项和回退条件。已完成任务移出待办表；保留影响后续判断的简短结论，详细变更与旧日志通过 Git 提交历史追溯。
 
-当前记录：2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1 的其余验收。
+当前记录：2026-11-03 已同步 `origin/main` 至 `600589e`，并完成 N1-A 工具链版本核对和输入统一；pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 的来源与兼容范围已记录。N1-B 已加入 Electron/Web 许可证束核对、版本源码入口和 Docker 文件存在检查；实际六平台发布产物、摘要和 Docker 远端镜像仍待下一次发布运行核对。干净安装、代码检查、构建和 E2E 仍未执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1 的其余验收。
 
 参考资料仅说明现有用法和接口：[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)、[贡献指南](CONTRIBUTING.md)、[开源协议](LICENSE.md)。

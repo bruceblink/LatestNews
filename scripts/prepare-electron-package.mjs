@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdir, access, copyFile, readFile, writeFile } from "node:fs/promises";
 
+import { verifyLicenseBundle } from "./verify-license-bundle.mjs";
 import { verifyElectronDependencies } from "./verify-electron-dependencies.mjs";
 
 const projectRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
@@ -21,6 +22,7 @@ const appManifest = {
     license: "GPL-3.0-only",
     description: rootPackage.description,
     homepage: rootPackage.homepage,
+    repository: `${rootPackage.repository}/tree/v${rootPackage.version}`,
     private: true,
     dependencies: {},
     main: "main/main.cjs",
@@ -35,4 +37,18 @@ await mkdir(resolve(outputRoot, "LICENSES"), { recursive: true });
 for (const licenseFile of ["GPL-3.0-only.txt", "AGPL-3.0-only.txt"]) {
     await copyFile(resolve(projectRoot, "LICENSES", licenseFile), resolve(outputRoot, "LICENSES", licenseFile));
 }
+await writeFile(
+    resolve(outputRoot, "README.txt"),
+    [
+        `LatestNews ${rootPackage.version} desktop package`,
+        "",
+        `Source code: ${rootPackage.repository}/tree/v${rootPackage.version}`,
+        `Build and update notes: ${rootPackage.repository}/blob/v${rootPackage.version}/docs/04-desktop-updates.md`,
+        "",
+        "License: LICENSE.md and LICENSES/",
+        "",
+    ].join("\n"),
+    "utf8"
+);
+await verifyLicenseBundle(outputRoot, "GPL-3.0-only");
 console.info("Prepared a minimal Electron app manifest without server dependencies.");

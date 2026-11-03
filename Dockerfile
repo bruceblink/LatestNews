@@ -49,6 +49,9 @@ COPY --from=builder /usr/src/LICENSE ./LICENSE
 COPY --from=builder /usr/src/LICENSE.md ./LICENSE.md
 COPY --from=builder /usr/src/LICENSES ./LICENSES
 
+# Fail the image build if the distributable lost any required license text.
+RUN node -e "const fs=require('node:fs'); for (const file of ['LICENSE','LICENSE.md','LICENSES/GPL-3.0-only.txt','LICENSES/AGPL-3.0-only.txt']) { const path='./'+file; if (!fs.statSync(path).isFile() || fs.statSync(path).size === 0) throw new Error('Missing license file: '+file); }"
+
 # Exercise the shipped binding for each target architecture before an image can be published.
 RUN node -e "const Database = require('./output/server/node_modules/better-sqlite3'); const db = new Database(':memory:'); if (db.prepare('SELECT 1 AS ok').get().ok !== 1) throw new Error('SQLite runtime check failed'); db.close();"
 

@@ -4,7 +4,7 @@
     "version": "0.7.4",
     "private": true,
     "license": "SEE LICENSE IN LICENSE.md",
-    "packageManager": "pnpm@12.15.0",
+    "packageManager": "pnpm@12.16.1",
     "engines": {
         "node": ">=22.23.0"
     },
