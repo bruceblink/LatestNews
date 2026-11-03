@@ -98,6 +98,23 @@ test("restores a fresh Feed snapshot after an offline reload", async ({ page }) 
         await page.reload({ waitUntil: "domcontentloaded" });
         await expect(page.getByText(fixtureTitle, { exact: true })).toBeVisible();
         await expect(page.getByText(/当前展示.*Feed 快照/)).toBeVisible();
+
+        await page.context().setOffline(false);
+        await page.evaluate(() => {
+            const storageKey = "latestnews:offline-feed-snapshots";
+            const raw = localStorage.getItem(storageKey);
+            if (!raw) throw new Error("Feed snapshot was not persisted.");
+            const store = JSON.parse(raw) as { version: number; snapshots: Array<Record<string, unknown>> };
+            store.snapshots = store.snapshots.map((snapshot) => ({
+                ...snapshot,
+                savedAt: Date.now() - 8 * 24 * 60 * 60 * 1000,
+            }));
+            localStorage.setItem(storageKey, JSON.stringify(store));
+        });
+        await page.context().setOffline(true);
+        await page.reload({ waitUntil: "domcontentloaded" });
+        await expect(page.getByText(fixtureTitle, { exact: true })).toHaveCount(0);
+        await expect(page.getByText(/已保存的 Feed 快照.*已过期/)).toBeVisible();
     } finally {
         await page.context().setOffline(false);
         await new Promise<void>((resolveClosed) => {
