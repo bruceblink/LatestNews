@@ -8,7 +8,7 @@ interface AssetRecord {
     gzipBytes: number;
 }
 
-const publicRoot = resolve(process.cwd(), "dist/output/public");
+const publicRoot = resolve(process.cwd(), process.env.LATESTNEWS_WEB_BASELINE_ROOT?.trim() || "dist/output/public");
 const htmlPath = join(publicRoot, "index.html");
 const assets = await collectAssets(publicRoot);
 const html = await readFile(htmlPath, "utf8");
