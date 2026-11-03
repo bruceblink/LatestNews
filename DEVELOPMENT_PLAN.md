@@ -125,6 +125,8 @@ macOS/Linux 的构建与真实安装分别记录。缺少设备时列出平台�
 
 验收：Web 和 Electron 均能从发现来源走到历史回看；关注和阅读状态跨页面一致，重启后保留。Feed 筛选、重置、刷新和前进/后退恢复一致，加载更多无重复条目。桌面和窄屏检查无横向溢出；键盘可打开、选择和关闭模态框。自动化使用稳定测试数据，真实窗口证据单独保存。
 
+2026-11-03 实现结果：上游 `600589e` 已让 Feed 筛选写入路由搜索；本地 `3277b8c` 继续让输入框、下拉框、重置按钮和侧栏筛选先更新受控状态，再异步更新路由，避免快速操作时界面回退或丢失输入。跨页面、重启、窄屏和真实窗口验收仍待执行。
+
 ### N2-B：验证 PWA 更新与离线恢复
 
 文件入口：`src/hooks/usePWA.ts`、`src/services/offline-reading-state.service.ts`、`src/services/offline-feed-snapshot.service.ts`、`shared/offline-reading-state.ts`、`shared/offline-feed-snapshot.ts`、`pwa.config.ts`。
