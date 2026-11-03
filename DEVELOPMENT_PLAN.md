@@ -155,6 +155,8 @@ macOS/Linux 的构建与真实安装分别记录。缺少设备时列出平台�
 
 2026-11-04 浏览器离线结果：新增 `e2e/offline-feed.e2e.spec.ts`，使用静态生产构建在线加载 Feed 并写入快照，再通过 Service Worker 离线重载确认条目和“当前展示 Feed 快照”提示仍可见；随后将保存时间推进 8 天，确认过期条目不再渲染并显示过期提示。该用例已纳入完整 Web E2E，17 个 Chromium 用例全部通过；Electron 不注册 Service Worker 的窗口证据仍待执行。
 
+2026-11-04 Electron 隔离结果：在真实 renderer 启动前拦截 `ServiceWorkerContainer.register`，reload 后调用次数为 0；该断言随 10 个 Electron E2E 用例通过。关闭并重新启动同一用户目录后的阅读历史也保持。Electron 不注册 Web Service Worker 的窗口证据已完成。
+
 ### N2-C：验证认证与 SyncHub 恢复流程
 
 文件入口：`src/hooks/useLogin.ts`、`src/hooks/useSync.ts`、`src/hooks/useSyncHub.ts`、`src/services/metadata.service.ts`、`src/services/synchub.service.ts`、`electron/synchub-storage.ts`。
@@ -256,6 +258,6 @@ N3 回退：按来源停用、插件版本回退或清空配置型清单并重�
 
 只在本文件更新任务状态、后续顺序、验收结果和未完成项。每个切片记录一条简明结果：日期、提交、执行环境、已完成检查、未执行项和回退条件。已完成任务移出待办表；保留影响后续判断的简短结论，详细变更与旧日志通过 Git 提交历史追溯。
 
-当前记录：2026-11-04 已同步 `origin/main` 至 `600589e`，本地 `main` 包含后续 19 个提交。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium E2E 17/17 和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 和六平台产物检查仍待执行。N1-B 的 Electron staging 许可证束和桌面依赖检查已通过；实际六平台发布产物、Web 发布 ZIP、摘要和 Docker 远端镜像仍待下一次发布运行核对。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载和过期不渲染证据，Electron Service Worker 隔离仍待执行。N3-A 的本地 Electron host smoke 已通过，Docker smoke 因本机缺少 Docker 命令而未执行，CI 运行记录仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3 的其余验收。
+当前记录：2026-11-04 已同步 `origin/main` 至 `600589e`，本地 `main` 包含后续 21 个提交。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium E2E 17/17 和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 和六平台产物检查仍待执行。N1-B 的 Electron staging 许可证束和桌面依赖检查已通过；实际六平台发布产物、Web 发布 ZIP、摘要和 Docker 远端镜像仍待下一次发布运行核对。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载、过期不渲染和 Electron 不注册 Service Worker 证据。N3-A 的本地 Electron host smoke 已通过，Docker smoke 因本机缺少 Docker 命令而未执行，CI 运行记录仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3 的其余验收。
 
 参考资料仅说明现有用法和接口：[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)、[贡献指南](CONTRIBUTING.md)、[开源协议](LICENSE.md)。

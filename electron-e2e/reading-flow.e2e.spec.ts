@@ -134,6 +134,31 @@ test.beforeAll(async () => {
 });
 
 test("keeps reading history and saved states across Electron source and history routes", async () => {
+    await page.addInitScript(() => {
+        const callsKey = "__latestNewsServiceWorkerRegisterCalls";
+        (window as unknown as Record<string, unknown>)[callsKey] = 0;
+        const serviceWorker = navigator.serviceWorker;
+        if (!serviceWorker) return;
+        const prototype = Object.getPrototypeOf(serviceWorker) as {
+            register?: (...args: unknown[]) => Promise<unknown>;
+        };
+        const register = prototype.register;
+        if (typeof register !== "function") return;
+        Object.defineProperty(prototype, "register", {
+            configurable: true,
+            value(...args: unknown[]) {
+                const current = Number((window as unknown as Record<string, unknown>)[callsKey] ?? 0);
+                (window as unknown as Record<string, unknown>)[callsKey] = current + 1;
+                return register.apply(this, args);
+            },
+        });
+    });
+    await page.reload();
+    expect(
+        await page.evaluate(() =>
+            Number((window as unknown as Record<string, unknown>).__latestNewsServiceWorkerRegisterCalls)
+        )
+    ).toBe(0);
     await page.goto("app://bundle/source/hackernews");
     await expect(page.getByRole("heading", { name: "Hacker News", level: 1 })).toBeVisible();
     const itemLink = page.getByRole("link", { name: new RegExp(fixtureItem.title) });
