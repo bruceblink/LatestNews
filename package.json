@@ -46,6 +46,7 @@
         "test:crawler:docker": "pnpm exec tsx scripts/crawler/docker-host-smoke.ts",
         "performance:baseline": "cross-env LATESTNEWS_SKIP_FAVICON_FETCH=true pnpm build && pnpm exec tsx scripts/performance/api-baseline.ts",
         "performance:web-baseline": "cross-env LATESTNEWS_SKIP_FAVICON_FETCH=true pnpm build:web:test && cross-env LATESTNEWS_WEB_BASELINE_ROOT=dist pnpm exec tsx scripts/performance/web-baseline.ts",
+        "performance:web-waterfall": "cross-env LATESTNEWS_SKIP_FAVICON_FETCH=true VITE_API_URL=/ pnpm build:web:test && pnpm exec tsx scripts/performance/web-waterfall.ts",
         "performance:electron-lifecycle": "pnpm electron:build && pnpm exec tsx scripts/performance/electron-lifecycle.ts",
         "source-quality:sample": "pnpm exec tsx scripts/performance/source-quality-sample.ts",
         "source-quality:report": "pnpm exec tsx scripts/performance/source-quality-report.ts",
