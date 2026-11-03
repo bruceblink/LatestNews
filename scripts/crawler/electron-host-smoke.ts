@@ -168,9 +168,15 @@ function createFixtureResponse(
 
 function runElectronApp(executable: string, appPath: string, smokeEnvironment: NodeJS.ProcessEnv) {
     return new Promise<number>((resolveExit, reject) => {
+        const electronEnvironment = { ...createRestrictedWorkerEnvironment(), ...smokeEnvironment };
+        // Keep the CI display connection for Electron without exposing the full parent environment to workers.
+        for (const name of ["DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY"]) {
+            const value = process.env[name];
+            if (value) electronEnvironment[name] = value;
+        }
         const child = spawn(executable, [appPath, "--no-sandbox"], {
             cwd: projectRoot,
-            env: { ...createRestrictedWorkerEnvironment(), ...smokeEnvironment },
+            env: electronEnvironment,
             stdio: ["ignore", "ignore", "pipe"],
             windowsHide: true,
         });
