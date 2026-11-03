@@ -17,13 +17,15 @@ dotenvFlow.config({
 });
 
 const appTitle = resolveAppTitle(process.env.VITE_APP_TITLE);
+// Keep the static PWA build independent from Nitro so its index.html can be served by the Web E2E harness.
+const useStaticWebBuild = process.env.LATESTNEWS_WEB_STATIC_BUILD === "true";
 
 export default defineConfig({
     resolve: {
         alias: rendererAliases,
     },
     define: createRendererDefines(appTitle),
-    plugins: [...createRendererPlugins("web", appTitle), initVoteNitro()],
+    plugins: [...createRendererPlugins("web", appTitle), ...(useStaticWebBuild ? [] : [initVoteNitro()])],
     build: createRendererBuildConfig(),
     server: createRendererServerConfig(),
 });

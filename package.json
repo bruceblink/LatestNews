@@ -26,6 +26,7 @@
         "crawler": "tsx ./crawler-platform/cli.ts",
         "start": "node --env-file .env.server dist/output/server/index.mjs",
         "build:pages": "node ./scripts/build-pages.mjs && node ./scripts/verify-pages-output.mjs",
+        "build:web:test": "pnpm presource && cross-env CF_PAGES=1 LATESTNEWS_WEB_STATIC_BUILD=true vite build",
         "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.app.json",
         "check": "pnpm lint:check && pnpm typecheck && pnpm test",
         "release": "bumpp",

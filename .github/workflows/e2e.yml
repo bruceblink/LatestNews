@@ -50,12 +50,14 @@ jobs:
             - name: Install Chromium
               run: pnpm exec playwright install --with-deps chromium
 
-            - name: Build Cloudflare Pages output
+            - name: Build static Web production output
               env:
                   LATESTNEWS_SKIP_FAVICON_FETCH: "true"
-              run: pnpm build:pages
+              run: pnpm build:web:test
 
             - name: Run Web E2E tests
+              env:
+                  LATESTNEWS_PWA_TEST_ROOT: dist
               run: pnpm test:e2e:web
 
             - name: Upload Web E2E results
