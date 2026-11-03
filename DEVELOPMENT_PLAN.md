@@ -89,6 +89,8 @@ N1–N4 的编码与验收估算为 14–19 个工作日，另留 3–5 日回�
 
 2026-11-03 核对结果：官方 npm 注册表的稳定版为 pnpm `12.16.1`、Vite `8.3.5`。根 `package.json`、锁文件、Release/Electron/E2E/Nightly 工作流和 README 已统一到 pnpm `12.16.1`；GitHub Actions 与 `.nvmrc` 已统一使用 Node `22.23.4`。Vite 的 Node 要求为 `^20.19.0 || >=22.12.0`，与项目 Node 最低版本 `22.23.0` 兼容。已用 pnpm `12.16.1` 完成锁文件解析和供应链策略检查；干净安装、代码检查、构建和 E2E 仍待执行。
 
+2026-11-04 检查结果：使用 pnpm `12.16.1` 完成冻结锁文件安装、全仓库 lint、Node/应用/Electron 类型检查、Node 生产构建和 Pages 构建。Pages 构建新增包装器，构建期间使用 Pages 来源清单，结束后恢复已跟踪的生成文件；成功和失败路径均保留构建前内容。当前本机 Node 为 `24.15.0`，不是计划锁定的 `22.23.4`，所以这些结果不能替代 Node 22 验收。4 个外部图标请求超时并使用已有默认图标；E2E 和六平台产物检查仍未执行。
+
 ### N1-B：验证发布产物、许可和版本源码入口
 
 文件入口：`LICENSE.md`、`LICENSES/`、`scripts/prepare-electron-package.mjs`、`scripts/verify-license-bundle.mjs`、`scripts/verify-electron-dependencies.mjs`、`.github/workflows/release.yml`、`Dockerfile`、`src/components/footer.tsx`。
@@ -236,6 +238,6 @@ N3 回退：按来源停用、插件版本回退或清空配置型清单并重�
 
 只在本文件更新任务状态、后续顺序、验收结果和未完成项。每个切片记录一条简明结果：日期、提交、执行环境、已完成检查、未执行项和回退条件。已完成任务移出待办表；保留影响后续判断的简短结论，详细变更与旧日志通过 Git 提交历史追溯。
 
-当前记录：2026-11-03 已同步 `origin/main` 至 `600589e`，并完成 N1-A 工具链版本核对和输入统一；pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 的来源与兼容范围已记录。N1-B 已加入 Electron/Web 许可证束核对、版本源码入口和 Docker 文件存在检查；实际六平台发布产物、摘要和 Docker 远端镜像仍待下一次发布运行核对。干净安装、代码检查、构建和 E2E 仍未执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1 的其余验收。
+当前记录：2026-11-04 已同步 `origin/main` 至 `600589e`，本地 `main` 包含后续 7 个提交。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 下的安装、lint、类型检查、Node/Pages 构建已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22、E2E 和六平台产物检查仍待执行。N1-B 已加入 Electron/Web 许可证束核对、版本源码入口和 Docker 文件存在检查；实际六平台发布产物、摘要和 Docker 远端镜像仍待下一次发布运行核对。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1 的其余验收。
 
 参考资料仅说明现有用法和接口：[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)、[贡献指南](CONTRIBUTING.md)、[开源协议](LICENSE.md)。
