@@ -127,6 +127,10 @@ let isHidingMainWindow = false;
 let lifecycleProbeActive = false;
 const lifecycle = createDesktopLifecycleTracker();
 
+const lifecycleProbeUserDataPath = process.env.LATESTNEWS_ELECTRON_LIFECYCLE_USER_DATA?.trim();
+// Set the isolated path before the single-instance lock so another desktop process cannot block the probe.
+if (lifecycleProbeUserDataPath) app.setPath("userData", resolve(lifecycleProbeUserDataPath));
+
 // Prevent Electron from creating its default File, Edit, View, and Window menu.
 Menu.setApplicationMenu(null);
 
@@ -167,8 +171,6 @@ if (!hasSingleInstanceLock) {
         .then(async () => {
             lifecycle.record("app-ready");
             app.setAppUserModelId("top.likanug.latestnews");
-            const probeUserDataPath = process.env.LATESTNEWS_ELECTRON_LIFECYCLE_USER_DATA?.trim();
-            if (probeUserDataPath) app.setPath("userData", resolve(probeUserDataPath));
             rendererDevUrl = getDevelopmentRendererUrl(process.env.ELECTRON_RENDERER_URL);
             trustedRendererUrl = rendererDevUrl?.origin ?? APP_BASE_URL;
             await loadStoredNewsApiSettings();
