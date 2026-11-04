@@ -98,10 +98,10 @@ async function closeElectronApp() {
     }
     if (electronProcess.exitCode === null) electronProcess.kill();
     await Promise.race([closeEvent, new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000))]);
-    await Promise.race([
-        electronApp.close().catch(() => undefined),
-        new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000)),
-    ]);
+    // Playwright 1.64 can leave its Electron channel open after the final process exits.
+    (electronApp as unknown as { _connection?: { close: (cause?: string) => void } })._connection?.close(
+        "Electron E2E process closed."
+    );
 }
 
 test("opens the shared settings route in the Electron renderer", async () => {
