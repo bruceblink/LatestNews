@@ -96,7 +96,17 @@ async function closeElectronApp() {
         // Xvfb can leave app.quit waiting on a hidden window; force the test process to finish cleanup.
         await electronApp.evaluate(({ app }) => app.exit(0)).catch(() => undefined);
     }
-    if (electronProcess.exitCode === null) electronProcess.kill();
+    if (electronProcess.exitCode === null) {
+        if (process.platform === "win32") {
+            electronProcess.kill();
+        } else if (electronProcess.pid) {
+            try {
+                process.kill(-electronProcess.pid, "SIGKILL");
+            } catch {
+                electronProcess.kill("SIGKILL");
+            }
+        }
+    }
     await Promise.race([closeEvent, new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000))]);
     // Playwright 1.64 can leave its Electron channel open after the final process exits.
     (electronApp as unknown as { _connection?: { close: (cause?: string) => void } })._connection?.close(
