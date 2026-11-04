@@ -251,6 +251,13 @@ async function closeElectronApp() {
         if (electronProcess.exitCode === null) electronProcess.kill();
         await Promise.race([closeEvent, new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000))]);
     }
+    await Promise.race([
+        electronApp
+            .context()
+            .close()
+            .catch(() => undefined),
+        new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000)),
+    ]);
 }
 
 async function closeApiServer() {
