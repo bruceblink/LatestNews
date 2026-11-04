@@ -265,6 +265,10 @@ async function closeElectronApp() {
             }
         }
     }
+    // Playwright removes the process from its graceful-close set only after all stdio pipes close.
+    electronProcess.stdout?.destroy();
+    electronProcess.stderr?.destroy();
+    for (const stream of electronProcess.stdio.slice(3)) stream?.destroy();
     await Promise.race([closeEvent, new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000))]);
 }
 
