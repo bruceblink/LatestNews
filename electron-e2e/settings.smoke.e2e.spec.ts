@@ -80,15 +80,16 @@ test.afterAll(async () => {
 
 async function closeElectronApp() {
     if (!electronApp) return;
-    const closePromise = electronApp.close().catch(() => undefined);
+    const closeEvent = new Promise<void>((resolveClosed) => electronApp.once("close", resolveClosed));
+    await electronApp.evaluate(({ app }) => app.quit()).catch(() => undefined);
     const closedGracefully = await Promise.race([
-        closePromise.then(() => true),
+        closeEvent.then(() => true),
         new Promise<boolean>((resolveClosed) => setTimeout(() => resolveClosed(false), 5000)),
     ]);
     if (!closedGracefully) {
         // Xvfb can leave app.quit waiting on a hidden window; force the test process to finish cleanup.
         await electronApp.evaluate(({ app }) => app.exit(0)).catch(() => undefined);
-        await Promise.race([closePromise, new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000))]);
+        await Promise.race([closeEvent, new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000))]);
     }
 }
 
