@@ -238,7 +238,12 @@ async function launchElectronApp() {
 
 async function closeElectronApp() {
     if (!electronApp) return;
-    const electronProcess = electronApp.process();
+    let electronProcess;
+    try {
+        electronProcess = electronApp.process();
+    } catch {
+        return;
+    }
     const closeEvent = new Promise<void>((resolveClosed) => electronApp.once("close", resolveClosed));
     await electronApp.evaluate(({ app }) => app.quit()).catch(() => undefined);
     const closedGracefully = await Promise.race([
@@ -248,14 +253,11 @@ async function closeElectronApp() {
     if (!closedGracefully) {
         // Xvfb can leave app.quit waiting on a hidden window; force the test process to finish cleanup.
         await electronApp.evaluate(({ app }) => app.exit(0)).catch(() => undefined);
-        if (electronProcess.exitCode === null) electronProcess.kill();
-        await Promise.race([closeEvent, new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000))]);
     }
+    if (electronProcess.exitCode === null) electronProcess.kill();
+    await Promise.race([closeEvent, new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000))]);
     await Promise.race([
-        electronApp
-            .context()
-            .close()
-            .catch(() => undefined),
+        electronApp.close().catch(() => undefined),
         new Promise<void>((resolveClosed) => setTimeout(resolveClosed, 1000)),
     ]);
 }
