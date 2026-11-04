@@ -91,6 +91,8 @@ N1–N4 的编码与验收估算为 14–19 个工作日，另留 3–5 日回�
 
 2026-11-04 检查结果：使用 pnpm `12.16.1` 完成冻结锁文件安装、全仓库 lint、Node/应用/Electron 类型检查、Node 生产构建和 Pages 构建。Pages 构建新增包装器，构建期间使用 Pages 来源清单，结束后恢复已跟踪的生成文件；成功和失败路径均保留构建前内容。新增静态 Web 生产构建入口供 PWA E2E 读取 `index.html`；本机 Node `24.15.0` 下 Web Chromium E2E 为 17/17、Electron E2E 为 10/10 通过。随后使用便携 Node `22.23.4` 和 pnpm `12.16.1` 重新完成冻结安装、lint、两项类型检查、Node 构建和 Pages 构建，全部退出码为 0。Node 22 下的 Windows x64 NSIS 包也已生成。远端发布运行 `41259777389` 的 Windows x64、Windows ARM64、Linux x64、Linux ARM64、macOS Intel、macOS Apple Silicon、Web 和 Docker 构建 job 均成功；发布运行 `41266229300` 成功复用这些产物。两组构建均有 4 个外部图标请求超时并使用已有默认图标。
 
+2026-11-04 CI 结果：`Playwright E2E` run `41749640773`（head `4f379c6`）的 `Crawler host smoke` job `126311256699`、`Web Chromium E2E` job `126311256886` 和 `Electron E2E` job `126311256976` 全部成功；Web 为 17/17，Electron 为 10/10。`Electron desktop` run `41749640707` 的 `Build and check Windows desktop` job `126311256489` 成功。此前 Electron worker 在测试通过后超时；`77789db` 修复 crawler 的显示环境，`c446b87` 修复 CI 静态 `dist` 根目录解析，`4f379c6` 在进程组和 stdio 管道层完成 Electron 清理，最终运行没有 teardown 超时。
+
 ### N1-B：验证发布产物、许可和版本源码入口
 
 文件入口：`LICENSE.md`、`LICENSES/`、`scripts/prepare-electron-package.mjs`、`scripts/verify-license-bundle.mjs`、`scripts/verify-electron-dependencies.mjs`、`.github/workflows/release.yml`、`Dockerfile`、`src/components/footer.tsx`。
@@ -191,6 +193,8 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 
 2026-11-04 Docker 结果：执行 `corepack pnpm@12.16.1 test:crawler:docker` 在构建镜像前以 `spawnSync docker ENOENT` 失败。本机没有 Docker 命令，因此没有创建容器或镜像；该结果只记录环境缺口，不代表 Docker host 代码通过或失败。
 
+2026-11-04 CI 结果：`Playwright E2E` run `41749640773` 的 `Crawler host smoke` job `126311256699` 成功，Electron 和 Docker host smoke 报告已上传；本机 Docker 容器启动、连接和清理仍待具备 Docker 环境后执行。
+
 验收：Node/Electron 加载同一插件包并得到一致有效输出；插件失败不阻塞内置或远端可用来源；任务停止后没有遗留进程。Docker 验收使用本地实际容器，进程 smoke 与真实窗口结论分别记录。凭据引用和新重试协议等新增能力等 N5 有需求后再设计。
 
 ### N3-B：动态来源与配置型来源的完整流程
@@ -278,6 +282,6 @@ N3 回退：按来源停用、插件版本回退或清空配置型清单并重�
 
 只在本文件更新任务状态、后续顺序、验收结果和未完成项。每个切片记录一条简明结果：日期、提交、执行环境、已完成检查、未执行项和回退条件。已完成任务移出待办表；保留影响后续判断的简短结论，详细变更与旧日志通过 Git 提交历史追溯。
 
-当前记录：2026-11-04 已同步 `origin/main` 至 `600589e`，本地 `main` 包含后续 30 个提交。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 和便携 Node `22.23.4` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium E2E 17/17 和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 工具链和 Windows x64 NSIS 包证据已完成；远端运行 `41259777389` 已成功完成六平台桌面、Web 和 Docker 构建，`v0.7.4` 发布运行 `41266229300` 成功，22 个资产及 21 条校验和已核对。N1-B 的 Electron staging 许可证束、桌面依赖、当前 HEAD 的 Node 22 Web 包和发布 Web ZIP 许可证检查已通过；GHCR v0.7.4 OCI 清单已核对，容器启动和实际连接仍待本机 Docker。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载、过期不渲染和 Electron 不注册 Service Worker 证据。N3-A 的本地 Electron host smoke 已通过，Docker smoke 因本机缺少 Docker 命令而未执行；远端 Docker 构建 job 和 GHCR 双架构清单已成功，容器连接仍待执行。N4 已完成 Node 22 API 基线、并发上限对比并保留四任务边界、Web 资源基线工具修复、一次 Electron 生命周期探针、5 次冷/5 次暖启动测量和真实 Web 请求瀑布；冷批量性能没有接受的优化，30 分钟阅读数据仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3/N4 的其余验收。
+当前记录：2026-11-04 已同步 `origin/main` 至 `4f379c6`，本地 `main` 与远端一致；从基线 `600589e` 到当前共有 41 个后续提交。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 和便携 Node `22.23.4` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium E2E 17/17 和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 工具链和 Windows x64 NSIS 包证据已完成；远端运行 `41259777389` 已成功完成六平台桌面、Web 和 Docker 构建，`v0.7.4` 发布运行 `41266229300` 成功，22 个资产及 21 条校验和已核对。N1-B 的 Electron staging 许可证束、桌面依赖、当前 HEAD 的 Node 22 Web 包和发布 Web ZIP 许可证检查已通过；GHCR v0.7.4 OCI 清单已核对，容器启动和实际连接仍待本机 Docker。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载、过期不渲染和 Electron 不注册 Service Worker 证据。N3-A 的本地 Electron host smoke 已通过，Docker smoke 因本机缺少 Docker 命令而未执行；远端 Docker 构建 job 和 GHCR 双架构清单已成功，容器连接仍待执行。N4 已完成 Node 22 API 基线、并发上限对比并保留四任务边界、Web 资源基线工具修复、一次 Electron 生命周期探针、5 次冷/5 次暖启动测量和真实 Web 请求瀑布；冷批量性能没有接受的优化，30 分钟阅读数据仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3/N4 的其余验收。
 
 参考资料仅说明现有用法和接口：[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)、[贡献指南](CONTRIBUTING.md)、[开源协议](LICENSE.md)。
