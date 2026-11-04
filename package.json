@@ -1,7 +1,7 @@
 {
     "name": "latestnews",
     "type": "module",
-    "version": "0.7.4",
+    "version": "0.7.5",
     "private": true,
     "license": "SEE LICENSE IN LICENSE.md",
     "packageManager": "pnpm@12.16.1",

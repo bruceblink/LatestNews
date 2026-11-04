@@ -53,7 +53,7 @@ Windows x64 集成使用本次源码构建的旧版本基线 `0.7.2`，并非旧
 | 许可和校验和 | 有模块说明和各产物复制步骤；本次为 Release 增加更新文件核对及 `SHA256SUMS.txt` | 许可复制步骤属于标签之后的主线变更；需检查真实发布产物 |
 | UI 自动化 | 有搜索框居中、安装引导、移动布局、设置与采集模式覆盖 | Web 页面用例大量使用固定 API 响应；另有真实本地 Nitro 目录、健康和无效 ID smoke |
 | 端到端缺口 | 真实认证、同步、Electron Service Worker 隔离和完整动态来源阅读流程仍需验收 | 不能仅由设置页 smoke、进程探针或局部路由测试确认 |
-| 插件宿主 | 清单预算、网络检查、包校验和错误映射已有实现；本地 Electron host smoke 已通过 | E2E 工作流已加入 Electron/Docker host smoke 和报告上传；CI 资源与退出记录、Docker smoke 仍待运行 |
+| 插件宿主 | 清单预算、网络检查、包校验和错误映射已有实现；本地 Electron host smoke 已通过 | E2E 工作流已加入 Electron/Docker host smoke 和报告上传；CI 运行 `41749640773` 的两个 host smoke 均成功，本机 Docker 容器连接仍待执行 |
 | 配置型来源 | Node RSS/JSON 实现与本地路由测试已存在 | 生产配置、浏览器 CORS、保存文章与目录变化的完整流程待确认 |
 | 历史观察 | 七天公网采样已按用户要求延后；历史记录不足以判定来源达标 | 恢复条件见第 8 节；本轮未探测生产新闻接口或 D1 状态 |
 
@@ -90,6 +90,8 @@ N1–N4 的编码与验收估算为 14–19 个工作日，另留 3–5 日回�
 2026-11-03 核对结果：官方 npm 注册表的稳定版为 pnpm `12.16.1`、Vite `8.3.5`。根 `package.json`、锁文件、Release/Electron/E2E/Nightly 工作流和 README 已统一到 pnpm `12.16.1`；GitHub Actions 与 `.nvmrc` 已统一使用 Node `22.23.4`。Vite 的 Node 要求为 `^20.19.0 || >=22.12.0`，与项目 Node 最低版本 `22.23.0` 兼容。已用 pnpm `12.16.1` 完成锁文件解析和供应链策略检查；干净安装、代码检查、构建和 E2E 仍待执行。
 
 2026-11-04 检查结果：使用 pnpm `12.16.1` 完成冻结锁文件安装、全仓库 lint、Node/应用/Electron 类型检查、Node 生产构建和 Pages 构建。Pages 构建新增包装器，构建期间使用 Pages 来源清单，结束后恢复已跟踪的生成文件；成功和失败路径均保留构建前内容。新增静态 Web 生产构建入口供 PWA E2E 读取 `index.html`；本机 Node `24.15.0` 下 Web Chromium E2E 为 17/17、Electron E2E 为 10/10 通过。随后使用便携 Node `22.23.4` 和 pnpm `12.16.1` 重新完成冻结安装、lint、两项类型检查、Node 构建和 Pages 构建，全部退出码为 0。Node 22 下的 Windows x64 NSIS 包也已生成。远端发布运行 `41259777389` 的 Windows x64、Windows ARM64、Linux x64、Linux ARM64、macOS Intel、macOS Apple Silicon、Web 和 Docker 构建 job 均成功；发布运行 `41266229300` 成功复用这些产物。两组构建均有 4 个外部图标请求超时并使用已有默认图标。
+
+2026-11-04 发布准备结果：CI 修复已合入主线，发布候选版本提升为 `0.7.5`。`77789db` 保留 crawler smoke 的显示环境，`c446b87` 修复 Web E2E 在 CI 中使用相对 `dist` 根目录导致的 Service Worker MIME 错误，`4f379c6` 及后续清理修复 Electron worker teardown 超时。发布前的本地 Node `22.23.4` 检查和远端 E2E 已覆盖这些修复。
 
 2026-11-04 CI 结果：`Playwright E2E` run `41749640773`（head `4f379c6`）的 `Crawler host smoke` job `126311256699`、`Web Chromium E2E` job `126311256886` 和 `Electron E2E` job `126311256976` 全部成功；Web 为 17/17，Electron 为 10/10。`Electron desktop` run `41749640707` 的 `Build and check Windows desktop` job `126311256489` 成功。此前 Electron worker 在测试通过后超时；`77789db` 修复 crawler 的显示环境，`c446b87` 修复 CI 静态 `dist` 根目录解析，`4f379c6` 在进程组和 stdio 管道层完成 Electron 清理，最终运行没有 teardown 超时。
 
@@ -193,7 +195,7 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 
 2026-11-04 Docker 结果：执行 `corepack pnpm@12.16.1 test:crawler:docker` 在构建镜像前以 `spawnSync docker ENOENT` 失败。本机没有 Docker 命令，因此没有创建容器或镜像；该结果只记录环境缺口，不代表 Docker host 代码通过或失败。
 
-2026-11-04 CI 结果：`Playwright E2E` run `41749640773` 的 `Crawler host smoke` job `126311256699` 成功，Electron 和 Docker host smoke 报告已上传；本机 Docker 容器启动、连接和清理仍待具备 Docker 环境后执行。
+2026-11-04 CI 结果：`Playwright E2E` run `41749640773` 的 `Crawler host smoke` job `126311256699` 成功，Electron 和 Docker host smoke 均完成且报告已上传；本机 Docker 容器启动、连接和清理仍待具备 Docker 环境后执行。
 
 验收：Node/Electron 加载同一插件包并得到一致有效输出；插件失败不阻塞内置或远端可用来源；任务停止后没有遗留进程。Docker 验收使用本地实际容器，进程 smoke 与真实窗口结论分别记录。凭据引用和新重试协议等新增能力等 N5 有需求后再设计。
 
