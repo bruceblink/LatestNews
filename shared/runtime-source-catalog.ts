@@ -5,7 +5,7 @@ import dataSources from "./data-sources";
 import { isDynamicSourceId } from "./dynamic-source-id";
 
 import type { Source, SourceID, ColumnID } from "./types";
-import type { SourceMetadataItem, SourceMetadataType } from "./source-metadata";
+import type { SourceMetadataItem, SourceMetadataType, SourceDisableReason } from "./source-metadata";
 
 export interface RuntimeSourceDefinition {
     id: string;
@@ -16,6 +16,8 @@ export interface RuntimeSourceDefinition {
     title?: string;
     desc?: string;
     home?: string;
+    disabled?: boolean;
+    disableReason?: SourceDisableReason;
 }
 
 const runtimeSourceSchema = z
@@ -47,12 +49,13 @@ export function createRuntimeSourceMetadataItem(source: RuntimeSourceDefinition)
         interval: source.interval,
         color: "primary",
         type: source.type ?? "normal",
-        disabled: false,
+        disabled: source.disabled ?? false,
         column: source.column,
         columnName: source.column ? metadata[source.column].name : undefined,
         title: source.title,
         description: source.desc,
         home: source.home,
+        disableReason: source.disableReason,
     };
 }
 

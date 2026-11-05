@@ -111,6 +111,12 @@ describe("configured source runtime", () => {
                 name: "Example JSON",
                 interval: 300_000,
             }),
+            expect.objectContaining({
+                id: "ext.config.disabled-feed",
+                name: "Disabled feed",
+                disabled: true,
+                disableReason: "manual",
+            }),
         ]);
         expect(runtime.hasSource("ext.config.rss-feed")).toBe(true);
         expect(runtime.hasSource("ext.config.disabled-feed")).toBe(false);

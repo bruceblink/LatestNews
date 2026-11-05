@@ -138,11 +138,24 @@ export function createConfiguredSourceRuntime(
     }
 
     const sources = new Map<string, ConfiguredSourceRecord>();
+    const sourceMetadata: RuntimeSourceDefinition[] = [];
     for (const config of parsedManifest.data.sources) {
-        const endpoint = parseEndpoint(config.endpoint, allowedHosts);
-        if (!config.enabled) continue;
-
         const id = createDynamicSourceId("config", config.key);
+        if (!config.enabled) {
+            sourceMetadata.push({
+                id,
+                name: config.name,
+                interval: config.intervalMs,
+                ...(config.column ? { column: config.column } : {}),
+                ...(config.title ? { title: config.title } : {}),
+                ...(config.description ? { desc: config.description } : {}),
+                disabled: true,
+                disableReason: "manual",
+            });
+            continue;
+        }
+
+        const endpoint = parseEndpoint(config.endpoint, allowedHosts);
         const home = config.home ? parsePublicHttpsUrl(config.home) : endpoint.origin;
         const metadata: RuntimeSourceDefinition = {
             id,
@@ -153,6 +166,7 @@ export function createConfiguredSourceRuntime(
             ...(config.description ? { desc: config.description } : {}),
             home,
         };
+        sourceMetadata.push(metadata);
         sources.set(id, { id, config, endpoint, metadata });
     }
 
@@ -168,7 +182,7 @@ export function createConfiguredSourceRuntime(
 
     return {
         listSources(): RuntimeSourceDefinition[] {
-            return [...sources.values()].map(({ metadata }) => metadata);
+            return sourceMetadata;
         },
         hasSource(id: string) {
             return sources.has(id);

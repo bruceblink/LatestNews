@@ -92,7 +92,7 @@ function getSourceType(source: Source) {
 
 function isSelectableSourceId(id: string): id is SourceID {
     const source = dataSources[id as SourceID];
-    return Boolean(source && !source.redirect);
+    return Boolean(source && !source.redirect && !source.disable);
 }
 
 function normalizeStringArray(value: string | string[] | undefined): string[] {

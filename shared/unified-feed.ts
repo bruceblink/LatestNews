@@ -299,7 +299,7 @@ function isUnifiedFeedCategory(value: string): value is UnifiedFeedCategoryID {
 
 function isSelectableSourceId(id: string): id is SourceID {
     const source = dataSources[id as SourceID];
-    return Boolean(source && !source.redirect);
+    return Boolean(source && !source.redirect && !source.disable);
 }
 
 function resolveSelectableSourceId(id: SourceID): SourceID | undefined {
