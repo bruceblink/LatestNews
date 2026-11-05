@@ -484,6 +484,10 @@ async function ensureDesktopRuntimeSourceCatalog(bridge: DesktopBridge) {
         })
         .catch((error: unknown) => {
             desktopRuntimeCatalogPromise = undefined;
+            const hasCachedRuntimeSources = createSourceMetadataResponse({ includeRedirects: true }).data.sources.some(
+                (source) => source.id.startsWith("ext.")
+            );
+            if (hasCachedRuntimeSources) return;
             throw error;
         });
     await desktopRuntimeCatalogPromise;
