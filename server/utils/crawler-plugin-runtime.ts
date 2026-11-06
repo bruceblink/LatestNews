@@ -1,4 +1,5 @@
 export {
+    getCrawlerSourceKind,
     hasCrawlerPluginSource,
     fetchCrawlerPluginSource,
     initializeCrawlerPluginCatalog,

@@ -4,6 +4,10 @@ export function hasCrawlerPluginSource(_id: SourceID) {
     return false;
 }
 
+export function getCrawlerSourceKind(_id: SourceID): undefined {
+    return undefined;
+}
+
 /** Pages has no local Node plugin host, so its catalog remains static. */
 export function initializeCrawlerPluginCatalog() {
     return [];

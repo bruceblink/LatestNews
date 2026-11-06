@@ -124,6 +124,13 @@ export function hasCrawlerPluginSource(id: SourceID) {
     return (pluginProvider?.hasSource(id) ?? false) || (configuredSourceProvider?.hasSource(id) ?? false);
 }
 
+/** Identify the runtime adapter while keeping plugin and configured-source security boundaries separate. */
+export function getCrawlerSourceKind(id: SourceID): "plugin" | "configured" | undefined {
+    if (pluginProvider?.hasSource(id)) return "plugin";
+    if (configuredSourceProvider?.hasSource(id)) return "configured";
+    return undefined;
+}
+
 /** Ensure Node plugin and configured-source metadata is registered before discovery and resolution. */
 export function initializeCrawlerPluginCatalog() {
     return [...(pluginProvider?.listSources() ?? []), ...(configuredSourceProvider?.listSources() ?? [])];

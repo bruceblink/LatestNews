@@ -2,7 +2,7 @@ import type { NewsItem, SourceID } from "@shared/types";
 import type { NewsItemsNormalizationQuality } from "@shared/news-item-schema";
 
 import { getters } from "#/getters";
-import { hasCrawlerPluginSource, fetchCrawlerPluginSource } from "#/utils/crawler-plugin-runtime";
+import { getCrawlerSourceKind, hasCrawlerPluginSource, fetchCrawlerPluginSource } from "#/utils/crawler-plugin-runtime";
 
 import { createSourceEngine } from "./source-engine";
 import { recordSourceFailure, recordSourceQuality, recordSourceSuccess } from "./source-health";
@@ -65,9 +65,10 @@ export function createSourceFetcher({
 
 const sourceEngine = createSourceEngine({
     resolveAdapter: (id) => {
-        if (hasCrawlerPluginSource(id)) {
+        const crawlerSourceKind = getCrawlerSourceKind(id);
+        if (crawlerSourceKind) {
             return {
-                descriptor: { id, kind: "plugin" },
+                descriptor: { id, kind: crawlerSourceKind },
                 collect: async () => (await fetchCrawlerPluginSource(id)) ?? [],
             } satisfies SourceAdapter;
         }
