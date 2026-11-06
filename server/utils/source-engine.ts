@@ -30,7 +30,8 @@ export interface SourceEngineQueueOptions {
 }
 
 export interface SourceEngineOptions extends SourceEngineQueueOptions {
-    resolveAdapter: (id: SourceID) => SourceAdapter | undefined;
+    adapters?: readonly SourceAdapter[];
+    resolveAdapter?: (id: SourceID) => SourceAdapter | undefined;
     onSuccess: (id: SourceID, durationMs: number, itemCount: number) => void;
     onQuality?: (id: SourceID, quality: NewsItemsNormalizationQuality, sampledAt: number) => void;
     onFailure: (id: SourceID, durationMs: number, error: unknown) => void;
@@ -46,6 +47,7 @@ export interface SourceCollectOptions {
  * Adapters own collection details; the engine owns scheduling, normalization and health hooks.
  */
 export function createSourceEngine({
+    adapters: initialAdapters = [],
     resolveAdapter,
     onSuccess,
     onQuality,
@@ -55,6 +57,10 @@ export function createSourceEngine({
     maxQueued = 100,
     queueTimeoutMs = 8_000,
 }: SourceEngineOptions) {
+    const adapters = new Map<SourceID, SourceAdapter>();
+    for (const adapter of initialAdapters) {
+        registerAdapter(adapter);
+    }
     const inflightRequests = new Map<SourceID, Promise<NewsItem[]>>();
     const queue = createCrawlerTaskQueue({ maxConcurrent, maxQueued, queueTimeoutMs });
 
@@ -68,7 +74,7 @@ export function createSourceEngine({
         options.signal?.addEventListener("abort", abort, { once: true });
         const request = queue
             .run(async () => {
-                const adapter = resolveAdapter(id);
+                const adapter = adapters.get(id) ?? resolveAdapter?.(id);
                 if (!adapter) throw new Error(`Source ${id} is not registered.`);
 
                 return adapter.collect({
@@ -101,7 +107,21 @@ export function createSourceEngine({
     return {
         collect,
         hasSource(id: SourceID) {
-            return Boolean(resolveAdapter(id));
+            return Boolean(adapters.get(id) ?? resolveAdapter?.(id));
+        },
+        register(adapter: SourceAdapter) {
+            registerAdapter(adapter);
+        },
+        listDescriptors(): SourceDescriptor[] {
+            return [...adapters.values()].map(({ descriptor }) => descriptor);
         },
     };
+
+    function registerAdapter(adapter: SourceAdapter) {
+        const existing = adapters.get(adapter.descriptor.id);
+        if (existing && existing !== adapter) {
+            throw new Error(`Source ${adapter.descriptor.id} is already registered.`);
+        }
+        adapters.set(adapter.descriptor.id, adapter);
+    }
 }

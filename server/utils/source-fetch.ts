@@ -7,6 +7,7 @@ import {
     fetchConfiguredSource,
     hasCrawlerPluginSource,
     fetchInstalledCrawlerSource,
+    initializeCrawlerPluginCatalog,
 } from "#/utils/crawler-plugin-runtime";
 
 import { createSourceEngine } from "./source-engine";
@@ -69,6 +70,7 @@ export function createSourceFetcher({
 }
 
 const sourceEngine = createSourceEngine({
+    adapters: createRegisteredSourceAdapters(),
     resolveAdapter: (id) => {
         const crawlerSourceKind = getCrawlerSourceKind(id);
         if (crawlerSourceKind) {
@@ -96,3 +98,32 @@ const sourceEngine = createSourceEngine({
 });
 
 export const fetchSourceItems = sourceEngine.collect;
+
+function createRegisteredSourceAdapters(): SourceAdapter[] {
+    const runtimeAdapters = initializeCrawlerPluginCatalog().flatMap((source) => {
+        const id = source.id as SourceID;
+        const kind = getCrawlerSourceKind(id);
+        if (!kind) return [];
+
+        return [
+            {
+                descriptor: { id, kind },
+                collect: async () =>
+                    (await (kind === "plugin" ? fetchInstalledCrawlerSource(id) : fetchConfiguredSource(id))) ?? [],
+            } satisfies SourceAdapter,
+        ];
+    });
+    const runtimeIds = new Set(runtimeAdapters.map(({ descriptor }) => descriptor.id));
+    const legacyAdapters = Object.entries(getters).flatMap(([id, getter]) => {
+        const sourceId = id as SourceID;
+        if (runtimeIds.has(sourceId) || typeof getter !== "function") return [];
+        return [
+            {
+                descriptor: { id: sourceId, kind: "legacy" as const },
+                collect: () => getter(),
+            } satisfies SourceAdapter,
+        ];
+    });
+
+    return [...runtimeAdapters, ...legacyAdapters];
+}
