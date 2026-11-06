@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7
+
 # =========================
 # Build stage
 # =========================
@@ -5,9 +7,26 @@ FROM node:22-alpine AS builder
 
 WORKDIR /usr/src
 
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
+ENV HTTP_PROXY=${HTTP_PROXY} \
+    HTTPS_PROXY=${HTTPS_PROXY} \
+    NO_PROXY=${NO_PROXY} \
+    http_proxy=${http_proxy} \
+    https_proxy=${https_proxy} \
+    no_proxy=${no_proxy} \
+    NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+
 # Native SQLite must also build when a matching musl prebuilt binary is unavailable.
-RUN apk add --no-cache python3 make g++
-RUN corepack enable
+# BuildKit callers behind an HTTPS inspection proxy may provide the proxy CA as
+# `--secret id=build-ca`; ordinary builds continue with the image CA bundle.
+RUN --mount=type=secret,id=build-ca,target=/tmp/build-ca.crt,required=false \
+    sh -c 'if [ -f /tmp/build-ca.crt ]; then cat /tmp/build-ca.crt >> /etc/ssl/certs/ca-certificates.crt; fi; apk add --no-cache python3 make g++'
+RUN npm install --global pnpm@12.16.1
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches ./patches
 # The web server build does not use the Electron runtime binary.
@@ -38,7 +57,8 @@ FROM node:22-alpine
 WORKDIR /usr/app
 
 # Keep the C++ runtime required by locally compiled native modules without build tools.
-RUN apk add --no-cache libstdc++
+RUN --mount=type=secret,id=build-ca,target=/tmp/build-ca.crt,required=false \
+    sh -c 'if [ -f /tmp/build-ca.crt ]; then cat /tmp/build-ca.crt >> /etc/ssl/certs/ca-certificates.crt; fi; apk add --no-cache libstdc++'
 
 # 只拷贝构建产物
 COPY --from=builder /usr/src/dist/output ./output

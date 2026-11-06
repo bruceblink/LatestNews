@@ -1,7 +1,9 @@
 import { tmpdir } from "node:os";
+import { existsSync } from "node:fs";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
+import { lookup } from "node:dns/promises";
 import { spawnSync } from "node:child_process";
 import { rm, mkdtemp } from "node:fs/promises";
 
@@ -25,7 +27,17 @@ try {
     await bundlePluginPackage(fixtureDirectory, packageDirectory);
     await installCrawlerPluginPackage(packageDirectory, pluginStore, { action: "install", enable: true });
 
-    runDocker(["build", "--tag", imageTag, "."], { inheritOutput: true });
+    const buildArguments = ["build", "--tag", imageTag];
+    const buildCaPath = [process.env.CODEX_PROXY_CERT, process.env.SSL_CERT_FILE].find((path): path is string =>
+        Boolean(path && existsSync(path))
+    );
+    if (buildCaPath) buildArguments.push("--secret", `id=build-ca,src=${buildCaPath}`);
+    for (const name of ["HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy"] as const) {
+        const value = process.env[name];
+        if (value) buildArguments.push("--build-arg", `${name}=${await normalizeBuildProxy(value)}`);
+    }
+    buildArguments.push(".");
+    runDocker(buildArguments, { inheritOutput: true });
     imageBuilt = true;
 
     const port = await getAvailableLocalPort();
@@ -168,4 +180,14 @@ function runDocker(args: string[], options: { allowFailure?: boolean; inheritOut
         throw new Error(`docker ${args[0]} failed with exit code ${String(result.status)}.`);
     }
     return result.stdout?.trim() ?? "";
+}
+
+async function normalizeBuildProxy(value: string) {
+    try {
+        const parsed = new URL(value);
+        if (parsed.hostname === "proxy") parsed.hostname = (await lookup(parsed.hostname, { family: 4 })).address;
+        return parsed.toString();
+    } catch {
+        return value;
+    }
 }

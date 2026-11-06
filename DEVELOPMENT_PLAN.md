@@ -121,6 +121,8 @@ N1–N4 的编码与验收估算为 14–19 个工作日，另留 3–5 日回�
 
 2026-11-04 Docker 清单结果：远端 GHCR `ghcr.io/bruceblink/latestnews:v0.7.4` 可读取，OCI 索引摘要为 `sha256:5b1c478a72f6337201e5710fc9e94be57c86280e9679eaf13c421be30ca99422`，包含 `linux/amd64` 和 `linux/arm64`。本机没有 Docker 命令，容器启动、健康检查、接口连接和清理仍待执行。
 
+2026-11-06 Docker 环境与 smoke 结果：Docker Engine `28.4.0`、Buildx `0.31.0` 和 Compose `2.40.3` 已可用。项目 Docker 构建增加可选 BuildKit CA secret、代理参数和锁定 pnpm 安装，解决透明代理环境下 Alpine `apk` 与 Corepack 的证书/网络问题。`corepack pnpm test:crawler:docker` 构建镜像、启动容器并验证动态来源 API、目录、详情、批量、JSON Feed、CORS 和未知来源拒绝全部通过；测试结束后临时容器和镜像已清理。
+
 ### N1-C：Windows 安装、升级与托盘验收
 
 文件入口：`electron/main.ts`、`electron/background-refresh.ts`、`electron/desktop-preferences.ts`、`electron-builder.yml`、`electron-e2e/`。
@@ -220,9 +222,13 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 
 2026-11-04 验收结果：首次执行 `corepack pnpm@12.16.1 test:crawler:electron` 时发现 `server/crawler-plugin-runtime.node.ts` 使用无扩展名 `.node` 导入，Node `24.15.0`/`tsx` 无法解析实际的 `.node.ts` 文件；改为显式 `.node.ts` 后重跑通过。Node 与 Electron 对同一插件包及动态插件输出的 SHA-256 一致，Node 用时 236 ms、Electron 用时 350 ms，检测到 Browser、GPU、NetworkService 和 NodeService，测试结束无残留 Electron 进程。Docker smoke 和 CI 运行记录仍待执行。
 
-2026-11-04 Docker 结果：执行 `corepack pnpm@12.16.1 test:crawler:docker` 在构建镜像前以 `spawnSync docker ENOENT` 失败。本机没有 Docker 命令，因此没有创建容器或镜像；该结果只记录环境缺口，不代表 Docker host 代码通过或失败。
+2026-11-04 Docker 结果：执行 `corepack pnpm@12.16.1 test:crawler:docker` 在构建镜像前以 `spawnSync docker ENOENT` 失败。本机当时没有 Docker 命令；该历史结果不代表 Docker host 代码通过或失败。
 
 2026-11-04 CI 结果：`Playwright E2E` run `41749640773` 的 `Crawler host smoke` job `126311256699` 成功，Electron 和 Docker host smoke 均完成且报告已上传；本机 Docker 容器启动、连接和清理仍待具备 Docker 环境后执行。
+
+2026-11-06 本机重跑结果：`corepack pnpm@12.16.1 test:crawler:electron` 在 Electron `44.9.0` 二进制下载阶段因网络 `fetch failed` 终止，未产生新的本机 smoke 证据；不改变此前 CI 的 Node/Electron 同包对比结论。
+
+2026-11-06 Docker smoke 结果：Docker 镜像构建和动态来源 API smoke 已通过，覆盖动态来源条目、目录、详情、批量、JSON Feed、配置 CORS、拒绝未配置 Origin 和未知来源；测试清理了临时容器与镜像。
 
 验收：Node/Electron 加载同一插件包并得到一致有效输出；插件失败不阻塞内置或远端可用来源；任务停止后没有遗留进程。Docker 验收使用本地实际容器，进程 smoke 与真实窗口结论分别记录。凭据引用和新重试协议等新增能力等 N5 有需求后再设计。
 
@@ -235,6 +241,8 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 配置型来源当前拒绝私网地址。先设计本地 HTTPS 测试服务的连接方式，不放宽生产网络校验。若需要在测试进程中注入 DNS 或传输，将实际请求送至隔离容器，并单独验证生产校验的拒绝行为；注入路径不能证明生产 DNS、TLS 或公网部署通过。
 
 验收：客户端无需修改来源专属代码即可显示动态来源；停用或目录暂时不可用时保留已保存文章和布局记录。Node 的运维清单与 Electron 本地插件分别生效；更改远端 API 不覆盖本地插件版本。同步验证依赖 N2-C 的服务条件；缺少服务时记录已完成流程和同步缺口，不将完整验收标为通过。
+
+2026-11-06 本地流程结果：配置型来源的 RSS/JSON 清单、来源目录、来源详情、单源条目、批量接口和 JSON Feed 已由 `server/configured-source-api.integration.test.ts` 覆盖，并随全量 83 个测试文件、432 个测试通过；动态目录快照、停用来源保留和目录暂时不可用回退已由 `a0b7a80`、`f1b6afc` 实现。真实浏览器、Docker Node 服务、跨页面关注/收藏/历史和同步仍待对应环境验收。
 
 ### N3-D：来源故障维护与小批量扩展
 
@@ -312,6 +320,6 @@ N3 回退：按来源停用、插件版本回退或清空配置型清单并重�
 
 只在本文件更新任务状态、后续顺序、验收结果和未完成项。每个切片记录一条简明结果：日期、提交、执行环境、已完成检查、未执行项和回退条件。已完成任务移出待办表；保留影响后续判断的简短结论，详细变更与旧日志通过 Git 提交历史追溯。
 
-当前记录：2026-11-06 已同步 `origin/main` 至 `9ec533f`，本地 `main` 与远端一致。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 和便携 Node `22.23.4` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium E2E 17/17 和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 工具链和 Windows x64 NSIS 包证据已完成；远端运行 `41259777389` 已成功完成六平台桌面、Web 和 Docker 构建，`v0.7.4` 发布运行 `41266229300` 成功，22 个资产及 21 条校验和已核对。N1-B 的 Electron staging 许可证束、桌面依赖、当前 HEAD 的 Node 22 Web 包和发布 Web ZIP 许可证检查已通过；GHCR v0.7.4 OCI 清单已核对，容器启动和实际连接仍待本机 Docker。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载、过期不渲染和 Electron 不注册 Service Worker 证据。N3-A 统一爬虫执行引擎已实现并完成契约验收：传统 getter、插件 provider、配置型 runtime 使用同一注册表和执行边界；支持队列取消和适配器 abort；Node、应用和 Electron 类型检查通过，全量 Vitest 为 83 个测试文件、432 个测试通过，生产构建通过。N3-B 的本地 Electron host smoke 已通过，Docker smoke 因本机缺少 Docker 命令而未执行；远端 Docker 构建 job 和 GHCR 双架构清单已成功，容器连接仍待执行。下一步是 N3-B 的代表性插件宿主对比和 N3-C 的动态来源完整流程。N4 已完成 Node 22 API 基线、并发上限对比并保留四任务边界、Web 资源基线工具修复、一次 Electron 生命周期探针、5 次冷/5 次暖启动测量和真实 Web 请求瀑布；冷批量性能没有接受的优化，30 分钟阅读数据仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3/N4 的其余验收。
+当前记录：2026-11-06 已同步 `origin/main` 至当前 Docker smoke 修复提交，工作区即将提交并推送。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 和便携 Node `22.23.4` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium E2E 17/17 和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 工具链和 Windows x64 NSIS 包证据已完成；远端运行 `41259777389` 已成功完成六平台桌面、Web 和 Docker 构建，`v0.7.4` 发布运行 `41266229300` 成功，22 个资产及 21 条校验和已核对。N1-B 的 Electron staging 许可证束、桌面依赖、当前 HEAD 的 Node 22 Web 包和发布 Web ZIP 许可证检查已通过；GHCR v0.7.4 OCI 清单和本地 Docker 动态来源 smoke 已通过，Docker 构建、容器 API、CORS 和清理结果已记录。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载、过期不渲染和 Electron 不注册 Service Worker 证据。N3-A 统一爬虫执行引擎已实现并完成契约验收：传统 getter、插件 provider、配置型 runtime 使用同一注册表和执行边界；支持队列取消和适配器 abort；Node、应用和 Electron 类型检查通过，全量 Vitest 为 83 个测试文件、432 个测试通过，生产构建通过。N3-B 的 CI host smoke 仍是有效证据，本地 Docker host smoke 已通过；本机 Electron smoke 仍受 Electron 44.9.0 二进制下载限制。N3-C 的配置型来源 API 合同测试、停用来源保留、目录快照回退和 Docker 动态来源 API smoke 已通过，真实浏览器跨页面关注/收藏/历史和同步流程仍待执行。N4 已完成 Node 22 API 基线、并发上限对比并保留四任务边界、Web 资源基线工具修复、一次 Electron 生命周期探针、5 次冷/5 次暖启动测量和真实 Web 请求瀑布；冷批量性能没有接受的优化，30 分钟阅读数据仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3/N4 的其余验收。
 
 参考资料仅说明现有用法和接口：[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)、[贡献指南](CONTRIBUTING.md)、[开源协议](LICENSE.md)。
