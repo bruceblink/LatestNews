@@ -69,20 +69,17 @@ export function createSourceEngine({
         if (pending) return pending;
 
         const startTime = now();
-        const controller = new AbortController();
-        const abort = () => controller.abort();
-        options.signal?.addEventListener("abort", abort, { once: true });
         const request = queue
-            .run(async () => {
+            .run(async (signal) => {
                 const adapter = adapters.get(id) ?? resolveAdapter?.(id);
                 if (!adapter) throw new Error(`Source ${id} is not registered.`);
 
                 return adapter.collect({
                     sourceId: id,
-                    signal: controller.signal,
+                    signal,
                     now,
                 });
-            })
+            }, options.signal)
             .then((items) => {
                 if (!Array.isArray(items)) throw new Error(`Source ${id} returned a non-array result.`);
                 const normalized = normalizeNewsItemsWithQuality(items, { sourceId: id });
@@ -92,11 +89,10 @@ export function createSourceEngine({
                 return normalized.items;
             })
             .catch((error) => {
-                onFailure(id, now() - startTime, error);
+                if (!isCancellationError(error)) onFailure(id, now() - startTime, error);
                 throw error;
             })
             .finally(() => {
-                options.signal?.removeEventListener("abort", abort);
                 inflightRequests.delete(id);
             });
 
@@ -124,4 +120,8 @@ export function createSourceEngine({
         }
         adapters.set(adapter.descriptor.id, adapter);
     }
+}
+
+function isCancellationError(error: unknown) {
+    return typeof error === "object" && error !== null && "code" in error && error.code === "CANCELLED";
 }

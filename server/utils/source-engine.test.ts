@@ -82,4 +82,36 @@ describe("createSourceEngine", () => {
             engine.register({ descriptor: { id: sourceId, kind: "plugin" }, collect: async () => [] })
         ).toThrow(`Source ${sourceId} is already registered.`);
     });
+
+    it("cancels queued work before it reaches an adapter", async () => {
+        let release: (items: NewsItem[]) => void = () => undefined;
+        const queuedId = "engine-queued" as SourceID;
+        const engine = createSourceEngine({
+            adapters: [
+                {
+                    descriptor: { id: sourceId, kind: "legacy" },
+                    collect: () => new Promise<NewsItem[]>((resolve) => (release = resolve)),
+                },
+                {
+                    descriptor: { id: queuedId, kind: "configured" },
+                    collect: vi.fn(async () => createItems()),
+                },
+            ],
+            maxConcurrent: 1,
+            maxQueued: 1,
+            queueTimeoutMs: 100,
+            onSuccess: vi.fn(),
+            onFailure: vi.fn(),
+        });
+
+        const running = engine.collect(sourceId);
+        await Promise.resolve();
+        const controller = new AbortController();
+        const queued = engine.collect(queuedId, { signal: controller.signal });
+        controller.abort();
+
+        await expect(queued).rejects.toMatchObject({ code: "CANCELLED" });
+        release(createItems());
+        await expect(running).resolves.toHaveLength(1);
+    });
 });
