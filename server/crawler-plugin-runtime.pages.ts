@@ -16,3 +16,11 @@ export function initializeCrawlerPluginCatalog() {
 export async function fetchCrawlerPluginSource(_id: SourceID): Promise<NewsItem[] | undefined> {
     return undefined;
 }
+
+export async function fetchInstalledCrawlerSource(_id: SourceID): Promise<NewsItem[] | undefined> {
+    return undefined;
+}
+
+export async function fetchConfiguredSource(_id: SourceID): Promise<NewsItem[] | undefined> {
+    return undefined;
+}

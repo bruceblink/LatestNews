@@ -136,8 +136,19 @@ export function initializeCrawlerPluginCatalog() {
     return [...(pluginProvider?.listSources() ?? []), ...(configuredSourceProvider?.listSources() ?? [])];
 }
 
-/** Adapt plugin output to the existing NewsItem shape used by caches and API responses. */
+/** Collect a source from the installed plugin provider only. */
+export async function fetchInstalledCrawlerSource(id: SourceID): Promise<NewsItem[] | undefined> {
+    if (!pluginProvider?.hasSource(id)) return undefined;
+    return pluginProvider.fetchSource(id);
+}
+
+/** Collect a source from the operator-owned RSS/JSON runtime only. */
+export async function fetchConfiguredSource(id: SourceID): Promise<NewsItem[] | undefined> {
+    if (!configuredSourceProvider?.hasSource(id)) return undefined;
+    return configuredSourceProvider.fetchSource(id);
+}
+
+/** Backward-compatible combined lookup used by legacy API callers. */
 export async function fetchCrawlerPluginSource(id: SourceID): Promise<NewsItem[] | undefined> {
-    if (pluginProvider?.hasSource(id)) return pluginProvider.fetchSource(id);
-    return configuredSourceProvider?.fetchSource(id);
+    return (await fetchInstalledCrawlerSource(id)) ?? fetchConfiguredSource(id);
 }
