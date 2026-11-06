@@ -1,4 +1,5 @@
 import type { SourceID } from "@shared/types";
+import type { SourceAdapterKind } from "@shared/source-adapter";
 
 export type SourceHealthStatus = "idle" | "healthy" | "failing";
 
@@ -27,6 +28,7 @@ export interface SourceHealthQuality {
 export interface SourceHealthSnapshot {
     id: SourceID;
     name: string;
+    adapterKind?: SourceAdapterKind;
     status: SourceHealthStatus;
     successCount: number;
     errorCount: number;

@@ -14,6 +14,7 @@ import { createUnifiedFeedView } from "@shared/unified-feed";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
+import { getSourceAdapterKindLabel } from "@shared/source-adapter";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 import {
     fetchUnifiedFeed,
@@ -358,6 +359,7 @@ function HealthPanel({ health }: { health?: SourceHealthSnapshot }) {
             <PanelTitle icon="i-ph:heartbeat-duotone" title="健康摘要" />
             <div className="mt-4 grid gap-2 text-sm">
                 <InfoRow label="状态" value={getHealthMetricLabel(health)} />
+                <InfoRow label="执行器" value={getSourceAdapterKindLabel(health?.adapterKind)} />
                 <InfoRow label="连续失败" value={health ? String(health.consecutiveFailures) : "-"} />
                 <InfoRow label="缓存降级" value={health?.cacheDegraded ? "是" : "否"} />
                 <InfoRow label="最近耗时" value={health?.lastDurationMs ? `${health.lastDurationMs} ms` : "-"} />

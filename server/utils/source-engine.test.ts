@@ -18,6 +18,7 @@ describe("createSourceEngine", () => {
         const onSuccess = vi.fn();
         const onQuality = vi.fn();
         const onFailure = vi.fn();
+        const onAdapter = vi.fn();
         const adapter = {
             descriptor: { id: sourceId, kind: "configured" as const },
             collect: vi.fn(async () => createItems()),
@@ -27,6 +28,7 @@ describe("createSourceEngine", () => {
             onSuccess,
             onQuality,
             onFailure,
+            onAdapter,
             now: () => 1_000,
         });
 
@@ -35,6 +37,7 @@ describe("createSourceEngine", () => {
         ]);
         expect(engine.hasSource(sourceId)).toBe(true);
         expect(engine.listDescriptors()).toEqual([adapter.descriptor]);
+        expect(onAdapter).toHaveBeenCalledWith(sourceId, adapter.descriptor);
         expect(adapter.collect).toHaveBeenCalledTimes(1);
         expect(onSuccess).toHaveBeenCalledWith(sourceId, 0, 1);
         expect(onQuality).toHaveBeenCalledWith(

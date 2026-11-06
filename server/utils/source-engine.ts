@@ -1,16 +1,12 @@
 import type { NewsItem, SourceID } from "@shared/types";
+import type { SourceDescriptor } from "@shared/source-adapter";
 import type { NewsItemsNormalizationQuality } from "@shared/news-item-schema";
 
 import { normalizeNewsItemsWithQuality } from "@shared/news-item-schema";
 
 import { createCrawlerTaskQueue } from "../../crawler-platform/host/task-queue";
 
-export type SourceAdapterKind = "legacy" | "plugin" | "configured";
-
-export interface SourceDescriptor {
-    id: SourceID;
-    kind: SourceAdapterKind;
-}
+export type { SourceDescriptor, SourceAdapterKind } from "@shared/source-adapter";
 
 export interface SourceExecutionContext {
     sourceId: SourceID;
@@ -35,6 +31,7 @@ export interface SourceEngineOptions extends SourceEngineQueueOptions {
     onSuccess: (id: SourceID, durationMs: number, itemCount: number) => void;
     onQuality?: (id: SourceID, quality: NewsItemsNormalizationQuality, sampledAt: number) => void;
     onFailure: (id: SourceID, durationMs: number, error: unknown) => void;
+    onAdapter?: (id: SourceID, descriptor: SourceDescriptor) => void;
     now?: () => number;
 }
 
@@ -52,6 +49,7 @@ export function createSourceEngine({
     onSuccess,
     onQuality,
     onFailure,
+    onAdapter,
     now = Date.now,
     maxConcurrent = 8,
     maxQueued = 100,
@@ -73,6 +71,7 @@ export function createSourceEngine({
             .run(async (signal) => {
                 const adapter = adapters.get(id) ?? resolveAdapter?.(id);
                 if (!adapter) throw new Error(`Source ${id} is not registered.`);
+                onAdapter?.(id, adapter.descriptor);
 
                 return adapter.collect({
                     sourceId: id,

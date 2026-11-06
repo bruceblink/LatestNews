@@ -1,3 +1,4 @@
+import { getSourceAdapterKindLabel } from "./source-adapter";
 import { rankFailingSourcesByPriority } from "./source-ranking-policy";
 import {
     formatSourceHealthPercent,
@@ -127,6 +128,7 @@ function formatQualitySection(sources: SourceHealthSnapshot[], formatTime: (time
 
             return [
                 `${index + 1}. ${source.name} (${source.id})`,
+                `执行器：${getSourceAdapterKindLabel(source.adapterKind)}`,
                 `采样 ${metrics.sampleCount} 次 · 成功率 ${formatSourceHealthPercent(metrics.successRate)} · 有效条目率 ${formatSourceHealthPercent(metrics.validItemRate)}`,
                 `重复率 ${formatSourceHealthPercent(metrics.duplicateRate)} · 发布时间完整率 ${formatSourceHealthPercent(metrics.publicationCompleteness)} · 空结果 ${metrics.emptyResultCount} 次`,
                 `有效条目 ${metrics.validItemCount} · 无效条目 ${metrics.invalidItemCount} · 重复条目 ${metrics.duplicateItemCount} · 最近成功 ${formatOptionalTime(source.lastSuccessAt, formatTime)} · 新鲜度 ${formatSourceHealthFreshness(metrics.lastFreshnessMs)}`,
@@ -150,6 +152,7 @@ function formatFailingSection(
         ...sources.map((source, index) =>
             [
                 `${index + 1}. ${source.name} (${source.id})`,
+                `执行器：${getSourceAdapterKindLabel(source.adapterKind)}`,
                 `状态：${source.status}`,
                 `连续失败：${source.consecutiveFailures}`,
                 `失败次数：${source.errorCount}`,
@@ -167,12 +170,12 @@ function formatCacheDegradedSection(sources: SourceHealthSnapshot[], formatTime:
 
     return [
         "## 缓存降级源",
-        ...sources.map(
-            (source, index) =>
-                `${index + 1}. ${source.name} (${source.id}) · 连续失败 ${source.consecutiveFailures} · 最近错误 ${formatOptionalTime(
-                    source.lastErrorAt,
-                    formatTime
-                )}`
+        ...sources.map((source, index) =>
+            [
+                `${index + 1}. ${source.name} (${source.id})`,
+                `执行器：${getSourceAdapterKindLabel(source.adapterKind)}`,
+                `连续失败 ${source.consecutiveFailures} · 最近错误 ${formatOptionalTime(source.lastErrorAt, formatTime)}`,
+            ].join(" · ")
         ),
     ].join("\n");
 }
@@ -180,7 +183,15 @@ function formatCacheDegradedSection(sources: SourceHealthSnapshot[], formatTime:
 function formatIdleSection(sources: SourceHealthSnapshot[]) {
     if (!sources.length) return "## 未采样源\n无";
 
-    return ["## 未采样源", ...sources.map((source, index) => `${index + 1}. ${source.name} (${source.id})`)].join("\n");
+    return [
+        "## 未采样源",
+        ...sources.map((source, index) =>
+            [
+                `${index + 1}. ${source.name} (${source.id})`,
+                `执行器：${getSourceAdapterKindLabel(source.adapterKind)}`,
+            ].join(" · ")
+        ),
+    ].join("\n");
 }
 
 function formatHealthySection(sources: SourceHealthSnapshot[], formatTime: (time: number) => string) {
@@ -193,7 +204,7 @@ function formatHealthySection(sources: SourceHealthSnapshot[], formatTime: (time
                 `${index + 1}. ${source.name} (${source.id}) · 成功 ${source.successCount} 次 · 最近成功 ${formatOptionalTime(
                     source.lastSuccessAt,
                     formatTime
-                )} · 最近返回 ${source.lastItemCount ?? "-"} 条`
+                )} · 最近返回 ${source.lastItemCount ?? "-"} 条 · 执行器 ${getSourceAdapterKindLabel(source.adapterKind)}`
         ),
     ].join("\n");
 }

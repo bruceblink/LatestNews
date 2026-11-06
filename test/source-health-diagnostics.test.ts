@@ -21,6 +21,7 @@ const summary: SourceHealthSummary = {
         {
             id: "weibo",
             name: "微博",
+            adapterKind: "configured",
             status: "failing",
             successCount: 3,
             errorCount: 5,
@@ -89,6 +90,7 @@ describe("source health diagnostics", () => {
         expect(report).toContain("总数据源：4");
         expect(report).toContain("1. 微博 (weibo)");
         expect(report).toContain("连续失败：4");
+        expect(report).toContain("执行器：配置来源");
         expect(report).toContain("- 失败 · time:1783511990000 · 900 ms · HTTP 500");
         expect(report).not.toContain("V2EX");
         expect(report).toContain("## 缓存降级源");

@@ -11,7 +11,7 @@ import {
 } from "#/utils/crawler-plugin-runtime";
 
 import { createSourceEngine } from "./source-engine";
-import { recordSourceFailure, recordSourceQuality, recordSourceSuccess } from "./source-health";
+import { recordSourceAdapter, recordSourceFailure, recordSourceQuality, recordSourceSuccess } from "./source-health";
 
 import type { SourceAdapter } from "./source-engine";
 
@@ -95,6 +95,7 @@ const sourceEngine = createSourceEngine({
     onSuccess: recordSourceSuccess,
     onQuality: recordSourceQuality,
     onFailure: recordSourceFailure,
+    onAdapter: (id, descriptor) => recordSourceAdapter(id, descriptor.kind),
 });
 
 export const fetchSourceItems = sourceEngine.collect;

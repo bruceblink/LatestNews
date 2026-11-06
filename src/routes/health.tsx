@@ -15,6 +15,7 @@ import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { sourceHealthCacheKey } from "@shared/source-api";
 import { useRef, useMemo, useState, useEffect } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { getSourceAdapterKindLabel } from "@shared/source-adapter";
 import { fetchSource, fetchSourceHealthSummary } from "~/services/source.service";
 import { rankSourcesForHealthReview, rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
 import { formatSourceHealthDiagnostics, createSourceHealthDiagnosticFilename } from "@shared/source-health-diagnostics";
@@ -460,6 +461,10 @@ function SourceHealthCard({
                         </Link>
                     </h2>
                     <div className="mt-1 text-xs op-55">{source.id}</div>
+                    <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary/8 px-2 py-0.5 text-xs text-primary-700 dark:text-primary-300">
+                        <span className="i-ph:gear-six-duotone" aria-hidden="true" />
+                        <span>{getSourceAdapterKindLabel(source.adapterKind)}</span>
+                    </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                     <span
@@ -486,6 +491,7 @@ function SourceHealthCard({
                 <MetricItem label="耗时" value={source.lastDurationMs ? `${source.lastDurationMs} ms` : "-"} />
                 <MetricItem label="最近成功" value={lastSuccess ?? "-"} />
                 <MetricItem label="最近错误" value={lastError ?? "-"} />
+                <MetricItem label="执行器" value={getSourceAdapterKindLabel(source.adapterKind)} />
                 <MetricItem
                     label="最近条数"
                     value={source.lastItemCount !== undefined ? String(source.lastItemCount) : "-"}
@@ -539,6 +545,10 @@ function SourceHealthCard({
                     <div>
                         <span className="op-60">最近返回条数：</span>
                         <span>{source.lastItemCount !== undefined ? source.lastItemCount : "-"}</span>
+                    </div>
+                    <div>
+                        <span className="op-60">执行器类型：</span>
+                        <span>{getSourceAdapterKindLabel(source.adapterKind)}</span>
                     </div>
                     {source.lastErrorMessage && (
                         <div className="mt-2 rounded-lg bg-red-500/6 px-3 py-2 text-red-600 dark:text-red-300">

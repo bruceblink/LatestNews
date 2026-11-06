@@ -6,6 +6,7 @@ vi.mock("../database/source-health-events", () => ({ getSourceHealthEventsTable:
 
 import {
     recordSourceFailure,
+    recordSourceAdapter,
     recordSourceQuality,
     recordSourceSuccess,
     getSourceHealthSummary,
@@ -14,6 +15,12 @@ import {
 
 describe("source health cache degradation", () => {
     const sourceId = "weibo" as SourceID;
+
+    it("records the adapter kind used for a source sample", () => {
+        recordSourceAdapter(sourceId, "configured");
+
+        expect(getSourceHealthSnapshot(sourceId).adapterKind).toBe("configured");
+    });
 
     it("marks a failing source as cache degraded after policy threshold", () => {
         recordSourceSuccess(sourceId, 10, 1);

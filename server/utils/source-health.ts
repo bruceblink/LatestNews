@@ -1,4 +1,5 @@
 import type { SourceID } from "@shared/types";
+import type { SourceAdapterKind } from "@shared/source-adapter";
 import type { SourceHealthQuality } from "@shared/source-health-types";
 import type { NewsItemsNormalizationQuality } from "@shared/news-item-schema";
 
@@ -20,6 +21,7 @@ export interface ServerSourceHealthEvent {
 export interface ServerSourceHealthSnapshot {
     id: SourceID;
     name: string;
+    adapterKind?: SourceAdapterKind;
     status: ServerSourceHealthStatus;
     successCount: number;
     errorCount: number;
@@ -90,6 +92,10 @@ export function recordSourceSuccess(id: SourceID, durationMs: number, itemCount:
         itemCount,
     });
     persistSourceHealthEvent(id, snapshot.recentEvents[0]);
+}
+
+export function recordSourceAdapter(id: SourceID, kind: SourceAdapterKind) {
+    getOrCreateSnapshot(id).adapterKind = kind;
 }
 
 /** Add item-level quality counters after a successful source normalization pass. */
