@@ -83,7 +83,9 @@ describe("desktop crawler provider cache fallback", () => {
         await expect(runtime.getHealthSummary()).resolves.toMatchObject({
             total: 1,
             idle: 1,
-            sources: [expect.objectContaining({ id: "juejin", status: "idle", successCount: 0 })],
+            sources: [
+                expect.objectContaining({ id: "juejin", adapterKind: "plugin", status: "idle", successCount: 0 }),
+            ],
         });
 
         vi.useFakeTimers();

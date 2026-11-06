@@ -96,13 +96,14 @@ Health query parameters:
 | Parameter | Values |
 | --- | --- |
 | `status` | `all`, `healthy`, `failing`, `idle`, `cache-degraded` |
+| `adapterKind` | `all`, `legacy`, `plugin`, `configured` |
 | `keyword` or `q` | Source name or ID search. |
 | `limit` | Limit returned snapshots. |
 
 Example:
 
 ```bash
-curl "https://news.example.com/api/v1/health/sources?status=cache-degraded&limit=20"
+curl "https://news.example.com/api/v1/health/sources?adapterKind=plugin&status=cache-degraded&limit=20"
 ```
 
 ## Feed Export

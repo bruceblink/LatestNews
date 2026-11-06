@@ -129,6 +129,7 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                     tags: ["Health"],
                     parameters: [
                         queryParameter("status", "all, healthy, failing, idle, or cache-degraded"),
+                        queryParameter("adapterKind", "all, legacy, plugin, or configured"),
                         queryParameter("keyword", "Search by source name or ID"),
                         queryParameter("q", "Alias of keyword"),
                         queryParameter("limit", "Maximum source count"),

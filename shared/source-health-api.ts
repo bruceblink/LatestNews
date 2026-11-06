@@ -1,12 +1,13 @@
 import { filterSourceHealthSnapshots } from "./source-health-filter";
 
 import type { SourceApiError } from "./source-api";
-import type { SourceHealthFilterStatus } from "./source-health-filter";
 import type { SourceHealthSummary, SourceHealthSnapshot } from "./source-health-types";
+import type { SourceHealthFilterStatus, SourceHealthFilterAdapterKind } from "./source-health-filter";
 
 export interface SourceHealthSourcesQuery {
     keyword?: string;
     status?: SourceHealthFilterStatus;
+    adapterKind?: SourceHealthFilterAdapterKind;
     limit?: number | string;
 }
 
@@ -20,6 +21,7 @@ export interface SourceHealthSourcesMeta {
     cacheDegradedCount: number;
     filters: {
         status: SourceHealthFilterStatus;
+        adapterKind: SourceHealthFilterAdapterKind;
         keyword?: string;
         limit?: number;
     };
@@ -36,9 +38,10 @@ export function createSourceHealthSourcesResponse(
     query: SourceHealthSourcesQuery = {}
 ): SourceHealthSourcesResponse {
     const status = query.status ?? "all";
+    const adapterKind = query.adapterKind ?? "all";
     const keyword = query.keyword?.trim();
     const limit = normalizeHealthSourcesLimit(query.limit);
-    const filteredSources = filterSourceHealthSnapshots(summary.sources, { keyword, status });
+    const filteredSources = filterSourceHealthSnapshots(summary.sources, { keyword, status, adapterKind });
     const data = typeof limit === "number" ? filteredSources.slice(0, limit) : filteredSources;
 
     return {
@@ -53,6 +56,7 @@ export function createSourceHealthSourcesResponse(
             cacheDegradedCount: summary.cacheDegraded,
             filters: {
                 status,
+                adapterKind,
                 ...(keyword && { keyword }),
                 ...(limit && { limit }),
             },

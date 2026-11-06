@@ -31,6 +31,16 @@ const sourceHealthSourcesQuerySchema = z.object({
         ])
         .optional()
         .transform((value) => (Array.isArray(value) ? value[0] : value)),
+    adapterKind: z
+        .union([
+            z.literal("all"),
+            z.literal("legacy"),
+            z.literal("plugin"),
+            z.literal("configured"),
+            z.array(z.enum(["all", "legacy", "plugin", "configured"])),
+        ])
+        .optional()
+        .transform((value) => (Array.isArray(value) ? value[0] : value)),
 });
 
 export default defineEventHandler((event): SourceHealthSourcesResponse => {

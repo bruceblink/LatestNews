@@ -12,6 +12,7 @@ const sourceHealth = {
             id: "hackernews",
             name: "Hacker News",
             status: "healthy",
+            adapterKind: "plugin",
             successCount: 1,
             errorCount: 0,
             consecutiveFailures: 0,
@@ -28,7 +29,7 @@ async function installApiMocks(page: Page) {
     await page.route("**/api/**", async (route) => {
         const url = new URL(route.request().url());
         const pathname = url.pathname;
-        if (pathname.endsWith("/s/health")) {
+        if (pathname.endsWith("/s/health") || pathname.endsWith("/v1/health/sources")) {
             await route.fulfill({ json: sourceHealth });
             return;
         }
@@ -145,6 +146,16 @@ test("loads the settings route directly", async ({ page }) => {
 
     await expect(page.getByRole("heading", { name: "设置", level: 1 })).toBeVisible();
     await expect(page.getByText("Web 和桌面端使用同一套配置面板")).toBeVisible();
+});
+
+test("filters source health by adapter kind", async ({ page }) => {
+    await installApiMocks(page);
+    await page.goto("/health");
+
+    await expect(page.getByRole("heading", { name: "数据源健康", level: 1 })).toBeVisible();
+    await page.getByRole("button", { name: "插件来源", exact: true }).click();
+    await expect(page.getByText("显示 1 / 1 个", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Hacker News", exact: true })).toBeVisible();
 });
 
 test("shows an actionable empty state for a new reading history", async ({ page }) => {

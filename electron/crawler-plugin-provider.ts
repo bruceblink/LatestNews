@@ -122,6 +122,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                         return {
                             id: typedSourceId,
                             name: dataSources[typedSourceId]?.name ?? sourceInfo.get(typedSourceId)?.name ?? sourceId,
+                            adapterKind: "plugin",
                             status: record.status,
                             successCount: record.successCount,
                             errorCount: record.errorCount,

@@ -1,4 +1,5 @@
 import type { SourceID } from "@shared/types";
+import type { SourceAdapterKind } from "@shared/source-adapter";
 import type { SourceHealthSummary, SourceHealthSnapshot } from "@shared/source-health-types";
 
 import { it, expect, describe } from "vitest";
@@ -12,10 +13,12 @@ function createSnapshot(input: {
     name: string;
     status: SourceHealthSnapshot["status"];
     cacheDegraded?: boolean;
+    adapterKind?: SourceAdapterKind;
 }): SourceHealthSnapshot {
     return {
         id: input.id,
         name: input.name,
+        adapterKind: input.adapterKind,
         status: input.status,
         cacheDegraded: input.cacheDegraded ?? false,
         successCount: input.status === "healthy" ? 1 : 0,
@@ -32,16 +35,19 @@ function createSummary(): SourceHealthSummary {
             name: "微博",
             status: "failing",
             cacheDegraded: true,
+            adapterKind: "configured",
         }),
         createSnapshot({
             id: "jin10" as SourceID,
             name: "金十数据",
             status: "healthy",
+            adapterKind: "plugin",
         }),
         createSnapshot({
             id: "seebug" as SourceID,
             name: "Seebug Paper",
             status: "idle",
+            adapterKind: "legacy",
         }),
     ];
 
@@ -70,6 +76,7 @@ describe("source health sources API", () => {
             cacheDegradedCount: 1,
             filters: {
                 status: "all",
+                adapterKind: "all",
             },
         });
         expect(response.errors).toEqual([]);
@@ -88,8 +95,18 @@ describe("source health sources API", () => {
         expect(response.meta.filters).toEqual({
             keyword: "微博",
             status: "cache-degraded",
+            adapterKind: "all",
             limit: 1,
         });
+    });
+
+    it("filters by adapter kind before applying the limit", () => {
+        const response = createSourceHealthSourcesResponse(createSummary(), {
+            adapterKind: "plugin",
+        });
+
+        expect(response.data.map((source) => source.id)).toEqual(["jin10"]);
+        expect(response.meta.filters).toEqual({ status: "all", adapterKind: "plugin" });
     });
 
     it("normalizes limit values with a max guard", () => {

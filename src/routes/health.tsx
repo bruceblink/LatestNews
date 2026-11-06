@@ -1,4 +1,5 @@
 import type { SourceResponse } from "@shared/types";
+import type { SourceHealthFilterStatus, SourceHealthFilterAdapterKind } from "@shared/source-health-filter";
 import type {
     SourceHealthEvent,
     SourceHealthStatus,
@@ -15,15 +16,11 @@ import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { sourceHealthCacheKey } from "@shared/source-api";
 import { useRef, useMemo, useState, useEffect } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { getSourceAdapterKindLabel } from "@shared/source-adapter";
 import { fetchSource, fetchSourceHealthSummary } from "~/services/source.service";
+import { sourceAdapterKindLabels, getSourceAdapterKindLabel } from "@shared/source-adapter";
+import { hasSourceHealthFilters, filterSourceHealthSnapshots } from "@shared/source-health-filter";
 import { rankSourcesForHealthReview, rankFailingSourcesByPriority } from "@shared/source-ranking-policy";
 import { formatSourceHealthDiagnostics, createSourceHealthDiagnosticFilename } from "@shared/source-health-diagnostics";
-import {
-    hasSourceHealthFilters,
-    filterSourceHealthSnapshots,
-    type SourceHealthFilterStatus,
-} from "@shared/source-health-filter";
 
 const statusLabelMap: Record<SourceHealthStatus, string> = {
     healthy: "正常",
@@ -37,6 +34,13 @@ const statusClassMap: Record<SourceHealthStatus, string> = {
     idle: "text-neutral-500 bg-neutral-500/10 dark:text-neutral-300",
 };
 
+const adapterKindFilterOptions = [
+    ["all", "全部"],
+    ["legacy", sourceAdapterKindLabels.legacy],
+    ["plugin", sourceAdapterKindLabels.plugin],
+    ["configured", sourceAdapterKindLabels.configured],
+] as const satisfies ReadonlyArray<readonly [SourceHealthFilterAdapterKind, string]>;
+
 export const Route = createFileRoute("/health")({
     component: HealthPage,
 });
@@ -45,6 +49,7 @@ function HealthPage() {
     useTitle(`${APP_TITLE} | 数据源健康`);
     const [keyword, setKeyword] = useState("");
     const [statusFilter, setStatusFilter] = useState<SourceHealthFilterStatus>("all");
+    const [adapterKindFilter, setAdapterKindFilter] = useState<SourceHealthFilterAdapterKind>("all");
     const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
     const toaster = useToast();
     const hasLoadedRef = useRef(false);
@@ -165,15 +170,24 @@ function HealthPage() {
     const filteredSources = useMemo(() => {
         if (!data?.sources) return [];
 
-        const matchedSources = filterSourceHealthSnapshots(data.sources, { keyword, status: statusFilter });
+        const matchedSources = filterSourceHealthSnapshots(data.sources, {
+            keyword,
+            status: statusFilter,
+            adapterKind: adapterKindFilter,
+        });
         return rankSourcesForHealthReview(matchedSources);
-    }, [data?.sources, keyword, statusFilter]);
+    }, [data?.sources, keyword, statusFilter, adapterKindFilter]);
 
-    const hasActiveFilters = hasSourceHealthFilters({ keyword, status: statusFilter });
+    const hasActiveFilters = hasSourceHealthFilters({
+        keyword,
+        status: statusFilter,
+        adapterKind: adapterKindFilter,
+    });
 
     const resetFilters = () => {
         setKeyword("");
         setStatusFilter("all");
+        setAdapterKindFilter("all");
     };
 
     return (
@@ -246,31 +260,53 @@ function HealthPage() {
             </div>
 
             <div className="flex flex-col gap-3 rounded-2xl bg-base/60 p-4 shadow shadow-primary/5 md:flex-row md:items-center md:justify-between">
-                <div className="flex flex-wrap gap-2">
-                    {(
-                        [
-                            ["all", "全部"],
-                            ["failing", "仅异常"],
-                            ["cache-degraded", "仅缓存降级"],
-                            ["healthy", "仅正常"],
-                            ["idle", "仅未采样"],
-                        ] as const
-                    ).map(([value, label]) => (
-                        <button
-                            key={value}
-                            type="button"
-                            className={clsx(
-                                "rounded-full px-3 py-1.5 text-sm transition-all",
-                                statusFilter === value
-                                    ? "bg-primary/15 text-primary-700 shadow shadow-primary/10 dark:text-primary-300"
-                                    : "bg-neutral-500/8 op-80 hover:bg-neutral-500/12"
-                            )}
-                            aria-pressed={statusFilter === value}
-                            onClick={() => setStatusFilter(value)}
-                        >
-                            {label}
-                        </button>
-                    ))}
+                <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="mr-1 text-xs op-60">状态</span>
+                        {(
+                            [
+                                ["all", "全部"],
+                                ["failing", "仅异常"],
+                                ["cache-degraded", "仅缓存降级"],
+                                ["healthy", "仅正常"],
+                                ["idle", "仅未采样"],
+                            ] as const
+                        ).map(([value, label]) => (
+                            <button
+                                key={value}
+                                type="button"
+                                className={clsx(
+                                    "rounded-full px-3 py-1.5 text-sm transition-all",
+                                    statusFilter === value
+                                        ? "bg-primary/15 text-primary-700 shadow shadow-primary/10 dark:text-primary-300"
+                                        : "bg-neutral-500/8 op-80 hover:bg-neutral-500/12"
+                                )}
+                                aria-pressed={statusFilter === value}
+                                onClick={() => setStatusFilter(value)}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="mr-1 text-xs op-60">执行器</span>
+                        {adapterKindFilterOptions.map(([value, label]) => (
+                            <button
+                                key={value}
+                                type="button"
+                                className={clsx(
+                                    "rounded-full px-3 py-1.5 text-sm transition-all",
+                                    adapterKindFilter === value
+                                        ? "bg-primary/15 text-primary-700 shadow shadow-primary/10 dark:text-primary-300"
+                                        : "bg-neutral-500/8 op-80 hover:bg-neutral-500/12"
+                                )}
+                                aria-pressed={adapterKindFilter === value}
+                                onClick={() => setAdapterKindFilter(value)}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 <div className="flex flex-col gap-2 md:flex-row md:items-center">
                     <span className="rounded-full bg-neutral-500/8 px-3 py-1.5 text-xs op-70">
