@@ -2,11 +2,12 @@ import type { NewsItem, SourceID } from "@shared/types";
 import type { NewsItemsNormalizationQuality } from "@shared/news-item-schema";
 
 import { getters } from "#/getters";
-import { normalizeNewsItemsWithQuality } from "@shared/news-item-schema";
 import { hasCrawlerPluginSource, fetchCrawlerPluginSource } from "#/utils/crawler-plugin-runtime";
 
-import { createCrawlerTaskQueue } from "../../crawler-platform/host/task-queue";
+import { createSourceEngine } from "./source-engine";
 import { recordSourceFailure, recordSourceQuality, recordSourceSuccess } from "./source-health";
+
+import type { SourceAdapter } from "./source-engine";
 
 export interface SourceFetcherQueueOptions {
     /** Maximum number of source collectors that may execute at the same time. */
@@ -45,42 +46,44 @@ export function createSourceFetcher({
     maxQueued = sourceFetcherQueueDefaults.maxQueued,
     queueTimeoutMs = sourceFetcherQueueDefaults.queueTimeoutMs,
 }: CreateSourceFetcherOptions) {
-    const inflightRequests = new Map<SourceID, Promise<NewsItem[]>>();
-    const queue = createCrawlerTaskQueue({ maxConcurrent, maxQueued, queueTimeoutMs });
+    const engine = createSourceEngine({
+        resolveAdapter: (id): SourceAdapter => ({
+            descriptor: { id, kind: "legacy" },
+            collect: () => getItems(id),
+        }),
+        onSuccess,
+        onQuality,
+        onFailure,
+        now,
+        maxConcurrent,
+        maxQueued,
+        queueTimeoutMs,
+    });
 
-    return function fetchSourceItems(id: SourceID) {
-        const pending = inflightRequests.get(id);
-        if (pending) return pending;
-
-        const startTime = now();
-        const request = queue
-            .run(() => getItems(id))
-            .then((items) => {
-                const normalized = normalizeNewsItemsWithQuality(items, { sourceId: id });
-                const completedAt = now();
-                onSuccess(id, completedAt - startTime, normalized.items.length);
-                onQuality?.(id, normalized.quality, completedAt);
-                return normalized.items;
-            })
-            .catch((error) => {
-                onFailure(id, now() - startTime, error);
-                throw error;
-            })
-            .finally(() => {
-                inflightRequests.delete(id);
-            });
-
-        inflightRequests.set(id, request);
-        return request;
-    };
+    return engine.collect;
 }
 
-export const fetchSourceItems = createSourceFetcher({
-    getItems: async (id) => {
-        const pluginItems = await fetchCrawlerPluginSource(id);
-        return pluginItems ?? getters[id]();
+const sourceEngine = createSourceEngine({
+    resolveAdapter: (id) => {
+        if (hasCrawlerPluginSource(id)) {
+            return {
+                descriptor: { id, kind: "plugin" },
+                collect: async () => (await fetchCrawlerPluginSource(id)) ?? [],
+            } satisfies SourceAdapter;
+        }
+
+        if (typeof getters[id] === "function") {
+            return {
+                descriptor: { id, kind: "legacy" },
+                collect: () => getters[id](),
+            } satisfies SourceAdapter;
+        }
+
+        return undefined;
     },
     onSuccess: recordSourceSuccess,
     onQuality: recordSourceQuality,
     onFailure: recordSourceFailure,
 });
+
+export const fetchSourceItems = sourceEngine.collect;
