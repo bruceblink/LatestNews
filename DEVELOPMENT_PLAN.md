@@ -214,6 +214,8 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 
 2026-11-06 适配器可观测性结果：`44b3a46` 将 `SourceAdapterKind` 与 `SourceDescriptor` 提取到共享契约，首次执行时把 `legacy`、`plugin` 或 `configured` 写入来源健康快照；健康列表、来源详情和文本诊断报告均显示执行器类型，旧快照兼容显示“待识别”。新增引擎回调、健康记录和诊断格式测试；全量 Vitest 83 个测试文件、433 个测试通过，Web 全量 E2E 16/18（2 项按既有 Service Worker 条件跳过）。
 
+2026-11-06 运维筛选结果：`eb7b8d8` 为 v1 健康接口增加 `adapterKind=legacy|plugin|configured` 筛选，健康页面增加执行器筛选和重置交互，Electron 本地插件健康摘要统一标注为 `plugin`；OpenAPI、API 文档、共享筛选逻辑及 Web/Electron 回归测试已同步。全量 Vitest 83 个测试文件、435 个测试通过，Web E2E 19 个用例中 17 个通过、2 个按既有 Service Worker 条件跳过。
+
 ### N3-B：完成插件宿主验收
 
 文件入口：`crawler-platform/sdk/`、`crawler-platform/host/`、`crawler-platform/runtime/`、`scripts/crawler/`、`.github/workflows/e2e.yml`、`.github/workflows/electron-desktop.yml`。
@@ -244,7 +246,7 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 
 验收：客户端无需修改来源专属代码即可显示动态来源；停用或目录暂时不可用时保留已保存文章和布局记录。Node 的运维清单与 Electron 本地插件分别生效；更改远端 API 不覆盖本地插件版本。同步验证依赖 N2-C 的服务条件；缺少服务时记录已完成流程和同步缺口，不将完整验收标为通过。
 
-2026-11-06 本地流程结果：配置型来源的 RSS/JSON 清单、来源目录、来源详情、单源条目、批量接口和 JSON Feed 已由 `server/configured-source-api.integration.test.ts` 覆盖，并随全量 83 个测试文件、432 个测试通过；动态目录快照、停用来源保留和目录暂时不可用回退已由 `a0b7a80`、`f1b6afc` 实现。真实浏览器、Docker Node 服务、跨页面关注/收藏/历史和同步仍待对应环境验收。
+2026-11-06 本地流程结果：配置型来源的 RSS/JSON 清单、来源目录、来源详情、单源条目、批量接口和 JSON Feed 已由 `server/configured-source-api.integration.test.ts` 覆盖，并随全量 83 个测试文件、435 个测试通过；动态目录快照、停用来源保留和目录暂时不可用回退已由 `a0b7a80`、`f1b6afc` 实现。真实浏览器、Docker Node 服务、跨页面关注/收藏/历史和同步仍待对应环境验收。
 
 2026-11-06 Web 流程结果：新增 `e2e/configured-source-flow.e2e.spec.ts`，使用稳定动态来源 API fixture 验证目录、来源详情、条目阅读、稍后读、收藏和历史回看，Chromium 1/1 通过。该用例证明客户端不依赖来源专属前端代码；浏览器直连 Docker Node 服务和 SyncHub 仍待独立环境验收。
 
@@ -326,6 +328,6 @@ N3 回退：按来源停用、插件版本回退或清空配置型清单并重�
 
 只在本文件更新任务状态、后续顺序、验收结果和未完成项。每个切片记录一条简明结果：日期、提交、执行环境、已完成检查、未执行项和回退条件。已完成任务移出待办表；保留影响后续判断的简短结论，详细变更与旧日志通过 Git 提交历史追溯。
 
-当前记录：2026-11-06 已同步 `origin/main` 至 `44b3a46`，工作区干净。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 和便携 Node `22.23.4` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium 全量 E2E 16/18（2 项按条件跳过）和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 工具链和 Windows x64 NSIS 包证据已完成；远端运行 `41259777389` 已成功完成六平台桌面、Web 和 Docker 构建，`v0.7.4` 发布运行 `41266229300` 成功，22 个资产及 21 条校验和已核对。N1-B 的 Electron staging 许可证束、桌面依赖、当前 HEAD 的 Node 22 Web 包和发布 Web ZIP 许可证检查已通过；GHCR v0.7.4 OCI 清单和本地 Docker 动态来源 smoke 已通过，Docker 构建、容器 API、CORS 和清理结果已记录。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载、过期不渲染和 Electron 不注册 Service Worker 证据。N3-A 统一爬虫执行引擎已实现并完成契约验收：传统 getter、插件 provider、配置型 runtime 使用同一注册表和执行边界；支持队列取消和适配器 abort；健康快照、健康列表、来源详情和诊断报告现在记录并显示适配器类型；Node、应用和 Electron 类型检查通过，全量 Vitest 为 83 个测试文件、433 个测试通过，生产构建通过。N3-B 的 CI host smoke 仍是有效证据，本地 Docker host smoke 已通过；本机 Electron smoke 仍受 Electron 44.9.0 二进制下载限制。N3-C 的配置型来源 API 合同测试、停用来源保留、目录快照回退、Docker 动态来源 API smoke、稳定 fixture Chromium 流程和 Web 全量回归（16/18，2 项按既有 Service Worker 条件跳过）已通过，浏览器直连 Docker Node 服务和同步流程仍待执行。N4 已完成 Node 22 API 基线、并发上限对比并保留四任务边界、Web 资源基线工具修复、一次 Electron 生命周期探针、5 次冷/5 次暖启动测量和真实 Web 请求瀑布；冷批量性能没有接受的优化，30 分钟阅读数据仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3/N4 的其余验收。
+当前记录：2026-11-06 已同步 `origin/main` 至 `eb7b8d8`，工作区干净。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 和便携 Node `22.23.4` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium 全量 E2E 17/19（2 项按条件跳过）和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 工具链和 Windows x64 NSIS 包证据已完成；远端运行 `41259777389` 已成功完成六平台桌面、Web 和 Docker 构建，`v0.7.4` 发布运行 `41266229300` 成功，22 个资产及 21 条校验和已核对。N1-B 的 Electron staging 许可证束、桌面依赖、当前 HEAD 的 Node 22 Web 包和发布 Web ZIP 许可证检查已通过；GHCR v0.7.4 OCI 清单和本地 Docker 动态来源 smoke 已通过，Docker 构建、容器 API、CORS 和清理结果已记录。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载、过期不渲染和 Electron 不注册 Service Worker 证据。N3-A 统一爬虫执行引擎已实现并完成契约验收：传统 getter、插件 provider、配置型 runtime 使用同一注册表和执行边界；支持队列取消和适配器 abort；健康快照、健康列表、来源详情和诊断报告现在记录并显示适配器类型，健康接口和页面支持按适配器类型筛选；Node、应用和 Electron 类型检查通过，全量 Vitest 为 83 个测试文件、435 个测试通过，生产构建通过。N3-B 的 CI host smoke 仍是有效证据，本地 Docker host smoke 已通过；本机 Electron smoke 仍受 Electron 44.9.0 二进制下载限制。N3-C 的配置型来源 API 合同测试、停用来源保留、目录快照回退、Docker 动态来源 API smoke、稳定 fixture Chromium 流程和 Web 全量回归（17/19，2 项按既有 Service Worker 条件跳过）已通过，浏览器直连 Docker Node 服务和同步流程仍待执行。N4 已完成 Node 22 API 基线、并发上限对比并保留四任务边界、Web 资源基线工具修复、一次 Electron 生命周期探针、5 次冷/5 次暖启动测量和真实 Web 请求瀑布；冷批量性能没有接受的优化，30 分钟阅读数据仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3/N4 的其余验收。
 
 参考资料仅说明现有用法和接口：[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)、[贡献指南](CONTRIBUTING.md)、[开源协议](LICENSE.md)。
