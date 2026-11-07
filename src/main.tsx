@@ -10,7 +10,11 @@ import { registerRuntimeSourceCatalog } from "@shared/runtime-source-catalog";
 import { myFetch } from "./utils";
 import { queryClient } from "./query-client";
 
-const runtimeSourceCatalogPromise = bootstrapRuntimeSourceCatalog();
+const RUNTIME_SOURCE_CATALOG_CACHE_KEY = "latestnews:runtime-source-catalog";
+
+// Load the bounded runtime catalog before importing route modules. Several atoms derive their
+// initial values from dataSources, so rendering first would discard cached dynamic focus items.
+await bootstrapRuntimeSourceCatalog();
 
 const [{ routeTree }, { AuthProvider }] = await Promise.all([import("./routeTree.gen"), import("./auth/AuthProvider")]);
 
@@ -33,8 +37,6 @@ if (!rootElement.innerHTML) {
         </QueryClientProvider>
     );
 }
-
-void runtimeSourceCatalogPromise;
 
 declare module "@tanstack/react-router" {
     interface Register {
@@ -101,8 +103,6 @@ async function bootstrapRuntimeSourceCatalog() {
         clearTimeout(timeout);
     }
 }
-
-const RUNTIME_SOURCE_CATALOG_CACHE_KEY = "latestnews:runtime-source-catalog";
 
 function readCachedRuntimeSourceCatalog(): SourceMetadataItem[] {
     try {

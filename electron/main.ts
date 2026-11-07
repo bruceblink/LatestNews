@@ -124,6 +124,7 @@ let backgroundRefresh: ReturnType<typeof createDesktopBackgroundRefresh> | null 
 let updateIpc: Awaited<ReturnType<typeof registerUpdateIpc>> | null = null;
 let isQuitting = false;
 let isHidingMainWindow = false;
+let rendererRecoveryInFlight = false;
 let lifecycleProbeActive = false;
 const lifecycle = createDesktopLifecycleTracker();
 
@@ -240,6 +241,12 @@ function attachWindowLifecycle(window: BrowserWindow, role: "main" | "auth") {
             reason: details.reason,
             exitCode: details.exitCode,
         });
+        if (role === "main" && !isQuitting && !lifecycleProbeActive && !rendererRecoveryInFlight) {
+            rendererRecoveryInFlight = true;
+            void recoverMainWindow(window).finally(() => {
+                rendererRecoveryInFlight = false;
+            });
+        }
     });
     window.webContents.on("unresponsive", () => update("window-unresponsive", "ready"));
     window.webContents.on("responsive", () => update("window-responsive", "ready"));
@@ -770,7 +777,7 @@ function syncBackgroundRefreshState() {
 function showMainWindow() {
     if (isQuitting) return;
     if (!mainWindow || mainWindow.isDestroyed()) {
-        void createMainWindow().then(() => syncBackgroundRefreshState());
+        void createMainWindow({ show: true }).then(() => syncBackgroundRefreshState());
         return;
     }
     if (mainWindow.isMinimized()) mainWindow.restore();
@@ -1238,7 +1245,7 @@ async function openExternalLink(candidate: string) {
     }
 }
 
-async function createMainWindow() {
+async function createMainWindow({ show = true }: { show?: boolean } = {}) {
     const window = new BrowserWindow({
         width: 1280,
         height: 850,
@@ -1264,7 +1271,9 @@ async function createMainWindow() {
     mainWindow = window;
     attachWindowLifecycle(window, "main");
     attachMainWindowSecurity(window.webContents);
-    window.once("ready-to-show", () => window.show());
+    window.once("ready-to-show", () => {
+        if (show) window.show();
+    });
     window.on("closed", () => {
         if (mainWindow === window) mainWindow = null;
     });
@@ -1275,4 +1284,28 @@ async function createMainWindow() {
     });
 
     await window.loadURL(rendererDevUrl?.href ?? APP_BASE_URL);
+}
+
+async function recoverMainWindow(window: BrowserWindow) {
+    if (window.isDestroyed() || mainWindow !== window) return;
+
+    const wasVisible = window.isVisible();
+    const wasMinimized = window.isMinimized();
+    try {
+        await window.loadURL(rendererDevUrl?.href ?? APP_BASE_URL);
+        if (!wasVisible || window.isDestroyed()) return;
+        window.show();
+        if (wasMinimized) window.minimize();
+        else window.focus();
+    } catch (error) {
+        console.warn("Main renderer could not be reloaded after it exited.", error);
+        if (!window.isDestroyed()) window.destroy();
+        if (isQuitting || mainWindow) return;
+        try {
+            await createMainWindow({ show: wasVisible });
+            syncBackgroundRefreshState();
+        } catch (recoveryError) {
+            console.error("LatestNews Desktop could not recreate its main window.", recoveryError);
+        }
+    }
 }

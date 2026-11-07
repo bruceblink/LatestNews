@@ -22,6 +22,15 @@ describe("source health cache degradation", () => {
         expect(getSourceHealthSnapshot(sourceId).adapterKind).toBe("configured");
     });
 
+    it("classifies an unsampled built-in source without collecting it", () => {
+        const idleSourceId = "ithome" as SourceID;
+
+        expect(getSourceHealthSnapshot(idleSourceId)).toMatchObject({
+            status: "idle",
+            adapterKind: "legacy",
+        });
+    });
+
     it("marks a failing source as cache degraded after policy threshold", () => {
         recordSourceSuccess(sourceId, 10, 1);
         recordSourceFailure(sourceId, 20, new Error("first failure"));

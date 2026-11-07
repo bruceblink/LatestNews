@@ -5,6 +5,7 @@ import type { NewsItemsNormalizationQuality } from "@shared/news-item-schema";
 
 import { logger } from "#/utils/logger";
 import dataSources from "@shared/data-sources";
+import { getCrawlerSourceKind } from "#/utils/crawler-plugin-runtime";
 import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 import { getSourceHealthEventsTable } from "#/database/source-health-events";
 
@@ -49,6 +50,7 @@ function createIdleSnapshot(id: SourceID): ServerSourceHealthSnapshot {
     return {
         id,
         name: getSourceMeta(id).name,
+        adapterKind: getCrawlerSourceKind(id) ?? "legacy",
         status: "idle",
         successCount: 0,
         errorCount: 0,
