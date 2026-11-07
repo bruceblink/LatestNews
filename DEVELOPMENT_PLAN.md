@@ -1,8 +1,8 @@
 # LatestNews 主线开发计划
 
-更新日期：2026-11-06。已发布基线：`v0.7.4`（`e27d4d9`）；发布恢复配置位于后续 `main` 提交。
+更新日期：2026-11-07。代码审查基线：`main` / `origin/main` 的 `84fba9f`。最新正式发布：`v0.7.5`（`0f53177`，2026-11-04）。
 
-本文件是仓库唯一的开发计划。桌面自动更新的 Windows 验收已完成，后续继续 N1 的剩余验收。旧计划、已完成切片和架构提案的必要结论已合并；逐次实施日志通过 Git 历史追溯，不再维护独立计划或进度文档。
+本文件是仓库唯一的开发计划。下一步先修复第 2 节确认的目录启动、健康筛选和桌面崩溃恢复问题，再继续 N1–N4 的剩余验收。桌面自动更新已有 `v0.7.4` 的 Windows x64 升级证据，不能直接作为 `v0.7.5` 的安装验收。旧计划和详细实施日志通过 Git 历史追溯，不再新增独立计划或进度文档。
 
 ## 1. 目标和范围
 
@@ -35,7 +35,7 @@ Windows x64 集成使用本次源码构建的旧版本基线 `0.7.2`，并非旧
 | 桌面采集模式 | `auto` 远端优先，仅网络/超时/5xx 等规定情况回退本地；401/403/429 和有效空结果保持原语义；`remote` 只读远端，`local` 只读已启用插件 |
 | 缓存与数据 | Node SQLite、Pages D1、桌面采集缓存、浏览器离线快照分别管理；新闻缓存不替代收藏、历史和同步数据 |
 | 插件与目录 | 只执行操作者审核过的 `trusted-js`；独立进程负责故障隔离，不能视为陌生代码沙箱；复用插件 ID、版本包和动态来源命名空间 |
-| 采集执行 | 统一引擎负责来源注册、队列、取消、超时、输出规范化、健康记录和回退；传统 getter、插件 provider、配置型来源通过适配器接入；不要求一次性迁移全部来源 |
+| 采集执行 | Node 的统一引擎负责来源注册、单源请求合并、排队、输出规范化和健康回调；执行超时和缓存回退仍由适配器或 API 路由负责；生产取消链路尚未接通，Electron 仍使用独立插件 provider |
 | 兼容与权限 | 保持既有来源 ID、URL/条目身份和 v1 API 兼容；桌面 IPC 只接收固定请求；新闻、认证、SyncHub 与联邦凭据分别管理 |
 | 技术选型 | 继续使用 TypeScript、React、Vite、Nitro 和 SQLite/可选 D1；跨语言重写、Java BFF、多服务拆分、Redis/消息队列等待独立需求评估 |
 
@@ -47,33 +47,60 @@ Windows x64 集成使用本次源码构建的旧版本基线 `0.7.2`，并非旧
 
 | 项目 | 当前核对结果 | 证据和限制 |
 | --- | --- | --- |
-| 正式发布 | `v0.7.4`，22 个资产，含四份更新清单及校验和 | [发布页](https://github.com/bruceblink/LatestNews/releases/tag/v0.7.4)；发布于 2026-11-01；Windows x64 已完成实际升级 |
-| 发布后主线 | `b5ff20c` 排除打包日志、`115f30d` 增加发布恢复检查 | 不改写原标签；恢复流程只复用已通过检查且提交匹配的产物 |
-| 发布 CI | 标签源码、六平台桌面包、Web、Docker 已通过；恢复发布成功 | [原构建](https://github.com/bruceblink/LatestNews/actions/runs/41259777389)、[恢复发布](https://github.com/bruceblink/LatestNews/actions/runs/41266229300)；不代替其他系统实际安装 |
-| Electron 版本 | 本次统一测试和打包运行时为 `44.9.0` | Windows 构建和 NSIS 打包已通过；各平台发布结果另行核对 |
-| 许可和校验和 | 有模块说明和各产物复制步骤；本次为 Release 增加更新文件核对及 `SHA256SUMS.txt` | 许可复制步骤属于标签之后的主线变更；需检查真实发布产物 |
+| 正式发布 | `v0.7.5`，2026-11-04 21:05（UTC+8）发布，共 22 个资产 | 2026-11-07 只读核对 GitHub Release 元数据和资产名称；本轮未下载、复算摘要或验证升级，不沿用 `v0.7.4` 的产物验收结论 |
+| 发布后主线 | 从 `v0.7.5` 的 `0f53177` 快进到 `84fba9f`，新增 21 个提交 | 本轮 `git fetch origin`、`git merge --ff-only origin/main`；同步前后均无本地改动，审查与计划修改以该提交为基线 |
+| 历史发布 CI | `v0.7.4` 的标签源码、六平台桌面包、Web、Docker 和恢复发布已有通过记录 | [原构建](https://github.com/bruceblink/LatestNews/actions/runs/41259777389)、[恢复发布](https://github.com/bruceblink/LatestNews/actions/runs/41266229300)；本轮不查询或监测 CI，不据此判断当前提交的 CI 状态 |
+| Electron 版本 | 当前依赖声明为 `44.9.0` | 历史 Windows 构建和 NSIS 打包已通过；本轮只做类型检查与测试，不代表重新运行打包程序 |
+| 许可和校验和 | 当前有模块说明、产物复制步骤和 `SHA256SUMS.txt` 生成流程 | `v0.7.4` 已有核对记录；`v0.7.5` 本轮只确认资产名称，摘要与实际许可文件仍应按版本分别验证 |
 | UI 自动化 | 有搜索框居中、安装引导、移动布局、设置与采集模式覆盖 | Web 页面用例大量使用固定 API 响应；另有真实本地 Nitro 目录、健康和无效 ID smoke |
-| 端到端缺口 | 真实认证、同步、Electron Service Worker 隔离和完整动态来源阅读流程仍需验收 | 不能仅由设置页 smoke、进程探针或局部路由测试确认 |
-| 插件宿主 | 清单预算、网络检查、包校验和错误映射已有实现；本地 Electron host smoke 已通过 | E2E 工作流已加入 Electron/Docker host smoke 和报告上传；CI 运行 `41749640773` 的两个 host smoke 均成功，本机 Docker 容器连接仍待执行 |
-| 爬虫执行引擎 | 已接入统一 `SourceEngine` 注册表、队列、规范化、健康回调和三类适配器分类 | 传统 getter、插件 provider、配置型来源共用执行入口；保留各自安全边界，代表性来源迁移和宿主实测仍按 N3-B/C 执行 |
-| 配置型来源 | Node RSS/JSON 实现与本地路由测试已存在 | 生产配置、浏览器 CORS、保存文章与目录变化的完整流程待确认 |
+| 端到端缺口 | 真实认证与 SyncHub、动态目录慢网/断网重启、浏览器直连 Docker Node 服务仍待验收 | N2-A/N2-B 已有阅读状态和 Electron 不注册 Service Worker 的历史 E2E 记录；不把这些结果列为本轮重测，也不代替未完成流程 |
+| 插件宿主 | 本地 Electron host smoke 和 2026-11-06 本地 Docker 动态来源 API smoke 已有通过记录 | 历史 CI 运行 `41749640773` 的两个 host smoke 成功；最近一次本机 Electron 重跑受二进制下载限制，本轮未复测 |
+| 爬虫执行引擎 | Node 三类适配器共用 `SourceEngine`；取消只在引擎/队列接口和测试层存在 | 真实 API 不传 `signal`，生产适配器不转发 `SourceExecutionContext.signal`；不能标为端到端取消完成，具体范围见 N3-A |
+| 配置型来源 | RSS/JSON 清单、停用来源、目录快照和使用固定测试响应的阅读 E2E 已实现 | 本轮复现启动快照不可读及目录晚到导致状态不同步；必须先修复 R-A，再进行 N3-C 的真实组合流程 |
 | 历史观察 | 七天公网采样已按用户要求延后；历史记录不足以判定来源达标 | 恢复条件见第 8 节；本轮未探测生产新闻接口或 D1 状态 |
 
 许可证范围见 [LICENSE.md](LICENSE.md)。N1-B 核对声明、代码来源和实际产物是否一致，不把已有说明视为完整的依赖许可审查。
 
-待验收事项继续保留：真实登录与 SyncHub、Electron Service Worker 隔离、原生托盘菜单的完整操作、Windows 安装后图标与卸载、macOS/Linux 实机、动态源完整阅读流程、D1 持久化和来源质量观察。2026-10-24 的 Pages 新闻 API 修复已取得生产单源/批量 HTTP 200 及无效来源 HTTP 400 证据，但当时 D1 缓存仍不可用；这两项分别验收。2026-10-25 记载的采样窗口快照为 12 轮、120 条记录，10 个来源的报告均为样本不足；恢复前需重新核对原始 JSONL，不能据此认定来源达标。
+待验收事项继续保留：真实登录与 SyncHub、原生托盘菜单的完整操作、Windows 安装后图标与卸载、macOS/Linux 实机、动态源完整阅读流程、D1 持久化和来源质量观察。2026-10-24 的 Pages 新闻 API 修复已取得生产单源/批量 HTTP 200 及无效来源 HTTP 400 证据，但当时 D1 缓存仍不可用；这是历史结果，本轮未核验生产接口或 D1 当前状态。2026-10-25 记载的采样窗口快照为 12 轮、120 条记录，10 个来源的报告均为样本不足；恢复前需重新核对原始 JSONL，不能据此认定来源达标。
+
+### 2026-11-07 代码审查
+
+本轮重点审查 `0f53177..84fba9f` 的变更及其前端状态、采集宿主和桌面窗口调用链。以下问题尚未修复。P1 应在继续来源扩展前处理；P2 随后独立处理。本轮不是完整安全审计。
+
+1. **R1 / P1：启动时没有读取动态来源快照。** `src/main.tsx:13` 立即调用 `bootstrapRuntimeSourceCatalog()`，读取函数在 `:109` 使用缓存键，但该 `const` 到 `:105` 才初始化。读取异常被捕获后返回空数组。提取真实 TypeScript 函数并按原顺序在 Node `vm` 中执行：已有 1 个缓存来源，但 `localStorage.getItem` 调用次数为 0；在无桌面本地目录的 Web 离线条件下注册空目录。现有快照因此不能用于断网或目录故障回退。
+2. **R2 / P1：目录晚到会丢失当前关注项，发现列表也不更新。** `src/main.tsx:15` 加载路由前未等待目录就绪；`src/atoms/primitiveMetadataAtom.ts:33` 在初始化时按当时的 `dataSources` 过滤已保存关注项；`src/components/common/search-bar/index.tsx:68` 用 `useMemo(..., [])` 固定发现列表。若实时目录晚于状态初始化或首次渲染，动态来源关注项被移除，搜索列表不包含新来源。使用实际预处理函数和延迟目录响应复现了 `focus: [ext.*] → []`；目录到达后不会恢复。初始化本身不立即覆盖磁盘，后续布局写入或同步可能把缺失项持久保存。
+3. **R3 / P2：执行器筛选漏掉未采样来源。** `server/utils/source-health.ts:48` 创建的 idle 快照没有 `adapterKind`；只有采集开始后，`server/utils/source-engine.ts:74` 才触发类型记录。`shared/source-health-filter.ts:36` 按具体类型严格匹配，因此新启动服务的内置、插件和配置型来源在对应筛选中被遗漏。当前测试手动填充类型，没有覆盖“注册目录 → 未采样摘要 → 类型筛选”。
+4. **R4 / P2：桌面渲染进程崩溃后不能通过唤醒恢复。** `electron/main.ts:238` 只记录 `render-process-gone`；窗口对象并未因此销毁，`mainWindow` 只在 `closed` 时清空。`:770` 的托盘/单实例唤醒只显示并聚焦现有窗口，不重载页面。该路径会保留坏窗口；启用托盘时再次打开仍不能恢复。结论来自静态调用链，本轮未注入真实窗口崩溃。
+
+另有两项限制，不作为已确认的生产回归：取消信号尚未接入真实请求及生产适配器；桌面缓存写入失败只记录警告、仍返回采集成功，这是当前的尽力保存行为。前者纳入 N3-A 的接口约定和真实链路验收；后者纳入 N3-B 的不可写目录、重启和旧缓存测试。不要把缓存写失败直接记为采集失败，也不要在未定义含义前改变 `cacheDegraded`。
+
+### 2026-11-07 验证记录
+
+环境：Windows，Node `24.15.0`，pnpm `12.16.1`。Node 满足 `engines` 最低要求，但不是 `.nvmrc` 的 `22.23.4`；这次结果不补足精确版本验收。
+
+| 检查 | 本轮结果 |
+| --- | --- |
+| `pnpm lint:check` | 通过，退出码 0 |
+| `pnpm typecheck` | Node 与应用类型检查通过，退出码 0 |
+| `pnpm typecheck:electron` | 通过，退出码 0 |
+| `pnpm test --run` | 83 个测试文件、435 项测试通过；有 `SourceAdapterKind` / `SourceDescriptor` 重复自动导入提示，未导致失败 |
+| 启动顺序诊断 | 从真实源码提取函数，用 Node `vm` 复现 R1 和 R2 的关注项过滤；不是浏览器、真实窗口或 Docker 集成证据 |
+| 文档检查 | UTF-8、LF、Markdown 解析、章节编号、8 个仓库相对链接及 `git diff --check` 通过；只修改本计划 |
+
+本轮未执行构建、Web/Electron E2E、真实窗口、Docker 集成、生产探测、依赖升级或 CI 监测。类型检查只更新了被 Git 忽略的两份 `.tsbuildinfo`；`shared/sources.json` 未变。当前测试全部通过，不代表 R1–R4 已有回归覆盖。正式修复时应先增加能复现问题的测试，再实现修复。
 
 ## 3. 顺序、依赖和版本
 
 | 阶段 | 用户或维护者得到的结果 | 依赖 | 建议版本 | 工作量 |
 | --- | --- | --- | --- | --- |
+| R 审查修复 | 动态目录重启保留关注，未采样来源可筛选，桌面坏窗口可恢复 | 当前审查；按 R-A → R-B → R-C 顺序 | 下一 `v0.7.x` 候选 | 2–4 日，含回归，实施前复估 |
 | N1 发布与桌面稳定性 | 能验证下载、安装、升级、托盘与对应版本源码 | 当前主线 | 后续 `v0.7.x` | 3–4 日 |
 | N2 阅读、离线与同步 | 跨页面状态一致，断网、重启和同步失败可恢复 | N1；外部服务验收可单独等待 | `v0.8.0` | 4–6 日 |
 | N3 来源维护与插件验收 | 统一来源执行边界；同一来源在目录、阅读、保存与宿主切换中可维护 | N2 的状态兼容验收；宿主 CI 可提前执行 | `v0.8.x` | 5–7 日 |
 | N4 性能预算与回归 | 当前版本有可重复的性能数据和预算检查 | N1 固定环境、N2/N3 代表流程 | `v0.8.x` | 3–4 日 |
 | N5 独立采集插件试点 | 有真实需求的适配器可以独立升级与回退 | N3 通过且满足第 8 节条件 | `v0.9.0` 候选 | 另行估算 |
 
-N1–N4 的编码与验收估算为 14–19 个工作日，另留 3–5 日回归。每个阶段允许拆成补丁发布；不为凑版本扩大范围。Web 可随已验证提交独立部署，桌面变更通过新安装包交付。公网七天观察和其他操作系统实机等待单列。
+表中 N1–N4 保留原阶段估算，不表示仍需重复投入这些工时。R 修复与剩余验收按第 10 节重新安排，不把已通过的历史检查重复列为开发任务。每个切片允许拆成补丁发布；不为凑版本扩大范围。Web 可随已验证提交独立部署，桌面变更通过新安装包交付。公网七天观察和其他操作系统实机等待单列。
 
 ## 4. N1：发布与桌面稳定性
 
@@ -97,6 +124,8 @@ N1–N4 的编码与验收估算为 14–19 个工作日，另留 3–5 日回�
 
 2026-11-04 CI 结果：`Playwright E2E` run `41749640773`（head `4f379c6`）的 `Crawler host smoke` job `126311256699`、`Web Chromium E2E` job `126311256886` 和 `Electron E2E` job `126311256976` 全部成功；Web 为 17/17，Electron 为 10/10。`Electron desktop` run `41749640707` 的 `Build and check Windows desktop` job `126311256489` 成功。此前 Electron worker 在测试通过后超时；`77789db` 修复 crawler 的显示环境，`c446b87` 修复 CI 静态 `dist` 根目录解析，`4f379c6` 在进程组和 stdio 管道层完成 Electron 清理，最终运行没有 teardown 超时。
 
+2026-11-07 发布状态校正：GitHub Release 列表与 `v0.7.5` 详情均显示该版本已于 2026-11-04 正式发布，非草稿、非预发布，共 22 个资产。标签指向本地提交 `0f53177`。本轮只核对元数据和资产清单，未执行下载摘要检查、容器连接或 `v0.7.5` 升级；README 仍写 `0.7.2` 和仅安装包更新，后续发布文档切片应校正。本轮按用户要求只提交开发计划。
+
 ### N1-B：验证发布产物、许可和版本源码入口
 
 文件入口：`LICENSE.md`、`LICENSES/`、`scripts/prepare-electron-package.mjs`、`scripts/verify-license-bundle.mjs`、`scripts/verify-electron-dependencies.mjs`、`.github/workflows/release.yml`、`Dockerfile`、`src/components/footer.tsx`。
@@ -117,9 +146,9 @@ N1–N4 的编码与验收估算为 14–19 个工作日，另留 3–5 日回�
 
 2026-11-04 Node 22 Web 结果：在当前 `main` 的 Node `22.23.4`、pnpm `12.16.1` 下运行 `pnpm build` 并按发布工作流打包，生成 152 个条目的临时 Web 包，大小为 10,657,890 字节，SHA-256 为 `43e7b1f943f2744ff9be6f20f295dd1f0c7c27ad9a027deb7707edd8b1559031`。运行 `node scripts/verify-license-bundle.mjs` 通过，包含 Node server、静态资源、版本 README 和完整许可证束；4 个外部图标请求超时并使用默认图标。
 
-2026-11-04 发布产物结果：下载 `v0.7.4` 的 `LatestNews-0.7.4-Web.zip`，大小为 10,423,425 字节，SHA-256 为 `2178a73066ebfb93fc2cae4ae8f25e6b40a4dc2eb83f54b83d8915273a2a7c69`。解压后运行 `node scripts/verify-license-bundle.mjs` 通过，包含 `LICENSE`、`LICENSE.md` 和两份 `LICENSES/*.txt`；包内 README 使用版本标签源码链接和 Node 22 启动入口。Docker 镜像构建 job 已成功，但本机没有 Docker 命令，镜像拉取、版本标签和容器连接仍待执行。
+2026-11-04 发布产物结果：下载 `v0.7.4` 的 `LatestNews-0.7.4-Web.zip`，大小为 10,423,425 字节，SHA-256 为 `2178a73066ebfb93fc2cae4ae8f25e6b40a4dc2eb83f54b83d8915273a2a7c69`。解压后运行 `node scripts/verify-license-bundle.mjs` 通过，包含 `LICENSE`、`LICENSE.md` 和两份 `LICENSES/*.txt`；包内 README 使用版本标签源码链接和 Node 22 启动入口。Docker 镜像构建 job 已成功；当次 Windows 会话未找到 Docker 命令且未核验 WSL，未完成镜像拉取或容器连接，不能据此判断本机 Docker 不可用。
 
-2026-11-04 Docker 清单结果：远端 GHCR `ghcr.io/bruceblink/latestnews:v0.7.4` 可读取，OCI 索引摘要为 `sha256:5b1c478a72f6337201e5710fc9e94be57c86280e9679eaf13c421be30ca99422`，包含 `linux/amd64` 和 `linux/arm64`。本机没有 Docker 命令，容器启动、健康检查、接口连接和清理仍待执行。
+2026-11-04 Docker 清单结果：远端 GHCR `ghcr.io/bruceblink/latestnews:v0.7.4` 可读取，OCI 索引摘要为 `sha256:5b1c478a72f6337201e5710fc9e94be57c86280e9679eaf13c421be30ca99422`，包含 `linux/amd64` 和 `linux/arm64`。当次未核验 WSL，容器启动、健康检查、接口连接和清理未执行；后续本地 Docker smoke 见下条记录。
 
 2026-11-06 Docker 环境与 smoke 结果：Docker Engine `28.4.0`、Buildx `0.31.0` 和 Compose `2.40.3` 已可用。项目 Docker 构建增加可选 BuildKit CA secret、代理参数和锁定 pnpm 安装，解决透明代理环境下 Alpine `apk` 与 Corepack 的证书/网络问题。`corepack pnpm test:crawler:docker` 构建镜像、启动容器并验证动态来源 API、目录、详情、批量、JSON Feed、CORS 和未知来源拒绝全部通过；测试结束后临时容器和镜像已清理。
 
@@ -191,15 +220,17 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 
 文件入口：`server/utils/source-fetch.ts`、`server/utils/source.ts`、`server/utils/crawler-plugin-runtime.ts`、`crawler-platform/sdk/`、`crawler-platform/host/`、`server/configured-source-runtime.node.ts`、`shared/news-item-schema.ts`。
 
-在现有来源执行边界之上增加共享的 `SourceAdapter`、`SourceDescriptor`、`SourceExecutionContext` 和 `SourceResult` 契约，形成一个统一的 `SourceEngine`。引擎负责来源注册与冲突处理、单源请求合并、全局队列、取消、超时、错误码映射、`NewsItem` 规范化、健康指标和回退入口。
+现有 `SourceEngine` 使用 `SourceAdapter`、`SourceDescriptor` 和 `SourceExecutionContext`，负责 Node 来源注册与冲突处理、单源请求合并、队列、`NewsItem` 规范化和健康回调。执行超时仍由各 runtime 负责，缓存回退仍在 API 路由中；不为补齐类型名称新增没有使用者的 `SourceResult`。
 
-第一阶段只接入三个适配器：
+当前 Node 接入三类适配器：
 
-- `LegacySourceAdapter` 包装现有 `getters[id]`，保留全部传统来源代码和现有 URL/条目 ID。
-- `PluginSourceAdapter` 包装 Node/Electron 插件 provider，继续使用清单预算、网络 broker、进程隔离和 `trusted-js` 边界。
-- `ConfiguredSourceAdapter` 包装 RSS/JSON 配置型来源，继续保留 HTTPS、主机 allow-list、DNS 固定和私网地址拒绝。
+- 传统来源适配器包装现有 `getters[id]`，保留全部传统来源代码和现有 URL/条目 ID。
+- 插件适配器包装 Node 插件 provider，继续使用清单预算、网络 broker、进程隔离和 `trusted-js` 边界。Electron 直接使用插件 provider，不声称已经接入同一个 `SourceEngine`。
+- 配置型来源适配器包装 RSS/JSON runtime，继续保留 HTTPS、主机 allow-list、DNS 固定和私网地址拒绝。
 
-不把插件安装、版本回滚、配置清单、Node/Electron 宿主和业务来源解析混进同一个接口；适配器只负责描述来源和执行采集，引擎统一编排运行时行为。保持现有来源 ID、缓存键、`NewsItem.extra`、远端/本地回退语义和 Pages 能力边界。
+不把插件安装、版本回滚、配置清单、Node/Electron 宿主和业务来源解析混进同一个接口；适配器负责描述来源和执行采集。保持现有来源 ID、缓存键、`NewsItem.extra`、远端/本地回退语义和 Pages 能力边界。
+
+尚未完成的取消链路：生产路由只调用 `fetchSourceItems(id)`，Node 适配器也没有把 `SourceExecutionContext.signal` 交给插件或配置型 runtime。先明确同源请求合并时的调用方取消规则，再补真实适配器的超时/停止测试；不能把一个调用方断开直接等同于取消其他调用方共享的任务。是否绑定 HTTP 断连按真实需求决定，不因已有队列接口而默认扩大范围。
 
 验收：
 
@@ -208,7 +239,7 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 - Node 与 Electron 对同一插件包保持一致输出和资源限制；配置型来源的 DNS/HTTPS 安全检查不被通用抽象绕过。
 - 至少覆盖 RSS、JSON API、HTML 三个代表来源；暂不迁移其余传统来源，不改变来源专属业务逻辑。
 
-回退：保留现有 `fetchSourceItems`、插件 provider 和配置型 runtime 作为兼容实现；统一引擎按来源开关逐步启用。出现输出、健康或回退差异时，可撤回适配器接入而不删除插件包、来源数据或缓存。
+回退：按独立修复提交撤回引擎或适配器变更，保留插件 provider、配置型 runtime、来源数据和缓存。当前没有来源级切换开关，不把尚不存在的开关作为恢复手段。
 
 2026-11-06 实现与验收结果：`6ba466a` 建立统一 `SourceEngine` 执行边界，`c5b900d` 增加 `legacy`/`plugin`/`configured` 分类，`0e34cc8` 分离插件 provider 与配置型 runtime 的执行入口，`fb66e9f` 增加来源注册表和插件优先替换传统 getter 的规则，`665e371` 增加注册、冲突、规范化和并发合并契约测试，`9ec533f` 让共享任务队列支持等待取消、运行中 abort，并避免取消被记录为来源失败。当前引擎统一处理单源请求合并、任务队列、取消、输出规范化、质量统计和健康回调；Node、应用和 Electron 类型检查通过，生产 Web/Nitro 构建通过，全量 Vitest 为 83 个测试文件、433 个测试通过。RSS/JSON 配置 runtime、HTML/RSS/JSON 插件仍保留各自网络和宿主安全实现，代表性来源迁移对比与 Docker/真实宿主验收继续留在 N3-B/C。
 
@@ -226,7 +257,7 @@ N2 回退：按页面、PWA 更新或同步切片分别撤回。若确需修改�
 
 2026-11-04 验收结果：首次执行 `corepack pnpm@12.16.1 test:crawler:electron` 时发现 `server/crawler-plugin-runtime.node.ts` 使用无扩展名 `.node` 导入，Node `24.15.0`/`tsx` 无法解析实际的 `.node.ts` 文件；改为显式 `.node.ts` 后重跑通过。Node 与 Electron 对同一插件包及动态插件输出的 SHA-256 一致，Node 用时 236 ms、Electron 用时 350 ms，检测到 Browser、GPU、NetworkService 和 NodeService，测试结束无残留 Electron 进程。Docker smoke 和 CI 运行记录仍待执行。
 
-2026-11-04 Docker 结果：执行 `corepack pnpm@12.16.1 test:crawler:docker` 在构建镜像前以 `spawnSync docker ENOENT` 失败。本机当时没有 Docker 命令；该历史结果不代表 Docker host 代码通过或失败。
+2026-11-04 Docker 结果：执行 `corepack pnpm@12.16.1 test:crawler:docker` 在构建镜像前以 `spawnSync docker ENOENT` 失败。当次 Windows 进程未找到命令，未检查 WSL 发行版或 Docker 服务；该历史结果不代表本机 Docker 不可用，也不代表宿主代码通过或失败。
 
 2026-11-04 CI 结果：`Playwright E2E` run `41749640773` 的 `Crawler host smoke` job `126311256699` 成功，Electron 和 Docker host smoke 均完成且报告已上传；本机 Docker 容器启动、连接和清理仍待具备 Docker 环境后执行。
 
@@ -313,21 +344,59 @@ N3 回退：按来源停用、插件版本回退或清空配置型清单并重�
 | Electron | `pnpm typecheck:electron`、`pnpm test:electron`、`pnpm electron:build`、`pnpm test:e2e:electron` | 实际打包程序、隔离用户目录、原生窗口行为 |
 | 统一爬虫引擎 | `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run`、`pnpm build`；补充三类适配器契约测试 | 传统 getter、插件 provider、配置型来源的输出一致性、取消、超时、健康记录和回退结果 |
 | 插件宿主 | `pnpm test:crawler:electron`、`pnpm test:crawler:docker` | 同包摘要、输出一致、故障、资源和清理记录 |
-| Docker 或同步服务集成 | 对应本地 Docker 命令与实际客户端连接 | 服务、镜像版本、端口、启动、连接和清理；不可用时记未完成 |
+| Docker 或同步服务集成 | 通过 WSL 执行 Docker/Compose，并进行实际客户端连接 | 先核对 WSL 发行版、Docker 状态和端口，再记录服务、镜像版本、启动、连接和清理；Windows 缺少 `docker` 命令不代表服务不可用 |
 | 正式发布 | 新标签完整发布 CI、资产与摘要复核 | 标签和版本一致、10 个桌面安装/归档文件与 1 个 Web 包按预期齐全，新增校验和匹配；Docker 标签与摘要另验 |
 
 每个切片完成后记录“范围、验收条件、实际结果、限制、回退边界”。完成检查后按用户授权独立提交、推送或发布。后续若需反复监控 CI，先记录仓库、run ID、head revision 和 job ID，再交给只读监控子代理；完成或失败后停止。
 
 ## 10. 下一次开发从哪里开始
 
-**N1-A** 的六平台产物、Web 包、发布资产和校验和已完成远端核对。Docker 标签、摘要和实际连接以及 N1-C 的原生安装验收仍保留为环境项。当前编码主线已完成 **N3-A 统一爬虫执行引擎**，下一步进入 N3-B 插件宿主验收和 N3-C 动态来源完整流程，优先补充代表性来源对比与故障回退证据。本次已统一 Electron 运行时，并完成自动更新发布及 Windows x64 升级，不重复安排这些变更。
+### R-A：先修复动态目录启动与状态保留
 
-如果 N1-C 缺 Windows 交互条件，可先做 N2-A 的本地流程检查；如果 N2-C 缺真实服务，则继续 N2-A/N2-B 或 N3-A。外部未完成项始终保留，不随其他任务通过而自动关闭。
+范围：R1、R2；修改入口为 `src/main.tsx`、运行时来源目录、关注状态初始化和发现列表。保持现有来源 ID、存储键和快照格式，不清空或迁移用户数据。先修复缓存键初始化顺序，再让目录就绪与依赖状态初始化保持一致；等待必须有界，目录失败不能阻止内置来源页面启动。目录后续变化需要刷新发现列表，不能只修改共享对象。
+
+验收：
+
+- 有快照时断网启动，动态来源仍可识别，关注、收藏和历史不被清理。
+- 无快照时延迟返回目录，动态来源能够被发现；已保存的动态关注项不会在目录到达前被过滤并回写。
+- 目录移除或停用来源时保留来源标识和已保存文章，状态明确显示停用；远端和本地目录一侧失败不误删另一侧记录。
+- 覆盖首次启动、刷新、同一用户目录重启和布局同步先于目录返回的顺序；用实际状态实现断言，不在测试中复制业务逻辑。
+
+验证：`pnpm lint:check`、`pnpm typecheck`、`pnpm typecheck:electron`、`pnpm test --run`，再在 Node `22.23.4` 下执行受影响的 Web/Electron 构建与 E2E。通过 Computer Use 检查真实浏览器和桌面窗口中的发现、关注与重启；未取得窗口证据时明确保留该项。
+
+回退：只撤回本切片目录初始化和状态更新代码，保留旧格式读取、用户数据及已保存文章。
+
+### R-B：补齐未采样来源的执行器分类
+
+范围：R3；由已有适配器注册信息生成来源类型，不能为了分类触发一次真实采集。保持 API 字段和筛选参数兼容，旧客户端仍可读取摘要。
+
+验收：服务启动后、没有调用采集前，内置、插件和配置型来源出现在对应类型筛选中；状态仍为 idle。单测和 API 测试覆盖目录、健康摘要与筛选的组合，Web 验证筛选及重置。执行共享逻辑/API 的检查入口；Pages/Node 构建分别检查已有运行环境边界。
+
+回退：撤回分类初始化和对应摘要变更，不删除健康数据或来源目录。
+
+### R-C：恢复桌面坏窗口，再完成 N1-C
+
+范围：R4；只处理主窗口的意外渲染进程退出。先明确可重试次数和失败反馈，避免连续崩溃引发无限重启。正常退出、更新安装、认证窗口关闭不应创建新主窗口。
+
+验收：隔离用户目录中主动终止主 renderer 后，窗口可恢复或提供明确恢复入口；再次启动、托盘恢复、采集模式、窗口可见状态和后台刷新保持一致。补充生命周期测试，运行 Electron 类型检查、单元测试、构建与 E2E；必须取得真实窗口结果。随后完成 N1-C 的原生菜单、图标、安装和卸载，不重复已有 `v0.7.4` 更新下载实验。
+
+回退：只撤回崩溃恢复逻辑，保留现有退出和更新安装流程，不清理用户目录。
+
+### 修复后的顺序与外部条件
+
+1. **N3-B/C**：在 R-A/R-B 通过后，用修复后的提交完成浏览器直连本地 Docker Node 服务的动态来源关注、阅读、收藏、历史和重启。本机 Docker 在 WSL 中运行，先核验发行版、Docker 状态和服务端口；通过 WSL 执行容器测试并记录镜像版本、启动、实际连接与清理。现有 Docker API smoke 和固定测试响应 E2E 不能互相替代。宿主故障测试加入缓存不可写、旧缓存读取和恢复后再写，不改变采集成功的含义。
+2. **N2-C**：取得本地 Docker 认证/SyncHub 服务与专用测试配置后，验证两端布局、收藏、历史、失败重试和离线变更。服务条件不足时保持待验收，不以生产请求或 mock 关闭该项。
+3. **N1-A/B**：对下一实际交付版本核对 Node `22.23.4` 基线、官方 Vite/pnpm 稳定版与兼容范围，校正 README 的版本及更新说明；单独验证对应 Release 资产摘要和 Docker 版本标签。本轮未升级依赖，不把 2026-11-03 的版本核对当作今天的最新版本结论。
+4. **N4**：在修复后的固定构建上补 30 分钟阅读、切页、隐藏恢复数据，并区分旧基线和新结果；没有测量证据时不提高并发上限、不引入缓存服务。
+
+七天公网采样、D1、macOS/Linux 实机、签名和 N5 仍按第 8 节条件处理。本轮不恢复采样、不部署、不发布。上述顺序是后续实施建议，本次授权仅包含审查、更新计划及提交推送计划。
 
 ## 11. 维护方式与参考资料
 
 只在本文件更新任务状态、后续顺序、验收结果和未完成项。每个切片记录一条简明结果：日期、提交、执行环境、已完成检查、未执行项和回退条件。已完成任务移出待办表；保留影响后续判断的简短结论，详细变更与旧日志通过 Git 提交历史追溯。
 
-当前记录：2026-11-06 已同步 `origin/main` 至 `eb7b8d8`，工作区干净。N1-A 的 pnpm `12.16.1`、Vite `8.3.5`、Node `22.23.4` 输入已统一；本机 Node `24.15.0` 和便携 Node `22.23.4` 下的安装、lint、类型检查、Node/Pages/Electron 构建、静态 Web 构建、Web Chromium 全量 E2E 17/19（2 项按条件跳过）和 Electron E2E 10/10 已通过，Pages 构建不会留下被过滤的生成来源清单。Node 22 工具链和 Windows x64 NSIS 包证据已完成；远端运行 `41259777389` 已成功完成六平台桌面、Web 和 Docker 构建，`v0.7.4` 发布运行 `41266229300` 成功，22 个资产及 21 条校验和已核对。N1-B 的 Electron staging 许可证束、桌面依赖、当前 HEAD 的 Node 22 Web 包和发布 Web ZIP 许可证检查已通过；GHCR v0.7.4 OCI 清单和本地 Docker 动态来源 smoke 已通过，Docker 构建、容器 API、CORS 和清理结果已记录。N1-C 已有隔离真实窗口的托盘偏好、关闭到后台和再次启动恢复证据，但安装器覆盖升级、原生托盘菜单和卸载仍待执行。N2-A 已取得 Web Chromium 和 Electron 的来源详情到历史回看、稍后读、收藏、刷新和同一用户目录重启持久化证据。N2-B 已取得浏览器等待更新、接受更新、Feed 快照离线重载、过期不渲染和 Electron 不注册 Service Worker 证据。N3-A 统一爬虫执行引擎已实现并完成契约验收：传统 getter、插件 provider、配置型 runtime 使用同一注册表和执行边界；支持队列取消和适配器 abort；健康快照、健康列表、来源详情和诊断报告现在记录并显示适配器类型，健康接口和页面支持按适配器类型筛选；Node、应用和 Electron 类型检查通过，全量 Vitest 为 83 个测试文件、435 个测试通过，生产构建通过。N3-B 的 CI host smoke 仍是有效证据，本地 Docker host smoke 已通过；本机 Electron smoke 仍受 Electron 44.9.0 二进制下载限制。N3-C 的配置型来源 API 合同测试、停用来源保留、目录快照回退、Docker 动态来源 API smoke、稳定 fixture Chromium 流程和 Web 全量回归（17/19，2 项按既有 Service Worker 条件跳过）已通过，浏览器直连 Docker Node 服务和同步流程仍待执行。N4 已完成 Node 22 API 基线、并发上限对比并保留四任务边界、Web 资源基线工具修复、一次 Electron 生命周期探针、5 次冷/5 次暖启动测量和真实 Web 请求瀑布；冷批量性能没有接受的优化，30 分钟阅读数据仍待执行。2026-11-01 桌面自动更新已发布为 `v0.7.4`；Windows x64 的自动检查、取消、完整包回退、差分下载、安装重启与数据保留均通过。验证范围和其他系统缺口见第 1 节；不据此关闭 N1/N2/N3/N4 的其余验收。
+当前记录：2026-11-07 将 `main` 从 `0f53177` 快进到 `origin/main` 的 `84fba9f`。同步后工作区干净；本轮只修改本计划，记录 R1–R4、实际验证、优先级和回退边界。lint、两组类型检查与 435 项测试通过；Node 精确版本、构建、E2E、真实窗口、Docker 和生产状态未在本轮重新验收。`v0.7.5` 已发布只由 Release 元数据确认，不等同于下载和升级通过。
+
+历史完成项保留在各阶段：`v0.7.4` 发布资产与 Windows x64 自动更新、N2-A 阅读状态、N2-B 离线快照与 Electron Service Worker 隔离、N3 的本地 Docker API smoke 和固定测试响应的浏览器流程、N4 的 API/启动/请求瀑布基线。R1/R2 说明目录回退和状态保留不能仅由现有通过测试认定完成；N3-A 取消链路仍有限制。N1-C 原生安装、N2-C 真实同步、N3-C Docker 与浏览器组合流程、N4 长时阅读和第 8 节条件性任务保持未完成。
 
 参考资料仅说明现有用法和接口：[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)、[贡献指南](CONTRIBUTING.md)、[开源协议](LICENSE.md)。
