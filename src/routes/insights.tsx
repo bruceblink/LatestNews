@@ -31,6 +31,7 @@ import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 
 type InsightScope = UnifiedFeedScope;
+type InsightAnalysisTab = "keywords" | "categories" | "sources";
 
 const scopeOptions: Array<{ id: InsightScope; label: string; icon: string }> = [
     { id: "focus", label: "关注", icon: "i-ph:star-duotone" },
@@ -51,6 +52,7 @@ function InsightsPage() {
     const { hiddenUrls } = useReadingState();
     const [scope, setScope] = useState<InsightScope>(focusSources.length ? "focus" : "hottest");
     const [trendWindow, setTrendWindow] = useState<InsightTrendWindow>("24h");
+    const [analysisTab, setAnalysisTab] = useState<InsightAnalysisTab>("keywords");
 
     const sources = useMemo(() => getScopeSources(scope, focusSources), [focusSources, scope]);
     const readUrls = useMemo(() => history.map((item) => item.url), [history]);
@@ -93,10 +95,16 @@ function InsightsPage() {
 
     return (
         <section className="page-stack insights-page">
-            <div className="surface-panel insights-hero flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
+            <div className="surface-panel insights-hero">
+                <div className="insights-hero-copy">
+                    <div className="insights-kicker">
+                        <span className="accent-dot" /> NEWSROOM SIGNALS
+                    </div>
                     <h1 className="m-0 text-2xl font-bold text-zinc-800 dark:text-zinc-100">阅读洞察</h1>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
+                    <p className="insights-hero-description">
+                        从发文节奏、热点覆盖和来源状态中，快速判断今天值得继续追踪的主题。
+                    </p>
+                    <div className="insights-status-row">
                         <SignalPill icon="i-ph:database-duotone" label={`${sources.length} 个来源`} />
                         <SignalPill icon="i-ph:clock-clockwise-duotone" label={isFetching ? "更新中" : "已就绪"} />
                         {data?.meta.partial && (
@@ -104,18 +112,13 @@ function InsightsPage() {
                         )}
                     </div>
                 </div>
-                <div className="flex flex-col gap-2 md:items-end">
-                    <div className="flex flex-wrap gap-2">
+                <div className="insights-controls" aria-label="洞察筛选与操作">
+                    <div className="insights-scope-switch" role="group" aria-label="内容范围">
                         {scopeOptions.map((option) => (
                             <button
                                 key={option.id}
                                 type="button"
-                                className={clsx(
-                                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all",
-                                    scope === option.id
-                                        ? "bg-cyan-500 text-zinc-900 font-semibold"
-                                        : "bg-zinc-200/75 text-zinc-700 hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-400 dark:hover:bg-zinc-700/75"
-                                )}
+                                className={clsx("insights-scope-button", scope === option.id && "is-active")}
                                 aria-pressed={scope === option.id}
                                 onClick={() => setScope(option.id)}
                             >
@@ -126,7 +129,7 @@ function InsightsPage() {
                     </div>
                     <button
                         type="button"
-                        className="inline-flex items-center gap-2 rounded-full bg-zinc-200/75 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 dark:bg-zinc-800/65 dark:text-zinc-300 dark:hover:bg-zinc-700/75"
+                        className="insights-refresh-button"
                         disabled={isFetching}
                         aria-busy={isFetching}
                         onClick={() => void refetch()}
@@ -150,7 +153,13 @@ function InsightsPage() {
                 <EmptyState />
             ) : (
                 <>
-                    <div className="grid gap-3 md:grid-cols-4">
+                    <InsightNarrative
+                        buckets={insights?.updateFrequency ?? []}
+                        keywords={insights?.keywordTrends ?? []}
+                        partial={Boolean(data?.meta.partial)}
+                    />
+
+                    <div className="insights-kpi-strip">
                         <MetricCard label="新闻条目" value={insights?.itemCount ?? 0} icon="i-ph:newspaper-duotone" />
                         <MetricCard
                             label="热点排行"
@@ -165,47 +174,89 @@ function InsightsPage() {
                         <MetricCard label="关键词" value={insights?.wordCloud.length ?? 0} icon="i-ph:cloud-duotone" />
                     </div>
 
-                    <SourceHealthOverview data={healthSummary} isFetching={isHealthFetching} isError={isHealthError} />
-
-                    <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                    <div className="insights-primary-grid">
                         <UpdateFrequencyPanel
                             buckets={insights?.updateFrequency ?? []}
                             loading={isFetching && !insights}
                             trendWindow={trendWindow}
                             onTrendWindowChange={setTrendWindow}
                         />
-                        <KeywordTrendPanel
-                            items={insights?.keywordTrends ?? []}
-                            loading={isFetching && !insights}
-                            scope={scope}
-                            trendWindow={trendWindow}
-                        />
-                    </div>
-
-                    <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
                         <HotRankingPanel items={insights?.hotRankings ?? []} scope={scope} onRead={handleReadHotItem} />
+                    </div>
+
+                    <div className="insights-secondary-grid">
                         <TopicPanel topics={insights?.topicEvents ?? []} scope={scope} onRead={handleReadTopicItem} />
-                    </div>
-
-                    <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-                        <WordCloudPanel items={insights?.wordCloud ?? []} maxWeight={maxWordWeight} scope={scope} />
-                        <CategorySharePanel
-                            items={insights?.categoryShares ?? []}
-                            maxCount={maxCategoryCount}
-                            scope={scope}
+                        <SourceHealthOverview
+                            data={healthSummary}
+                            isFetching={isHealthFetching}
+                            isError={isHealthError}
                         />
                     </div>
 
-                    <div className="grid gap-4">
-                        <SourceActivityPanel
-                            items={insights?.sourceActivity ?? []}
-                            maxCount={maxSourceCount}
-                            scope={scope}
-                        />
-                    </div>
+                    <section className="insights-analysis-shell" aria-labelledby="insights-analysis-title">
+                        <div className="insights-analysis-heading">
+                            <div>
+                                <div className="insights-kicker">SECONDARY ANALYSIS</div>
+                                <h2 id="insights-analysis-title">分析洞察</h2>
+                            </div>
+                            <span className="insights-analysis-note">点击标签切换数据维度</span>
+                        </div>
+                        <div className="insights-analysis-tabs" role="tablist" aria-label="分析维度">
+                            {(
+                                [
+                                    ["keywords", "关键词趋势", "i-ph:trend-up-duotone"],
+                                    ["categories", "按类别分析", "i-ph:chart-pie-slice-duotone"],
+                                    ["sources", "按来源分析", "i-ph:chart-bar-duotone"],
+                                ] as const
+                            ).map(([id, label, icon]) => (
+                                <button
+                                    key={id}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={analysisTab === id}
+                                    className={clsx("insights-analysis-tab", analysisTab === id && "is-active")}
+                                    onClick={() => setAnalysisTab(id)}
+                                >
+                                    <span className={icon} aria-hidden="true" />
+                                    <span>{label}</span>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="insights-analysis-content">
+                            {analysisTab === "keywords" && (
+                                <div className="insights-analysis-grid">
+                                    <KeywordTrendPanel
+                                        items={insights?.keywordTrends ?? []}
+                                        loading={isFetching && !insights}
+                                        scope={scope}
+                                        trendWindow={trendWindow}
+                                    />
+                                    <WordCloudPanel
+                                        items={insights?.wordCloud ?? []}
+                                        maxWeight={maxWordWeight}
+                                        scope={scope}
+                                    />
+                                </div>
+                            )}
+                            {analysisTab === "categories" && (
+                                <CategorySharePanel
+                                    items={insights?.categoryShares ?? []}
+                                    maxCount={maxCategoryCount}
+                                    scope={scope}
+                                />
+                            )}
+                            {analysisTab === "sources" && (
+                                <SourceActivityPanel
+                                    items={insights?.sourceActivity ?? []}
+                                    maxCount={maxSourceCount}
+                                    scope={scope}
+                                />
+                            )}
+                        </div>
+                    </section>
 
                     {!!data?.errors.length && (
-                        <div className="rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
+                        <div className="insights-errors rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
                             {data.errors.slice(0, 3).map((item) => (
                                 <div key={`${item.sourceId ?? "source"}-${item.message}`}>
                                     {item.sourceId ? `${item.sourceId}: ` : ""}
@@ -216,6 +267,55 @@ function InsightsPage() {
                     )}
                 </>
             )}
+        </section>
+    );
+}
+
+/** Gives the reader a concise, data-backed headline before the detailed charts. */
+function InsightNarrative({
+    buckets,
+    keywords,
+    partial,
+}: {
+    buckets: InsightTimeBucket[];
+    keywords: KeywordTrend[];
+    partial: boolean;
+}) {
+    const latestBucket = buckets.at(-1);
+    const previousBucket = buckets.at(-2);
+    const latestCount = latestBucket?.itemCount ?? 0;
+    const previousCount = previousBucket?.itemCount ?? 0;
+    const change = previousCount ? Math.round(((latestCount - previousCount) / previousCount) * 100) : 0;
+    const leadKeyword = keywords[0]?.term;
+    const trendTone = change > 0 ? "up" : change < 0 ? "down" : "flat";
+    const trendLabel =
+        change > 0
+            ? `较上一时段上升 ${change}%`
+            : change < 0
+              ? `较上一时段下降 ${Math.abs(change)}%`
+              : "与上一时段接近";
+
+    return (
+        <section className="insights-narrative" aria-labelledby="insights-narrative-title">
+            <div className="insights-narrative-mark" aria-hidden="true">
+                <span className="i-ph:trend-up-duotone" />
+            </div>
+            <div className="insights-narrative-copy">
+                <div className="insights-kicker">TODAY'S SIGNAL</div>
+                <h2 id="insights-narrative-title">
+                    {change > 0 ? "阅读热度正在上升" : change < 0 ? "阅读热度暂时回落" : "阅读热度保持稳定"}
+                </h2>
+                <p>
+                    {latestCount
+                        ? `最近一个时间段有 ${latestCount} 条内容进入统计，${leadKeyword ? `关键词“${leadKeyword}”最值得继续追踪。` : "当前没有明显的单一关键词。"}`
+                        : "等待来源返回带有发布时间的内容后，趋势会在这里更新。"}
+                </p>
+            </div>
+            <div className={clsx("insights-narrative-stat", `is-${trendTone}`)}>
+                <span>{latestCount ? trendLabel : "暂无趋势"}</span>
+                <strong>{latestCount || "--"}</strong>
+                <small>{partial ? "部分来源未返回" : "最近时间桶 · 条目"}</small>
+            </div>
         </section>
     );
 }
@@ -249,7 +349,7 @@ function SourceHealthOverview({
         .slice(0, 4);
 
     return (
-        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+        <section className="insights-panel insights-health-panel">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <PanelTitle icon="i-ph:heartbeat-duotone" title="来源健康概览" />
                 <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
@@ -354,7 +454,7 @@ function UpdateFrequencyPanel({
     const totalCount = buckets.reduce((total, bucket) => total + bucket.itemCount, 0);
 
     return (
-        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+        <section className="insights-panel insights-frequency-panel">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <PanelTitle icon="i-ph:chart-line-up-duotone" title="更新频率" />
                 <div className="flex rounded-lg bg-zinc-200/75 p-0.5 dark:bg-zinc-800/75" aria-label="趋势时间范围">
@@ -420,6 +520,20 @@ function UpdateFrequencyPanel({
                     <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-500">
                         共 {totalCount} 条具有发布时间的内容 · 时间桶按 UTC 对齐
                     </div>
+                    <div className="insights-heat-strip" aria-label="各时间桶来源覆盖">
+                        {buckets.map((bucket) => {
+                            const coverage = buckets.length
+                                ? bucket.sourceCount / Math.max(...buckets.map((item) => item.sourceCount), 1)
+                                : 0;
+                            return (
+                                <span
+                                    key={`${bucket.startAt}-coverage`}
+                                    title={`${formatTrendBucketLabel(bucket.startAt, trendWindow)}：${bucket.sourceCount} 个来源`}
+                                    style={{ opacity: Math.max(0.2, coverage) }}
+                                />
+                            );
+                        })}
+                    </div>
                 </div>
             ) : (
                 <div className="mt-4">
@@ -445,7 +559,7 @@ function KeywordTrendPanel({
     const maxCount = Math.max(...items.flatMap((item) => item.buckets.map((bucket) => bucket.itemCount)), 0);
 
     return (
-        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+        <section className="insights-panel insights-keyword-panel">
             <PanelTitle icon="i-ph:trend-up-duotone" title="关键词趋势" />
             <div className="mt-4 flex flex-col gap-2">
                 {loading ? (
@@ -515,14 +629,17 @@ function HotRankingPanel({
     onRead: (item: HotNewsItem) => void;
 }) {
     return (
-        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
-            <PanelTitle icon="i-ph:fire-duotone" title="热点排行" />
-            <div className="mt-4 flex flex-col gap-2">
+        <section className="insights-panel insights-hot-panel">
+            <div className="insights-panel-heading">
+                <PanelTitle icon="i-ph:fire-duotone" title="热点排行" />
+                <span className="insights-panel-caption">按热度与跨源覆盖排序</span>
+            </div>
+            <div className="insights-hot-list">
                 {items.length ? (
-                    items.map((item) => (
+                    items.slice(0, 6).map((item) => (
                         <article
                             key={item.id}
-                            className="group flex gap-3 rounded-xl border border-zinc-200/85 bg-white/82 px-3 py-3 transition-all hover:border-zinc-300/90 hover:bg-zinc-100/95 dark:border-zinc-700/32 dark:bg-zinc-800/54 dark:hover:border-zinc-600/55 dark:hover:bg-zinc-800/78"
+                            className="insights-hot-item group flex gap-3 rounded-xl border border-zinc-200/85 bg-white/82 px-3 py-3 transition-all hover:border-zinc-300/90 hover:bg-zinc-100/95 dark:border-zinc-700/32 dark:bg-zinc-800/54 dark:hover:border-zinc-600/55 dark:hover:bg-zinc-800/78"
                         >
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/12 text-sm font-bold text-cyan-700 dark:text-cyan-300">
                                 {item.rank}
@@ -588,20 +705,35 @@ function TopicPanel({
     scope: InsightScope;
     onRead: (item: TopicEvent["items"][number]) => void;
 }) {
+    const [expandedTopicId, setExpandedTopicId] = useState<string | undefined>(topics[0]?.id);
+
     return (
-        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
-            <PanelTitle icon="i-ph:git-branch-duotone" title="话题事件" />
+        <section className="insights-panel insights-topic-panel">
+            <div className="insights-panel-heading">
+                <PanelTitle icon="i-ph:git-branch-duotone" title="话题事件" />
+                <span className="insights-panel-caption">按关键词聚合的跨源事件</span>
+            </div>
             <div className="mt-4 flex flex-col gap-3">
                 {topics.length ? (
                     topics.map((topic) => (
                         <article
                             key={topic.id}
-                            className="rounded-xl border border-zinc-200/85 bg-white/82 p-3 dark:border-zinc-700/32 dark:bg-zinc-800/54"
+                            className={clsx(
+                                "insights-topic-item rounded-xl border border-zinc-200/85 bg-white/82 p-3 dark:border-zinc-700/32 dark:bg-zinc-800/54",
+                                expandedTopicId === topic.id && "is-expanded"
+                            )}
                         >
                             <div className="flex items-start justify-between gap-3">
-                                <div className="line-clamp-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                                <button
+                                    type="button"
+                                    className="insights-topic-toggle line-clamp-2 text-left text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+                                    aria-expanded={expandedTopicId === topic.id}
+                                    onClick={() =>
+                                        setExpandedTopicId(expandedTopicId === topic.id ? undefined : topic.id)
+                                    }
+                                >
                                     {topic.title}
-                                </div>
+                                </button>
                                 <FeedFilterLink q={getTopicFeedKeyword(topic)} scope={scope} label="追踪" />
                             </div>
                             <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
@@ -621,38 +753,40 @@ function TopicPanel({
                                     </Link>
                                 ))}
                             </div>
-                            <div className="mt-3 flex flex-col gap-1.5">
-                                {topic.items.slice(0, 3).map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="flex items-center gap-2 rounded-lg bg-zinc-100/75 px-2 py-1.5 dark:bg-zinc-900/45"
-                                    >
-                                        <a
-                                            href={item.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="line-clamp-1 min-w-0 flex-1 text-xs text-zinc-700 transition-all hover:text-cyan-700 dark:text-zinc-400 dark:hover:text-cyan-300"
-                                            onClick={() => onRead(item)}
+                            {expandedTopicId === topic.id && (
+                                <div className="mt-3 flex flex-col gap-1.5">
+                                    {topic.items.slice(0, 3).map((item) => (
+                                        <div
+                                            key={item.id}
+                                            className="flex items-center gap-2 rounded-lg bg-zinc-100/75 px-2 py-1.5 dark:bg-zinc-900/45"
                                         >
-                                            {item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId} ·{" "}
-                                            {item.title}
-                                        </a>
-                                        <ReadingStateActions
-                                            entry={{
-                                                newsId: item.id,
-                                                title: item.title,
-                                                url: item.url,
-                                                sourceId: item.sourceId,
-                                                sourceName:
-                                                    item.sourceName ??
-                                                    dataSources[item.sourceId]?.name ??
-                                                    item.sourceId,
-                                            }}
-                                            className="shrink-0"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
+                                            <a
+                                                href={item.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="line-clamp-1 min-w-0 flex-1 text-xs text-zinc-700 transition-all hover:text-cyan-700 dark:text-zinc-400 dark:hover:text-cyan-300"
+                                                onClick={() => onRead(item)}
+                                            >
+                                                {item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId} ·{" "}
+                                                {item.title}
+                                            </a>
+                                            <ReadingStateActions
+                                                entry={{
+                                                    newsId: item.id,
+                                                    title: item.title,
+                                                    url: item.url,
+                                                    sourceId: item.sourceId,
+                                                    sourceName:
+                                                        item.sourceName ??
+                                                        dataSources[item.sourceId]?.name ??
+                                                        item.sourceId,
+                                                }}
+                                                className="shrink-0"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </article>
                     ))
                 ) : (
@@ -673,7 +807,7 @@ function WordCloudPanel({
     scope: InsightScope;
 }) {
     return (
-        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+        <section className="insights-panel insights-word-panel">
             <PanelTitle icon="i-ph:cloud-duotone" title="词云图" />
             <div className="mt-4 flex min-h-48 flex-wrap content-start gap-2">
                 {items.length ? (
@@ -709,7 +843,7 @@ function CategorySharePanel({
     scope: InsightScope;
 }) {
     return (
-        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+        <section className="insights-panel insights-category-panel">
             <PanelTitle icon="i-ph:chart-pie-slice-duotone" title="分类占比" />
             <div className="mt-4 flex flex-col gap-3">
                 {items.length ? (
@@ -761,7 +895,7 @@ function SourceActivityPanel({
     scope: InsightScope;
 }) {
     return (
-        <section className="rounded-2xl bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:bg-zinc-900/68">
+        <section className="insights-panel insights-source-panel">
             <PanelTitle icon="i-ph:chart-bar-duotone" title="来源活跃度" />
             <div className="mt-4 flex flex-col gap-3">
                 {items.length ? (
