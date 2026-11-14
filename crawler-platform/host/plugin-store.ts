@@ -466,7 +466,10 @@ function assertSourcesAndStoreAreSeparate(sourceRoot: string, storeRoot: string)
 }
 
 function assertPathWithin(root: string, candidate: string) {
-    const relativePath = relative(root, candidate);
+    // macOS 的 /var 临时目录可能通过符号链接映射到 /private/var；比较前统一真实路径。
+    const canonicalRoot = realpathSync(root);
+    const canonicalCandidate = realpathSync(candidate);
+    const relativePath = relative(canonicalRoot, canonicalCandidate);
     if (!relativePath || relativePath === ".." || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)) {
         throw new CrawlerPlatformError("INVALID_ARTIFACT", `Plugin store path escapes its root: ${candidate}`);
     }
