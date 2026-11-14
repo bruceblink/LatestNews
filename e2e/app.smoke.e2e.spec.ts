@@ -185,10 +185,10 @@ test("scrolls a selected mobile navigation link into view", async ({ page }) => 
     await page.setViewportSize({ width: 390, height: 844 });
     await installApiMocks(page);
     await page.goto("/");
-    await page.getByRole("link", { name: "历史", exact: true }).click();
+    await page.getByRole("link", { name: "选题参考", exact: true }).click();
 
     await expect(page).toHaveURL(/\/history$/);
-    await expect(page.getByRole("link", { name: "历史", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("link", { name: "选题参考", exact: true })).toHaveAttribute("aria-current", "page");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
