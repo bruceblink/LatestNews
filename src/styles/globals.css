@@ -1873,16 +1873,24 @@ html.dark .app-header {
 }
 .header-menu-items > li > button {
     display: flex;
+    min-height: 40px;
     gap: 9px;
     align-items: center;
     width: 100%;
     padding: 10px 12px;
-    border-radius: 8px;
+    border: 1px solid transparent;
+    border-radius: 10px;
     text-align: left;
     font-size: 13px;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .header-menu-items > li > button:hover {
     background: var(--surface-hover);
+    border-color: var(--border);
+}
+.header-menu-items > li > button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 .header-menu-items > li > button:disabled {
     cursor: wait;
@@ -2506,22 +2514,52 @@ html.dark .app-header {
     gap: 6px;
     padding-top: 10px;
 }
-.app-modern-nav-link {
-    display: flex;
-    min-height: 38px;
+.app-nav-item {
+    min-height: 40px;
     align-items: center;
     gap: 11px;
     padding: 0 10px;
-    border-radius: 8px;
-    color: #253248;
+    border-radius: 10px;
     font-size: 13px;
-    font-weight: 600;
-    transition: background 0.15s, color 0.15s;
+    font-weight: 650;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
-.app-modern-nav-link > span:first-child { color: #394961; font-size: 18px; }
-.app-modern-nav-link:hover { color: #087d78; background: #f0f8f7; }
-.app-modern-nav-link.is-active { color: #087d78; background: #dff4f1; box-shadow: inset 3px 0 0 #079a91; }
-.app-modern-nav-link.is-active > span:first-child { color: #079a91; }
+.app-nav-item:focus-visible {
+    outline: 2px solid #079a91;
+    outline-offset: 2px;
+}
+.app-modern-nav-link {
+    display: flex;
+    color: #253248;
+}
+.app-modern-settings-link {
+    display: flex;
+    color: #253248;
+}
+.app-modern-nav-link > span:first-child,
+.app-modern-settings-link > span:first-child {
+    color: #394961;
+    font-size: 19px;
+}
+.app-modern-nav-link:hover,
+.app-modern-settings-link:hover {
+    color: #087d78;
+    background: #f0f8f7;
+}
+.app-modern-nav-link.is-active,
+.app-modern-settings-link.is-active {
+    color: #087d78;
+    background: #dff4f1;
+    box-shadow: inset 3px 0 0 #079a91;
+}
+.app-modern-nav-link.is-active > span:first-child,
+.app-modern-settings-link.is-active > span:first-child {
+    color: #079a91;
+}
+.app-modern-sidebar-search {
+    width: 100%;
+    justify-content: flex-start;
+}
 .app-modern-sidebar-tools {
     flex-shrink: 0;
     padding-top: 12px;
@@ -2533,16 +2571,16 @@ html.dark .app-header {
     align-items: stretch;
     gap: 6px;
 }
-.app-modern-sidebar-actions .header-search {
-    width: 100%;
-    justify-content: flex-start;
-}
-.app-modern-sidebar-actions .icon-button {
+.app-modern-sidebar-actions .icon-button,
+.app-modern-settings-link {
+    min-height: 40px;
     width: 100%;
     justify-content: flex-start;
     padding-inline: 10px;
 }
-.app-modern-sidebar-actions .action-divider { display: none; }
+.app-modern-sidebar-actions .icon-button {
+    border-radius: 10px;
+}
 .app-modern-sidebar-actions .header-menu,
 .app-modern-sidebar-actions .header-menu > span { display: block; }
 .app-modern-sidebar-actions .header-menu-position {
@@ -2620,12 +2658,17 @@ html.dark .app-modern-content,
 html.dark .app-modern-column { background: #101722; }
 html.dark .app-modern-sidebar { border-right-color: #2a3545; background: #18212e; }
 html.dark .app-modern-brand,
-html.dark .app-modern-nav-link { color: #e6edf5; }
+html.dark .app-modern-nav-link,
+html.dark .app-modern-settings-link { color: #e6edf5; }
 html.dark .app-modern-brand small { color: #92a0b3; }
-html.dark .app-modern-nav-link > span:first-child { color: #a1aec0; }
-html.dark .app-modern-nav-link:hover { color: #66d5d3; background: #243142; }
-html.dark .app-modern-nav-link.is-active { color: #66d5d3; background: #1b363e; box-shadow: inset 3px 0 0 #66d5d3; }
-html.dark .app-modern-nav-link.is-active > span:first-child { color: #66d5d3; }
+html.dark .app-modern-nav-link > span:first-child,
+html.dark .app-modern-settings-link > span:first-child { color: #a1aec0; }
+html.dark .app-modern-nav-link:hover,
+html.dark .app-modern-settings-link:hover { color: #66d5d3; background: #243142; }
+html.dark .app-modern-nav-link.is-active,
+html.dark .app-modern-settings-link.is-active { color: #66d5d3; background: #1b363e; box-shadow: inset 3px 0 0 #66d5d3; }
+html.dark .app-modern-nav-link.is-active > span:first-child,
+html.dark .app-modern-settings-link.is-active > span:first-child { color: #66d5d3; }
 html.dark .app-modern-sidebar-tools { border-top-color: #2a3545; }
 html.dark .app-modern-column .surface-panel,
 html.dark .app-modern-column .feed-list-panel,
@@ -2664,6 +2707,7 @@ html.dark .app-modern-column .health-page .bg-base\/70 { border-color: #2a3545; 
     .app-modern-brand img { width: 29px; height: 29px; }
     .app-modern-brand small { display: none; }
     .app-modern-brand strong { font-size: 14px; }
+    .app-modern-sidebar-search { width: 34px; min-height: 34px; padding: 0; justify-content: center; }
     .app-modern-nav { flex: 1; flex-direction: row; gap: 3px; overflow-x: auto; padding: 0; }
     .app-modern-nav-link { min-height: 34px; flex-shrink: 0; gap: 5px; padding: 0 8px; font-size: 11px; }
     .app-modern-nav-link > span:first-child { font-size: 15px; }
@@ -2672,6 +2716,8 @@ html.dark .app-modern-column .health-page .bg-base\/70 { border-color: #2a3545; 
     .app-modern-sidebar-actions .icon-button,
     .app-modern-sidebar-actions .header-search { width: 34px; padding: 0; justify-content: center; }
     .app-modern-sidebar-actions .header-menu-position { top: calc(100% + 8px); right: 0; bottom: auto; left: auto; }
+    .app-modern-settings-link { width: 34px; min-height: 34px; padding: 0; justify-content: center; }
+    .app-modern-settings-link > span:last-child { display: none; }
     .app-modern-column .app-main { padding: 18px 14px 32px; }
     .app-modern-column .app-footer { margin: 0 14px; }
 }
@@ -2747,6 +2793,10 @@ html.dark .app-modern-column .health-page .bg-base\/70 { border-color: #2a3545; 
     color: var(--insights-muted);
     font-size: 10px;
 }
+.insights-sidebar-search {
+    width: 100%;
+    justify-content: flex-start;
+}
 .insights-sidebar-nav {
     display: flex;
     flex: 1;
@@ -2757,11 +2807,11 @@ html.dark .app-modern-column .health-page .bg-base\/70 { border-color: #2a3545; 
 .insights-sidebar-link,
 .insights-sidebar-settings {
     display: flex;
-    min-height: 38px;
+    min-height: 40px;
     align-items: center;
     gap: 11px;
     padding: 0 10px;
-    border-radius: 8px;
+    border-radius: 10px;
     color: #253248;
     font-size: 13px;
     font-weight: 600;
@@ -2776,6 +2826,12 @@ html.dark .app-modern-column .health-page .bg-base\/70 { border-color: #2a3545; 
 .insights-sidebar-settings:hover {
     color: var(--insights-teal-dark);
     background: #f0f8f7;
+}
+.insights-sidebar-link:focus-visible,
+.insights-sidebar-settings:focus-visible,
+.insights-sidebar-search:focus-visible {
+    outline: 2px solid var(--insights-teal);
+    outline-offset: 2px;
 }
 .insights-sidebar-link.is-active {
     color: var(--insights-teal-dark);
@@ -3292,10 +3348,11 @@ html.dark .app-modern-column .health-page .bg-base\/70 { border-color: #2a3545; 
     .insights-sidebar-brand img { width: 29px; height: 29px; }
     .insights-sidebar-brand small { display: none; }
     .insights-sidebar-brand strong { font-size: 14px; }
+    .insights-sidebar-search { width: 34px; min-height: 34px; padding: 0; justify-content: center; }
     .insights-sidebar-nav { flex: 1; flex-direction: row; gap: 3px; overflow-x: auto; padding: 0; }
     .insights-sidebar-link { min-height: 34px; flex-shrink: 0; gap: 5px; padding: 0 8px; font-size: 11px; }
     .insights-sidebar-link > span:first-child { font-size: 15px; }
-    .insights-sidebar-settings { min-height: 34px; border-top: 0; padding: 0 3px; }
+    .insights-sidebar-settings { width: 34px; min-height: 34px; border-top: 0; padding: 0; justify-content: center; }
     .insights-sidebar-settings > span:last-child { display: none; }
     .insights-workspace { padding: 16px 14px 22px; }
     .insights-workspace-header { gap: 13px; padding-bottom: 14px; }

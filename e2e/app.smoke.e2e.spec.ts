@@ -103,18 +103,20 @@ async function installApiMocks(page: Page) {
     });
 }
 
-test("renders the shared web shell and opens the settings panel", async ({ page }) => {
+test("renders the shared web shell and opens the settings page", async ({ page }) => {
     await installApiMocks(page);
     await page.goto("/feed");
 
     await expect(page).toHaveTitle(/LatestNews/i);
     await expect(page.locator(".app-modern-header")).toHaveCount(0);
     await expect(page.locator(".app-modern-sidebar")).toBeVisible();
-    await expect(page.getByRole("button", { name: "打开设置" })).toBeVisible();
-    await page.getByRole("button", { name: "打开设置" }).click();
+    await expect(page.getByRole("link", { name: "设置", exact: true })).toBeVisible();
+    const settingsLink = page.getByRole("link", { name: "设置", exact: true });
+    await settingsLink.focus();
+    await page.keyboard.press("Enter");
 
-    await expect(page.getByRole("dialog")).toContainText("设置");
-    await expect(page.getByText("当前运行在 Web 版本。数据源地址由构建变量")).toBeVisible();
+    await expect(page).toHaveURL(/\/settings$/);
+    await expect(page.getByRole("heading", { name: "设置", level: 1 })).toBeVisible();
 });
 
 test("opens the reading insights workspace as the application home", async ({ page }) => {
@@ -125,7 +127,28 @@ test("opens the reading insights workspace as the application home", async ({ pa
     await expect(page.getByRole("heading", { name: /阅读洞察 Reading Insights/ })).toBeVisible();
     await expect(page.getByRole("link", { name: "阅读洞察", exact: true })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "洞察", exact: true })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "选题参考", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "阅读历史", exact: true })).toBeVisible();
+});
+
+test("keeps navigation labels aligned with their destination pages", async ({ page }) => {
+    await installApiMocks(page);
+
+    const destinations = [
+        { path: "/feed", label: "统一 Feed", heading: "统一 Feed" },
+        { path: "/history", label: "阅读历史", heading: "阅读历史" },
+        { path: "/health", label: "数据源健康", heading: "数据源健康" },
+        { path: "/settings", label: "设置", heading: "设置" },
+    ] as const;
+
+    for (const destination of destinations) {
+        await page.goto(destination.path);
+        const navigation = page.getByRole("complementary", { name: "主要导航" });
+        await expect(navigation.getByRole("link", { name: destination.label, exact: true })).toHaveAttribute(
+            "aria-current",
+            "page"
+        );
+        await expect(page.getByRole("heading", { name: destination.heading, level: 1 })).toBeVisible();
+    }
 });
 
 test("keeps the source search dialog centered in the viewport", async ({ page }) => {
@@ -198,11 +221,11 @@ test("scrolls a selected mobile navigation link into view", async ({ page }) => 
     await page.setViewportSize({ width: 390, height: 844 });
     await installApiMocks(page);
     await page.goto("/");
-    await page.locator(".insights-sidebar").getByRole("link", { name: "选题参考", exact: true }).click();
+    await page.locator(".insights-sidebar").getByRole("link", { name: "阅读历史", exact: true }).click();
 
     await expect(page).toHaveURL(/\/history$/);
     await expect(
-        page.getByRole("complementary", { name: "主要导航" }).getByRole("link", { name: "选题参考", exact: true })
+        page.getByRole("complementary", { name: "主要导航" }).getByRole("link", { name: "阅读历史", exact: true })
     ).toHaveAttribute("aria-current", "page");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
@@ -211,6 +234,7 @@ async function openInstallationGuide(page: Page) {
     const menu = page.getByRole("button", { name: "打开菜单", exact: true });
     await menu.focus();
     await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: "数据源健康", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "安装与下载", exact: true }).click();
     return page.getByRole("dialog", { name: "安装与下载" });
 }

@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { useToast } from "~/hooks/useToast";
 import { PROJECT_URL } from "@shared/consts";
 import { useRef, useState, useEffect } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { useAtom, useSetAtom, useAtomValue } from "jotai";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { login, logout, useLoginState } from "~/hooks/useLogin";
@@ -47,7 +46,6 @@ export function Menu() {
         return () => document.removeEventListener("pointerdown", dismiss);
     }, [shown]);
     const [syncing, setSyncing] = useState(false);
-    const navigate = useNavigate();
     const toaster = useToast();
     const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
     const syncStatus = useAtomValue(metadataSyncStatusAtom);
@@ -69,11 +67,6 @@ export function Menu() {
         toaster(loggedIn ? "布局已重置，稍后会自动同步到云端" : "布局已重置为默认配置", {
             type: "success",
         });
-    };
-
-    const goToHealthPage = () => {
-        show(false);
-        void navigate({ to: "/health" });
     };
 
     const handleManualSync = async () => {
@@ -417,12 +410,6 @@ export function Menu() {
                                     <span>安装与下载</span>
                                 </button>
                             </li>
-                            <li>
-                                <button type="button" onClick={goToHealthPage}>
-                                    <span className="i-ph:heartbeat-duotone inline-block" />
-                                    <span>数据源健康</span>
-                                </button>
-                            </li>
                             {/* <ThemeToggle /> */}
                             <li>
                                 <button
@@ -431,7 +418,7 @@ export function Menu() {
                                     className="cursor-pointer [&_*]:cursor-pointer transition-all"
                                 >
                                     <span className="i-ph:github-logo-duotone inline-block" />
-                                    <span>Star on Github </span>
+                                    <span>打开 GitHub 仓库</span>
                                 </button>
                             </li>
                             <li className="flex gap-2 items-center">

@@ -20,6 +20,7 @@ import { APP_TITLE } from "~/utils/app-title";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
+import { SearchButton } from "~/components/header";
 import { useReadingState } from "~/hooks/useReadingState";
 import { getNewsInsightsCacheKey } from "@shared/source-api";
 import { fetchNewsInsights } from "~/services/source.service";
@@ -27,6 +28,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
 import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
+import { appNavigation, feedNavigationSearch } from "~/components/app-navigation";
 
 type InsightScope = UnifiedFeedScope;
 type SourceFilter = SourceID | "all";
@@ -113,27 +115,41 @@ function InsightsPage() {
     return (
         <div className="insights-design-surface">
             <aside className="insights-sidebar" aria-label="洞察导航">
-                <Link to="/" className="insights-sidebar-brand" aria-label="LatestNews 首页">
+                <Link to={appNavigation.home.path} className="insights-sidebar-brand" aria-label="LatestNews 首页">
                     <img src="/icon.svg" alt="" width="36" height="36" />
                     <span>
                         <strong>LatestNews</strong>
                         <small>新闻简阅</small>
                     </span>
                 </Link>
+                <SearchButton className="insights-sidebar-search" />
                 <nav className="insights-sidebar-nav" aria-label="主要导航">
-                    <InsightNavLink to="/" icon="i-ph:house-duotone" label="首页" active />
                     <InsightNavLink
-                        to="/feed"
-                        search={{ q: undefined, scope: "hottest" }}
-                        icon="i-ph:fire-duotone"
-                        label="热点追踪"
+                        to={appNavigation.home.path}
+                        icon={appNavigation.home.icon}
+                        label={appNavigation.home.label}
+                        active
                     />
-                    <InsightNavLink to="/history" icon="i-ph:article-duotone" label="选题参考" />
-                    <InsightNavLink to="/health" icon="i-ph:stack-duotone" label="来源管理" />
+                    <InsightNavLink
+                        to={appNavigation.feed.path}
+                        search={feedNavigationSearch}
+                        icon={appNavigation.feed.icon}
+                        label={appNavigation.feed.label}
+                    />
+                    <InsightNavLink
+                        to={appNavigation.history.path}
+                        icon={appNavigation.history.icon}
+                        label={appNavigation.history.label}
+                    />
+                    <InsightNavLink
+                        to={appNavigation.health.path}
+                        icon={appNavigation.health.icon}
+                        label={appNavigation.health.label}
+                    />
                 </nav>
-                <Link to="/settings" className="insights-sidebar-settings">
-                    <span className="i-ph:gear-six-duotone" aria-hidden="true" />
-                    <span>设置</span>
+                <Link to={appNavigation.settings.path} className="app-nav-item insights-sidebar-settings">
+                    <span className={appNavigation.settings.icon} aria-hidden="true" />
+                    <span>{appNavigation.settings.label}</span>
                 </Link>
             </aside>
 
@@ -291,7 +307,7 @@ function InsightNavLink({
     label,
     active = false,
 }: {
-    to: "/" | "/feed" | "/history" | "/health";
+    to: "/insights" | "/feed" | "/history" | "/health" | "/settings";
     search?: { q?: string; scope?: InsightScope };
     icon: string;
     label: string;
@@ -301,7 +317,7 @@ function InsightNavLink({
         <Link
             to={to}
             search={search}
-            className={clsx("insights-sidebar-link", active && "is-active")}
+            className={clsx("app-nav-item", "insights-sidebar-link", active && "is-active")}
             aria-current={active ? "page" : undefined}
         >
             <span className={icon} aria-hidden="true" />

@@ -11,10 +11,10 @@ import { useLoginState } from "~/hooks/useLogin.ts";
 import { Version, PROJECT_URL } from "@shared/consts";
 import { useIsFetching } from "@tanstack/react-query";
 import { goToTopAtom, currentSourcesAtom } from "~/atoms";
+import { appNavigation } from "~/components/app-navigation";
 
 import { Menu } from "./menu";
 import { NavBar } from "../navbar";
-import { SettingsButton } from "../settings/settings-button";
 
 function GoTop() {
     const { ok, fn: goToTop } = useAtomValue(goToTopAtom);
@@ -65,21 +65,35 @@ function ThemeToggle() {
     );
 }
 
-export function HeaderActions({ className }: { className?: string }) {
-    const { enableLogin } = useLoginState();
+export function SearchButton({ className }: { className?: string }) {
     const { toggle } = useSearchBar();
+    return (
+        <button
+            type="button"
+            aria-label="打开搜索"
+            className={clsx("header-search", className)}
+            onClick={() => toggle(true)}
+        >
+            <span className="i-ph:magnifying-glass-duotone" aria-hidden="true" />
+            <span className="search-label">搜索来源</span>
+            <kbd aria-hidden="true">⌘ / Ctrl K</kbd>
+        </button>
+    );
+}
+
+export function HeaderActions({ className, includeSearch = true }: { className?: string; includeSearch?: boolean }) {
+    const { enableLogin } = useLoginState();
     return (
         <div className={clsx("header-actions", className)}>
             <GoTop />
-            <button type="button" aria-label="打开搜索" className="header-search" onClick={() => toggle(true)}>
-                <span className="i-ph:magnifying-glass-duotone" aria-hidden="true" />
-                <span className="search-label">搜索来源</span>
-                <kbd aria-hidden="true">⌘ / Ctrl K</kbd>
-            </button>
-            <span className="action-divider" aria-hidden="true" />
+            {includeSearch && (
+                <>
+                    <SearchButton />
+                    <span className="action-divider" aria-hidden="true" />
+                </>
+            )}
             {enableLogin.enable && <Refresh />}
             <ThemeToggle />
-            <SettingsButton />
             <a
                 className="icon-button header-github"
                 href={PROJECT_URL}
@@ -99,7 +113,7 @@ export function Header() {
     return (
         <>
             <div className="header-brand">
-                <Link to="/" className="brand-link" aria-label="LatestNews 首页">
+                <Link to={appNavigation.home.path} className="brand-link" aria-label="LatestNews 首页">
                     <img className="brand-icon" src="/icon.svg" alt="" width="36" height="36" />
                     <span className="brand-wordmark">
                         Latest<span>News</span>
