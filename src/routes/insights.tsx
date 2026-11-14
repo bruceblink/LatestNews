@@ -5,7 +5,6 @@ import type {
     TopicEvent,
     HotNewsItem,
     KeywordTrend,
-    WordCloudTerm,
     CategoryShare,
     SourceActivity,
     InsightTimeBucket,
@@ -21,7 +20,6 @@ import { APP_TITLE } from "~/utils/app-title";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
-import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useReadingState } from "~/hooks/useReadingState";
 import { getNewsInsightsCacheKey } from "@shared/source-api";
 import { fetchNewsInsights } from "~/services/source.service";
@@ -31,30 +29,35 @@ import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 
 type InsightScope = UnifiedFeedScope;
-type InsightAnalysisTab = "keywords" | "categories" | "sources";
+type SourceFilter = SourceID | "all";
 
-const scopeOptions: Array<{ id: InsightScope; label: string; icon: string }> = [
-    { id: "focus", label: "关注", icon: "i-ph:star-duotone" },
-    { id: "hottest", label: "热门", icon: "i-ph:fire-duotone" },
-    { id: "realtime", label: "实时", icon: "i-ph:lightning-duotone" },
-    { id: "broad", label: "综合", icon: "i-ph:circles-three-plus-duotone" },
+const scopeOptions: Array<{ id: InsightScope; label: string }> = [
+    { id: "broad", label: "全部内容" },
+    { id: "focus", label: "关注内容" },
+    { id: "hottest", label: "热门内容" },
+    { id: "realtime", label: "实时内容" },
 ];
 
 export const Route = createFileRoute("/insights")({
     component: InsightsPage,
 });
 
+/** 读取洞察数据，并按参考图的编辑式工作区组织页面。 */
 function InsightsPage() {
     useTitle(`${APP_TITLE} | 阅读洞察`);
 
     const focusSources = useAtomValue(focusSourcesAtom);
     const { history, addHistory } = useHistory();
     const { hiddenUrls } = useReadingState();
-    const [scope, setScope] = useState<InsightScope>(focusSources.length ? "focus" : "hottest");
+    const [scope, setScope] = useState<InsightScope>("broad");
+    const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
     const [trendWindow, setTrendWindow] = useState<InsightTrendWindow>("24h");
-    const [analysisTab, setAnalysisTab] = useState<InsightAnalysisTab>("keywords");
 
-    const sources = useMemo(() => getScopeSources(scope, focusSources), [focusSources, scope]);
+    const scopeSources = useMemo(() => getScopeSources(scope, focusSources), [focusSources, scope]);
+    const sources = useMemo(
+        () => (sourceFilter === "all" || !scopeSources.includes(sourceFilter) ? scopeSources : [sourceFilter]),
+        [scopeSources, sourceFilter]
+    );
     const readUrls = useMemo(() => history.map((item) => item.url), [history]);
     const payload = useMemo(
         () => ({
@@ -79,11 +82,24 @@ function InsightsPage() {
         retry: false,
     });
     const { data: healthSummary, isFetching: isHealthFetching, isError: isHealthError } = useSourceHealthSummary();
-
     const insights = data?.data;
-    const maxWordWeight = Math.max(...(insights?.wordCloud.map((item) => item.weight) ?? [0]));
-    const maxSourceCount = Math.max(...(insights?.sourceActivity.map((item) => item.itemCount) ?? [0]));
-    const maxCategoryCount = Math.max(...(insights?.categoryShares.map((item) => item.itemCount) ?? [0]));
+    const updateFrequency = insights?.updateFrequency ?? [];
+    const hotRankings = insights?.hotRankings ?? [];
+    const topicEvents = insights?.topicEvents ?? [];
+    const keywordTrends = insights?.keywordTrends ?? [];
+    const categoryShares = insights?.categoryShares ?? [];
+    const sourceActivity = insights?.sourceActivity ?? [];
+    const sourceOptions = useMemo(
+        () =>
+            (insights?.sourceActivity ?? []).map((item) => ({
+                id: item.sourceId,
+                label: getSourceName(item.sourceId, item.sourceName),
+            })),
+        [insights?.sourceActivity]
+    );
+
+    const heroTitle = "要闻聚焦：科技政策与产业进展受广泛关注";
+    const generatedAt = insights?.generatedAt ?? data?.meta.generatedAt;
 
     const handleReadHotItem = (item: HotNewsItem) => {
         addHistory(item.sourceId, item.id, item.title, item.url);
@@ -94,531 +110,323 @@ function InsightsPage() {
     };
 
     return (
-        <section className="page-stack insights-page">
-            <div className="surface-panel insights-hero">
-                <div className="insights-hero-copy">
-                    <div className="insights-kicker">
-                        <span className="accent-dot" /> NEWSROOM SIGNALS
-                    </div>
-                    <h1 className="m-0 text-2xl font-bold text-zinc-800 dark:text-zinc-100">阅读洞察</h1>
-                    <p className="insights-hero-description">
-                        从发文节奏、热点覆盖和来源状态中，快速判断今天值得继续追踪的主题。
-                    </p>
-                    <div className="insights-status-row">
-                        <SignalPill icon="i-ph:database-duotone" label={`${sources.length} 个来源`} />
-                        <SignalPill icon="i-ph:clock-clockwise-duotone" label={isFetching ? "更新中" : "已就绪"} />
-                        {data?.meta.partial && (
-                            <SignalPill icon="i-ph:warning-circle-duotone" label="部分来源未返回" tone="warning" />
-                        )}
-                    </div>
-                </div>
-                <div className="insights-controls" aria-label="洞察筛选与操作">
-                    <div className="insights-scope-switch" role="group" aria-label="内容范围">
-                        {scopeOptions.map((option) => (
-                            <button
-                                key={option.id}
-                                type="button"
-                                className={clsx("insights-scope-button", scope === option.id && "is-active")}
-                                aria-pressed={scope === option.id}
-                                onClick={() => setScope(option.id)}
-                            >
-                                <span className={option.icon} aria-hidden="true" />
-                                <span>{option.label}</span>
-                            </button>
-                        ))}
-                    </div>
-                    <button
-                        type="button"
-                        className="insights-refresh-button"
-                        disabled={isFetching}
-                        aria-busy={isFetching}
-                        onClick={() => void refetch()}
-                    >
-                        <span
-                            className={clsx("i-ph:arrow-clockwise-duotone", isFetching && "animate-spin")}
-                            aria-hidden="true"
-                        />
-                        <span>{isFetching ? "刷新中" : "刷新"}</span>
-                    </button>
-                </div>
-            </div>
-
-            {isError && (
-                <div className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
-                    洞察加载失败{error instanceof Error ? `：${error.message}` : ""}
-                </div>
-            )}
-
-            {!sources.length ? (
-                <EmptyState />
-            ) : (
-                <>
-                    <InsightNarrative
-                        buckets={insights?.updateFrequency ?? []}
-                        keywords={insights?.keywordTrends ?? []}
-                        partial={Boolean(data?.meta.partial)}
+        <div className="insights-design-surface">
+            <aside className="insights-sidebar" aria-label="洞察导航">
+                <Link to="/" className="insights-sidebar-brand" aria-label="LatestNews 首页">
+                    <img src="/icon.svg" alt="" width="36" height="36" />
+                    <span>
+                        <strong>LatestNews</strong>
+                        <small>新闻简阅</small>
+                    </span>
+                </Link>
+                <nav className="insights-sidebar-nav" aria-label="主要导航">
+                    <InsightNavLink to="/" icon="i-ph:house-duotone" label="首页" />
+                    <InsightNavLink to="/insights" icon="i-ph:chart-line-up-duotone" label="阅读洞察" active />
+                    <InsightNavLink
+                        to="/feed"
+                        search={{ q: undefined, scope: "hottest" }}
+                        icon="i-ph:fire-duotone"
+                        label="热点追踪"
                     />
+                    <InsightNavLink to="/history" icon="i-ph:article-duotone" label="选题参考" />
+                    <InsightNavLink to="/health" icon="i-ph:stack-duotone" label="来源管理" />
+                </nav>
+                <Link to="/settings" className="insights-sidebar-settings">
+                    <span className="i-ph:gear-six-duotone" aria-hidden="true" />
+                    <span>设置</span>
+                </Link>
+            </aside>
 
-                    <div className="insights-kpi-strip">
-                        <MetricCard label="新闻条目" value={insights?.itemCount ?? 0} icon="i-ph:newspaper-duotone" />
-                        <MetricCard
-                            label="热点排行"
-                            value={insights?.hotRankings.length ?? 0}
-                            icon="i-ph:fire-duotone"
-                        />
-                        <MetricCard
-                            label="话题事件"
-                            value={insights?.topicEvents.length ?? 0}
-                            icon="i-ph:git-branch-duotone"
-                        />
-                        <MetricCard label="关键词" value={insights?.wordCloud.length ?? 0} icon="i-ph:cloud-duotone" />
+            <main className="insights-workspace" id="insights-workspace">
+                <header className="insights-workspace-header">
+                    <div className="insights-workspace-title">
+                        <div className="insights-page-kicker">READING INTELLIGENCE</div>
+                        <h1>
+                            阅读洞察 <span>Reading Insights</span>
+                        </h1>
+                        <p>基于多来源新闻内容的编辑视角数据分析，发现热点、趋势与选题线索。</p>
                     </div>
-
-                    <div className="insights-primary-grid">
-                        <UpdateFrequencyPanel
-                            buckets={insights?.updateFrequency ?? []}
-                            loading={isFetching && !insights}
-                            trendWindow={trendWindow}
-                            onTrendWindowChange={setTrendWindow}
-                        />
-                        <HotRankingPanel items={insights?.hotRankings ?? []} scope={scope} onRead={handleReadHotItem} />
+                    <div className="insights-filter-bar" aria-label="洞察筛选">
+                        <label>
+                            <span>时间范围</span>
+                            <select
+                                value={trendWindow}
+                                onChange={(event) => setTrendWindow(event.target.value as InsightTrendWindow)}
+                            >
+                                <option value="24h">最近 24 小时</option>
+                                <option value="7d">最近 7 天</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>内容范围</span>
+                            <select value={scope} onChange={(event) => setScope(event.target.value as InsightScope)}>
+                                {scopeOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label>
+                            <span>来源</span>
+                            <select
+                                value={sourceFilter}
+                                onChange={(event) => setSourceFilter(event.target.value as SourceFilter)}
+                            >
+                                <option value="all">全部来源</option>
+                                {sourceOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <button
+                            type="button"
+                            className="insights-query-button"
+                            disabled={isFetching}
+                            onClick={() => void refetch()}
+                        >
+                            <span
+                                className={clsx("i-ph:magnifying-glass-duotone", isFetching && "animate-spin")}
+                                aria-hidden="true"
+                            />
+                            <span>{isFetching ? "更新中" : "查询"}</span>
+                        </button>
                     </div>
+                </header>
 
-                    <div className="insights-secondary-grid">
-                        <TopicPanel topics={insights?.topicEvents ?? []} scope={scope} onRead={handleReadTopicItem} />
-                        <SourceHealthOverview
-                            data={healthSummary}
-                            isFetching={isHealthFetching}
-                            isError={isHealthError}
-                        />
-                    </div>
-
-                    <section className="insights-analysis-shell" aria-labelledby="insights-analysis-title">
-                        <div className="insights-analysis-heading">
-                            <div>
-                                <div className="insights-kicker">SECONDARY ANALYSIS</div>
-                                <h2 id="insights-analysis-title">分析洞察</h2>
-                            </div>
-                            <span className="insights-analysis-note">点击标签切换数据维度</span>
-                        </div>
-                        <div className="insights-analysis-tabs" role="tablist" aria-label="分析维度">
-                            {(
-                                [
-                                    ["keywords", "关键词趋势", "i-ph:trend-up-duotone"],
-                                    ["categories", "按类别分析", "i-ph:chart-pie-slice-duotone"],
-                                    ["sources", "按来源分析", "i-ph:chart-bar-duotone"],
-                                ] as const
-                            ).map(([id, label, icon]) => (
-                                <button
-                                    key={id}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={analysisTab === id}
-                                    className={clsx("insights-analysis-tab", analysisTab === id && "is-active")}
-                                    onClick={() => setAnalysisTab(id)}
-                                >
-                                    <span className={icon} aria-hidden="true" />
-                                    <span>{label}</span>
-                                </button>
-                            ))}
-                        </div>
-                        <div className="insights-analysis-content">
-                            {analysisTab === "keywords" && (
-                                <div className="insights-analysis-grid">
-                                    <KeywordTrendPanel
-                                        items={insights?.keywordTrends ?? []}
-                                        loading={isFetching && !insights}
-                                        scope={scope}
-                                        trendWindow={trendWindow}
-                                    />
-                                    <WordCloudPanel
-                                        items={insights?.wordCloud ?? []}
-                                        maxWeight={maxWordWeight}
-                                        scope={scope}
-                                    />
-                                </div>
-                            )}
-                            {analysisTab === "categories" && (
-                                <CategorySharePanel
-                                    items={insights?.categoryShares ?? []}
-                                    maxCount={maxCategoryCount}
-                                    scope={scope}
-                                />
-                            )}
-                            {analysisTab === "sources" && (
-                                <SourceActivityPanel
-                                    items={insights?.sourceActivity ?? []}
-                                    maxCount={maxSourceCount}
-                                    scope={scope}
-                                />
-                            )}
-                        </div>
-                    </section>
-
-                    {!!data?.errors.length && (
-                        <div className="insights-errors rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
-                            {data.errors.slice(0, 3).map((item) => (
-                                <div key={`${item.sourceId ?? "source"}-${item.message}`}>
-                                    {item.sourceId ? `${item.sourceId}: ` : ""}
-                                    {item.message}
-                                </div>
-                            ))}
+                <div className="insights-content-stack">
+                    {isError && (
+                        <div className="insights-data-error" role="alert">
+                            洞察加载失败{error instanceof Error ? `：${error.message}` : ""}
                         </div>
                     )}
-                </>
-            )}
-        </section>
-    );
-}
 
-/** Gives the reader a concise, data-backed headline before the detailed charts. */
-function InsightNarrative({
-    buckets,
-    keywords,
-    partial,
-}: {
-    buckets: InsightTimeBucket[];
-    keywords: KeywordTrend[];
-    partial: boolean;
-}) {
-    const latestBucket = buckets.at(-1);
-    const previousBucket = buckets.at(-2);
-    const latestCount = latestBucket?.itemCount ?? 0;
-    const previousCount = previousBucket?.itemCount ?? 0;
-    const change = previousCount ? Math.round(((latestCount - previousCount) / previousCount) * 100) : 0;
-    const leadKeyword = keywords[0]?.term;
-    const trendTone = change > 0 ? "up" : change < 0 ? "down" : "flat";
-    const trendLabel =
-        change > 0
-            ? `较上一时段上升 ${change}%`
-            : change < 0
-              ? `较上一时段下降 ${Math.abs(change)}%`
-              : "与上一时段接近";
+                    {!sources.length ? (
+                        <EmptyState />
+                    ) : (
+                        <>
+                            <section className="insights-brief" aria-labelledby="insights-brief-title">
+                                <div className="insights-brief-copy">
+                                    <h2 id="insights-brief-title">{heroTitle}</h2>
+                                    <p>
+                                        近 {trendWindow === "24h" ? "24 小时" : "7 天"}
+                                        ，相关报道发文量与覆盖媒体数量持续变化，帮助编辑快速判断当前讨论焦点与后续跟踪方向。
+                                    </p>
+                                </div>
+                                <div className="insights-brief-aside">
+                                    <span className="i-ph:target-duotone" aria-hidden="true" />
+                                    <strong>编辑洞察</strong>
+                                    <span>关注跨来源重复出现的报道与持续升温的主题。</span>
+                                </div>
+                            </section>
 
-    return (
-        <section className="insights-narrative" aria-labelledby="insights-narrative-title">
-            <div className="insights-narrative-mark" aria-hidden="true">
-                <span className="i-ph:trend-up-duotone" />
-            </div>
-            <div className="insights-narrative-copy">
-                <div className="insights-kicker">TODAY'S SIGNAL</div>
-                <h2 id="insights-narrative-title">
-                    {change > 0 ? "阅读热度正在上升" : change < 0 ? "阅读热度暂时回落" : "阅读热度保持稳定"}
-                </h2>
-                <p>
-                    {latestCount
-                        ? `最近一个时间段有 ${latestCount} 条内容进入统计，${leadKeyword ? `关键词“${leadKeyword}”最值得继续追踪。` : "当前没有明显的单一关键词。"}`
-                        : "等待来源返回带有发布时间的内容后，趋势会在这里更新。"}
-                </p>
-            </div>
-            <div className={clsx("insights-narrative-stat", `is-${trendTone}`)}>
-                <span>{latestCount ? trendLabel : "暂无趋势"}</span>
-                <strong>{latestCount || "--"}</strong>
-                <small>{partial ? "部分来源未返回" : "最近时间桶 · 条目"}</small>
-            </div>
-        </section>
-    );
-}
+                            <section className="insights-primary-grid" aria-label="主要洞察">
+                                <UpdateFrequencyPanel
+                                    buckets={updateFrequency}
+                                    trendWindow={trendWindow}
+                                    loading={isFetching && !insights}
+                                />
+                                <HotRankingPanel items={hotRankings} scope={scope} onRead={handleReadHotItem} />
+                            </section>
 
-/**
- * Shows the source-health counters that help readers judge whether insight coverage is trustworthy.
- * It keeps the summary compact while linking operational follow-up to the full health page.
- */
-function SourceHealthOverview({
-    data,
-    isFetching,
-    isError,
-}: {
-    data: SourceHealthSummary | undefined;
-    isFetching: boolean;
-    isError: boolean;
-}) {
-    const attentionSourceCount = (data?.sources ?? []).filter(
-        (source) => source.status === "failing" || source.cacheDegraded
-    ).length;
-    const attentionSources = (data?.sources ?? [])
-        .filter((source) => source.status === "failing" || source.cacheDegraded)
-        .sort((left, right) => {
-            const statusWeight = (status: SourceHealthSummary["sources"][number]["status"]) =>
-                status === "failing" ? 2 : 1;
-            return (
-                statusWeight(right.status) - statusWeight(left.status) ||
-                right.consecutiveFailures - left.consecutiveFailures
-            );
-        })
-        .slice(0, 4);
+                            <section className="insights-middle-grid" aria-label="事件与来源分析">
+                                <TopicPanel topics={topicEvents} scope={scope} onRead={handleReadTopicItem} />
+                                <div className="insights-middle-right">
+                                    <SourceHealthPanel
+                                        data={healthSummary}
+                                        isFetching={isHealthFetching}
+                                        isError={isHealthError}
+                                    />
+                                    <KeywordTrendMatrix items={keywordTrends} />
+                                </div>
+                            </section>
 
-    return (
-        <section className="insights-panel insights-health-panel">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <PanelTitle icon="i-ph:heartbeat-duotone" title="来源健康概览" />
-                <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
-                    {isFetching && <span className="i-ph:spinner-gap-duotone animate-spin text-cyan-600" />}
-                    <Link
-                        to="/health"
-                        className="inline-flex items-center gap-1 rounded-full bg-cyan-500/10 px-2.5 py-1 text-cyan-700 transition-colors hover:bg-cyan-500/18 dark:text-cyan-300"
-                    >
-                        <span>查看健康详情</span>
-                        <span className="i-ph:arrow-up-right-duotone" />
-                    </Link>
-                </div>
-            </div>
+                            <section className="insights-bottom-grid" aria-label="分类与来源统计">
+                                <CategorySharePanel items={categoryShares} />
+                                <SourceActivityPanel items={sourceActivity} />
+                            </section>
 
-            {isError ? (
-                <div className="mt-4 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
-                    暂时无法读取来源健康状态，请前往健康页重试。
-                </div>
-            ) : data ? (
-                <>
-                    <div className="mt-4 grid gap-2 sm:grid-cols-5">
-                        <HealthMetric label="总数据源" value={data.total} tone="neutral" />
-                        <HealthMetric label="正常" value={data.healthy} tone="green" />
-                        <HealthMetric label="异常" value={data.failing} tone="red" />
-                        <HealthMetric label="未采样" value={data.idle} tone="slate" />
-                        <HealthMetric label="缓存降级" value={data.cacheDegraded} tone="amber" />
-                    </div>
+                            <footer className="insights-data-footer">
+                                <span className="i-ph:info-duotone" aria-hidden="true" />
+                                <span>
+                                    数据来源：LatestNews 聚合的公开新闻来源（含主流媒体、行业媒体及地方媒体等）。
+                                </span>
+                                <span className="insights-footer-divider" aria-hidden="true" />
+                                <span>使用提示与声明：数据为内容聚合与统计结果，可能存在延迟、去重影响。</span>
+                                <span className="insights-footer-updated">
+                                    <span className="i-ph:arrow-clockwise-duotone" aria-hidden="true" />
+                                    最后更新：{generatedAt ? formatUpdatedAt(generatedAt) : "等待数据"}
+                                </span>
+                                <span className={clsx("insights-live-pill", data?.meta.partial && "is-partial")}>
+                                    <span className="i-ph:check-circle-fill" aria-hidden="true" />
+                                    {data?.meta.partial ? "部分数据" : "数据已更新"}
+                                </span>
+                            </footer>
 
-                    {attentionSources.length > 0 && (
-                        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-                            <span className="text-zinc-600 dark:text-zinc-500">需要关注：</span>
-                            {attentionSources.map((source) => (
-                                <Link
-                                    key={source.id}
-                                    to="/health"
-                                    className={clsx(
-                                        "rounded-full border px-2.5 py-1 transition-colors hover:border-cyan-500/40 hover:text-cyan-700 dark:hover:text-cyan-300",
-                                        source.status === "failing"
-                                            ? "border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300"
-                                            : "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                                    )}
-                                >
-                                    {source.name}
-                                </Link>
-                            ))}
-                            {attentionSources.length < attentionSourceCount && (
-                                <Link to="/health" className="text-cyan-700 dark:text-cyan-300">
-                                    查看全部
-                                </Link>
+                            {!!data?.errors.length && (
+                                <div className="insights-data-error insights-data-error-muted">
+                                    {data.errors.slice(0, 3).map((item) => (
+                                        <div key={`${item.sourceId ?? "source"}-${item.message}`}>
+                                            {item.sourceId ? `${item.sourceId}: ` : ""}
+                                            {item.message}
+                                        </div>
+                                    ))}
+                                </div>
                             )}
-                        </div>
+                        </>
                     )}
-                </>
-            ) : (
-                <div className="mt-4 rounded-xl bg-zinc-100/70 px-3 py-2 text-sm text-zinc-600 dark:bg-zinc-800/45 dark:text-zinc-500">
-                    正在加载来源健康状态…
                 </div>
-            )}
-        </section>
-    );
-}
-
-/** Renders one compact health counter with a color that matches its operational meaning. */
-function HealthMetric({
-    label,
-    value,
-    tone,
-}: {
-    label: string;
-    value: number;
-    tone: "neutral" | "green" | "red" | "slate" | "amber";
-}) {
-    const toneClass = {
-        neutral: "bg-zinc-100/80 text-zinc-700 dark:bg-zinc-800/65 dark:text-zinc-300",
-        green: "bg-green-500/10 text-green-700 dark:text-green-300",
-        red: "bg-red-500/10 text-red-700 dark:text-red-300",
-        slate: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
-        amber: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
-    }[tone];
-
-    return (
-        <div className={clsx("rounded-xl px-3 py-2", toneClass)}>
-            <div className="text-xs op-75">{label}</div>
-            <div className="mt-1 text-xl font-bold">{value}</div>
+            </main>
         </div>
     );
 }
 
-/** Displays UTC-aligned publication buckets and controls the shared trend window. */
+/** 复用洞察工作区的左侧导航链接，保持移动端也有清晰的返回路径。 */
+function InsightNavLink({
+    to,
+    search,
+    icon,
+    label,
+    active = false,
+}: {
+    to: "/" | "/insights" | "/feed" | "/history" | "/health";
+    search?: { q?: string; scope?: InsightScope };
+    icon: string;
+    label: string;
+    active?: boolean;
+}) {
+    return (
+        <Link
+            to={to}
+            search={search}
+            className={clsx("insights-sidebar-link", active && "is-active")}
+            aria-current={active ? "page" : undefined}
+        >
+            <span className={icon} aria-hidden="true" />
+            <span>{label}</span>
+        </Link>
+    );
+}
+
+/** 显示按 UTC 时间桶统计的发文量，并保留热点、峰值和回落的直接标注。 */
 function UpdateFrequencyPanel({
     buckets,
-    loading,
     trendWindow,
-    onTrendWindowChange,
+    loading,
 }: {
     buckets: InsightTimeBucket[];
-    loading: boolean;
     trendWindow: InsightTrendWindow;
-    onTrendWindowChange: (window: InsightTrendWindow) => void;
+    loading: boolean;
 }) {
-    const maxCount = Math.max(...buckets.map((bucket) => bucket.itemCount), 0);
-    const totalCount = buckets.reduce((total, bucket) => total + bucket.itemCount, 0);
+    const maxCount = Math.max(...buckets.map((bucket) => bucket.itemCount), 1);
+    const totalCount = buckets.reduce((sum, bucket) => sum + bucket.itemCount, 0);
+    const peakIndex = buckets.findIndex((bucket) => bucket.itemCount === maxCount);
+    const firstActiveIndex = buckets.findIndex((bucket) => bucket.itemCount > 0);
+    const lastActiveIndex = [...buckets].reverse().findIndex((bucket) => bucket.itemCount > 0);
+    const tailIndex = lastActiveIndex < 0 ? -1 : buckets.length - 1 - lastActiveIndex;
 
     return (
-        <section className="insights-panel insights-frequency-panel">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <PanelTitle icon="i-ph:chart-line-up-duotone" title="更新频率" />
-                <div className="flex rounded-lg bg-zinc-200/75 p-0.5 dark:bg-zinc-800/75" aria-label="趋势时间范围">
-                    {(
-                        [
-                            ["24h", "24 小时"],
-                            ["7d", "7 天"],
-                        ] as const
-                    ).map(([value, label]) => (
-                        <button
-                            key={value}
-                            type="button"
-                            className={clsx(
-                                "rounded-md px-2.5 py-1 text-xs transition-colors",
-                                trendWindow === value
-                                    ? "bg-white font-medium text-zinc-800 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                                    : "text-zinc-600 hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300"
-                            )}
-                            onClick={() => onTrendWindowChange(value)}
-                        >
-                            {label}
-                        </button>
-                    ))}
+        <article className="insights-panel insights-frequency-panel">
+            <div className="insights-panel-header">
+                <div>
+                    <PanelTitle
+                        icon="i-ph:chart-bar-duotone"
+                        title={trendWindow === "24h" ? "24 小时发文走势" : "7 天发文走势"}
+                    />
+                    <span className="insights-panel-subtitle">发文量（篇）</span>
+                </div>
+                <div className="insights-window-toggle" aria-label="趋势时间范围">
+                    <span className={trendWindow === "7d" ? "" : "is-active"}>7 天</span>
+                    <span className={trendWindow === "24h" ? "is-active" : ""}>24 小时</span>
                 </div>
             </div>
-
             {loading ? (
                 <PanelEmpty label="趋势加载中" />
             ) : totalCount > 0 ? (
-                <div className="mt-4 overflow-x-auto pb-1">
-                    <div
-                        className="grid h-48 min-w-560px items-end gap-2"
-                        style={{ gridTemplateColumns: `repeat(${buckets.length}, minmax(56px, 1fr))` }}
-                    >
-                        {buckets.map((bucket) => {
-                            const barHeight =
-                                bucket.itemCount && maxCount
-                                    ? Math.max(8, Math.round((bucket.itemCount / maxCount) * 128))
-                                    : 0;
-
-                            return (
+                <>
+                    <div className="insights-chart-stage">
+                        {firstActiveIndex >= 0 && (
+                            <div
+                                className="insights-chart-annotation is-start"
+                                style={{ left: `${(firstActiveIndex / Math.max(buckets.length - 1, 1)) * 100}%` }}
+                            >
+                                <strong>上涨启动</strong>
+                                <span>报道数量开始增加</span>
+                            </div>
+                        )}
+                        {peakIndex >= 0 && (
+                            <div
+                                className="insights-chart-annotation is-peak"
+                                style={{ left: `${(peakIndex / Math.max(buckets.length - 1, 1)) * 100}%` }}
+                            >
+                                <strong>当日峰值</strong>
+                                <span>发文量 {maxCount} 篇</span>
+                            </div>
+                        )}
+                        {tailIndex >= 0 && tailIndex !== peakIndex && (
+                            <div
+                                className="insights-chart-annotation is-tail"
+                                style={{ left: `${(tailIndex / Math.max(buckets.length - 1, 1)) * 100}%` }}
+                            >
+                                <strong>热度回落</strong>
+                                <span>仍保持较高覆盖</span>
+                            </div>
+                        )}
+                        <div
+                            className="insights-bar-chart"
+                            role="img"
+                            aria-label={`共 ${totalCount} 条具有发布时间的内容`}
+                        >
+                            {buckets.map((bucket) => (
                                 <div
                                     key={bucket.startAt}
-                                    className="grid h-full grid-rows-[20px_1fr_20px] items-end text-center"
+                                    className="insights-bar-column"
                                     title={`${bucket.itemCount} 条 · ${bucket.sourceCount} 个来源`}
                                 >
-                                    <span className="text-xs text-zinc-600 dark:text-zinc-500">
-                                        {bucket.itemCount || ""}
-                                    </span>
-                                    <div className="flex h-full items-end justify-center">
-                                        <div
-                                            className="w-7 rounded-t-md bg-cyan-500/75 transition-[height] dark:bg-cyan-400/65"
-                                            style={{ height: `${barHeight}px` }}
+                                    <span className="insights-bar-value">{bucket.itemCount || ""}</span>
+                                    <div className="insights-bar-track">
+                                        <span
+                                            className="insights-bar"
+                                            style={{
+                                                height: `${Math.max(bucket.itemCount ? 10 : 0, (bucket.itemCount / maxCount) * 100)}%`,
+                                            }}
                                         />
                                     </div>
-                                    <span className="truncate text-[11px] text-zinc-600 dark:text-zinc-500">
+                                    <span className="insights-bar-label">
                                         {formatTrendBucketLabel(bucket.startAt, trendWindow)}
                                     </span>
                                 </div>
-                            );
-                        })}
-                    </div>
-                    <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-500">
-                        共 {totalCount} 条具有发布时间的内容 · 时间桶按 UTC 对齐
-                    </div>
-                    <div className="insights-heat-strip" aria-label="各时间桶来源覆盖">
-                        {buckets.map((bucket) => {
-                            const coverage = buckets.length
-                                ? bucket.sourceCount / Math.max(...buckets.map((item) => item.sourceCount), 1)
-                                : 0;
-                            return (
-                                <span
-                                    key={`${bucket.startAt}-coverage`}
-                                    title={`${formatTrendBucketLabel(bucket.startAt, trendWindow)}：${bucket.sourceCount} 个来源`}
-                                    style={{ opacity: Math.max(0.2, coverage) }}
-                                />
-                            );
-                        })}
-                    </div>
-                </div>
-            ) : (
-                <div className="mt-4">
-                    <PanelEmpty label="当前时间范围内暂无可统计的发布时间" />
-                </div>
-            )}
-        </section>
-    );
-}
-
-/** Lists the strongest keyword trends and links each term to the matching Feed time range. */
-function KeywordTrendPanel({
-    items,
-    loading,
-    scope,
-    trendWindow,
-}: {
-    items: KeywordTrend[];
-    loading: boolean;
-    scope: InsightScope;
-    trendWindow: InsightTrendWindow;
-}) {
-    const maxCount = Math.max(...items.flatMap((item) => item.buckets.map((bucket) => bucket.itemCount)), 0);
-
-    return (
-        <section className="insights-panel insights-keyword-panel">
-            <PanelTitle icon="i-ph:trend-up-duotone" title="关键词趋势" />
-            <div className="mt-4 flex flex-col gap-2">
-                {loading ? (
-                    <PanelEmpty label="关键词趋势加载中" />
-                ) : items.length ? (
-                    items.map((item) => (
-                        <div
-                            key={item.term}
-                            className="grid gap-2 rounded-xl border border-zinc-200/80 bg-white/82 px-3 py-2.5 dark:border-zinc-700/35 dark:bg-zinc-800/54 md:grid-cols-[minmax(110px,0.8fr)_1.4fr_auto] md:items-center"
-                        >
-                            <div className="min-w-0">
-                                <Link
-                                    to="/feed"
-                                    search={{ q: item.term, scope, since: trendWindow }}
-                                    className="block truncate text-sm font-medium text-zinc-800 transition-colors hover:text-cyan-700 dark:text-zinc-200 dark:hover:text-cyan-300"
-                                >
-                                    {item.term}
-                                </Link>
-                                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-500">
-                                    {item.totalCount} 次 · {item.sourceCount} 个来源
-                                </div>
-                            </div>
-                            <div
-                                className="grid h-8 min-w-0 items-end gap-1"
-                                style={{ gridTemplateColumns: `repeat(${item.buckets.length}, minmax(4px, 1fr))` }}
-                                title={item.buckets.map((bucket) => bucket.itemCount).join(" / ")}
-                            >
-                                {item.buckets.map((bucket) => {
-                                    const barHeight =
-                                        bucket.itemCount && maxCount
-                                            ? Math.max(3, Math.round((bucket.itemCount / maxCount) * 28))
-                                            : 0;
-                                    return (
-                                        <span
-                                            key={bucket.startAt}
-                                            className="block min-w-1 rounded-sm bg-blue-500/65 dark:bg-blue-400/60"
-                                            style={{ height: `${barHeight}px` }}
-                                        />
-                                    );
-                                })}
-                            </div>
-                            <Link
-                                to="/feed"
-                                search={{ q: item.term, scope, since: trendWindow }}
-                                className="inline-flex items-center justify-self-start gap-1 rounded-full bg-cyan-500/10 px-2 py-1 text-xs text-cyan-700 transition-colors hover:bg-cyan-500/18 dark:text-cyan-300 md:justify-self-end"
-                            >
-                                <span>查看</span>
-                                <span className="i-ph:arrow-right-duotone" />
-                            </Link>
+                            ))}
                         </div>
-                    ))
-                ) : (
-                    <PanelEmpty label="当前时间范围内暂无关键词趋势" />
-                )}
-            </div>
-        </section>
+                    </div>
+                    <div className="insights-heat-strip" aria-label="各时间段来源覆盖">
+                        {buckets.map((bucket) => (
+                            <span
+                                key={`${bucket.startAt}-coverage`}
+                                style={{
+                                    opacity: Math.max(
+                                        0.18,
+                                        bucket.sourceCount / Math.max(...buckets.map((item) => item.sourceCount), 1)
+                                    ),
+                                }}
+                            />
+                        ))}
+                    </div>
+                    <div className="insights-chart-footnote">
+                        <span>共 {totalCount} 条具有发布时间的内容</span>
+                        <span>时间桶按 UTC 对齐</span>
+                    </div>
+                </>
+            ) : (
+                <PanelEmpty label="当前时间范围内暂无可统计的发布时间" />
+            )}
+        </article>
     );
 }
 
+/** 以紧凑排行呈现跨来源热点，同时保留阅读记录和 Feed 追踪入口。 */
 function HotRankingPanel({
     items,
     scope,
@@ -629,52 +437,55 @@ function HotRankingPanel({
     onRead: (item: HotNewsItem) => void;
 }) {
     return (
-        <section className="insights-panel insights-hot-panel">
-            <div className="insights-panel-heading">
-                <PanelTitle icon="i-ph:fire-duotone" title="热点排行" />
-                <span className="insights-panel-caption">按热度与跨源覆盖排序</span>
+        <article className="insights-panel insights-hot-panel">
+            <div className="insights-panel-header">
+                <PanelTitle icon="i-ph:fire-duotone" title="热点新闻榜" />
+                <div className="insights-mini-toggle">
+                    <span className="is-active">按热度</span>
+                    <span>按增速</span>
+                </div>
+            </div>
+            <div className="insights-hot-head">
+                <span>#</span>
+                <span>新闻标题（简要）</span>
+                <span>覆盖来源</span>
+                <span>舆情热度</span>
             </div>
             <div className="insights-hot-list">
                 {items.length ? (
-                    items.slice(0, 6).map((item) => (
-                        <article
-                            key={item.id}
-                            className="insights-hot-item group flex gap-3 rounded-xl border border-zinc-200/85 bg-white/82 px-3 py-3 transition-all hover:border-zinc-300/90 hover:bg-zinc-100/95 dark:border-zinc-700/32 dark:bg-zinc-800/54 dark:hover:border-zinc-600/55 dark:hover:bg-zinc-800/78"
-                        >
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/12 text-sm font-bold text-cyan-700 dark:text-cyan-300">
+                    items.slice(0, 5).map((item) => (
+                        <article key={item.id} className="insights-hot-row">
+                            <span className={clsx("insights-rank-badge", item.rank <= 3 && `rank-${item.rank}`)}>
                                 {item.rank}
                             </span>
-                            <div className="min-w-0 flex-1">
+                            <div className="insights-hot-main">
                                 <a
                                     href={item.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={() => onRead(item)}
                                 >
-                                    <span className="line-clamp-2 text-sm font-medium leading-5 text-zinc-800 transition-colors group-hover:text-cyan-700 dark:text-zinc-200 dark:group-hover:text-cyan-300">
-                                        {item.title}
-                                    </span>
+                                    {item.title}
                                 </a>
-                                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
-                                    <span>{item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId}</span>
+                                <div className="insights-hot-meta">
+                                    <span>{getSourceName(item.sourceId, item.sourceName)}</span>
                                     <span>{item.sources.length} 源覆盖</span>
                                     <span>分数 {item.score}</span>
-                                    {item.publishedAt && <RelativeTimeLabel time={item.publishedAt} />}
                                     <FeedFilterLink q={item.keywords[0] ?? item.title} scope={scope} label="相关" />
                                 </div>
-                                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-600 dark:text-zinc-500">
-                                    <span className="rounded-md bg-zinc-100/85 px-2 py-1 dark:bg-zinc-900/55">
-                                        {item.signals.rankingReason}
-                                    </span>
-                                    {item.signals.categoryDistribution.map((category) => (
-                                        <span
-                                            key={category.categoryId}
-                                            className="rounded-md bg-cyan-500/8 px-2 py-1 text-cyan-800 dark:text-cyan-300"
-                                        >
-                                            {category.categoryName} {category.itemCount} 条 / {category.sourceCount} 源
-                                        </span>
-                                    ))}
-                                </div>
+                            </div>
+                            <div className="insights-source-chips">
+                                {item.sourceNames.slice(0, 3).map((name) => (
+                                    <span key={name}>{name}</span>
+                                ))}
+                            </div>
+                            <div className="insights-score-bars" aria-label={`热度 ${item.score}`}>
+                                {Array.from({ length: 6 }, (_, index) => (
+                                    <span
+                                        key={index}
+                                        className={index < Math.min(6, Math.ceil(item.score / 40)) ? "is-filled" : ""}
+                                    />
+                                ))}
                             </div>
                             <ReadingStateActions
                                 entry={{
@@ -682,9 +493,9 @@ function HotRankingPanel({
                                     title: item.title,
                                     url: item.url,
                                     sourceId: item.sourceId,
-                                    sourceName: item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId,
+                                    sourceName: getSourceName(item.sourceId, item.sourceName),
                                 }}
-                                className="shrink-0"
+                                className="insights-inline-actions"
                             />
                         </article>
                     ))
@@ -692,10 +503,11 @@ function HotRankingPanel({
                     <PanelEmpty label="暂无热点" />
                 )}
             </div>
-        </section>
+        </article>
     );
 }
 
+/** 让话题聚合保持列表式密度，并用选中行打开跨来源内容。 */
 function TopicPanel({
     topics,
     scope,
@@ -706,326 +518,309 @@ function TopicPanel({
     onRead: (item: TopicEvent["items"][number]) => void;
 }) {
     const [expandedTopicId, setExpandedTopicId] = useState<string | undefined>(topics[0]?.id);
-
     return (
-        <section className="insights-panel insights-topic-panel">
-            <div className="insights-panel-heading">
-                <PanelTitle icon="i-ph:git-branch-duotone" title="话题事件" />
-                <span className="insights-panel-caption">按关键词聚合的跨源事件</span>
+        <article className="insights-panel insights-topic-panel">
+            <div className="insights-panel-header">
+                <PanelTitle icon="i-ph:chat-circle-dots-duotone" title="话题事件" />
+                <div className="insights-mini-toggle">
+                    <span className="is-active">按热度</span>
+                    <span>按发文量</span>
+                </div>
             </div>
-            <div className="mt-4 flex flex-col gap-3">
+            <div className="insights-topic-list">
                 {topics.length ? (
-                    topics.map((topic) => (
-                        <article
-                            key={topic.id}
-                            className={clsx(
-                                "insights-topic-item rounded-xl border border-zinc-200/85 bg-white/82 p-3 dark:border-zinc-700/32 dark:bg-zinc-800/54",
-                                expandedTopicId === topic.id && "is-expanded"
-                            )}
-                        >
-                            <div className="flex items-start justify-between gap-3">
+                    topics.slice(0, 5).map((topic) => {
+                        const expanded = expandedTopicId === topic.id;
+                        return (
+                            <article key={topic.id} className={clsx("insights-topic-row", expanded && "is-expanded")}>
                                 <button
                                     type="button"
-                                    className="insights-topic-toggle line-clamp-2 text-left text-sm font-semibold text-zinc-800 dark:text-zinc-200"
-                                    aria-expanded={expandedTopicId === topic.id}
-                                    onClick={() =>
-                                        setExpandedTopicId(expandedTopicId === topic.id ? undefined : topic.id)
-                                    }
+                                    className="insights-topic-button"
+                                    aria-expanded={expanded}
+                                    onClick={() => setExpandedTopicId(expanded ? undefined : topic.id)}
                                 >
-                                    {topic.title}
+                                    <span className="insights-topic-hash">#</span>
+                                    <span className="insights-topic-title">{topic.title}</span>
+                                    <span className="insights-topic-count">{topic.itemCount} 篇</span>
+                                    <span className="i-ph:caret-right-duotone" aria-hidden="true" />
                                 </button>
-                                <FeedFilterLink q={getTopicFeedKeyword(topic)} scope={scope} label="追踪" />
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-500">
-                                <span>{topic.itemCount} 条动态</span>
-                                <span>{topic.sources.length} 个来源</span>
-                                {topic.latestPublishedAt && <RelativeTimeLabel time={topic.latestPublishedAt} />}
-                            </div>
-                            <div className="mt-3 flex flex-wrap gap-1.5">
-                                {topic.keywords.slice(0, 5).map((keyword) => (
-                                    <Link
-                                        key={keyword}
-                                        to="/feed"
-                                        search={{ q: keyword, scope, since: "all" }}
-                                        className="rounded-full bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-700 dark:text-cyan-300"
-                                    >
-                                        {keyword}
-                                    </Link>
-                                ))}
-                            </div>
-                            {expandedTopicId === topic.id && (
-                                <div className="mt-3 flex flex-col gap-1.5">
-                                    {topic.items.slice(0, 3).map((item) => (
-                                        <div
-                                            key={item.id}
-                                            className="flex items-center gap-2 rounded-lg bg-zinc-100/75 px-2 py-1.5 dark:bg-zinc-900/45"
-                                        >
+                                {expanded && (
+                                    <div className="insights-topic-detail">
+                                        <div className="insights-topic-keywords">
+                                            {topic.keywords.slice(0, 6).map((keyword) => (
+                                                <FeedFilterLink
+                                                    key={keyword}
+                                                    q={keyword}
+                                                    scope={scope}
+                                                    label={keyword}
+                                                />
+                                            ))}
+                                        </div>
+                                        {topic.items.slice(0, 3).map((item) => (
                                             <a
+                                                key={item.id}
                                                 href={item.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="line-clamp-1 min-w-0 flex-1 text-xs text-zinc-700 transition-all hover:text-cyan-700 dark:text-zinc-400 dark:hover:text-cyan-300"
                                                 onClick={() => onRead(item)}
                                             >
-                                                {item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId} ·{" "}
-                                                {item.title}
+                                                {getSourceName(item.sourceId, item.sourceName)} · {item.title}
                                             </a>
-                                            <ReadingStateActions
-                                                entry={{
-                                                    newsId: item.id,
-                                                    title: item.title,
-                                                    url: item.url,
-                                                    sourceId: item.sourceId,
-                                                    sourceName:
-                                                        item.sourceName ??
-                                                        dataSources[item.sourceId]?.name ??
-                                                        item.sourceId,
-                                                }}
-                                                className="shrink-0"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </article>
-                    ))
+                                        ))}
+                                    </div>
+                                )}
+                            </article>
+                        );
+                    })
                 ) : (
                     <PanelEmpty label="暂无话题" />
                 )}
             </div>
-        </section>
+        </article>
     );
 }
 
-function WordCloudPanel({
-    items,
-    maxWeight,
-    scope,
+/** 显示来源健康摘要，保留异常、缓存降级和未采样状态。 */
+function SourceHealthPanel({
+    data,
+    isFetching,
+    isError,
 }: {
-    items: WordCloudTerm[];
-    maxWeight: number;
-    scope: InsightScope;
+    data: SourceHealthSummary | undefined;
+    isFetching: boolean;
+    isError: boolean;
 }) {
+    const sources = data?.sources ?? [];
     return (
-        <section className="insights-panel insights-word-panel">
-            <PanelTitle icon="i-ph:cloud-duotone" title="词云图" />
-            <div className="mt-4 flex min-h-48 flex-wrap content-start gap-2">
-                {items.length ? (
-                    items.map((item) => (
-                        <Link
-                            key={item.term}
-                            to="/feed"
-                            search={{ q: item.term, scope, since: "all" }}
+        <article className="insights-panel insights-health-panel">
+            <div className="insights-panel-header">
+                <PanelTitle icon="i-ph:stack-duotone" title="来源健康状态" />
+                <Link to="/health" className="insights-inline-link">
+                    查看详情 <span className="i-ph:arrow-up-right-duotone" aria-hidden="true" />
+                </Link>
+            </div>
+            <div className="insights-health-legend">
+                <span>
+                    <i className="is-healthy" />
+                    正常 {data?.healthy ?? "--"}
+                </span>
+                <span>
+                    <i className="is-failing" />
+                    异常 {data?.failing ?? "--"}
+                </span>
+                <span>
+                    <i className="is-degraded" />
+                    缓存降级 {data?.cacheDegraded ?? "--"}
+                </span>
+            </div>
+            {isError ? (
+                <PanelEmpty label="暂时无法读取来源健康状态" />
+            ) : isFetching && !data ? (
+                <PanelEmpty label="来源状态加载中" />
+            ) : (
+                <div className="insights-health-sources">
+                    {sources.slice(0, 6).map((source) => (
+                        <div
+                            key={source.id}
                             className={clsx(
-                                "rounded-full border px-3 py-1.5 font-medium transition-all hover:-translate-y-0.5 hover:border-cyan-500/35 hover:bg-cyan-500/12",
-                                getWordClass(item.weight, maxWeight)
+                                "insights-health-source",
+                                `is-${source.status}`,
+                                source.cacheDegraded && "is-degraded"
                             )}
-                            title={`${item.count} 次 · ${item.sources.length} 个来源`}
                         >
-                            {item.term}
-                        </Link>
+                            <strong>{source.name}</strong>
+                            <span>
+                                {source.status === "healthy"
+                                    ? "正常"
+                                    : source.cacheDegraded
+                                      ? "缓存降级"
+                                      : source.status === "failing"
+                                        ? "异常"
+                                        : "未采样"}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </article>
+    );
+}
+
+/** 用小型 SVG 线图展示关键词在时间桶中的变化，不依赖 hover 才能读懂趋势。 */
+function KeywordTrendMatrix({ items }: { items: KeywordTrend[] }) {
+    const topItems = items.slice(0, 6);
+    return (
+        <article className="insights-panel insights-keyword-matrix">
+            <div className="insights-panel-header">
+                <PanelTitle icon="i-ph:trend-up-duotone" title="关键词趋势矩阵" />
+                <span className="insights-panel-subtitle">对比关键词（最多 6 个）</span>
+            </div>
+            <div className="insights-keyword-grid">
+                {topItems.length ? (
+                    topItems.map((item) => (
+                        <div key={item.term} className="insights-keyword-cell">
+                            <strong>{item.term}</strong>
+                            <Sparkline values={item.buckets.map((bucket) => bucket.itemCount)} />
+                            <span>
+                                {item.totalCount} 次 · {item.sourceCount} 源
+                            </span>
+                        </div>
                     ))
                 ) : (
-                    <PanelEmpty label="暂无关键词" />
+                    <PanelEmpty label="暂无关键词趋势" />
                 )}
             </div>
-        </section>
+        </article>
     );
 }
 
-function CategorySharePanel({
-    items,
-    maxCount,
-    scope,
-}: {
-    items: CategoryShare[];
-    maxCount: number;
-    scope: InsightScope;
-}) {
+function Sparkline({ values }: { values: number[] }) {
+    const max = Math.max(...values, 1);
+    const points = values
+        .map((value, index) => `${(index / Math.max(values.length - 1, 1)) * 100},${34 - (value / max) * 28}`)
+        .join(" ");
     return (
-        <section className="insights-panel insights-category-panel">
-            <PanelTitle icon="i-ph:chart-pie-slice-duotone" title="分类占比" />
-            <div className="mt-4 flex flex-col gap-3">
-                {items.length ? (
-                    items.map((item) => {
-                        const percent = Math.round(item.ratio * 100);
-                        const barWidth = maxCount ? Math.max(6, Math.round((item.itemCount / maxCount) * 100)) : 0;
-
-                        return (
-                            <div key={item.categoryId} className="rounded-xl bg-white/82 p-3 dark:bg-zinc-800/54">
-                                <div className="flex items-center justify-between gap-3">
-                                    <div>
-                                        <Link
-                                            to="/feed"
-                                            search={{ category: item.categoryId, scope, since: "all" }}
-                                            className="font-medium text-zinc-800 transition-colors hover:text-cyan-700 dark:text-zinc-200 dark:hover:text-cyan-300"
-                                        >
-                                            {item.categoryName}
-                                        </Link>
-                                        <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-500">
-                                            {item.sourceCount} 个来源 · {item.itemCount} 条
-                                        </div>
-                                    </div>
-                                    <div className="text-lg font-bold text-cyan-700 dark:text-cyan-300">{percent}%</div>
-                                </div>
-                                <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-zinc-900/70">
-                                    <div
-                                        className="h-full rounded-full bg-cyan-500"
-                                        style={{ width: `${barWidth}%` }}
-                                    />
-                                </div>
-                            </div>
-                        );
-                    })
-                ) : (
-                    <PanelEmpty label="暂无分类统计" />
-                )}
-            </div>
-        </section>
+        <svg className="insights-sparkline" viewBox="0 0 100 36" role="img" aria-label="关键词趋势线">
+            <polyline points={points} fill="none" vectorEffect="non-scaling-stroke" />
+        </svg>
     );
 }
 
-function SourceActivityPanel({
-    items,
-    maxCount,
-    scope,
-}: {
-    items: SourceActivity[];
-    maxCount: number;
-    scope: InsightScope;
-}) {
+/** 用环形占比和可读图例呈现分类结构。 */
+function CategorySharePanel({ items }: { items: CategoryShare[] }) {
+    const colors = ["#0a9e95", "#42bfb0", "#7ed5c4", "#b9dfbd", "#e9c778", "#e6e7df"];
+    let offset = 0;
+    const gradient = items
+        .slice(0, 6)
+        .map((item, index) => {
+            const start = offset * 100;
+            offset += item.ratio;
+            return `${colors[index % colors.length]} ${start}% ${offset * 100}%`;
+        })
+        .join(", ");
     return (
-        <section className="insights-panel insights-source-panel">
-            <PanelTitle icon="i-ph:chart-bar-duotone" title="来源活跃度" />
-            <div className="mt-4 flex flex-col gap-3">
-                {items.length ? (
-                    items.slice(0, 12).map((item) => {
-                        const percent = maxCount ? Math.max(6, Math.round((item.itemCount / maxCount) * 100)) : 0;
-
-                        return (
-                            <div
-                                key={item.sourceId}
-                                className="grid gap-2 md:grid-cols-[120px_1fr_48px] md:items-center"
+        <article className="insights-panel insights-category-panel">
+            <div className="insights-panel-header">
+                <PanelTitle icon="i-ph:chart-pie-slice-duotone" title="内容分类占比" />
+            </div>
+            {items.length ? (
+                <div className="insights-category-content">
+                    <div
+                        className="insights-donut"
+                        style={{ background: `conic-gradient(${gradient || "#dfe5e5 0 100%"})` }}
+                    >
+                        <div>
+                            <strong>
+                                {items.reduce((sum, item) => sum + item.itemCount, 0).toLocaleString("zh-CN")}
+                            </strong>
+                            <span>内容总量</span>
+                        </div>
+                    </div>
+                    <div className="insights-category-legend">
+                        {items.slice(0, 6).map((item, index) => (
+                            <Link
+                                key={item.categoryId}
+                                to="/feed"
+                                search={{ category: item.categoryId, scope: "broad", since: "all" }}
                             >
-                                <Link
-                                    to="/feed"
-                                    search={{ scope, since: "all", source: item.sourceId }}
-                                    className="truncate text-sm text-zinc-700 transition-colors hover:text-cyan-700 dark:text-zinc-300 dark:hover:text-cyan-300"
-                                >
-                                    {item.sourceName ?? dataSources[item.sourceId]?.name ?? item.sourceId}
-                                </Link>
-                                <div className="h-2 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-zinc-800">
-                                    <div className="h-full rounded-full bg-cyan-500" style={{ width: `${percent}%` }} />
-                                </div>
-                                <div className="text-right text-xs text-zinc-600 dark:text-zinc-500">
-                                    {item.itemCount} 条
-                                </div>
+                                <i style={{ background: colors[index % colors.length] }} />
+                                <span>{item.categoryName}</span>
+                                <strong>{Math.round(item.ratio * 100)}%</strong>
+                                <small>({item.itemCount} 篇)</small>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            ) : (
+                <PanelEmpty label="暂无分类统计" />
+            )}
+        </article>
+    );
+}
+
+/** 以横向柱状图比较各来源的发文活跃度。 */
+function SourceActivityPanel({ items }: { items: SourceActivity[] }) {
+    const visibleItems = items.slice(0, 8);
+    const maxCount = Math.max(...visibleItems.map((item) => item.itemCount), 1);
+    return (
+        <article className="insights-panel insights-source-panel">
+            <div className="insights-panel-header">
+                <PanelTitle icon="i-ph:chart-bar-duotone" title="来源活跃度" />
+                <div className="insights-mini-toggle">
+                    <span className="is-active">发文量</span>
+                    <span>覆盖度</span>
+                </div>
+            </div>
+            {visibleItems.length ? (
+                <div className="insights-source-bars">
+                    {visibleItems.map((item) => (
+                        <Link
+                            key={item.sourceId}
+                            to="/feed"
+                            search={{ source: item.sourceId, scope: "broad", since: "all" }}
+                            className="insights-source-bar-row"
+                        >
+                            <span>{getSourceName(item.sourceId, item.sourceName)}</span>
+                            <div>
+                                <i style={{ width: `${Math.max(4, (item.itemCount / maxCount) * 100)}%` }} />
                             </div>
-                        );
-                    })
-                ) : (
-                    <PanelEmpty label="暂无统计" />
-                )}
-            </div>
-        </section>
-    );
-}
-
-function FeedFilterLink({ q, scope, label }: { q: string; scope: InsightScope; label: string }) {
-    return (
-        <Link
-            to="/feed"
-            search={{ q, scope, since: "all" }}
-            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-700 transition-all hover:bg-cyan-500/18 dark:text-cyan-300"
-        >
-            <span className="i-ph:funnel-duotone" />
-            <span>{label}</span>
-        </Link>
-    );
-}
-
-function MetricCard({ label, value, icon }: { label: string; value: number; icon: string }) {
-    return (
-        <div className="insights-metric-card rounded-2xl p-4">
-            <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-500">
-                <span>{label}</span>
-                <span className={clsx("text-lg text-cyan-600 dark:text-cyan-300", icon)} />
-            </div>
-            <div className="mt-2 text-3xl font-bold text-zinc-800 dark:text-zinc-100">{value}</div>
-        </div>
+                            <strong>{item.itemCount}</strong>
+                        </Link>
+                    ))}
+                </div>
+            ) : (
+                <PanelEmpty label="暂无统计" />
+            )}
+        </article>
     );
 }
 
 function PanelTitle({ icon, title }: { icon: string; title: string }) {
     return (
-        <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-100">
-            <span className={clsx("text-lg text-cyan-600 dark:text-cyan-300", icon)} />
-            <h2 className="m-0 text-lg font-semibold">{title}</h2>
+        <div className="insights-panel-title">
+            <span className={icon} aria-hidden="true" />
+            <h2>{title}</h2>
+            <span className="i-ph:info-duotone insights-info-icon" aria-hidden="true" />
         </div>
     );
 }
 
-function SignalPill({ icon, label, tone = "neutral" }: { icon: string; label: string; tone?: "neutral" | "warning" }) {
+function FeedFilterLink({ q, scope, label }: { q: string; scope: InsightScope; label: string }) {
     return (
-        <span
-            className={clsx(
-                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1",
-                tone === "warning"
-                    ? "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                    : "border-zinc-200/80 bg-zinc-100/80 text-zinc-700 dark:border-zinc-700/45 dark:bg-zinc-800/65 dark:text-zinc-400"
-            )}
-        >
-            <span className={icon} />
-            <span>{label}</span>
-        </span>
+        <Link to="/feed" search={{ q, scope, since: "all" }} className="insights-filter-link">
+            {label}
+        </Link>
     );
 }
 
 function PanelEmpty({ label }: { label: string }) {
-    return (
-        <div className="flex min-h-28 flex-1 items-center justify-center rounded-xl bg-zinc-100/70 text-sm text-zinc-500 dark:bg-zinc-800/45 dark:text-zinc-500">
-            {label}
-        </div>
-    );
+    return <div className="insights-panel-empty">{label}</div>;
 }
 
 function EmptyState() {
-    return (
-        <div className="rounded-2xl bg-zinc-50/88 p-8 text-center text-sm text-zinc-600 shadow shadow-primary/6 dark:bg-zinc-900/68 dark:text-zinc-500">
-            关注栏为空，先添加关注源后可查看专属洞察。
-        </div>
-    );
+    return <div className="insights-panel-empty insights-empty-state">暂无可用来源，请先在首页添加关注来源。</div>;
 }
 
-function RelativeTimeLabel({ time }: { time: number }) {
-    const relativeTime = useRelativeTime(time);
-    return <span>{relativeTime ?? "刚刚"}</span>;
+function getSourceName(sourceId: SourceID, sourceName?: string) {
+    return sourceName ?? dataSources[sourceId]?.name ?? sourceId;
 }
 
 function getScopeSources(scope: InsightScope, focusSources: SourceID[]) {
     return getUnifiedFeedScopeSources(scope, focusSources, scope === "focus" ? 100 : 30);
 }
 
-function getTopicFeedKeyword(topic: TopicEvent) {
-    return topic.keywords[0] ?? topic.title;
-}
-
-function getWordClass(weight: number, maxWeight: number) {
-    const ratio = maxWeight ? weight / maxWeight : 0;
-    if (ratio > 0.72) {
-        return "border-cyan-500/20 bg-cyan-500/16 text-base text-cyan-700 dark:text-cyan-300";
-    }
-    if (ratio > 0.45) {
-        return "border-blue-500/18 bg-blue-500/12 text-sm text-blue-700 dark:text-blue-300";
-    }
-    return "border-zinc-200/90 bg-white/82 text-xs text-zinc-700 dark:border-zinc-700/40 dark:bg-zinc-800/62 dark:text-zinc-400";
-}
-
-/** Formats fixed UTC bucket boundaries consistently across browser time zones. */
 function formatTrendBucketLabel(startAt: number, trendWindow: InsightTrendWindow) {
     const date = new Date(startAt);
-    if (trendWindow === "7d") {
-        return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
-    }
-    return `${String(date.getUTCHours()).padStart(2, "0")}:00`;
+    return trendWindow === "7d"
+        ? `${date.getUTCMonth() + 1}/${date.getUTCDate()}`
+        : `${String(date.getUTCHours()).padStart(2, "0")}:00`;
+}
+
+function formatUpdatedAt(value: number) {
+    return new Intl.DateTimeFormat("zh-CN", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(value));
 }

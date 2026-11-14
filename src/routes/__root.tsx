@@ -16,7 +16,7 @@ import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { DesktopUpdateNotice } from "~/components/desktop-update-notice";
 import { GlobalOverlayScrollbar } from "~/components/common/overlay-scrollbar";
-import { Outlet, Navigate, createRootRouteWithContext } from "@tanstack/react-router";
+import { Outlet, Navigate, useRouterState, createRootRouteWithContext } from "@tanstack/react-router";
 import { OfflineReadingSnapshotContext, usePersistOfflineReadingSnapshot } from "~/hooks/useOfflineReadingSnapshot.ts";
 
 export const Route = createRootRouteWithContext<{
@@ -31,6 +31,7 @@ function NotFoundComponent() {
 }
 
 function RootComponent() {
+    const isInsightsRoute = useRouterState({ select: (state) => state.location.pathname === "/insights" });
     useOnReload();
     useSync();
     const syncHub = useSyncHub();
@@ -42,16 +43,16 @@ function RootComponent() {
     return (
         <PWAStatusContext.Provider value={pwa}>
             <OfflineReadingSnapshotContext.Provider value={offlineReadingSnapshot}>
-                <GlobalOverlayScrollbar className="app-scroll h-full">
+                <GlobalOverlayScrollbar className={clsx("app-scroll h-full", isInsightsRoute && "insights-app-scroll")}>
                     <a className="skip-link" href="#main-content">
                         跳到主要内容
                     </a>
-                    <header className="app-header">
+                    <header className={clsx("app-header", isInsightsRoute && "insights-root-header")}>
                         <div className="header-inner">
                             <Header />
                         </div>
                     </header>
-                    <div className="app-content">
+                    <div className={clsx("app-content", isInsightsRoute && "insights-app-content")}>
                         <DesktopUpdateNotice />
                         <PwaStatusBanner
                             isOffline={pwa.isOffline}
@@ -60,10 +61,14 @@ function RootComponent() {
                             justRecovered={pwa.justRecovered}
                             onUpdate={pwa.applyUpdate}
                         />
-                        <main id="main-content" className="app-main" tabIndex={-1}>
+                        <main
+                            id="main-content"
+                            className={clsx("app-main", isInsightsRoute && "insights-root-main")}
+                            tabIndex={-1}
+                        >
                             <Outlet />
                         </main>
-                        <footer className="app-footer">
+                        <footer className={clsx("app-footer", isInsightsRoute && "insights-root-footer")}>
                             <Footer />
                         </footer>
                     </div>
