@@ -65,9 +65,37 @@ function ThemeToggle() {
     );
 }
 
-export function Header() {
+export function HeaderActions({ className }: { className?: string }) {
     const { enableLogin } = useLoginState();
     const { toggle } = useSearchBar();
+    return (
+        <div className={clsx("header-actions", className)}>
+            <GoTop />
+            <button type="button" aria-label="打开搜索" className="header-search" onClick={() => toggle(true)}>
+                <span className="i-ph:magnifying-glass-duotone" aria-hidden="true" />
+                <span className="search-label">搜索来源</span>
+                <kbd aria-hidden="true">⌘ / Ctrl K</kbd>
+            </button>
+            <span className="action-divider" aria-hidden="true" />
+            {enableLogin.enable && <Refresh />}
+            <ThemeToggle />
+            <SettingsButton />
+            <a
+                className="icon-button header-github"
+                href={PROJECT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="GitHub 仓库"
+                aria-label="GitHub 仓库"
+            >
+                <span className="i-ph:github-logo-duotone" aria-hidden="true" />
+            </a>
+            <Menu />
+        </div>
+    );
+}
+
+export function Header() {
     return (
         <>
             <div className="header-brand">
@@ -87,29 +115,7 @@ export function Header() {
                 </a>
             </div>
             <NavBar />
-            <div className="header-actions">
-                <GoTop />
-                <button type="button" aria-label="打开搜索" className="header-search" onClick={() => toggle(true)}>
-                    <span className="i-ph:magnifying-glass-duotone" aria-hidden="true" />
-                    <span className="search-label">搜索来源</span>
-                    <kbd aria-hidden="true">⌘ / Ctrl K</kbd>
-                </button>
-                <span className="action-divider" aria-hidden="true" />
-                {enableLogin.enable && <Refresh />}
-                <ThemeToggle />
-                <SettingsButton />
-                <a
-                    className="icon-button header-github"
-                    href={PROJECT_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="GitHub 仓库"
-                    aria-label="GitHub 仓库"
-                >
-                    <span className="i-ph:github-logo-duotone" aria-hidden="true" />
-                </a>
-                <Menu />
-            </div>
+            <HeaderActions />
         </>
     );
 }

@@ -108,6 +108,8 @@ test("renders the shared web shell and opens the settings panel", async ({ page 
     await page.goto("/feed");
 
     await expect(page).toHaveTitle(/LatestNews/i);
+    await expect(page.locator(".app-modern-header")).toHaveCount(0);
+    await expect(page.locator(".app-modern-sidebar")).toBeVisible();
     await expect(page.getByRole("button", { name: "打开设置" })).toBeVisible();
     await page.getByRole("button", { name: "打开设置" }).click();
 

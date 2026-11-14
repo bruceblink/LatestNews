@@ -49,13 +49,13 @@ function RootComponent() {
                     <a className="skip-link" href="#main-content">
                         跳到主要内容
                     </a>
-                    <header
-                        className={clsx("app-header", isInsightsRoute ? "insights-root-header" : "app-modern-header")}
-                    >
-                        <div className="header-inner">
-                            <Header />
-                        </div>
-                    </header>
+                    {!isModernRoute && (
+                        <header className="app-header insights-root-header">
+                            <div className="header-inner">
+                                <Header />
+                            </div>
+                        </header>
+                    )}
                     <div
                         className={clsx("app-content", isInsightsRoute ? "insights-app-content" : "app-modern-content")}
                     >

@@ -1,10 +1,11 @@
 import clsx from "clsx";
+import { HeaderActions } from "~/components/header";
 import { Link, useRouterState } from "@tanstack/react-router";
 
 /** 统一应用侧栏，提供所有页面都可访问的主要功能入口。 */
 export function AppShellSidebar() {
     const pathname = useRouterState({ select: (state) => state.location.pathname });
-    const active = (section: "home" | "feed" | "history" | "health" | "settings") => {
+    const active = (section: "home" | "feed" | "history" | "health") => {
         if (section === "home") return pathname === "/";
         if (section === "feed") return pathname === "/feed" || pathname.startsWith("/c/");
         // 来源详情属于来源管理流程，保持侧栏在详情页也有明确的当前项。
@@ -33,13 +34,9 @@ export function AppShellSidebar() {
                 <ModernNavLink to="/history" icon="i-ph:article-duotone" label="选题参考" active={active("history")} />
                 <ModernNavLink to="/health" icon="i-ph:stack-duotone" label="来源管理" active={active("health")} />
             </nav>
-            <ModernNavLink
-                to="/settings"
-                icon="i-ph:gear-six-duotone"
-                label="设置"
-                active={active("settings")}
-                className="app-modern-settings"
-            />
+            <div className="app-modern-sidebar-tools" aria-label="应用工具">
+                <HeaderActions className="app-modern-sidebar-actions" />
+            </div>
         </aside>
     );
 }
@@ -50,20 +47,18 @@ function ModernNavLink({
     icon,
     label,
     active,
-    className,
 }: {
-    to: "/" | "/feed" | "/history" | "/health" | "/settings";
+    to: "/" | "/feed" | "/history" | "/health";
     search?: { q?: string; scope?: "focus" | "hottest" | "realtime" | "broad" };
     icon: string;
     label: string;
     active: boolean;
-    className?: string;
 }) {
     return (
         <Link
             to={to}
             search={search}
-            className={clsx("app-modern-nav-link", active && "is-active", className)}
+            className={clsx("app-modern-nav-link", active && "is-active")}
             aria-current={active ? "page" : undefined}
         >
             <span className={icon} aria-hidden="true" />
