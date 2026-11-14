@@ -99,7 +99,8 @@ function InsightsPage() {
     );
 
     const heroTitle = "要闻聚焦：科技政策与产业进展受广泛关注";
-    const generatedAt = insights?.generatedAt ?? data?.meta.generatedAt;
+    // API 发生部分失败或测试替身缺少元数据时，洞察页面仍应保留导航和空状态。
+    const generatedAt = insights?.generatedAt ?? data?.meta?.generatedAt;
 
     const handleReadHotItem = (item: HotNewsItem) => {
         addHistory(item.sourceId, item.id, item.title, item.url);
@@ -259,15 +260,15 @@ function InsightsPage() {
                                     <span className="i-ph:arrow-clockwise-duotone" aria-hidden="true" />
                                     最后更新：{generatedAt ? formatUpdatedAt(generatedAt) : "等待数据"}
                                 </span>
-                                <span className={clsx("insights-live-pill", data?.meta.partial && "is-partial")}>
+                                <span className={clsx("insights-live-pill", data?.meta?.partial && "is-partial")}>
                                     <span className="i-ph:check-circle-fill" aria-hidden="true" />
-                                    {data?.meta.partial ? "部分数据" : "数据已更新"}
+                                    {data?.meta?.partial ? "部分数据" : "数据已更新"}
                                 </span>
                             </footer>
 
-                            {!!data?.errors.length && (
+                            {!!data?.errors?.length && (
                                 <div className="insights-data-error insights-data-error-muted">
-                                    {data.errors.slice(0, 3).map((item) => (
+                                    {(data.errors ?? []).slice(0, 3).map((item) => (
                                         <div key={`${item.sourceId ?? "source"}-${item.message}`}>
                                             {item.sourceId ? `${item.sourceId}: ` : ""}
                                             {item.message}
