@@ -147,10 +147,6 @@ function InsightsPage() {
                         label={appNavigation.health.label}
                     />
                 </nav>
-                <Link to={appNavigation.settings.path} className="app-nav-item insights-sidebar-settings">
-                    <span className={appNavigation.settings.icon} aria-hidden="true" />
-                    <span>{appNavigation.settings.label}</span>
-                </Link>
             </aside>
 
             <main className="insights-workspace" id="insights-workspace">

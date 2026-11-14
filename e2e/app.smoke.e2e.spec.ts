@@ -103,15 +103,22 @@ async function installApiMocks(page: Page) {
     });
 }
 
-test("renders the shared web shell and opens the settings page", async ({ page }) => {
+test("renders the shared web shell and opens the settings page from the tools menu", async ({ page }) => {
     await installApiMocks(page);
     await page.goto("/feed");
 
     await expect(page).toHaveTitle(/LatestNews/i);
     await expect(page.locator(".app-modern-header")).toHaveCount(0);
     await expect(page.locator(".app-modern-sidebar")).toBeVisible();
-    await expect(page.getByRole("link", { name: "设置", exact: true })).toBeVisible();
+    await expect(page.locator(".app-modern-sidebar .app-modern-sidebar-search")).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "主要导航" }).getByRole("link", { name: "设置" })).toHaveCount(
+        0
+    );
+    const menu = page.getByRole("button", { name: "打开菜单", exact: true });
+    await menu.focus();
+    await page.keyboard.press("Enter");
     const settingsLink = page.getByRole("link", { name: "设置", exact: true });
+    await expect(settingsLink).toBeVisible();
     await settingsLink.focus();
     await page.keyboard.press("Enter");
 
@@ -137,7 +144,6 @@ test("keeps navigation labels aligned with their destination pages", async ({ pa
         { path: "/feed", label: "统一 Feed", heading: "统一 Feed" },
         { path: "/history", label: "阅读历史", heading: "阅读历史" },
         { path: "/health", label: "数据源健康", heading: "数据源健康" },
-        { path: "/settings", label: "设置", heading: "设置" },
     ] as const;
 
     for (const destination of destinations) {

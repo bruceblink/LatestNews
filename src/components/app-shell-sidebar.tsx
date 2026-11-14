@@ -46,18 +46,6 @@ export function AppShellSidebar() {
             </nav>
             <div className="app-modern-sidebar-tools" aria-label="应用工具">
                 <HeaderActions className="app-modern-sidebar-actions" includeSearch={false} />
-                <Link
-                    to={appNavigation.settings.path}
-                    className={clsx(
-                        "app-nav-item",
-                        "app-modern-settings-link",
-                        isAppNavigationActive("settings", pathname) && "is-active"
-                    )}
-                    aria-current={isAppNavigationActive("settings", pathname) ? "page" : undefined}
-                >
-                    <span className={appNavigation.settings.icon} aria-hidden="true" />
-                    <span>{appNavigation.settings.label}</span>
-                </Link>
             </div>
         </aside>
     );

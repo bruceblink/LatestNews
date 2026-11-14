@@ -4,9 +4,11 @@ import clsx from "clsx";
 import { motion } from "framer-motion";
 import { useToast } from "~/hooks/useToast";
 import { PROJECT_URL } from "@shared/consts";
+import { Link } from "@tanstack/react-router";
 import { useRef, useState, useEffect } from "react";
 import { useAtom, useSetAtom, useAtomValue } from "jotai";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
+import { appNavigation } from "~/components/app-navigation";
 import { login, logout, useLoginState } from "~/hooks/useLogin";
 import { metadataSyncStatusAtom } from "~/atoms/syncStatusAtom";
 import { isSyncHubConfigured } from "~/services/synchub.service";
@@ -409,6 +411,12 @@ export function Menu() {
                                     <span className="i-ph:download-simple-duotone inline-block" aria-hidden="true" />
                                     <span>安装与下载</span>
                                 </button>
+                            </li>
+                            <li>
+                                <Link to={appNavigation.settings.path} className="header-menu-link">
+                                    <span className={appNavigation.settings.icon} aria-hidden="true" />
+                                    <span>{appNavigation.settings.label}</span>
+                                </Link>
                             </li>
                             {/* <ThemeToggle /> */}
                             <li>
