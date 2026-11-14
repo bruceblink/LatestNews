@@ -2427,6 +2427,226 @@ html.dark .app-header {
     }
 }
 
+/* 所有非洞察路由共用的应用壳层。页面内容继续保留各自的筛选和数据操作。 */
+.app-modern-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid #dde5eb;
+    background: rgb(255 255 255 / 94%);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 3px 14px rgb(29 54 77 / 4%);
+}
+.app-modern-header .header-inner {
+    grid-template-columns: 1fr auto;
+    max-width: none;
+    min-height: 64px;
+    padding: 0 28px;
+}
+.app-modern-header .header-brand,
+.app-modern-header .primary-nav {
+    display: none;
+}
+.app-modern-header .header-actions {
+    justify-self: end;
+}
+.app-modern-header .icon-button,
+.app-modern-header .header-search {
+    color: #627188;
+}
+.app-modern-header .header-search {
+    border-color: #dce5eb;
+    background: #fff;
+}
+.app-modern-content {
+    display: grid;
+    max-width: none;
+    min-height: calc(100vh - 64px);
+    grid-template-columns: 164px minmax(0, 1fr);
+    padding: 0;
+    background: #f7f9fb;
+}
+.app-modern-sidebar {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    display: flex;
+    height: calc(100vh - 64px);
+    flex-direction: column;
+    gap: 20px;
+    box-sizing: border-box;
+    padding: 22px 12px 16px;
+    border-right: 1px solid #dde5eb;
+    background: #fff;
+}
+.app-modern-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 7px;
+    color: #17243a;
+}
+.app-modern-brand img {
+    width: 31px;
+    height: 31px;
+    border-radius: 8px;
+}
+.app-modern-brand span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    line-height: 1.15;
+}
+.app-modern-brand strong { font-size: 15px; letter-spacing: -0.4px; }
+.app-modern-brand small { margin-top: 3px; color: #738095; font-size: 10px; }
+.app-modern-nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 10px;
+}
+.app-modern-nav-link {
+    display: flex;
+    min-height: 38px;
+    align-items: center;
+    gap: 11px;
+    padding: 0 10px;
+    border-radius: 8px;
+    color: #253248;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s, color 0.15s;
+}
+.app-modern-nav-link > span:first-child { color: #394961; font-size: 18px; }
+.app-modern-nav-link:hover { color: #087d78; background: #f0f8f7; }
+.app-modern-nav-link.is-active { color: #087d78; background: #dff4f1; box-shadow: inset 3px 0 0 #079a91; }
+.app-modern-nav-link.is-active > span:first-child { color: #079a91; }
+.app-modern-settings { border-top: 1px solid #dde5eb; border-radius: 0; padding-top: 15px; }
+.app-modern-column {
+    min-width: 0;
+    background: #f7f9fb;
+    color: #17243a;
+}
+.app-modern-column .app-main {
+    min-height: calc(100vh - 64px);
+    padding: 26px 32px 44px;
+}
+.app-modern-column .app-footer {
+    margin: 0 32px;
+    border-top-color: #dde5eb;
+    color: #778499;
+}
+.app-modern-column .page-stack { max-width: 1380px; gap: 18px; }
+.app-modern-column .surface-panel,
+.app-modern-column .feed-list-panel,
+.app-modern-column .history-sync-panel,
+.app-modern-column .history-tabs,
+.app-modern-column .health-page > .rounded-2xl,
+.app-modern-column .settings-page > * {
+    border-color: #dde5eb;
+    background: #fff;
+    box-shadow: 0 2px 8px rgb(25 48 71 / 3%);
+}
+.app-modern-column .surface-panel { border-radius: 12px; }
+.app-modern-column .page-stack h1,
+.app-modern-column h1,
+.app-modern-column h2 { color: #17243a; }
+.app-modern-column .text-zinc-800,
+.app-modern-column .text-zinc-700,
+.app-modern-column .text-zinc-600 { color: #253248; }
+.app-modern-column .text-zinc-500 { color: #738095; }
+.app-modern-column .feed-toolbar,
+.app-modern-column .history-page-header { padding: 20px 22px !important; }
+.app-modern-column .feed-mode-switch > button[aria-pressed="true"],
+.app-modern-column .feed-toolbar .bg-cyan-500 { color: #fff; background: #079a91; }
+.app-modern-column .feed-filters input,
+.app-modern-column .feed-filters select,
+.app-modern-column .history-sync-fields input,
+.app-modern-column select,
+.app-modern-column input {
+    border-color: #cfd9e1;
+    background: #fff;
+    color: #17243a;
+}
+.app-modern-column .feed-article,
+.app-modern-column .source-item-article { border-color: #edf0f2; }
+.app-modern-column .feed-article:hover,
+.app-modern-column .source-item-article:hover { background: #f4f8f9; }
+.app-modern-column .health-page .bg-base\/60,
+.app-modern-column .health-page .bg-base\/80,
+.app-modern-column .health-page .bg-base\/70 { border: 1px solid #dde5eb; background: #fff; }
+.app-modern-column .settings-page { max-width: 980px; margin: 0 auto; }
+.app-modern-column .settings-page .surface-panel { border-radius: 12px; }
+.app-modern-column .rounded-2xl { border-radius: 12px; }
+
+html.dark .app-modern-header {
+    border-bottom-color: #2a3545;
+    background: rgb(16 23 34 / 94%);
+    box-shadow: 0 3px 14px rgb(0 0 0 / 14%);
+}
+html.dark .app-modern-header .icon-button,
+html.dark .app-modern-header .header-search { color: #a1aec0; }
+html.dark .app-modern-header .header-search { border-color: #2a3545; background: #18212e; }
+html.dark .app-modern-content,
+html.dark .app-modern-column { background: #101722; }
+html.dark .app-modern-sidebar { border-right-color: #2a3545; background: #18212e; }
+html.dark .app-modern-brand,
+html.dark .app-modern-nav-link { color: #e6edf5; }
+html.dark .app-modern-brand small { color: #92a0b3; }
+html.dark .app-modern-nav-link > span:first-child { color: #a1aec0; }
+html.dark .app-modern-nav-link:hover { color: #66d5d3; background: #243142; }
+html.dark .app-modern-nav-link.is-active { color: #66d5d3; background: #1b363e; box-shadow: inset 3px 0 0 #66d5d3; }
+html.dark .app-modern-nav-link.is-active > span:first-child { color: #66d5d3; }
+html.dark .app-modern-settings { border-top-color: #2a3545; }
+html.dark .app-modern-column .surface-panel,
+html.dark .app-modern-column .feed-list-panel,
+html.dark .app-modern-column .history-sync-panel,
+html.dark .app-modern-column .history-tabs,
+html.dark .app-modern-column .health-page > .rounded-2xl,
+html.dark .app-modern-column .settings-page > * {
+    border-color: #2a3545;
+    background: #18212e;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 14%);
+}
+html.dark .app-modern-column .page-stack h1,
+html.dark .app-modern-column h1,
+html.dark .app-modern-column h2,
+html.dark .app-modern-column .text-zinc-800,
+html.dark .app-modern-column .text-zinc-700 { color: #e6edf5; }
+html.dark .app-modern-column .text-zinc-600,
+html.dark .app-modern-column .text-zinc-500 { color: #a1aec0; }
+html.dark .app-modern-column .feed-filters input,
+html.dark .app-modern-column .feed-filters select,
+html.dark .app-modern-column .history-sync-fields input,
+html.dark .app-modern-column select,
+html.dark .app-modern-column input { border-color: #3c4a5e; background: #1c2735; color: #e6edf5; }
+html.dark .app-modern-column .feed-article,
+html.dark .app-modern-column .source-item-article { border-color: #2a3545; }
+html.dark .app-modern-column .feed-article:hover,
+html.dark .app-modern-column .source-item-article:hover { background: #243142; }
+html.dark .app-modern-column .health-page .bg-base\/60,
+html.dark .app-modern-column .health-page .bg-base\/80,
+html.dark .app-modern-column .health-page .bg-base\/70 { border-color: #2a3545; background: #18212e; }
+
+@media (max-width: 767px) {
+    .app-modern-header .header-inner { min-height: 56px; padding: 0 14px; }
+    .app-modern-header .header-actions { gap: 2px; }
+    .app-modern-content { display: block; min-height: calc(100vh - 56px); }
+    .app-modern-sidebar { position: sticky; top: 56px; height: auto; flex-direction: row; align-items: center; gap: 10px; padding: 10px 14px; border-right: 0; border-bottom: 1px solid #dde5eb; }
+    .app-modern-brand { flex-shrink: 0; padding: 0; }
+    .app-modern-brand img { width: 29px; height: 29px; }
+    .app-modern-brand small { display: none; }
+    .app-modern-brand strong { font-size: 14px; }
+    .app-modern-nav { flex: 1; flex-direction: row; gap: 3px; overflow-x: auto; padding: 0; }
+    .app-modern-nav-link { min-height: 34px; flex-shrink: 0; gap: 5px; padding: 0 8px; font-size: 11px; }
+    .app-modern-nav-link > span:first-child { font-size: 15px; }
+    .app-modern-settings { min-height: 34px; border-top: 0; padding: 0 3px; }
+    .app-modern-settings > span:last-child { display: none; }
+    .app-modern-column .app-main { padding: 18px 14px 32px; }
+    .app-modern-column .app-footer { margin: 0 14px; }
+}
+
 /* 参考图对应的洞察工作区：独立使用浅色编辑式画布，不改变其他页面主题。 */
 .insights-root-header,
 .insights-root-footer {

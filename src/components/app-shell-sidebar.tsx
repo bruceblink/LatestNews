@@ -1,0 +1,78 @@
+import clsx from "clsx";
+import { Link, useRouterState } from "@tanstack/react-router";
+
+/** 统一应用侧栏，提供所有页面都可访问的主要功能入口。 */
+export function AppShellSidebar() {
+    const pathname = useRouterState({ select: (state) => state.location.pathname });
+    const active = (section: "home" | "insights" | "feed" | "history" | "health" | "settings") => {
+        if (section === "home") return pathname === "/";
+        if (section === "insights") return pathname === "/insights";
+        if (section === "feed") return pathname === "/feed" || pathname.startsWith("/c/");
+        return pathname === `/${section}`;
+    };
+
+    return (
+        <aside className="app-modern-sidebar" aria-label="主要导航">
+            <Link to="/insights" className="app-modern-brand" aria-label="LatestNews 首页">
+                <img src="/icon.svg" alt="" width="36" height="36" />
+                <span>
+                    <strong>LatestNews</strong>
+                    <small>新闻简阅</small>
+                </span>
+            </Link>
+            <nav className="app-modern-nav">
+                <ModernNavLink to="/" icon="i-ph:house-duotone" label="首页" active={active("home")} />
+                <ModernNavLink
+                    to="/insights"
+                    icon="i-ph:chart-line-up-duotone"
+                    label="阅读洞察"
+                    active={active("insights")}
+                />
+                <ModernNavLink
+                    to="/feed"
+                    search={{ q: undefined, scope: "hottest" }}
+                    icon="i-ph:fire-duotone"
+                    label="热点追踪"
+                    active={active("feed")}
+                />
+                <ModernNavLink to="/history" icon="i-ph:article-duotone" label="选题参考" active={active("history")} />
+                <ModernNavLink to="/health" icon="i-ph:stack-duotone" label="来源管理" active={active("health")} />
+            </nav>
+            <ModernNavLink
+                to="/settings"
+                icon="i-ph:gear-six-duotone"
+                label="设置"
+                active={active("settings")}
+                className="app-modern-settings"
+            />
+        </aside>
+    );
+}
+
+function ModernNavLink({
+    to,
+    search,
+    icon,
+    label,
+    active,
+    className,
+}: {
+    to: "/" | "/insights" | "/feed" | "/history" | "/health" | "/settings";
+    search?: { q?: string; scope?: "focus" | "hottest" | "realtime" | "broad" };
+    icon: string;
+    label: string;
+    active: boolean;
+    className?: string;
+}) {
+    return (
+        <Link
+            to={to}
+            search={search}
+            className={clsx("app-modern-nav-link", active && "is-active", className)}
+            aria-current={active ? "page" : undefined}
+        >
+            <span className={icon} aria-hidden="true" />
+            <span>{label}</span>
+        </Link>
+    );
+}
