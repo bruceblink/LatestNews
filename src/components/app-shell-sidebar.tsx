@@ -4,9 +4,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 /** 统一应用侧栏，提供所有页面都可访问的主要功能入口。 */
 export function AppShellSidebar() {
     const pathname = useRouterState({ select: (state) => state.location.pathname });
-    const active = (section: "home" | "insights" | "feed" | "history" | "health" | "settings") => {
+    const active = (section: "home" | "feed" | "history" | "health" | "settings") => {
         if (section === "home") return pathname === "/";
-        if (section === "insights") return pathname === "/insights";
         if (section === "feed") return pathname === "/feed" || pathname.startsWith("/c/");
         // 来源详情属于来源管理流程，保持侧栏在详情页也有明确的当前项。
         if (section === "health") return pathname === "/health" || pathname.startsWith("/source/");
@@ -24,12 +23,6 @@ export function AppShellSidebar() {
             </Link>
             <nav className="app-modern-nav">
                 <ModernNavLink to="/" icon="i-ph:house-duotone" label="首页" active={active("home")} />
-                <ModernNavLink
-                    to="/insights"
-                    icon="i-ph:chart-line-up-duotone"
-                    label="阅读洞察"
-                    active={active("insights")}
-                />
                 <ModernNavLink
                     to="/feed"
                     search={{ q: undefined, scope: "hottest" }}
@@ -59,7 +52,7 @@ function ModernNavLink({
     active,
     className,
 }: {
-    to: "/" | "/insights" | "/feed" | "/history" | "/health" | "/settings";
+    to: "/" | "/feed" | "/history" | "/health" | "/settings";
     search?: { q?: string; scope?: "focus" | "hottest" | "realtime" | "broad" };
     icon: string;
     label: string;

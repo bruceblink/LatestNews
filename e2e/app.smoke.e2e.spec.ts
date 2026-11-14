@@ -121,6 +121,8 @@ test("opens the reading insights workspace as the application home", async ({ pa
 
     await expect(page).toHaveURL(/\/insights$/);
     await expect(page.getByRole("heading", { name: /阅读洞察 Reading Insights/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: "阅读洞察", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "洞察", exact: true })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "选题参考", exact: true })).toBeVisible();
 });
 

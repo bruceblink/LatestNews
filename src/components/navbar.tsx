@@ -58,14 +58,6 @@ export function NavBar() {
                 <span>Feed</span>
             </Link>
             <Link
-                to="/insights"
-                className={clsx("nav-link", pathname === "/insights" && "is-active")}
-                aria-current={pathname === "/insights" ? "page" : undefined}
-            >
-                <span className="i-ph:chart-line-up-duotone" aria-hidden="true" />
-                <span>洞察</span>
-            </Link>
-            <Link
                 to="/history"
                 className={clsx("nav-link", pathname === "/history" && "is-active")}
                 aria-current={pathname === "/history" ? "page" : undefined}

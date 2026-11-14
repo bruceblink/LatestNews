@@ -121,8 +121,7 @@ function InsightsPage() {
                     </span>
                 </Link>
                 <nav className="insights-sidebar-nav" aria-label="主要导航">
-                    <InsightNavLink to="/" icon="i-ph:house-duotone" label="首页" />
-                    <InsightNavLink to="/insights" icon="i-ph:chart-line-up-duotone" label="阅读洞察" active />
+                    <InsightNavLink to="/" icon="i-ph:house-duotone" label="首页" active />
                     <InsightNavLink
                         to="/feed"
                         search={{ q: undefined, scope: "hottest" }}
@@ -292,7 +291,7 @@ function InsightNavLink({
     label,
     active = false,
 }: {
-    to: "/" | "/insights" | "/feed" | "/history" | "/health";
+    to: "/" | "/feed" | "/history" | "/health";
     search?: { q?: string; scope?: InsightScope };
     icon: string;
     label: string;
