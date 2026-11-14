@@ -111,12 +111,14 @@ test("renders the shared web shell and opens the settings page from the tools me
     await expect(page.locator(".app-modern-header")).toHaveCount(0);
     await expect(page.locator(".app-modern-sidebar")).toBeVisible();
     await expect(page.locator(".app-modern-sidebar .app-modern-sidebar-search")).toBeVisible();
-    await expect(page.getByRole("complementary", { name: "主要导航" }).getByRole("link", { name: "设置" })).toHaveCount(
-        0
-    );
+    const sidebar = page.getByRole("complementary", { name: "主要导航" });
+    await expect(sidebar.getByRole("link", { name: "设置" })).toHaveCount(0);
+    await expect(sidebar.getByRole("link", { name: "GitHub 仓库" })).toHaveCount(0);
+    await expect(sidebar.getByRole("button", { name: /切换到.*主题/ })).toHaveCount(0);
     const menu = page.getByRole("button", { name: "打开菜单", exact: true });
     await menu.focus();
     await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: "打开 GitHub 仓库", exact: true })).toHaveCount(0);
     const settingsLink = page.getByRole("link", { name: "设置", exact: true });
     await expect(settingsLink).toBeVisible();
     await settingsLink.focus();

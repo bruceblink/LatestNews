@@ -5,7 +5,6 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import clsx from "clsx";
 import { useSync } from "~/hooks/useSync.ts";
-import { Header } from "~/components/header";
 import { Footer } from "~/components/footer";
 import { Toast } from "~/components/common/toast";
 import { useSyncHub } from "~/hooks/useSyncHub.ts";
@@ -49,13 +48,6 @@ function RootComponent() {
                     <a className="skip-link" href="#main-content">
                         跳到主要内容
                     </a>
-                    {!isModernRoute && (
-                        <header className="app-header insights-root-header">
-                            <div className="header-inner">
-                                <Header />
-                            </div>
-                        </header>
-                    )}
                     <div
                         className={clsx("app-content", isInsightsRoute ? "insights-app-content" : "app-modern-content")}
                     >

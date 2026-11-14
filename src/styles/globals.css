@@ -2492,7 +2492,7 @@ html.dark .app-header {
     display: grid;
     max-width: none;
     min-height: 100vh;
-    grid-template-columns: 164px minmax(0, 1fr);
+    grid-template-columns: 216px minmax(0, 1fr);
     padding: 0;
     background: #f7f9fb;
 }
@@ -2503,9 +2503,9 @@ html.dark .app-header {
     display: flex;
     height: 100vh;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     box-sizing: border-box;
-    padding: 22px 12px 16px;
+    padding: 20px 14px 16px;
     border-right: 1px solid #dde5eb;
     background: #fff;
 }
@@ -2534,11 +2534,19 @@ html.dark .app-header {
     flex: 1;
     flex-direction: column;
     gap: 6px;
-    padding-top: 10px;
+    padding-top: 2px;
+}
+.app-modern-nav-label {
+    padding: 0 10px 4px;
+    color: #8793a4;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 .app-nav-item {
     display: flex;
-    min-height: 40px;
+    min-height: 42px;
     align-items: center;
     gap: 11px;
     padding: 0 10px;
@@ -2596,7 +2604,10 @@ html.dark .app-header {
     border-radius: 10px;
 }
 .app-modern-sidebar-actions .header-menu,
-.app-modern-sidebar-actions .header-menu > span { display: block; }
+.app-modern-sidebar-actions .header-menu > span { display: flex; }
+.app-modern-sidebar-actions .header-menu > span > .icon-button {
+    width: 100%;
+}
 .app-modern-sidebar-actions .header-menu-position {
     top: auto;
     right: auto;
@@ -2709,6 +2720,11 @@ html.dark .app-modern-column .health-page .bg-base\/60,
 html.dark .app-modern-column .health-page .bg-base\/80,
 html.dark .app-modern-column .health-page .bg-base\/70 { border-color: #2a3545; background: #18212e; }
 
+@media (min-width: 768px) and (max-width: 1120px) {
+    .app-modern-content { grid-template-columns: 184px minmax(0, 1fr); }
+    .app-modern-column .app-main { padding-inline: 24px; }
+}
+
 @media (max-width: 767px) {
     .app-modern-content { display: block; min-height: 100vh; }
     .app-modern-sidebar { position: sticky; top: 0; height: auto; flex-direction: row; align-items: center; gap: 10px; padding: 10px 14px; border-right: 0; border-bottom: 1px solid #dde5eb; }
@@ -2718,12 +2734,14 @@ html.dark .app-modern-column .health-page .bg-base\/70 { border-color: #2a3545; 
     .app-modern-brand strong { font-size: 14px; }
     .app-modern-sidebar-search { width: 34px; min-height: 34px; padding: 0; justify-content: center; }
     .app-modern-nav { flex: 1; flex-direction: row; gap: 3px; overflow-x: auto; padding: 0; }
+    .app-modern-nav-label { display: none; }
     .app-modern-nav-link { min-height: 34px; flex-shrink: 0; gap: 5px; padding: 0 8px; font-size: 11px; }
     .app-modern-nav-link > span:first-child { font-size: 15px; }
     .app-modern-sidebar-tools { padding-top: 0; border-top: 0; }
     .app-modern-sidebar-actions { flex-direction: row; align-items: center; gap: 2px; }
     .app-modern-sidebar-actions .icon-button,
     .app-modern-sidebar-actions .header-search { width: 34px; padding: 0; justify-content: center; }
+    .app-modern-sidebar-actions .header-menu > span > .icon-button { width: 34px; }
     .app-modern-sidebar-actions .header-menu-position { top: calc(100% + 8px); right: 0; bottom: auto; left: auto; }
     .app-modern-column .app-main { padding: 18px 14px 32px; }
     .app-modern-column .app-footer { margin: 0 14px; }

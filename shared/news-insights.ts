@@ -10,6 +10,9 @@ import {
 import type { NewsItem, SourceID, ColumnID, SourceResponse } from "./types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** 洞察时间显示和分桶统一使用中国标准时间（UTC+8）。 */
+export const NEWS_INSIGHTS_TIME_ZONE = "Asia/Shanghai";
+const NEWS_INSIGHTS_TIMEZONE_OFFSET_MS = 8 * 60 * 60 * 1000;
 const DEFAULT_HOT_LIMIT = 20;
 const DEFAULT_TOPIC_LIMIT = 20;
 const DEFAULT_WORD_LIMIT = 40;
@@ -26,6 +29,14 @@ const TREND_WINDOW_CONFIG = {
     },
 } as const;
 const TRACKING_QUERY_PATTERN = /^(utm_|spm$|from$|ref$|source$|share$|fbclid$|gclid$|igshid$|yclid$)/i;
+
+/** 按北京时间边界对时间戳向下取整，避免运行环境本地时区影响结果。 */
+function floorBucketStart(timestamp: number, bucketMs: number) {
+    return (
+        Math.floor((timestamp + NEWS_INSIGHTS_TIMEZONE_OFFSET_MS) / bucketMs) * bucketMs -
+        NEWS_INSIGHTS_TIMEZONE_OFFSET_MS
+    );
+}
 
 const DEFAULT_STOP_WORDS = new Set([
     "a",
@@ -430,8 +441,8 @@ export function createUpdateFrequency(
 ): InsightTimeBucket[] {
     const generatedAt = options.generatedAt ?? Date.now();
     const config = TREND_WINDOW_CONFIG[options.trendWindow ?? "24h"];
-    const firstBucketStart = Math.floor((generatedAt - config.durationMs) / config.bucketMs) * config.bucketMs;
-    const lastBucketStart = Math.floor(generatedAt / config.bucketMs) * config.bucketMs;
+    const firstBucketStart = floorBucketStart(generatedAt - config.durationMs, config.bucketMs);
+    const lastBucketStart = floorBucketStart(generatedAt, config.bucketMs);
     const buckets = createEmptyBuckets(firstBucketStart, lastBucketStart, config.bucketMs);
 
     for (const item of items) {
@@ -458,8 +469,8 @@ export function createKeywordTrends(
 ): KeywordTrend[] {
     const generatedAt = options.generatedAt ?? Date.now();
     const config = TREND_WINDOW_CONFIG[options.trendWindow ?? "24h"];
-    const firstBucketStart = Math.floor((generatedAt - config.durationMs) / config.bucketMs) * config.bucketMs;
-    const lastBucketStart = Math.floor(generatedAt / config.bucketMs) * config.bucketMs;
+    const firstBucketStart = floorBucketStart(generatedAt - config.durationMs, config.bucketMs);
+    const lastBucketStart = floorBucketStart(generatedAt, config.bucketMs);
     const buckets = createEmptyBuckets(firstBucketStart, lastBucketStart, config.bucketMs);
     const trends = new Map<string, MutableKeywordTrend>();
 

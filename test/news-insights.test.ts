@@ -188,6 +188,34 @@ describe("news insights", () => {
         expect(insights.updateFrequency.every((bucket) => bucket.endAt > bucket.startAt)).toBe(true);
     });
 
+    it("aligns insight time buckets to Beijing midnight and four-hour boundaries", () => {
+        const generatedAt = Date.parse("2026-07-05T08:30:00.000Z");
+        const item = {
+            id: "beijing-midnight",
+            title: "北京时间边界测试",
+            url: "https://news.example.com/beijing-midnight",
+            pubDate: Date.parse("2026-07-04T16:30:00.000Z"),
+        };
+        const response = createResponse("weibo" as SourceID, "Weibo", [item]);
+        const expectedBucketStart = Date.parse("2026-07-04T16:00:00.000Z");
+
+        const fourHourInsights = createNewsInsights([response], {
+            generatedAt,
+            trendWindow: "24h",
+        });
+        expect(fourHourInsights.updateFrequency.filter((bucket) => bucket.itemCount > 0)).toEqual([
+            expect.objectContaining({ startAt: expectedBucketStart }),
+        ]);
+
+        const dailyInsights = createNewsInsights([response], {
+            generatedAt,
+            trendWindow: "7d",
+        });
+        expect(dailyInsights.updateFrequency.filter((bucket) => bucket.itemCount > 0)).toEqual([
+            expect.objectContaining({ startAt: expectedBucketStart }),
+        ]);
+    });
+
     it("omits hidden URLs from rankings and summaries", () => {
         const insights = createNewsInsights(
             [

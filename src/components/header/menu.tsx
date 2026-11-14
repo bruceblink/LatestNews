@@ -33,7 +33,7 @@ import {
 
 import { InstallationGuide } from "./installation-guide";
 
-export function Menu() {
+export function Menu({ includeRepositoryActions = true }: { includeRepositoryActions?: boolean } = {}) {
     const { loggedIn, userInfo, enableLogin } = useLoginState();
     const [shown, show] = useState(false);
     const [installationOpen, setInstallationOpen] = useState(false);
@@ -418,31 +418,34 @@ export function Menu() {
                                     <span>{appNavigation.settings.label}</span>
                                 </Link>
                             </li>
-                            {/* <ThemeToggle /> */}
-                            <li>
-                                <button
-                                    type="button"
-                                    onClick={() => window.open(PROJECT_URL, "_blank", "noopener,noreferrer")}
-                                    className="cursor-pointer [&_*]:cursor-pointer transition-all"
-                                >
-                                    <span className="i-ph:github-logo-duotone inline-block" />
-                                    <span>打开 GitHub 仓库</span>
-                                </button>
-                            </li>
-                            <li className="flex gap-2 items-center">
-                                <a href={`${PROJECT_URL}`}>
-                                    <img
-                                        alt="GitHub stars badge"
-                                        src="https://img.shields.io/github/stars/bruceblink/LatestNews?logo=github&style=flat&labelColor=%235e3c40&color=%23614447"
-                                    />
-                                </a>
-                                <a href={`${PROJECT_URL}/fork`}>
-                                    <img
-                                        alt="GitHub forks badge"
-                                        src="https://img.shields.io/github/forks/bruceblink/LatestNews?logo=github&style=flat&labelColor=%235e3c40&color=%23614447"
-                                    />
-                                </a>
-                            </li>
+                            {includeRepositoryActions && (
+                                <>
+                                    <li>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.open(PROJECT_URL, "_blank", "noopener,noreferrer")}
+                                            className="cursor-pointer [&_*]:cursor-pointer transition-all"
+                                        >
+                                            <span className="i-ph:github-logo-duotone inline-block" />
+                                            <span>打开 GitHub 仓库</span>
+                                        </button>
+                                    </li>
+                                    <li className="flex gap-2 items-center">
+                                        <a href={`${PROJECT_URL}`}>
+                                            <img
+                                                alt="GitHub stars badge"
+                                                src="https://img.shields.io/github/stars/bruceblink/LatestNews?logo=github&style=flat&labelColor=%235e3c40&color=%23614447"
+                                            />
+                                        </a>
+                                        <a href={`${PROJECT_URL}/fork`}>
+                                            <img
+                                                alt="GitHub forks badge"
+                                                src="https://img.shields.io/github/forks/bruceblink/LatestNews?logo=github&style=flat&labelColor=%235e3c40&color=%23614447"
+                                            />
+                                        </a>
+                                    </li>
+                                </>
+                            )}
                         </ol>
                     </motion.div>
                 </div>

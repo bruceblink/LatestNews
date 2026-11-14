@@ -25,6 +25,7 @@ import { useReadingState } from "~/hooks/useReadingState";
 import { getNewsInsightsCacheKey } from "@shared/source-api";
 import { fetchNewsInsights } from "~/services/source.service";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { NEWS_INSIGHTS_TIME_ZONE } from "@shared/news-insights";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
 import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
@@ -322,7 +323,7 @@ function InsightNavLink({
     );
 }
 
-/** 显示按 UTC 时间桶统计的发文量，并保留热点、峰值和回落的直接标注。 */
+/** 显示按北京时间（UTC+8）时间桶统计的发文量，并保留热点、峰值和回落的直接标注。 */
 function UpdateFrequencyPanel({
     buckets,
     trendWindow,
@@ -428,7 +429,7 @@ function UpdateFrequencyPanel({
                     </div>
                     <div className="insights-chart-footnote">
                         <span>共 {totalCount} 条具有发布时间的内容</span>
-                        <span>时间桶按 UTC 对齐</span>
+                        <span>时间桶按北京时间（UTC+8）对齐</span>
                     </div>
                 </>
             ) : (
@@ -822,14 +823,23 @@ function getScopeSources(scope: InsightScope, focusSources: SourceID[]) {
 }
 
 function formatTrendBucketLabel(startAt: number, trendWindow: InsightTrendWindow) {
-    const date = new Date(startAt);
-    return trendWindow === "7d"
-        ? `${date.getUTCMonth() + 1}/${date.getUTCDate()}`
-        : `${String(date.getUTCHours()).padStart(2, "0")}:00`;
+    const parts = new Map(
+        new Intl.DateTimeFormat("zh-CN", {
+            timeZone: NEWS_INSIGHTS_TIME_ZONE,
+            month: "numeric",
+            day: "numeric",
+            hour: "2-digit",
+            hourCycle: "h23",
+        })
+            .formatToParts(new Date(startAt))
+            .map(({ type, value }) => [type, value])
+    );
+    return trendWindow === "7d" ? `${parts.get("month")}/${parts.get("day")}` : `${parts.get("hour")}:00`;
 }
 
 function formatUpdatedAt(value: number) {
     return new Intl.DateTimeFormat("zh-CN", {
+        timeZone: NEWS_INSIGHTS_TIME_ZONE,
         month: "2-digit",
         day: "2-digit",
         hour: "2-digit",
