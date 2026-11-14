@@ -327,8 +327,8 @@ importers:
       '@rollup/pluginutils':
         specifier: ^5.5.1
         version: 5.5.1(rollup@4.65.0)
-      '@tanstack/router-devtools':
-        specifier: ^1.167.2
+      '@tanstack/react-router-devtools':
+        specifier: 1.167.2
         version: 1.167.2(@tanstack/react-router@1.170.46(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@tanstack/router-core@1.171.39)(csstype@3.2.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/router-plugin':
         specifier: ^1.168.48
@@ -2595,18 +2595,6 @@ packages:
     peerDependencies:
       '@tanstack/router-core': ^1.171.30
       csstype: ^3.0.10
-    peerDependenciesMeta:
-      csstype:
-        optional: true
-
-  '@tanstack/router-devtools@1.167.2':
-    resolution: {integrity: sha512-sBvc6KYUAkICtLxy1xcO2EN59Z91xw24oeZW8SWSklqmrxn56Nkv8CkJfx8/sNUbQm3Y8Iu8vlRaVxu4IJUFoQ==}
-    engines: {node: '>=20.19'}
-    peerDependencies:
-      '@tanstack/react-router': ^1.170.36
-      csstype: ^3.0.10
-      react: '>=18.0.0 || >=19.0.0'
-      react-dom: '>=18.0.0 || >=19.0.0'
     peerDependenciesMeta:
       csstype:
         optional: true
@@ -8633,17 +8621,6 @@ snapshots:
       goober: 2.1.19(csstype@3.2.3)
     optionalDependencies:
       csstype: 3.2.3
-
-  '@tanstack/router-devtools@1.167.2(@tanstack/react-router@1.170.46(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@tanstack/router-core@1.171.39)(csstype@3.2.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@tanstack/react-router': 1.170.46(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tanstack/react-router-devtools': 1.167.2(@tanstack/react-router@1.170.46(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@tanstack/router-core@1.171.39)(csstype@3.2.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-    optionalDependencies:
-      csstype: 3.2.3
-    transitivePeerDependencies:
-      - '@tanstack/router-core'
 
   '@tanstack/router-generator@1.167.46(supports-color@7.2.0)':
     dependencies:

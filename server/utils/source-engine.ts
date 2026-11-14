@@ -6,8 +6,6 @@ import { normalizeNewsItemsWithQuality } from "@shared/news-item-schema";
 
 import { createCrawlerTaskQueue } from "../../crawler-platform/host/task-queue";
 
-export type { SourceDescriptor, SourceAdapterKind } from "@shared/source-adapter";
-
 export interface SourceExecutionContext {
     sourceId: SourceID;
     signal: AbortSignal;

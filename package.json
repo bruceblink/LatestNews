@@ -108,7 +108,7 @@
         "@playwright/test": "^1.64.1",
         "@resvg/resvg-js": "^2.6.2",
         "@rollup/pluginutils": "^5.5.1",
-        "@tanstack/router-devtools": "^1.167.2",
+        "@tanstack/react-router-devtools": "1.167.2",
         "@tanstack/router-plugin": "^1.168.48",
         "@types/node": "22.20.5",
         "@types/react": "^18.3.31",
