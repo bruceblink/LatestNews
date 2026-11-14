@@ -8,6 +8,8 @@ export function AppShellSidebar() {
         if (section === "home") return pathname === "/";
         if (section === "insights") return pathname === "/insights";
         if (section === "feed") return pathname === "/feed" || pathname.startsWith("/c/");
+        // 来源详情属于来源管理流程，保持侧栏在详情页也有明确的当前项。
+        if (section === "health") return pathname === "/health" || pathname.startsWith("/source/");
         return pathname === `/${section}`;
     };
 
