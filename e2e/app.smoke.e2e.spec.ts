@@ -103,9 +103,9 @@ async function installApiMocks(page: Page) {
     });
 }
 
-test("renders the web shell and opens the shared settings panel", async ({ page }) => {
+test("renders the shared web shell and opens the settings panel", async ({ page }) => {
     await installApiMocks(page);
-    await page.goto("/");
+    await page.goto("/feed");
 
     await expect(page).toHaveTitle(/LatestNews/i);
     await expect(page.getByRole("button", { name: "打开设置" })).toBeVisible();
@@ -113,6 +113,15 @@ test("renders the web shell and opens the shared settings panel", async ({ page 
 
     await expect(page.getByRole("dialog")).toContainText("设置");
     await expect(page.getByText("当前运行在 Web 版本。数据源地址由构建变量")).toBeVisible();
+});
+
+test("opens the reading insights workspace as the application home", async ({ page }) => {
+    await installApiMocks(page);
+    await page.goto("/");
+
+    await expect(page).toHaveURL(/\/insights$/);
+    await expect(page.getByRole("heading", { name: /阅读洞察 Reading Insights/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: "选题参考", exact: true })).toBeVisible();
 });
 
 test("keeps the source search dialog centered in the viewport", async ({ page }) => {
@@ -185,10 +194,12 @@ test("scrolls a selected mobile navigation link into view", async ({ page }) => 
     await page.setViewportSize({ width: 390, height: 844 });
     await installApiMocks(page);
     await page.goto("/");
-    await page.getByRole("link", { name: "选题参考", exact: true }).click();
+    await page.locator(".insights-sidebar").getByRole("link", { name: "选题参考", exact: true }).click();
 
     await expect(page).toHaveURL(/\/history$/);
-    await expect(page.getByRole("link", { name: "选题参考", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(
+        page.getByRole("complementary", { name: "主要导航" }).getByRole("link", { name: "选题参考", exact: true })
+    ).toHaveAttribute("aria-current", "page");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
@@ -202,7 +213,7 @@ async function openInstallationGuide(page: Page) {
 
 test("opens installation instructions by keyboard and restores focus when closed", async ({ page }) => {
     await installApiMocks(page);
-    await page.goto("/");
+    await page.goto("/feed");
     const guide = await openInstallationGuide(page);
     await expect(guide).toBeVisible();
     await expect(guide.getByRole("link", { name: "查看已发布版本" })).toHaveAttribute(
@@ -228,7 +239,7 @@ test.describe("mobile installation", () => {
     test("keeps installation steps readable in a narrow touch viewport", async ({ page }) => {
         await page.setViewportSize({ width: 375, height: 812 });
         await installApiMocks(page);
-        await page.goto("/");
+        await page.goto("/feed");
         await page.getByRole("button", { name: "打开菜单", exact: true }).tap();
         await page.getByRole("button", { name: "安装与下载", exact: true }).tap();
         const guide = page.getByRole("dialog", { name: "安装与下载" });
@@ -246,7 +257,7 @@ for (const outcome of ["accepted", "dismissed", "error"] as const) {
         const errors: Error[] = [];
         page.on("pageerror", (error) => errors.push(error));
         await installApiMocks(page);
-        await page.goto("/");
+        await page.goto("/feed");
         const guide = await openInstallationGuide(page);
         await guide.getByRole("tab", { name: "浏览器应用", exact: true }).click();
         await page.evaluate((result) => {
@@ -286,7 +297,7 @@ test("recognizes an already running standalone browser app", async ({ page }) =>
         };
     });
     await installApiMocks(page);
-    await page.goto("/");
+    await page.goto("/feed");
     const guide = await openInstallationGuide(page);
     await guide.getByRole("tab", { name: "浏览器应用", exact: true }).click();
     await expect(guide).toContainText("当前已在浏览器应用中运行，或已完成安装。");
