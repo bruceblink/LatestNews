@@ -26,7 +26,7 @@ ENV HTTP_PROXY=${HTTP_PROXY} \
 # `--secret id=build-ca`; ordinary builds continue with the image CA bundle.
 RUN --mount=type=secret,id=build-ca,target=/tmp/build-ca.crt,required=false \
     sh -c 'if [ -f /tmp/build-ca.crt ]; then cat /tmp/build-ca.crt >> /etc/ssl/certs/ca-certificates.crt; fi; apk add --no-cache python3 make g++'
-RUN npm install --global pnpm@12.16.1
+RUN npm install --global pnpm@12.21.0
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches ./patches
 # The web server build does not use the Electron runtime binary.
