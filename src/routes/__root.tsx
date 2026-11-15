@@ -11,11 +11,12 @@ import { useSyncHub } from "~/hooks/useSyncHub.ts";
 import { useOnReload } from "~/hooks/useOnReload.ts";
 import { SearchBar } from "~/components/common/search-bar";
 import { usePWA, PWAStatusContext } from "~/hooks/usePWA.ts";
-import { AppShellSidebar } from "~/components/app-shell-sidebar";
+import { AppShellHeader } from "~/components/app-shell-header";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { DesktopUpdateNotice } from "~/components/desktop-update-notice";
 import { GlobalOverlayScrollbar } from "~/components/common/overlay-scrollbar";
+import { AppShellSidebar, AppMobileNavigation } from "~/components/app-shell-sidebar";
 import { Outlet, Navigate, createRootRouteWithContext } from "@tanstack/react-router";
 import { OfflineReadingSnapshotContext, usePersistOfflineReadingSnapshot } from "~/hooks/useOfflineReadingSnapshot.ts";
 
@@ -50,6 +51,7 @@ function RootComponent() {
                     <div className="app-content app-modern-content">
                         <AppShellSidebar />
                         <div className="app-modern-column">
+                            <AppShellHeader />
                             <DesktopUpdateNotice />
                             <PwaStatusBanner
                                 isOffline={pwa.isOffline}
@@ -65,11 +67,12 @@ function RootComponent() {
                                 <Footer />
                             </footer>
                         </div>
+                        <AppMobileNavigation />
                     </div>
                 </GlobalOverlayScrollbar>
                 <Toast />
                 <SearchBar />
-                {import.meta.env.DEV && (
+                {import.meta.env.DEV && import.meta.env.VITE_DEVTOOLS === "true" && (
                     <>
                         <ReactQueryDevtools buttonPosition="bottom-left" />
                         <TanStackRouterDevtools position="bottom-right" />
@@ -113,11 +116,7 @@ function PwaStatusBanner({
           : "已切回在线内容拉取策略，稍后会自动补齐最新资讯。";
 
     return (
-        <section
-            className="mb-3 flex flex-col gap-2 rounded-xl bg-blue-500/6 dark:bg-cyan-500/5 px-4 py-3 shadow shadow-blue-500/10 dark:shadow-cyan-500/10 border border-blue-500/20 dark:border-cyan-500/15 md:flex-row md:items-center md:justify-between"
-            role="status"
-            data-test-id="web-update-notice"
-        >
+        <section className="update-notice" role="status" data-test-id="web-update-notice">
             <div className="flex items-start gap-3">
                 <span className={clsx("mt-0.5 text-lg", iconClass)} />
                 <div>
@@ -126,11 +125,7 @@ function PwaStatusBanner({
                 </div>
             </div>
             {needRefresh && (
-                <button
-                    type="button"
-                    className="rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400"
-                    onClick={() => void onUpdate()}
-                >
+                <button type="button" className="primary-button" onClick={() => void onUpdate()}>
                     立即更新
                 </button>
             )}

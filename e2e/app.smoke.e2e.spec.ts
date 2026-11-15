@@ -1,5 +1,22 @@
 import { test, expect, type Page } from "@playwright/test";
 
+type AuthUser = {
+    id: number;
+    username: string;
+    email?: string;
+    avatar?: string;
+    roles: string[];
+};
+
+type ApiMockOptions = {
+    enableLogin?: boolean;
+    user?: AuthUser | null;
+    holdEnableLogin?: boolean;
+    failFirstEnableLogin?: boolean;
+    holdEnableLoginRetry?: boolean;
+    holdAuth?: boolean;
+};
+
 const sourceHealth = {
     updatedAt: Date.parse("2026-10-24T00:00:00.000Z"),
     total: 1,
@@ -25,10 +42,69 @@ const sourceHealth = {
     ],
 };
 
-async function installApiMocks(page: Page) {
+async function installApiMocks(page: Page, options: ApiMockOptions = {}) {
+    let markEnableLoginStarted!: () => void;
+    let releaseEnableLogin!: () => void;
+    let markEnableLoginRetryStarted!: () => void;
+    let releaseEnableLoginRetry!: () => void;
+    let markAuthStarted!: () => void;
+    let releaseAuth!: () => void;
+    let enableLoginHeld = false;
+    let enableLoginRetryHeld = false;
+    let enableLoginRequests = 0;
+    let authHeld = false;
+    const enableLoginRequestStarted = new Promise<void>((resolve) => {
+        markEnableLoginStarted = resolve;
+    });
+    const enableLoginGate = new Promise<void>((resolve) => {
+        releaseEnableLogin = resolve;
+    });
+    const enableLoginRetryStarted = new Promise<void>((resolve) => {
+        markEnableLoginRetryStarted = resolve;
+    });
+    const enableLoginRetryGate = new Promise<void>((resolve) => {
+        releaseEnableLoginRetry = resolve;
+    });
+    const authRequestStarted = new Promise<void>((resolve) => {
+        markAuthStarted = resolve;
+    });
+    const authGate = new Promise<void>((resolve) => {
+        releaseAuth = resolve;
+    });
+
     await page.route("**/api/**", async (route) => {
         const url = new URL(route.request().url());
         const pathname = url.pathname;
+        if (pathname.endsWith("/api/me")) {
+            if (options.holdAuth) {
+                authHeld = true;
+                markAuthStarted();
+                await authGate;
+            }
+            await route.fulfill({
+                json: options.user ? { status: "ok", data: options.user } : { status: "unauthenticated" },
+            });
+            return;
+        }
+        if (pathname.endsWith("/enable-login")) {
+            enableLoginRequests += 1;
+            if (options.holdEnableLogin) {
+                enableLoginHeld = true;
+                markEnableLoginStarted();
+                await enableLoginGate;
+            }
+            if (options.failFirstEnableLogin && enableLoginRequests === 1) {
+                await route.fulfill({ status: 503, json: { error: "temporarily unavailable" } });
+                return;
+            }
+            if (options.holdEnableLoginRetry && enableLoginRequests > 1) {
+                enableLoginRetryHeld = true;
+                markEnableLoginRetryStarted();
+                await enableLoginRetryGate;
+            }
+            await route.fulfill({ json: { enable: options.enableLogin ?? true } });
+            return;
+        }
         if (pathname.endsWith("/s/insights")) {
             const now = Date.now();
             await route.fulfill({
@@ -163,25 +239,38 @@ async function installApiMocks(page: Page) {
         }
         await route.fulfill({ json: { data: [], errors: [] } });
     });
+
+    return {
+        enableLoginRequestStarted,
+        enableLoginRetryStarted,
+        authRequestStarted,
+        releaseEnableLogin: () => {
+            if (enableLoginHeld) releaseEnableLogin();
+        },
+        releaseAuth: () => {
+            if (authHeld) releaseAuth();
+        },
+        releaseEnableLoginRetry: () => {
+            if (enableLoginRetryHeld) releaseEnableLoginRetry();
+        },
+    };
 }
 
-test("renders the shared web shell and opens the settings page from the tools menu", async ({ page }) => {
+test("renders the shared web shell and exposes a direct desktop settings entry", async ({ page }) => {
     await installApiMocks(page);
     await page.goto("/feed");
 
     await expect(page).toHaveTitle(/LatestNews/i);
     await expect(page.locator(".app-modern-header")).toHaveCount(0);
     await expect(page.locator(".app-modern-sidebar")).toBeVisible();
-    await expect(page.locator(".app-modern-sidebar .app-modern-sidebar-search")).toBeVisible();
+    await expect(page.locator(".app-modern-sidebar .app-shell-search")).toBeVisible();
     const sidebar = page.getByRole("complementary", { name: "主要导航" });
-    await expect(sidebar.getByRole("link", { name: "设置" })).toHaveCount(0);
     await expect(sidebar.getByRole("link", { name: "GitHub 仓库" })).toHaveCount(0);
-    await expect(sidebar.getByRole("button", { name: /切换到.*主题/ })).toHaveCount(0);
-    const menu = page.getByRole("button", { name: "打开菜单", exact: true });
-    await menu.focus();
-    await page.keyboard.press("Enter");
-    await expect(page.getByRole("button", { name: "打开 GitHub 仓库", exact: true })).toHaveCount(0);
-    const settingsLink = page.getByRole("link", { name: "设置", exact: true });
+    await expect(sidebar.getByRole("button", { name: /切换到.*主题/ })).toBeVisible();
+    const settingsLink = sidebar.locator(".app-shell-account-desktop-tools").getByRole("link", {
+        name: "设置",
+        exact: true,
+    });
     await expect(settingsLink).toBeVisible();
     await settingsLink.focus();
     await page.keyboard.press("Enter");
@@ -190,12 +279,113 @@ test("renders the shared web shell and opens the settings page from the tools me
     await expect(page.getByRole("heading", { name: "设置", level: 1 })).toBeVisible();
 });
 
+test("keeps the account menu accurate while authentication and login capability are loading", async ({ page }) => {
+    const mocks = await installApiMocks(page, { holdAuth: true, holdEnableLogin: true });
+    await page.goto("/feed");
+    await Promise.all([mocks.authRequestStarted, mocks.enableLoginRequestStarted]);
+
+    const account = page.getByRole("button", { name: "正在检查登录状态", exact: true });
+    await expect(account).toHaveAttribute("aria-busy", "true");
+    await account.click();
+    const menu = page.locator("#account-dropdown");
+    await expect(menu).toBeVisible();
+    await expect(menu.locator(".app-shell-account-heading")).toContainText("正在检查登录状态");
+    await expect(menu.getByRole("button", { name: "使用 GitHub 登录", exact: true })).toHaveCount(0);
+    await expect(menu.getByRole("button", { name: "退出登录", exact: true })).toHaveCount(0);
+
+    mocks.releaseAuth();
+    mocks.releaseEnableLogin();
+    const loginAccount = page.locator(".app-shell-account-trigger");
+    await expect(loginAccount).toBeVisible();
+    await expect(loginAccount).toHaveAccessibleName("使用 GitHub 登录");
+    await expect(loginAccount).toHaveAttribute("aria-busy", "false");
+    await expect(menu.locator(".app-shell-account-heading")).toContainText("未登录");
+    await expect(menu.locator(".app-shell-account-heading")).not.toContainText("已登录");
+    await expect(menu.getByRole("button", { name: "使用 GitHub 登录", exact: true })).toBeVisible();
+});
+
+test.describe("login capability retry", () => {
+    test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+
+    test("allows retrying a failed login capability check", async ({ page }) => {
+        const mocks = await installApiMocks(page, { failFirstEnableLogin: true, holdEnableLoginRetry: true });
+        await page.goto("/feed");
+
+        const account = page.getByRole("button", { name: "登录状态暂不可用", exact: true });
+        await expect(account).toBeVisible();
+        await account.tap();
+        const menu = page.locator("#account-dropdown");
+        await expect(menu).toBeVisible();
+        await expect(menu.getByRole("button", { name: "重新检查登录状态", exact: true })).toBeVisible();
+        await expect(menu.getByRole("button", { name: "使用 GitHub 登录", exact: true })).toHaveCount(0);
+
+        await menu.getByRole("button", { name: "重新检查登录状态", exact: true }).tap();
+        await mocks.enableLoginRetryStarted;
+        await expect(page.locator(".app-shell-account-trigger")).toHaveAttribute("aria-busy", "true");
+        await expect(page.locator(".app-shell-account-trigger")).toHaveAccessibleName("正在检查登录状态");
+
+        await page.locator(".app-shell-account-trigger").tap();
+        await expect(menu.getByRole("button", { name: "使用 GitHub 登录", exact: true })).toHaveCount(0);
+        mocks.releaseEnableLoginRetry();
+        await expect(menu.locator(".app-shell-account-heading")).toContainText("未登录");
+        await expect(menu.getByRole("button", { name: "使用 GitHub 登录", exact: true })).toBeVisible();
+    });
+});
+
+test("does not show a login action when the login capability is disabled", async ({ page }) => {
+    await installApiMocks(page, { enableLogin: false });
+    await page.goto("/feed");
+
+    const account = page.getByRole("button", { name: "账户不可用", exact: true });
+    await expect(account).toBeVisible();
+    await account.click();
+    const menu = page.locator("#account-dropdown");
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole("button", { name: "使用 GitHub 登录", exact: true })).toHaveCount(0);
+    await expect(menu.getByRole("button", { name: "退出登录", exact: true })).toHaveCount(0);
+    await expect(page.locator(".app-shell-account-desktop-tools").getByRole("link", { name: "设置" })).toBeVisible();
+});
+
+test("shows the real username and falls back when the user's avatar fails", async ({ page }) => {
+    const username = "真实测试读者";
+    await page.route("https://avatar.example.test/broken.png**", (route) =>
+        route.fulfill({ status: 404, body: "missing avatar" })
+    );
+    await installApiMocks(page, {
+        user: {
+            id: 42,
+            username,
+            email: "reader@example.test",
+            avatar: "https://avatar.example.test/broken.png",
+            roles: ["user"],
+        },
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/feed");
+
+    const account = page.getByRole("button", { name: `打开用户菜单：${username}`, exact: true });
+    await expect(account).toContainText(username);
+    await expect(account).toContainText("reader@example.test");
+    await expect(account).not.toContainText("Vercel");
+    await expect(account.locator(".app-shell-account-fallback")).toHaveText("真");
+
+    await account.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#account-dropdown")).toBeVisible();
+    await expect(
+        page.locator("#account-dropdown").getByRole("button", { name: "退出登录", exact: true })
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#account-dropdown")).toHaveCount(0);
+    await expect(account).toBeFocused();
+});
+
 test("opens the reading insights workspace as the application home", async ({ page }) => {
     await installApiMocks(page);
     await page.goto("/");
 
     await expect(page).toHaveURL(/\/insights$/);
-    await expect(page.getByRole("heading", { name: /阅读洞察 Reading Insights/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "阅读洞察", level: 1 })).toBeVisible();
     await expect(page.getByRole("link", { name: "阅读洞察", exact: true })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "洞察", exact: true })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "阅读历史", exact: true })).toBeVisible();
@@ -287,29 +477,162 @@ test("keeps mobile feed filters compact without horizontal overflow", async ({ p
     expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
-test("scrolls a selected mobile navigation link into view", async ({ page }) => {
+test("navigates with the selected mobile navigation link without horizontal overflow", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await installApiMocks(page);
     await page.goto("/");
     await page
-        .getByRole("complementary", { name: "主要导航" })
+        .getByRole("navigation", { name: "移动端主要导航" })
         .getByRole("link", { name: "阅读历史", exact: true })
         .click();
 
     await expect(page).toHaveURL(/\/history$/);
     await expect(
-        page.getByRole("complementary", { name: "主要导航" }).getByRole("link", { name: "阅读历史", exact: true })
+        page.getByRole("navigation", { name: "移动端主要导航" }).getByRole("link", {
+            name: "阅读历史",
+            exact: true,
+        })
     ).toHaveAttribute("aria-current", "page");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
+test("keeps the current theme after reloading settings", async ({ page }) => {
+    await installApiMocks(page);
+    await page.goto("/settings");
+    await page.getByRole("button", { name: "深色", exact: true }).click();
+    await expect(page.locator("html")).toHaveClass(/dark/);
+
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "设置", level: 1 })).toBeVisible();
+    await expect(page.locator("html")).toHaveClass(/dark/);
+    await expect(page.getByRole("button", { name: "深色", exact: true })).toHaveAttribute("aria-pressed", "true");
+});
+
+test.describe("mobile account navigation", () => {
+    test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+
+    test("keeps account and bottom navigation touch targets large and returns focus after Escape", async ({ page }) => {
+        await installApiMocks(page, {
+            user: {
+                id: 42,
+                username: "真实移动读者",
+                email: "mobile@example.test",
+                roles: ["user"],
+            },
+        });
+        await page.goto("/insights");
+
+        const navigation = page.getByRole("navigation", { name: "移动端主要导航" });
+        const navigationLinks = navigation.getByRole("link");
+        await expect(navigationLinks).toHaveCount(4);
+        await expect(navigation.getByRole("link", { name: "首页", exact: true })).toHaveAttribute(
+            "aria-current",
+            "page"
+        );
+        await navigation.getByRole("link", { name: "阅读历史", exact: true }).tap();
+        await expect(page).toHaveURL(/\/history$/);
+        await expect(navigation.getByRole("link", { name: "阅读历史", exact: true })).toHaveAttribute(
+            "aria-current",
+            "page"
+        );
+        await navigation.getByRole("link", { name: "首页", exact: true }).tap();
+        await expect(page).toHaveURL(/\/insights$/);
+
+        const account = page.getByRole("button", { name: "打开用户菜单：真实移动读者", exact: true });
+        const targetSizes = await Promise.all(
+            [account, ...(await navigationLinks.all())].map((target) =>
+                target.evaluate((element) => {
+                    const rect = element.getBoundingClientRect();
+                    return { width: rect.width, height: rect.height };
+                })
+            )
+        );
+        expect(targetSizes.every(({ width, height }) => width >= 44 && height >= 44)).toBe(true);
+
+        await account.tap();
+        const menu = page.locator("#account-dropdown");
+        await expect(menu).toBeVisible();
+        const accountHeading = menu.locator(".app-shell-account-heading");
+        await expect(accountHeading).toContainText("真实移动读者");
+        await expect(accountHeading).toContainText("mobile@example.test");
+        await expect(accountHeading).toContainText("已登录");
+        const mobileActions = [
+            menu.getByRole("link", { name: "设置", exact: true }),
+            menu.getByRole("button", { name: "安装与下载", exact: true }),
+            menu.getByRole("button", { name: "切换到深色主题", exact: true }),
+            menu.getByRole("button", { name: "搜索来源", exact: true }),
+            menu.getByRole("link", { name: "我的关注", exact: true }),
+        ];
+        await expect
+            .poll(async () =>
+                Math.min(
+                    ...(await Promise.all(
+                        mobileActions.map((target) =>
+                            target.evaluate((element) => element.getBoundingClientRect().height)
+                        )
+                    ))
+                )
+            )
+            .toBeGreaterThanOrEqual(44);
+        const mobileActionSizes = await Promise.all(
+            mobileActions.map(async (target) => {
+                await expect(target).toBeVisible();
+                return target.evaluate((element) => {
+                    const rect = element.getBoundingClientRect();
+                    return { width: rect.width, height: rect.height };
+                });
+            })
+        );
+        expect(mobileActionSizes).toEqual([
+            { width: expect.any(Number), height: expect.any(Number) },
+            { width: expect.any(Number), height: expect.any(Number) },
+            { width: expect.any(Number), height: expect.any(Number) },
+            { width: expect.any(Number), height: expect.any(Number) },
+            { width: expect.any(Number), height: expect.any(Number) },
+        ]);
+        expect(
+            mobileActionSizes.every(({ width, height }) => width >= 44 && height >= 44),
+            JSON.stringify(mobileActions.map((action, index) => ({ action: index, ...mobileActionSizes[index] })))
+        ).toBe(true);
+        await menu.getByRole("link", { name: "设置", exact: true }).focus();
+        await page.keyboard.press("Escape");
+        await expect(menu).toHaveCount(0);
+        await expect(account).toBeFocused();
+    });
+
+    test("keeps mobile settings, installation and theme actions available once each", async ({ page }) => {
+        await page.addInitScript(() => localStorage.setItem("color-scheme", JSON.stringify("light")));
+        await installApiMocks(page);
+        await page.goto("/settings");
+        await page.getByRole("button", { name: "使用 GitHub 登录", exact: true }).tap();
+        const menu = page.locator("#account-dropdown");
+
+        await expect(menu.getByRole("link", { name: "设置", exact: true })).toHaveCount(1);
+        await expect(menu.getByRole("button", { name: "安装与下载", exact: true })).toHaveCount(1);
+        await expect(menu.getByRole("button", { name: /切换到.*主题/ })).toHaveCount(1);
+
+        await menu.getByRole("button", { name: "搜索来源", exact: true }).tap();
+        await expect(page.getByRole("dialog", { name: "搜索新闻源" })).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("dialog", { name: "搜索新闻源" })).toHaveCount(0);
+
+        await page.getByRole("button", { name: "使用 GitHub 登录", exact: true }).tap();
+        await page.getByRole("button", { name: "切换到深色主题", exact: true }).tap();
+        await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+
+        await page.getByRole("button", { name: "使用 GitHub 登录", exact: true }).tap();
+        await page.getByRole("button", { name: "切换到浅色主题", exact: true }).tap();
+        await expect(page.locator("html")).not.toHaveClass(/\bdark\b/);
+    });
+});
+
 const workspaceRoutes = [
-    { path: "/insights", heading: /阅读洞察 Reading Insights/, navigation: "首页" },
+    { path: "/insights", heading: "阅读洞察", navigation: "首页" },
     { path: "/feed", heading: "统一 Feed", navigation: "统一 Feed" },
     { path: "/history", heading: "阅读历史", navigation: "阅读历史" },
     { path: "/health", heading: "数据源健康", navigation: "数据源健康" },
     { path: "/source/hackernews", heading: "Hacker News", navigation: "数据源健康" },
-    { path: "/c/focus", heading: "我的关注", navigation: "统一 Feed" },
+    { path: "/c/focus", heading: "我的关注", navigation: "统一 Feed", desktopNavigation: "我的关注" },
     { path: "/settings", heading: "设置" },
 ] as const;
 
@@ -414,8 +737,8 @@ for (const scenario of [
             });
             expect(initialBackground.background).not.toBe("rgba(0, 0, 0, 0)");
             expect(initialBackground.background).not.toBe("transparent");
-            expect(initialBackground.background).toBe(scenario.expectedDark ? "rgb(16, 23, 34)" : "rgb(247, 249, 251)");
-            expect(initialBackground.pageBackground).toBe(scenario.expectedDark ? "#101722" : "#f7f9fb");
+            expect(initialBackground.background).toBe(scenario.expectedDark ? "rgb(0, 0, 0)" : "rgb(255, 255, 255)");
+            expect(initialBackground.pageBackground).toBe(scenario.expectedDark ? "#000000" : "#ffffff");
             expect(
                 await page.evaluate(
                     () =>
@@ -447,7 +770,12 @@ for (const scenario of [
             await page.evaluate(
                 () => (window as Window & { __latestNewsThemeToggles: boolean[] }).__latestNewsThemeToggles
             )
-        ).toEqual([scenario.expectedDark, scenario.expectedDark]);
+        ).toEqual(expect.arrayContaining([scenario.expectedDark, scenario.expectedDark]));
+        const appliedThemes = await page.evaluate(
+            () => (window as Window & { __latestNewsThemeToggles: boolean[] }).__latestNewsThemeToggles
+        );
+        expect(appliedThemes.length).toBeGreaterThanOrEqual(2);
+        expect(appliedThemes.every((isDark) => isDark === scenario.expectedDark)).toBe(true);
     });
 }
 
@@ -473,12 +801,18 @@ test("applies the saved theme immediately and keeps it across all workspace rout
                 "page"
             );
         }
+        if ("desktopNavigation" in route) {
+            await expect(sidebar.getByRole("link", { name: route.desktopNavigation, exact: true })).toHaveAttribute(
+                "aria-current",
+                "page"
+            );
+        }
         const colors = await page.locator(".app-modern-column").evaluate((element) => ({
             background: getComputedStyle(element).backgroundColor,
             expected: getComputedStyle(document.documentElement).getPropertyValue("--page-bg").trim(),
         }));
-        expect(colors.background).toBe("rgb(16, 23, 34)");
-        expect(colors.expected).toBe("#101722");
+        expect(colors.background).toBe("rgb(0, 0, 0)");
+        expect(colors.expected).toBe("#000000");
     }
 
     await page.getByRole("button", { name: "浅色", exact: true }).click();
@@ -499,21 +833,20 @@ test("opens settings and returns home by keyboard using the same workspace menu"
         const icon = sidebar.getByRole("link", { name, exact: true }).locator("span").first();
         expect(await icon.evaluate((element) => getComputedStyle(element).maskImage)).not.toBe("none");
     }
-    await sidebar.getByRole("button", { name: "打开菜单", exact: true }).focus();
-    await page.keyboard.press("Enter");
-    await page.getByRole("link", { name: "设置", exact: true }).focus();
+    const settingsLink = sidebar.getByRole("link", { name: "设置", exact: true });
+    await settingsLink.focus();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/settings$/);
     await sidebar.getByRole("link", { name: "首页", exact: true }).focus();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/insights$/);
-    await expect(page.getByRole("heading", { name: /阅读洞察 Reading Insights/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "阅读洞察", level: 1 })).toBeVisible();
 });
 
 test("keeps the workspace sidebar in natural keyboard tab order", async ({ page }) => {
     await installApiMocks(page);
     await page.goto("/insights");
-    await expect(page.getByRole("heading", { name: /阅读洞察 Reading Insights/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "阅读洞察", level: 1 })).toBeVisible();
 
     const expectedFocusOrder = [
         page.locator(".skip-link"),
@@ -523,7 +856,13 @@ test("keeps the workspace sidebar in natural keyboard tab order", async ({ page 
         page.getByRole("link", { name: "统一 Feed", exact: true }),
         page.getByRole("link", { name: "阅读历史", exact: true }),
         page.getByRole("link", { name: "数据源健康", exact: true }),
-        page.getByRole("button", { name: "打开菜单", exact: true }),
+        page.getByRole("link", { name: "我的关注", exact: true }),
+        page.getByRole("link", { name: "热门", exact: true }),
+        page.getByRole("link", { name: "实时", exact: true }),
+        page.getByRole("link", { name: "设置", exact: true }),
+        page.getByRole("button", { name: "安装与下载", exact: true }),
+        page.getByRole("button", { name: "切换到深色主题", exact: true }),
+        page.getByRole("button", { name: "使用 GitHub 登录", exact: true }),
     ];
 
     for (const locator of expectedFocusOrder) {
@@ -557,7 +896,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
 }
 
 async function openInstallationGuide(page: Page) {
-    const menu = page.getByRole("button", { name: "打开菜单", exact: true });
+    const menu = page.getByRole("button", { name: "使用 GitHub 登录", exact: true });
     await menu.focus();
     await page.keyboard.press("Enter");
     await expect(page.getByRole("button", { name: "数据源健康", exact: true })).toHaveCount(0);
@@ -584,7 +923,7 @@ test("opens installation instructions by keyboard and restores focus when closed
     await expect(guide.getByRole("tabpanel", { name: "浏览器应用" })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(guide).not.toBeVisible();
-    await expect(page.getByRole("button", { name: "打开菜单", exact: true })).toBeFocused();
+    await expect(page.getByRole("button", { name: "使用 GitHub 登录", exact: true })).toBeFocused();
 });
 
 test.describe("mobile installation", () => {
@@ -594,7 +933,7 @@ test.describe("mobile installation", () => {
         await page.setViewportSize({ width: 375, height: 812 });
         await installApiMocks(page);
         await page.goto("/feed");
-        await page.getByRole("button", { name: "打开菜单", exact: true }).tap();
+        await page.getByRole("button", { name: "使用 GitHub 登录", exact: true }).tap();
         await page.getByRole("button", { name: "安装与下载", exact: true }).tap();
         const guide = page.getByRole("dialog", { name: "安装与下载" });
         await guide.getByRole("tab", { name: "浏览器应用", exact: true }).tap();

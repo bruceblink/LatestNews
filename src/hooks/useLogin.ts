@@ -1,7 +1,7 @@
 import { myFetch, apiFetch } from "~/utils";
 import { queryClient } from "~/query-client";
 import { atomWithStorage } from "jotai/utils";
-import { useAtomValue, getDefaultStore } from "jotai";
+import { atom, useAtomValue, getDefaultStore } from "jotai";
 
 import { userAtom, authStatusAtom } from "../auth/authAtoms";
 
@@ -9,17 +9,33 @@ import { userAtom, authStatusAtom } from "../auth/authAtoms";
 // 全局状态
 // -----------------------------
 export const enableLoginAtom = atomWithStorage<{ enable: boolean; url?: string }>("login", { enable: true });
+export const enableLoginLoadingAtom = atom(true);
+export const enableLoginErrorAtom = atom(false);
 
-// 初始化登录开关
-enableLoginAtom.onMount = (set) => {
-    myFetch("/enable-login")
-        .then((r) => set(r))
-        .catch((e) => {
-            if (e.statusCode === 506) {
-                set({ enable: false });
-                localStorage.removeItem("access_token");
-            }
-        });
+async function checkLoginCapability() {
+    const store = getDefaultStore();
+    store.set(enableLoginLoadingAtom, true);
+    store.set(enableLoginErrorAtom, false);
+
+    try {
+        store.set(enableLoginAtom, await myFetch("/enable-login"));
+    } catch (error) {
+        if (typeof error === "object" && error !== null && "statusCode" in error && error.statusCode === 506) {
+            store.set(enableLoginAtom, { enable: false });
+            localStorage.removeItem("access_token");
+        } else {
+            store.set(enableLoginErrorAtom, true);
+        }
+    } finally {
+        store.set(enableLoginLoadingAtom, false);
+    }
+}
+
+// Retry is user-triggered; the initial request still runs once when the shared atom mounts.
+export const retryEnableLoginCheckAtom = atom(null, () => checkLoginCapability());
+
+enableLoginAtom.onMount = () => {
+    void checkLoginCapability();
 };
 
 // -----------------------------
@@ -68,10 +84,14 @@ export function useLoginState() {
     const authStatus = useAtomValue(authStatusAtom);
     const userInfo = useAtomValue(userAtom);
     const enableLogin = useAtomValue(enableLoginAtom);
+    const enableLoginLoading = useAtomValue(enableLoginLoadingAtom);
+    const enableLoginError = useAtomValue(enableLoginErrorAtom);
     return {
         loading: authStatus === "idle" || authStatus === "loading",
         loggedIn: authStatus === "authenticated",
         userInfo,
         enableLogin,
+        enableLoginLoading,
+        enableLoginError,
     };
 }

@@ -2,7 +2,7 @@ import { hex2rgba } from "@unocss/rule-utils";
 import { presetIcons, presetWind3, defineConfig, transformerDirectives, transformerVariantGroup } from "unocss";
 
 import { dataSources } from "./shared/data-sources";
-import { appNavigation } from "./shared/app-navigation";
+import { appNavigation, columnNavigation } from "./shared/app-navigation";
 
 export default defineConfig({
     mergeSelectors: false,
@@ -43,6 +43,7 @@ export default defineConfig({
     },
     safelist: [
         ...Object.values(appNavigation).map((item) => item.icon),
+        ...columnNavigation.map((item) => item.icon),
         ...["orange", ...new Set(Object.values(dataSources).map((k) => k.color))]
             .map((k) =>
                 `bg-${k} color-${k} border-${k} sprinkle-${k} shadow-${k}
@@ -54,8 +55,13 @@ export default defineConfig({
             .flat(),
     ],
     extendTheme: (theme) => {
-        // @ts-expect-error >_<
-        theme.colors.primary = theme.colors.cyan;
+        // 旧页面沿用原有工具类，但普通控件与新工作台共用中性色；告警色保持独立。
+        // @ts-expect-error UnoCSS 的扩展主题未声明颜色字段。
+        theme.colors.zinc = theme.colors.neutral;
+        // @ts-expect-error UnoCSS 的扩展主题未声明颜色字段。
+        theme.colors.cyan = theme.colors.neutral;
+        // @ts-expect-error UnoCSS 的扩展主题未声明颜色字段。
+        theme.colors.primary = theme.colors.neutral;
         return theme;
     },
 });

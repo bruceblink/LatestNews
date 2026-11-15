@@ -125,7 +125,7 @@ pnpm electron:package:linux
 
 桌面构建可通过 `LATESTNEWS_DESKTOP_API_URL`、`LATESTNEWS_DESKTOP_AUTH_API_URL` 和 `LATESTNEWS_DESKTOP_AUTH_CALLBACK_URL` 覆盖新闻 API、认证 API 和登录回调地址。生产构建要求远程地址使用 HTTPS。开发时仅允许把 HTTP 用于本机 API。桌面应用将已验证的 SyncHub 地址和 API Key 一起加密保存；地址不变时可留空复用密钥，更换地址时需要重新输入并验证。
 
-Header 右侧的齿轮按钮在 Web 和 Electron 中打开同一套设置面板。Web 端显示构建变量 `VITE_NEWS_API_URL` 的来源说明；Electron 端可以填写新闻服务根地址，保存后写入应用用户数据目录，并立即用于后续 `/api` 请求。认证服务和 SyncHub 不使用这个数据源地址。
+侧栏的“设置”入口在 Web 和 Electron 中打开同一套设置页面，手机端从顶部账户菜单进入。Web 端显示构建变量 `VITE_NEWS_API_URL` 的来源说明；Electron 端可以填写新闻服务根地址，保存后写入应用用户数据目录，并立即用于后续 `/api` 请求。认证服务和 SyncHub 不使用这个数据源地址。
 
 ## 环境变量
 
@@ -151,6 +151,7 @@ PRODUCTHUNT_API_TOKEN=
 变量说明：
 
 - `VITE_APP_TITLE`：浏览器与桌面应用名称，未配置时默认为 `LatestNews`
+- `VITE_DEVTOOLS`：可选开发变量。设置为 `true` 时显示 Query/Router 调试入口，默认隐藏，避免遮挡账户行和手机底部导航；生产构建始终不显示。
 - `VITE_API_URL`：登录与用户同步相关 API 地址
 - `VITE_NEWS_API_URL`：可选 Web 构建变量。设置为远程 Node API 根地址后，Web 新闻请求使用该服务；桌面仍使用主进程代理。
 - `LATESTNEWS_WEB_ORIGINS`：Node 运行变量。填写允许访问 Node API 的 Web 来源地址；多个地址用逗号分隔。

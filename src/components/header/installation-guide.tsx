@@ -82,7 +82,7 @@ function initialBrowserSystem(): BrowserSystem {
 interface InstallationGuideProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    triggerRef: RefObject<HTMLButtonElement>;
+    triggerRef: RefObject<HTMLButtonElement | null>;
 }
 
 /** Keep the browser's one-use install event until a direct user action consumes it. */

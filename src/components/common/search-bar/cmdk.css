@@ -3,9 +3,11 @@
 }
 
 [cmdk-item] {
-    @apply p-2 mb-1 rounded-lg;
+    @apply p-2 mb-1 rounded-md;
     color: var(--text-secondary);
-    transition: background 0.15s, color 0.15s;
+    transition:
+        background 0.15s,
+        color 0.15s;
 }
 
 [cmdk-item]:hover {
@@ -53,7 +55,7 @@
 
 [cmdk-dialog] {
     position: fixed;
-    @apply rounded-2xl outline-none;
+    @apply rounded-lg outline-none;
     width: min(92vw, 680px);
     max-height: min(82dvh, 720px);
     overflow: hidden;
@@ -61,7 +63,6 @@
     background: var(--surface);
     color: var(--text-primary);
     box-shadow: var(--dialog-shadow);
-    backdrop-filter: blur(18px);
     z-index: 999;
     left: 50%;
     top: 50%;
@@ -76,13 +77,21 @@
 }
 
 @keyframes dialogIn {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 @keyframes dialogOut {
-    0% { opacity: 1; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
 
 [cmdk-empty] {
@@ -94,18 +103,21 @@
 [cmdk-overlay] {
     @apply fixed inset-0;
     z-index: 998;
-    background: rgb(8 16 29 / 48%);
-    backdrop-filter: blur(6px);
+    background: rgb(0 0 0 / 45%);
 }
 
 @media (max-width: 767px) {
     [cmdk-dialog] {
         width: calc(100vw - 28px);
         max-height: min(84dvh, 680px);
-        border-radius: 18px;
+        border-radius: 8px;
     }
 
     [cmdk-list] {
         max-height: 58dvh;
+    }
+
+    [cmdk-item] {
+        min-height: 44px;
     }
 }

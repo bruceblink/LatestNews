@@ -172,7 +172,6 @@ test("shows desktop updates on every route and exposes the download action", asy
 test("shows desktop update instructions without a PWA install action", async () => {
     const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
     await page.goto("app://bundle/settings");
-    await page.getByRole("button", { name: "打开菜单", exact: true }).click();
     await page.getByRole("button", { name: "安装与下载", exact: true }).click();
     const guide = page.getByRole("dialog", { name: "安装与下载" });
     await expect(guide).toContainText(`当前为桌面版 v${version}。`);
@@ -187,6 +186,19 @@ test("shows desktop update instructions without a PWA install action", async () 
     await expect(guide.getByLabel("浏览器环境")).toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(guide).not.toBeVisible();
+});
+
+test("keeps desktop account tools reachable from the sidebar", async () => {
+    await page.goto("app://bundle/settings");
+    const sidebar = page.getByRole("complementary", { name: "主要导航" });
+    await expect(sidebar.getByRole("link", { name: "设置", exact: true })).toBeVisible();
+    await expect(sidebar.getByRole("button", { name: "安装与下载", exact: true })).toBeVisible();
+    await expect(sidebar.getByRole("button", { name: /切换到.*主题/ })).toBeVisible();
+    await expect(
+        sidebar.getByRole("button", {
+            name: /(?:正在检查登录状态|账户不可用|登录状态暂不可用|使用 GitHub 登录|打开用户菜单：)/,
+        })
+    ).toBeVisible();
 });
 
 test("saves and resets the desktop API URL through the settings panel", async () => {
