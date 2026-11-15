@@ -1302,8 +1302,22 @@ html.dark .app-header {
 .source-detail-hero {
     box-shadow: var(--shadow);
 }
-.app-main .source-page .surface-panel {
+.app-main .source-page .surface-panel,
+.app-main .health-card {
     padding: 16px;
+}
+.app-main .health-page .health-load-error,
+.app-main .health-page .health-priority-panel {
+    border-color: color-mix(in srgb, #ef4444 25%, var(--border));
+    background: color-mix(in srgb, #ef4444 8%, var(--surface));
+}
+.health-summary-grid > :first-child {
+    grid-column: 1 / -1;
+}
+@media (min-width: 768px) {
+    .health-summary-grid > :first-child {
+        grid-column: auto;
+    }
 }
 .source-item-article:focus-within {
     border-color: color-mix(in srgb, var(--accent) 42%, var(--border));

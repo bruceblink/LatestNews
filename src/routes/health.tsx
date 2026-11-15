@@ -238,11 +238,9 @@ function HealthPage() {
                     </span>
                     <button
                         type="button"
-                        className={clsx(
-                            "flex items-center gap-2 rounded-full px-3 py-1.5 transition-all",
-                            "bg-base/80 hover:bg-base shadow shadow-primary/10",
-                            isFetching && "animate-pulse"
-                        )}
+                        className="flex items-center gap-2 rounded-full bg-base/80 px-3 py-1.5 shadow shadow-primary/10 transition-all enabled:hover:bg-base disabled:cursor-wait disabled:opacity-60"
+                        disabled={isFetching}
+                        aria-busy={isFetching}
                         onClick={() => void refetch()}
                     >
                         <span className={clsx("i-ph:arrow-clockwise-duotone", isFetching && "animate-spin")} />
@@ -251,7 +249,7 @@ function HealthPage() {
                 </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-5">
+            <div className="health-summary-grid grid grid-cols-2 gap-3 md:grid-cols-5">
                 <SummaryCard label="总数据源" value={data?.total ?? 0} tone="neutral" />
                 <SummaryCard label="正常" value={data?.healthy ?? 0} tone="green" />
                 <SummaryCard label="异常" value={data?.failing ?? 0} tone="red" />
@@ -344,13 +342,16 @@ function HealthPage() {
             </div>
 
             {isError && (
-                <div className="rounded-2xl bg-red-500/10 p-4 text-red-600 dark:text-red-300">
+                <div
+                    className="surface-panel health-load-error rounded-2xl border-red-500/25 bg-red-500/8 p-4 text-red-700 dark:text-red-300"
+                    role="alert"
+                >
                     加载健康统计失败{error instanceof Error ? `：${error.message}` : ""}
                 </div>
             )}
 
             {!!data?.failing && (
-                <div className="rounded-2xl bg-red-500/8 p-4 shadow shadow-red/5">
+                <div className="surface-panel health-priority-panel rounded-2xl bg-red-500/8 p-4 shadow shadow-red/5">
                     <div className="mb-3 flex items-center gap-2 text-red-600 dark:text-red-300">
                         <span className="i-ph:warning-circle-duotone text-lg" />
                         <span className="font-semibold">需要优先处理的异常源</span>
@@ -410,7 +411,7 @@ function HealthPage() {
                 ))}
             </div>
             {data && filteredSources.length === 0 && (
-                <div className="rounded-2xl bg-neutral-500/8 p-6 text-center text-sm op-70">
+                <div className="surface-panel health-filter-empty rounded-2xl bg-neutral-500/8 p-6 text-center text-sm op-70">
                     当前筛选条件下没有匹配的数据源
                 </div>
             )}
@@ -436,7 +437,7 @@ function SummaryCard({
     } satisfies Record<typeof tone, string>;
 
     return (
-        <div className={clsx("rounded-2xl p-4 shadow shadow-primary/5", toneClass[tone])}>
+        <div className={clsx("health-summary-card rounded-2xl p-4 shadow shadow-primary/5", toneClass[tone])}>
             <div className="text-sm op-75">{label}</div>
             <div className="mt-2 text-3xl font-bold">{value}</div>
         </div>
@@ -456,7 +457,8 @@ function SourceHealthCard({
     const lastError = useRelativeTime(source.lastErrorAt ?? "");
     const [detailsOpen, setDetailsOpen] = useState(source.status === "failing");
     const [probing, setProbing] = useState(false);
-    const [probeResult, setProbeResult] = useState<string>();
+    const [probeResult, setProbeResult] = useState<{ kind: "success" | "error"; message: string }>();
+    const probeInFlightRef = useRef(false);
 
     const severityLabel =
         source.status === "failing"
@@ -468,23 +470,31 @@ function SourceHealthCard({
               : "稳定";
 
     const handleProbe = async () => {
+        if (probeInFlightRef.current) return;
+
+        probeInFlightRef.current = true;
         setProbing(true);
+        setProbeResult(undefined);
         try {
             const result = await fetchSource({ id: source.id, latest: true, clearCache: true });
 
-            setProbeResult(`已清理缓存并探测成功，返回 ${result.items.length} 条数据`);
             await onProbeSuccess(result);
+            setProbeResult({
+                kind: "success",
+                message: `已清理缓存并探测成功，返回 ${result.items.length} 条数据`,
+            });
         } catch (error) {
             const message = error instanceof Error ? error.message : "探测失败，请稍后重试";
-            setProbeResult(message);
+            setProbeResult({ kind: "error", message: `清缓存探测失败：${message}` });
             onProbeError(message);
         } finally {
+            probeInFlightRef.current = false;
             setProbing(false);
         }
     };
 
     return (
-        <article className="rounded-2xl bg-base/70 p-4 shadow shadow-primary/8 backdrop-blur-sm">
+        <article className="surface-panel health-card health-source-card rounded-2xl bg-base/70 p-4 shadow shadow-primary/8 backdrop-blur-sm">
             <div className="flex items-start justify-between gap-3">
                 <div>
                     <h2 className="m-0 text-lg font-semibold">
@@ -537,7 +547,10 @@ function SourceHealthCard({
             <div className="mt-4 flex flex-wrap gap-2">
                 <button
                     type="button"
-                    className="rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary-700 transition-all hover:bg-primary/14 dark:text-primary-300"
+                    className="rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary-700 transition-all hover:bg-primary/14 disabled:cursor-wait disabled:opacity-60 dark:text-primary-300"
+                    disabled={probing}
+                    aria-busy={probing}
+                    aria-label={probing ? "清理中" : "清缓存探测"}
                     onClick={() => void handleProbe()}
                 >
                     <span
@@ -559,8 +572,16 @@ function SourceHealthCard({
             </div>
 
             {probeResult && (
-                <div className="mt-3 rounded-xl bg-primary/6 px-3 py-2 text-sm text-primary-700 dark:text-primary-300">
-                    {probeResult}
+                <div
+                    className={clsx(
+                        "health-probe-result mt-3 rounded-xl border px-3 py-2 text-sm",
+                        probeResult.kind === "error"
+                            ? "border-red-500/20 bg-red-500/8 text-red-700 dark:text-red-300"
+                            : "border-green-500/20 bg-green-500/8 text-green-700 dark:text-green-300"
+                    )}
+                    role={probeResult.kind === "error" ? "alert" : "status"}
+                >
+                    {probeResult.message}
                 </div>
             )}
 
