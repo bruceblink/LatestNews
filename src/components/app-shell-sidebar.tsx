@@ -3,7 +3,7 @@ import { useRef, useEffect } from "react";
 import { Menu } from "~/components/header/menu";
 import { SearchButton } from "~/components/header";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { appNavigation, feedNavigationSearch, isAppNavigationActive } from "~/components/app-navigation";
+import { appNavigation, feedNavigationSearch, isAppNavigationActive } from "@shared/app-navigation";
 
 /** 统一应用侧栏，提供所有页面都可访问的主要功能入口。 */
 export function AppShellSidebar() {

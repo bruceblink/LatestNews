@@ -2,7 +2,7 @@ import { hex2rgba } from "@unocss/rule-utils";
 import { presetIcons, presetWind3, defineConfig, transformerDirectives, transformerVariantGroup } from "unocss";
 
 import { dataSources } from "./shared/data-sources";
-import { appNavigation } from "./src/components/app-navigation";
+import { appNavigation } from "./shared/app-navigation";
 
 export default defineConfig({
     mergeSelectors: false,

@@ -1,4 +1,4 @@
-import type { UnifiedFeedScope } from "@shared/unified-feed";
+import type { UnifiedFeedScope } from "./unified-feed";
 
 /** 统一应用导航的可见文案和图标，侧栏与洞察工作区共用同一份定义。 */
 export const appNavigation = {

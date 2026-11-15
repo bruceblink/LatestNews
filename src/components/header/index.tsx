@@ -10,8 +10,8 @@ import { useRefetch } from "~/hooks/useRefetch.ts";
 import { useLoginState } from "~/hooks/useLogin.ts";
 import { Version, PROJECT_URL } from "@shared/consts";
 import { useIsFetching } from "@tanstack/react-query";
+import { appNavigation } from "@shared/app-navigation";
 import { goToTopAtom, currentSourcesAtom } from "~/atoms";
-import { appNavigation } from "~/components/app-navigation";
 
 import { Menu } from "./menu";
 import { NavBar } from "../navbar";
