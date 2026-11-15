@@ -14,6 +14,7 @@ import {
 export function AppShellSidebar() {
     const pathname = useRouterState({ select: (state) => state.location.pathname });
     const navRef = useRef<HTMLElement>(null);
+    const showInstallation = import.meta.env.LATESTNEWS_DESKTOP !== true;
 
     useEffect(() => {
         const nav = navRef.current;
@@ -64,8 +65,15 @@ export function AppShellSidebar() {
                         variant="account"
                         includeRepositoryActions={false}
                         showSettings={false}
-                        desktopExtraItems={["settings", "installation", "theme"]}
-                        mobileExtraItems={["search", "columns", "settings", "installation", "theme"]}
+                        showInstallation={showInstallation}
+                        desktopExtraItems={
+                            showInstallation ? ["settings", "installation", "theme"] : ["settings", "theme"]
+                        }
+                        mobileExtraItems={
+                            showInstallation
+                                ? ["search", "columns", "settings", "installation", "theme"]
+                                : ["search", "columns", "settings", "theme"]
+                        }
                     />
                 </div>
             </div>

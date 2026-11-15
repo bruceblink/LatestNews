@@ -871,6 +871,18 @@ test("keeps the workspace sidebar in natural keyboard tab order", async ({ page 
     }
 });
 
+test("keeps the installation entry available in the Web workspace sidebar", async ({ page }) => {
+    await installApiMocks(page);
+    await page.goto("/insights");
+    await expect(page.getByRole("heading", { name: "阅读洞察", level: 1 })).toBeVisible();
+
+    const sidebar = page.getByRole("complementary", { name: "主要导航" });
+    const installButton = sidebar.getByRole("button", { name: "安装与下载", exact: true });
+    await expect(installButton).toBeVisible();
+    await installButton.click();
+    await expect(page.getByRole("dialog", { name: "安装与下载" })).toBeVisible();
+});
+
 for (const width of [320, 390, 768, 1024, 1440]) {
     test(`keeps all workspace pages within the ${width}px viewport`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });

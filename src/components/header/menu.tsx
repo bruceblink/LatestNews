@@ -59,6 +59,7 @@ interface MenuProps {
     includeRepositoryActions?: boolean;
     variant?: MenuVariant;
     showSettings?: boolean;
+    showInstallation?: boolean;
     desktopExtraItems?: DesktopExtraItem[];
     mobileExtraItems?: MobileExtraItem[];
 }
@@ -67,6 +68,7 @@ export function Menu({
     includeRepositoryActions = true,
     variant = "default",
     showSettings = true,
+    showInstallation = true,
     desktopExtraItems = [],
     mobileExtraItems = [],
 }: MenuProps = {}) {
@@ -344,6 +346,7 @@ export function Menu({
                     </Link>
                 );
             case "installation":
+                if (!showInstallation) return null;
                 return (
                     <button
                         key={item}
@@ -636,7 +639,7 @@ export function Menu({
                                     <span>重置布局</span>
                                 </button>
                             </li>
-                            {!desktopExtraItems.includes("installation") && (
+                            {showInstallation && !desktopExtraItems.includes("installation") && (
                                 <li className="block! p-0!">
                                     <button
                                         type="button"
