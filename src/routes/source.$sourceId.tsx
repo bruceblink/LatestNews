@@ -40,6 +40,7 @@ function SourceDetailPage() {
     const { history, addHistory } = useHistory();
     const { hiddenUrls, isHiddenUrl } = useReadingState();
     const [isClearingCache, setIsClearingCache] = useState(false);
+    const [clearCacheError, setClearCacheError] = useState<string>();
 
     const metadataItemQuery = useQuery({
         queryKey: getSourceMetadataItemCacheKey(requestedId),
@@ -108,10 +109,15 @@ function SourceDetailPage() {
         try {
             const response = await fetchSourceItemsV1(id, { limit: 20, latest: true, clearCache: true });
             queryClient.setQueryData(sourceItemsQueryKey, response);
+            setClearCacheError(undefined);
+        } catch (error) {
+            setClearCacheError(error instanceof Error ? error.message : "未知错误");
         } finally {
             setIsClearingCache(false);
         }
     };
+
+    const handleRetryMetadata = () => void metadataItemQuery.refetch();
 
     if (metadataItemQuery.isLoading) {
         return (
@@ -122,17 +128,39 @@ function SourceDetailPage() {
     }
 
     if (!metadataItem) {
+        if ([400, 404].includes(getErrorStatus(metadataItemQuery.error) ?? 0)) {
+            return (
+                <section className="page-stack source-page">
+                    <div className="surface-panel source-not-found p-8 text-center text-sm">
+                        未找到或无效的数据源。
+                        <Link
+                            to="/feed"
+                            search={{ q: undefined, scope: undefined }}
+                            className="ml-2 text-cyan-700 dark:text-cyan-300"
+                        >
+                            返回 Feed
+                        </Link>
+                    </div>
+                </section>
+            );
+        }
+
         return (
-            <section className="mx-auto max-w-5xl px-1 md:px-4">
-                <div className="source-not-found rounded-2xl bg-zinc-50/88 p-8 text-center text-sm text-zinc-600 shadow shadow-primary/6 dark:bg-zinc-900/68 dark:text-zinc-500">
-                    未找到这个数据源。
-                    <Link
-                        to="/feed"
-                        search={{ q: undefined, scope: undefined }}
-                        className="ml-2 text-cyan-700 dark:text-cyan-300"
+            <section className="page-stack source-page">
+                <div className="surface-panel flex flex-col items-center gap-3 p-8 text-center" role="alert">
+                    <div>
+                        无法加载来源详情
+                        {metadataItemQuery.error instanceof Error ? `：${metadataItemQuery.error.message}` : "。"}
+                    </div>
+                    <button
+                        type="button"
+                        className="history-empty-action"
+                        disabled={metadataItemQuery.isFetching}
+                        onClick={handleRetryMetadata}
                     >
-                        返回 Feed
-                    </Link>
+                        <span className="i-ph:arrow-clockwise-duotone" aria-hidden="true" />
+                        重试
+                    </button>
                 </div>
             </section>
         );
@@ -140,17 +168,25 @@ function SourceDetailPage() {
 
     return (
         <section className="page-stack source-page">
-            <div className="source-detail-hero rounded-2xl border border-zinc-200/88 bg-zinc-50/90 p-4 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
+            <div className="surface-panel source-detail-hero p-4">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="flex min-w-0 gap-4">
-                        <a
-                            className="h-14 w-14 shrink-0 rounded-2xl bg-cover bg-center ring-1 ring-zinc-300/85 dark:ring-zinc-700/65"
-                            aria-label={`打开${metadataItem.name}源站`}
-                            href={metadataItem.home}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ backgroundImage: `url(/icons/${metadataItem.id.split("-")[0]}.png)` }}
-                        />
+                        {metadataItem.home ? (
+                            <a
+                                className="h-14 w-14 shrink-0 rounded-2xl bg-cover bg-center ring-1 ring-zinc-300/85 dark:ring-zinc-700/65"
+                                aria-label={`打开${metadataItem.name}源站`}
+                                href={metadataItem.home}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ backgroundImage: `url(/icons/${metadataItem.id.split("-")[0]}.png)` }}
+                            />
+                        ) : (
+                            <span
+                                className="h-14 w-14 shrink-0 rounded-2xl bg-cover bg-center ring-1 ring-zinc-300/85 dark:ring-zinc-700/65"
+                                aria-hidden="true"
+                                style={{ backgroundImage: `url(/icons/${metadataItem.id.split("-")[0]}.png)` }}
+                            />
+                        )}
                         <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                                 <h1 className="m-0 text-2xl font-bold text-zinc-800 dark:text-zinc-100">
@@ -245,13 +281,15 @@ function SourceDetailPage() {
                                 )}
                                 aria-hidden="true"
                             />
-                            <span>{isClearingCache ? "清理中" : "清缓存刷新"}</span>
+                            <span>
+                                {isClearingCache ? "清理中" : clearCacheError ? "重试清缓存刷新" : "清缓存刷新"}
+                            </span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <MetricCard
                     label="最近条目"
                     value={itemsQuery.data?.meta.itemCount ?? 0}
@@ -263,9 +301,17 @@ function SourceDetailPage() {
             </div>
 
             <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
-                <section className="rounded-2xl border border-zinc-200/88 bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
+                <section className="surface-panel p-4">
                     <PanelTitle icon="i-ph:newspaper-duotone" title="最近更新" />
                     <div className="mt-4 flex flex-col gap-2">
+                        {clearCacheError && (
+                            <div
+                                className="rounded-xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+                                role="alert"
+                            >
+                                清缓存刷新失败，当前显示的内容已保留：{clearCacheError}
+                            </div>
+                        )}
                         {itemsQuery.isError && (
                             <div
                                 className="rounded-xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
@@ -320,14 +366,22 @@ function SourceDetailPage() {
                                 );
                             })
                         ) : (
-                            <PanelEmpty label={itemsQuery.isFetching ? "正在加载最近更新" : "暂无最近更新"} />
+                            <PanelEmpty
+                                label={
+                                    itemsQuery.isFetching
+                                        ? "正在加载最近更新"
+                                        : itemsQuery.isError
+                                          ? "暂时无法读取最近更新"
+                                          : "暂无最近更新"
+                                }
+                            />
                         )}
                     </div>
                 </section>
 
                 <aside className="flex flex-col gap-4">
                     <HealthPanel health={health} />
-                    <section className="rounded-2xl border border-zinc-200/88 bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
+                    <section className="surface-panel p-4">
                         <PanelTitle icon="i-ph:compass-duotone" title="同类动态" />
                         <div className="mt-4 flex flex-col gap-2">
                             {relatedFeed.items.length ? (
@@ -355,7 +409,7 @@ function SourceDetailPage() {
 
 function HealthPanel({ health }: { health?: SourceHealthSnapshot }) {
     return (
-        <section className="rounded-2xl border border-zinc-200/88 bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
+        <section className="surface-panel p-4">
             <PanelTitle icon="i-ph:heartbeat-duotone" title="健康摘要" />
             <div className="mt-4 grid gap-2 text-sm">
                 <InfoRow label="状态" value={getHealthMetricLabel(health)} />
@@ -441,7 +495,7 @@ function HealthEventItem({ event }: { event: SourceHealthEvent }) {
 
 function MetricCard({ label, value, icon }: { label: string; value: number | string; icon: string }) {
     return (
-        <div className="rounded-2xl border border-zinc-200/88 bg-zinc-50/88 p-4 shadow shadow-primary/6 dark:border-zinc-700/32 dark:bg-zinc-900/68">
+        <div className="surface-panel source-metric-card p-4">
             <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-500">
                 <span>{label}</span>
                 <span className={clsx("text-lg text-cyan-600 dark:text-cyan-300", icon)} aria-hidden="true" />
@@ -531,4 +585,11 @@ function getHealthMetricLabel(health?: SourceHealthSnapshot) {
     if (health.status === "healthy") return "正常";
     if (health.status === "failing") return "异常";
     return "未采样";
+}
+
+function getErrorStatus(error: unknown) {
+    if (!error || typeof error !== "object") return undefined;
+    if ("status" in error && typeof error.status === "number") return error.status;
+    if ("statusCode" in error && typeof error.statusCode === "number") return error.statusCode;
+    return undefined;
 }

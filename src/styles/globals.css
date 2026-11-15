@@ -1302,6 +1302,9 @@ html.dark .app-header {
 .source-detail-hero {
     box-shadow: var(--shadow);
 }
+.app-main .source-page .surface-panel {
+    padding: 16px;
+}
 .source-item-article:focus-within {
     border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
