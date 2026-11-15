@@ -48,7 +48,7 @@ function HistoryItem({
     const relativeTime = useRelativeTime(readAt);
 
     return (
-        <div className="group flex items-start justify-between gap-3 rounded-xl bg-white/82 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/30 px-4 py-3 transition-all hover:border-zinc-300/80 dark:hover:border-zinc-600/50 hover:bg-zinc-100/95 dark:hover:bg-zinc-800/60">
+        <div className="history-item group">
             <div className="min-w-0 flex-1">
                 <a
                     href={url}
@@ -68,9 +68,12 @@ function HistoryItem({
             <button
                 type="button"
                 title="移除此条记录"
-                className="mt-0.5 shrink-0 i-ph:x-duotone op-0 group-hover:op-40 hover:op-80! transition-opacity btn text-base"
+                aria-label={`移除阅读记录：${title}`}
+                className="history-remove-button"
                 onClick={onRemove}
-            />
+            >
+                <span className="i-ph:x-duotone" aria-hidden="true" />
+            </button>
         </div>
     );
 }
@@ -122,12 +125,13 @@ function HistoryPage() {
             .map(([id, item]) => ({ id, ...item }))
             .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
     }, [activeHistory]);
+    const effectiveSourceFilter = sourceOptions.some((source) => source.id === sourceFilter) ? sourceFilter : "";
 
-    const hasActiveFilters = hasReadingHistoryFilters({ keyword, sourceId: sourceFilter });
+    const hasActiveFilters = hasReadingHistoryFilters({ keyword, sourceId: effectiveSourceFilter });
 
     const filtered = useMemo(
-        () => filterReadingHistory(activeHistory, { keyword, sourceId: sourceFilter }),
-        [activeHistory, keyword, sourceFilter]
+        () => filterReadingHistory(activeHistory, { keyword, sourceId: effectiveSourceFilter }),
+        [activeHistory, keyword, effectiveSourceFilter]
     );
 
     const groups = useMemo(() => {
@@ -151,15 +155,15 @@ function HistoryPage() {
         clearHistory();
     };
 
-    const selectedSource = sourceOptions.find((source) => source.id === sourceFilter);
+    const selectedSource = sourceOptions.find((source) => source.id === effectiveSourceFilter);
 
     const handleClearSource = () => {
-        if (!sourceFilter || !selectedSource) return;
+        if (!effectiveSourceFilter || !selectedSource) return;
         if (!window.confirm(`确认清空「${selectedSource.name}」的 ${selectedSource.count} 条阅读历史？`)) return;
         if (useHistorySnapshot) {
-            replaceHistory(activeHistory.filter((item) => item.sourceId !== sourceFilter));
+            replaceHistory(activeHistory.filter((item) => item.sourceId !== effectiveSourceFilter));
         } else {
-            clearSourceHistory(sourceFilter);
+            clearSourceHistory(effectiveSourceFilter);
         }
         setSourceFilter("");
     };
@@ -220,7 +224,7 @@ function HistoryPage() {
                 />
             )}
 
-            <section className="history-sync-panel rounded-2xl border border-zinc-200/90 bg-white/78 p-4 dark:border-zinc-700/40 dark:bg-zinc-900/70">
+            <section className="history-sync-panel surface-panel">
                 <div className="history-sync-heading">
                     <span className="i-ph:cloud-arrow-up-duotone" aria-hidden="true" />
                     <div>
@@ -303,11 +307,7 @@ function HistoryPage() {
                 </div>
             </section>
 
-            <div
-                className="history-tabs rounded-2xl border border-zinc-200/90 bg-white/78 p-2 dark:border-zinc-700/40 dark:bg-zinc-900/70"
-                role="group"
-                aria-label="阅读状态"
-            >
+            <div className="history-tabs" role="group" aria-label="阅读状态">
                 <TabButton
                     active={stateTab === "history"}
                     label={`已读 ${activeHistory.length}`}
@@ -331,10 +331,11 @@ function HistoryPage() {
             </div>
 
             {stateTab === "history" && activeHistory.length > 0 && (
-                <div className="flex flex-col gap-3 rounded-2xl bg-white/78 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/40 p-3 md:flex-row md:items-center">
+                <div className="history-filters surface-panel flex flex-col gap-3 md:flex-row md:items-center">
                     <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-zinc-50/80 dark:bg-zinc-950/30 border border-zinc-200/80 dark:border-zinc-700/35 px-3 py-2">
                         <span className="i-ph:magnifying-glass-duotone text-lg op-50" />
                         <input
+                            aria-label="搜索阅读历史"
                             value={keyword}
                             onChange={(e) => setKeyword(e.target.value)}
                             placeholder="搜索标题或来源名称"
@@ -350,7 +351,8 @@ function HistoryPage() {
                         )}
                     </label>
                     <select
-                        value={sourceFilter}
+                        aria-label="按来源筛选阅读历史"
+                        value={effectiveSourceFilter}
                         className="rounded-xl bg-zinc-50/80 dark:bg-zinc-950/30 border border-zinc-200/80 dark:border-zinc-700/35 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 outline-none"
                         onChange={(e) => setSourceFilter(e.target.value as SourceID | "")}
                     >
@@ -371,7 +373,7 @@ function HistoryPage() {
                             <span>重置筛选</span>
                         </button>
                     )}
-                    {sourceFilter && (
+                    {effectiveSourceFilter && (
                         <button
                             type="button"
                             className="flex items-center justify-center gap-2 rounded-xl bg-red-500/8 px-3 py-2 text-sm text-red-700 transition-all hover:bg-red-500/14 dark:text-red-300"
@@ -383,10 +385,8 @@ function HistoryPage() {
                     )}
                     <button
                         type="button"
-                        className={clsx(
-                            "flex items-center justify-center gap-2 rounded-xl bg-cyan-500/12 px-3 py-2 text-sm text-cyan-800 transition-all hover:bg-cyan-500/20 dark:text-cyan-300",
-                            filtered.length === 0 && "pointer-events-none op-40"
-                        )}
+                        className="flex items-center justify-center gap-2 rounded-xl bg-cyan-500/12 px-3 py-2 text-sm text-cyan-800 transition-all hover:bg-cyan-500/20 dark:text-cyan-300 disabled:cursor-not-allowed disabled:op-40"
+                        disabled={filtered.length === 0}
                         onClick={() => void copyFilteredHistory()}
                     >
                         <span className="i-ph:copy-duotone" />
@@ -534,7 +534,7 @@ function SavedReadingItem({
     const relativeTime = useRelativeTime(updatedAt);
 
     return (
-        <div className="group flex items-start justify-between gap-3 rounded-xl bg-white/82 dark:bg-zinc-900/70 border border-zinc-200/90 dark:border-zinc-700/30 px-4 py-3 transition-all hover:border-zinc-300/80 dark:hover:border-zinc-600/50 hover:bg-zinc-100/95 dark:hover:bg-zinc-800/60">
+        <div className="history-item group">
             <div className="min-w-0 flex-1">
                 <a
                     href={url}
@@ -554,9 +554,12 @@ function SavedReadingItem({
             <button
                 type="button"
                 title={removeTitle}
-                className="mt-0.5 shrink-0 i-ph:x-duotone op-0 group-hover:op-40 hover:op-80! transition-opacity btn text-base"
+                aria-label={`${removeTitle}：${title}`}
+                className="history-remove-button"
                 onClick={onRemove}
-            />
+            >
+                <span className="i-ph:x-duotone" aria-hidden="true" />
+            </button>
         </div>
     );
 }

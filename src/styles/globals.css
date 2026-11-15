@@ -1108,6 +1108,44 @@ html.dark .app-header {
 .history-page {
     max-width: 1020px;
 }
+.history-item {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    transition: border-color 0.15s, background 0.15s;
+}
+.history-item:hover,
+.history-item:focus-within {
+    border-color: var(--border-strong);
+    background: var(--surface-soft);
+}
+.history-remove-button {
+    display: inline-flex;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    background: transparent;
+    font-size: 18px;
+}
+.history-remove-button:hover,
+.history-remove-button:focus-visible {
+    color: var(--text-primary);
+    background: var(--surface-hover);
+    border-color: var(--border);
+}
+.app-main .history-filters {
+    padding: 12px;
+}
 .history-sync-panel {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -1164,6 +1202,10 @@ html.dark .app-header {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
     box-shadow: var(--shadow);
 }
 .history-tab-button {
