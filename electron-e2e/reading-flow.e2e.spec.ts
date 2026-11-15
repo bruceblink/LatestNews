@@ -134,6 +134,7 @@ test.beforeAll(async () => {
 });
 
 test("keeps reading history and saved states across Electron source and history routes", async () => {
+    expect(await getExternalOpenAttempts()).toEqual([]);
     await page.addInitScript(() => {
         const callsKey = "__latestNewsServiceWorkerRegisterCalls";
         (window as unknown as Record<string, unknown>)[callsKey] = 0;
@@ -171,6 +172,8 @@ test("keeps reading history and saved states across Electron source and history 
 
     await itemLink.click();
     await expect(itemLink).toContainText("已读");
+    await expect.poll(async () => getExternalOpenAttempts()).toEqual([fixtureItem.url]);
+    expect(page.url()).toBe("app://bundle/source/hackernews");
 
     await page.goto("app://bundle/history");
     await expect(page.getByRole("heading", { name: "阅读历史", level: 1 })).toBeVisible();
@@ -186,6 +189,7 @@ test("keeps reading history and saved states across Electron source and history 
 
     await closeElectronApp();
     await launchElectronApp();
+    expect(await getExternalOpenAttempts()).toEqual([]);
     await page.goto("app://bundle/history");
     await expect(page.getByText(fixtureItem.title, { exact: true })).toBeVisible();
 });
@@ -234,6 +238,31 @@ async function launchElectronApp() {
     });
     page = await electronApp.firstWindow();
     await page.waitForLoadState("load");
+    await installExternalOpenCapture();
+}
+
+async function installExternalOpenCapture() {
+    await electronApp.evaluate(({ shell }) => {
+        const appGlobal = globalThis as typeof globalThis & {
+            __latestNewsExternalOpenAttempts?: string[];
+        };
+        appGlobal.__latestNewsExternalOpenAttempts = [];
+        Object.defineProperty(shell, "openExternal", {
+            configurable: true,
+            value: async (url: string) => {
+                appGlobal.__latestNewsExternalOpenAttempts?.push(url);
+            },
+        });
+    });
+}
+
+async function getExternalOpenAttempts() {
+    return electronApp.evaluate(() => {
+        const appGlobal = globalThis as typeof globalThis & {
+            __latestNewsExternalOpenAttempts?: string[];
+        };
+        return appGlobal.__latestNewsExternalOpenAttempts ?? [];
+    });
 }
 
 async function closeElectronApp() {
