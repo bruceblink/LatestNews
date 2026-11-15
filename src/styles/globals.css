@@ -2883,38 +2883,44 @@ html.dark .app-header {
     color: var(--insights-muted);
     font-size: 10px;
 }
-.insights-window-toggle,
-.insights-mini-toggle {
+.insights-window-toggle {
     display: inline-flex;
     align-items: center;
     border: 1px solid var(--border);
     border-radius: 7px;
-    overflow: hidden;
     color: var(--text-secondary);
     background: var(--surface);
     font-size: 10px;
     font-weight: 700;
 }
-.insights-window-toggle span,
-.insights-mini-toggle span {
+.insights-window-toggle button {
+    min-height: 36px;
     padding: 6px 10px;
+    border: 0;
+    border-radius: 6px;
+    color: inherit;
+    background: transparent;
 }
-.insights-window-toggle span.is-active,
-.insights-mini-toggle span.is-active {
+.insights-window-toggle button:hover,
+.insights-window-toggle button[aria-pressed="true"] {
     color: var(--insights-teal-dark);
     background: var(--insights-teal-soft);
+}
+.insights-sort-label {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 10px;
 }
 .insights-chart-stage {
     position: relative;
     min-width: 0;
     overflow-x: auto;
-    padding-top: 54px;
+    padding-top: 10px;
 }
 .insights-bar-chart {
     display: grid;
-    min-width: 650px;
+    min-width: 0;
     height: 194px;
-    grid-template-columns: repeat(auto-fit, minmax(18px, 1fr));
     align-items: end;
     gap: 7px;
     padding: 0 5px;
@@ -2949,43 +2955,6 @@ html.dark .app-header {
     border-radius: 4px 4px 0 0;
     background: linear-gradient(180deg, #46c3b5, #0a998f);
 }
-.insights-chart-annotation {
-    position: absolute;
-    top: 0;
-    z-index: 1;
-    display: flex;
-    width: 122px;
-    min-height: 43px;
-    flex-direction: column;
-    gap: 1px;
-    padding: 6px 8px;
-    transform: translateX(-50%);
-    border: 1px solid #b9dedb;
-    border-radius: 7px;
-    background: var(--surface);
-    color: var(--text-secondary);
-    font-size: 9px;
-    box-shadow: 0 4px 12px rgb(29 67 76 / 8%);
-}
-.insights-chart-annotation strong {
-    color: var(--insights-teal-dark);
-    font-size: 10px;
-}
-.insights-chart-annotation.is-peak {
-    border-color: #f1c1ba;
-}
-.insights-chart-annotation.is-peak strong {
-    color: var(--insights-red);
-}
-.insights-chart-annotation.is-tail {
-    border-color: #b7d9d8;
-}
-.insights-chart-annotation.is-start {
-    transform: translateX(0);
-}
-.insights-chart-annotation.is-tail {
-    transform: translateX(-100%);
-}
 .insights-heat-strip {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(8px, 1fr));
@@ -3008,7 +2977,7 @@ html.dark .app-header {
 .insights-hot-head,
 .insights-hot-row {
     display: grid;
-    grid-template-columns: 25px minmax(0, 1fr) 108px 64px 0;
+    grid-template-columns: 25px minmax(0, 1fr) 80px 48px;
     align-items: center;
     gap: 8px;
 }
@@ -3039,14 +3008,14 @@ html.dark .app-header {
 .insights-rank-badge.rank-3 { color: #fff; background: #c99157; }
 .insights-hot-main { min-width: 0; }
 .insights-hot-main > a {
-    display: block;
+    display: -webkit-box;
     overflow: hidden;
     color: var(--insights-ink);
     font-size: 12px;
     font-weight: 750;
     line-height: 1.35;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 .insights-hot-main > a:hover { color: var(--insights-teal-dark); }
 .insights-hot-meta {
@@ -3096,9 +3065,7 @@ html.dark .app-header {
 .insights-score-bars span:nth-child(5) { height: 19px; }
 .insights-score-bars span:nth-child(6) { height: 22px; }
 .insights-score-bars span.is-filled { background: var(--insights-teal); }
-.insights-inline-actions { position: absolute; right: 0; opacity: 0; }
-.insights-hot-row:hover .insights-inline-actions,
-.insights-hot-row:focus-within .insights-inline-actions { opacity: 1; }
+.insights-inline-actions { grid-column: 2 / -1; justify-self: end; }
 .insights-topic-list { display: flex; flex-direction: column; }
 .insights-topic-row { border-bottom: 1px solid var(--border); }
 .insights-topic-row:last-child { border-bottom: 0; }
@@ -3128,6 +3095,7 @@ html.dark .app-header {
 .insights-health-legend i { width: 7px; height: 7px; border-radius: 50%; background: #20a348; }
 .insights-health-legend i.is-failing { background: var(--insights-red); }
 .insights-health-legend i.is-degraded { background: var(--insights-amber); }
+.insights-health-legend i.is-idle { background: var(--text-muted); }
 .insights-health-sources { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 7px; }
 .insights-health-source { display: flex; min-width: 0; min-height: 54px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 1px solid color-mix(in srgb, #259342 30%, var(--border)); border-radius: 7px; background: color-mix(in srgb, #259342 6%, var(--surface)); text-align: center; }
 .insights-health-source strong { max-width: 100%; overflow: hidden; color: var(--text-primary); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
@@ -3195,15 +3163,14 @@ html.dark .app-header {
     .insights-middle-grid,
     .insights-bottom-grid { grid-template-columns: 1fr; }
     .insights-panel { padding: 13px; border-radius: 9px; }
-    .insights-chart-stage { overflow-x: auto; margin-inline: -5px; padding-top: 44px; }
-    .insights-chart-annotation { display: none; }
+    .insights-chart-stage { margin-inline: -5px; }
     .insights-chart-footnote { font-size: 9px; }
     .insights-hot-head { display: none; }
     .insights-hot-list { flex-direction: column; overflow: visible; margin-right: 0; padding-right: 0; }
     .insights-hot-row { grid-template-columns: 25px minmax(0, 1fr) 58px; gap: 8px; }
     .insights-source-chips { display: none; }
     .insights-score-bars { grid-column: 3; grid-row: 1; }
-    .insights-inline-actions { display: none; }
+    .insights-inline-actions { display: flex; }
     .insights-hot-main > a { font-size: 11px; white-space: normal; }
     .insights-health-sources { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .insights-keyword-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

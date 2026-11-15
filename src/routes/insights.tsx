@@ -55,9 +55,10 @@ function InsightsPage() {
     const [trendWindow, setTrendWindow] = useState<InsightTrendWindow>("24h");
 
     const scopeSources = useMemo(() => getScopeSources(scope, focusSources), [focusSources, scope]);
+    const selectedSource = sourceFilter !== "all" && scopeSources.includes(sourceFilter) ? sourceFilter : "all";
     const sources = useMemo(
-        () => (sourceFilter === "all" || !scopeSources.includes(sourceFilter) ? scopeSources : [sourceFilter]),
-        [scopeSources, sourceFilter]
+        () => (selectedSource === "all" ? scopeSources : [selectedSource]),
+        [scopeSources, selectedSource]
     );
     const readUrls = useMemo(() => history.map((item) => item.url), [history]);
     const payload = useMemo(
@@ -90,18 +91,29 @@ function InsightsPage() {
     const keywordTrends = insights?.keywordTrends ?? [];
     const categoryShares = insights?.categoryShares ?? [];
     const sourceActivity = insights?.sourceActivity ?? [];
-    const sourceOptions = useMemo(
-        () =>
-            (insights?.sourceActivity ?? []).map((item) => ({
-                id: item.sourceId,
-                label: getSourceName(item.sourceId, item.sourceName),
-            })),
-        [insights?.sourceActivity]
-    );
+    const sourceOptions = useMemo(() => scopeSources.map((id) => ({ id, label: getSourceName(id) })), [scopeSources]);
 
-    const heroTitle = "要闻聚焦：科技政策与产业进展受广泛关注";
-    // API 发生部分失败或测试替身缺少元数据时，洞察页面仍应保留导航和空状态。
+    const heroTitle = hotRankings[0]?.title
+        ? `要闻聚焦：${hotRankings[0].title}`
+        : isFetching
+          ? "正在汇总当前来源"
+          : isError
+            ? "暂时无法生成洞察"
+            : insights && insights.itemCount > 0
+              ? "当前来源内容概览"
+              : "当前范围暂无内容";
     const generatedAt = insights?.generatedAt ?? data?.meta?.generatedAt;
+    const statusLabel = isFetching
+        ? "更新中"
+        : isError
+          ? "更新失败"
+          : !insights
+            ? "等待数据"
+            : data?.meta?.partial
+              ? "部分数据"
+              : insights.itemCount === 0
+                ? "暂无内容"
+                : "数据已更新";
 
     const handleReadHotItem = (item: HotNewsItem) => {
         addHistory(item.sourceId, item.id, item.title, item.url);
@@ -135,7 +147,13 @@ function InsightsPage() {
                         </label>
                         <label>
                             <span>内容范围</span>
-                            <select value={scope} onChange={(event) => setScope(event.target.value as InsightScope)}>
+                            <select
+                                value={scope}
+                                onChange={(event) => {
+                                    setScope(event.target.value as InsightScope);
+                                    setSourceFilter("all");
+                                }}
+                            >
                                 {scopeOptions.map((option) => (
                                     <option key={option.id} value={option.id}>
                                         {option.label}
@@ -146,7 +164,7 @@ function InsightsPage() {
                         <label>
                             <span>来源</span>
                             <select
-                                value={sourceFilter}
+                                value={selectedSource}
                                 onChange={(event) => setSourceFilter(event.target.value as SourceFilter)}
                             >
                                 <option value="all">全部来源</option>
@@ -160,7 +178,8 @@ function InsightsPage() {
                         <button
                             type="button"
                             className="insights-query-button"
-                            disabled={isFetching}
+                            disabled={isFetching || !sources.length}
+                            aria-busy={isFetching}
                             onClick={() => void refetch()}
                         >
                             <span
@@ -176,6 +195,7 @@ function InsightsPage() {
                     {isError && (
                         <div className="insights-data-error" role="alert">
                             洞察加载失败{error instanceof Error ? `：${error.message}` : ""}
+                            {insights ? "。当前保留上次结果，请重新查询。" : "。请重新查询。"}
                         </div>
                     )}
 
@@ -187,14 +207,15 @@ function InsightsPage() {
                                 <div className="insights-brief-copy">
                                     <h2 id="insights-brief-title">{heroTitle}</h2>
                                     <p>
-                                        近 {trendWindow === "24h" ? "24 小时" : "7 天"}
-                                        ，相关报道发文量与覆盖媒体数量持续变化，帮助编辑快速判断当前讨论焦点与后续跟踪方向。
+                                        {insights
+                                            ? `本次返回 ${insights.sourceCount} 个来源、${insights.itemCount} 条内容。时间范围仅控制发布时间趋势，其他统计基于来源当前返回的内容。`
+                                            : "热点与统计以来源返回的数据为准，不代表全部新闻。"}
                                     </p>
                                 </div>
                                 <div className="insights-brief-aside">
                                     <span className="i-ph:target-duotone" aria-hidden="true" />
                                     <strong>编辑洞察</strong>
-                                    <span>关注跨来源重复出现的报道与持续升温的主题。</span>
+                                    <span>结合来源覆盖和发布时间比较内容，不将单次快照视为增长趋势。</span>
                                 </div>
                             </section>
 
@@ -202,6 +223,7 @@ function InsightsPage() {
                                 <UpdateFrequencyPanel
                                     buckets={updateFrequency}
                                     trendWindow={trendWindow}
+                                    onTrendWindowChange={setTrendWindow}
                                     loading={isFetching && !insights}
                                 />
                                 <HotRankingPanel items={hotRankings} scope={scope} onRead={handleReadHotItem} />
@@ -235,9 +257,24 @@ function InsightsPage() {
                                     <span className="i-ph:arrow-clockwise-duotone" aria-hidden="true" />
                                     最后更新：{generatedAt ? formatUpdatedAt(generatedAt) : "等待数据"}
                                 </span>
-                                <span className={clsx("insights-live-pill", data?.meta?.partial && "is-partial")}>
-                                    <span className="i-ph:check-circle-fill" aria-hidden="true" />
-                                    {data?.meta?.partial ? "部分数据" : "数据已更新"}
+                                <span
+                                    role="status"
+                                    className={clsx(
+                                        "insights-live-pill",
+                                        (data?.meta?.partial || isError || !insights) && "is-partial"
+                                    )}
+                                >
+                                    <span
+                                        className={
+                                            isFetching
+                                                ? "i-ph:spinner-gap-duotone animate-spin"
+                                                : isError
+                                                  ? "i-ph:warning-circle-duotone"
+                                                  : "i-ph:info-duotone"
+                                        }
+                                        aria-hidden="true"
+                                    />
+                                    {statusLabel}
                                 </span>
                             </footer>
 
@@ -259,22 +296,21 @@ function InsightsPage() {
     );
 }
 
-/** 显示按北京时间（UTC+8）时间桶统计的发文量，并保留热点、峰值和回落的直接标注。 */
+/** 按北京时间（UTC+8）显示发布时间分布，不从单次快照推断增长或回落。 */
 function UpdateFrequencyPanel({
     buckets,
     trendWindow,
     loading,
+    onTrendWindowChange,
 }: {
     buckets: InsightTimeBucket[];
     trendWindow: InsightTrendWindow;
     loading: boolean;
+    onTrendWindowChange: (value: InsightTrendWindow) => void;
 }) {
     const maxCount = Math.max(...buckets.map((bucket) => bucket.itemCount), 1);
     const totalCount = buckets.reduce((sum, bucket) => sum + bucket.itemCount, 0);
-    const peakIndex = buckets.findIndex((bucket) => bucket.itemCount === maxCount);
-    const firstActiveIndex = buckets.findIndex((bucket) => bucket.itemCount > 0);
-    const lastActiveIndex = [...buckets].reverse().findIndex((bucket) => bucket.itemCount > 0);
-    const tailIndex = lastActiveIndex < 0 ? -1 : buckets.length - 1 - lastActiveIndex;
+    const maxSourceCount = Math.max(...buckets.map((bucket) => bucket.sourceCount), 1);
 
     return (
         <article className="insights-panel insights-frequency-panel">
@@ -286,9 +322,22 @@ function UpdateFrequencyPanel({
                     />
                     <span className="insights-panel-subtitle">发文量（篇）</span>
                 </div>
-                <div className="insights-window-toggle" aria-label="趋势时间范围">
-                    <span className={trendWindow === "7d" ? "" : "is-active"}>7 天</span>
-                    <span className={trendWindow === "24h" ? "is-active" : ""}>24 小时</span>
+                <div className="insights-window-toggle" role="group" aria-label="趋势时间范围">
+                    {(
+                        [
+                            ["7d", "7 天"],
+                            ["24h", "24 小时"],
+                        ] as const
+                    ).map(([value, label]) => (
+                        <button
+                            key={value}
+                            type="button"
+                            aria-pressed={trendWindow === value}
+                            onClick={() => onTrendWindowChange(value)}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </div>
             </div>
             {loading ? (
@@ -296,37 +345,11 @@ function UpdateFrequencyPanel({
             ) : totalCount > 0 ? (
                 <>
                     <div className="insights-chart-stage">
-                        {firstActiveIndex >= 0 && (
-                            <div
-                                className="insights-chart-annotation is-start"
-                                style={{ left: `${(firstActiveIndex / Math.max(buckets.length - 1, 1)) * 100}%` }}
-                            >
-                                <strong>上涨启动</strong>
-                                <span>报道数量开始增加</span>
-                            </div>
-                        )}
-                        {peakIndex >= 0 && (
-                            <div
-                                className="insights-chart-annotation is-peak"
-                                style={{ left: `${(peakIndex / Math.max(buckets.length - 1, 1)) * 100}%` }}
-                            >
-                                <strong>当日峰值</strong>
-                                <span>发文量 {maxCount} 篇</span>
-                            </div>
-                        )}
-                        {tailIndex >= 0 && tailIndex !== peakIndex && (
-                            <div
-                                className="insights-chart-annotation is-tail"
-                                style={{ left: `${(tailIndex / Math.max(buckets.length - 1, 1)) * 100}%` }}
-                            >
-                                <strong>热度回落</strong>
-                                <span>仍保持较高覆盖</span>
-                            </div>
-                        )}
                         <div
                             className="insights-bar-chart"
                             role="img"
                             aria-label={`共 ${totalCount} 条具有发布时间的内容`}
+                            style={{ gridTemplateColumns: `repeat(${buckets.length}, minmax(0, 1fr))` }}
                         >
                             {buckets.map((bucket) => (
                                 <div
@@ -355,10 +378,7 @@ function UpdateFrequencyPanel({
                             <span
                                 key={`${bucket.startAt}-coverage`}
                                 style={{
-                                    opacity: Math.max(
-                                        0.18,
-                                        bucket.sourceCount / Math.max(...buckets.map((item) => item.sourceCount), 1)
-                                    ),
+                                    opacity: Math.max(0.18, bucket.sourceCount / maxSourceCount),
                                 }}
                             />
                         ))}
@@ -389,10 +409,7 @@ function HotRankingPanel({
         <article className="insights-panel insights-hot-panel">
             <div className="insights-panel-header">
                 <PanelTitle icon="i-ph:fire-duotone" title="热点新闻榜" />
-                <div className="insights-mini-toggle">
-                    <span className="is-active">按热度</span>
-                    <span>按增速</span>
-                </div>
+                <span className="insights-sort-label">按综合热度排序</span>
             </div>
             <div className="insights-hot-head">
                 <span>#</span>
@@ -466,27 +483,25 @@ function TopicPanel({
     scope: InsightScope;
     onRead: (item: TopicEvent["items"][number]) => void;
 }) {
-    const [expandedTopicId, setExpandedTopicId] = useState<string | undefined>(topics[0]?.id);
+    const [expandedTopicId, setExpandedTopicId] = useState<string | null>();
+    const visibleExpandedId = expandedTopicId === undefined ? topics[0]?.id : expandedTopicId;
     return (
         <article className="insights-panel insights-topic-panel">
             <div className="insights-panel-header">
                 <PanelTitle icon="i-ph:chat-circle-dots-duotone" title="话题事件" />
-                <div className="insights-mini-toggle">
-                    <span className="is-active">按热度</span>
-                    <span>按发文量</span>
-                </div>
+                <span className="insights-sort-label">按聚合结果排序</span>
             </div>
             <div className="insights-topic-list">
                 {topics.length ? (
                     topics.slice(0, 5).map((topic) => {
-                        const expanded = expandedTopicId === topic.id;
+                        const expanded = visibleExpandedId === topic.id;
                         return (
                             <article key={topic.id} className={clsx("insights-topic-row", expanded && "is-expanded")}>
                                 <button
                                     type="button"
                                     className="insights-topic-button"
                                     aria-expanded={expanded}
-                                    onClick={() => setExpandedTopicId(expanded ? undefined : topic.id)}
+                                    onClick={() => setExpandedTopicId(expanded ? null : topic.id)}
                                 >
                                     <span className="insights-topic-hash">#</span>
                                     <span className="insights-topic-title">{topic.title}</span>
@@ -561,12 +576,16 @@ function SourceHealthPanel({
                     <i className="is-degraded" />
                     缓存降级 {data?.cacheDegraded ?? "--"}
                 </span>
+                <span>
+                    <i className="is-idle" />
+                    未采样 {data?.idle ?? "--"}
+                </span>
             </div>
             {isError ? (
                 <PanelEmpty label="暂时无法读取来源健康状态" />
             ) : isFetching && !data ? (
                 <PanelEmpty label="来源状态加载中" />
-            ) : (
+            ) : sources.length ? (
                 <div className="insights-health-sources">
                     {sources.slice(0, 6).map((source) => (
                         <div
@@ -574,22 +593,24 @@ function SourceHealthPanel({
                             className={clsx(
                                 "insights-health-source",
                                 `is-${source.status}`,
-                                source.cacheDegraded && "is-degraded"
+                                source.cacheDegraded && source.status !== "failing" && "is-degraded"
                             )}
                         >
                             <strong>{source.name}</strong>
                             <span>
-                                {source.status === "healthy"
-                                    ? "正常"
+                                {source.status === "failing"
+                                    ? "异常"
                                     : source.cacheDegraded
                                       ? "缓存降级"
-                                      : source.status === "failing"
-                                        ? "异常"
+                                      : source.status === "healthy"
+                                        ? "正常"
                                         : "未采样"}
                             </span>
                         </div>
                     ))}
                 </div>
+            ) : (
+                <PanelEmpty label="暂无来源健康记录" />
             )}
         </article>
     );
@@ -695,10 +716,7 @@ function SourceActivityPanel({ items }: { items: SourceActivity[] }) {
         <article className="insights-panel insights-source-panel">
             <div className="insights-panel-header">
                 <PanelTitle icon="i-ph:chart-bar-duotone" title="来源活跃度" />
-                <div className="insights-mini-toggle">
-                    <span className="is-active">发文量</span>
-                    <span>覆盖度</span>
-                </div>
+                <span className="insights-sort-label">按内容数量排序</span>
             </div>
             {visibleItems.length ? (
                 <div className="insights-source-bars">
@@ -747,7 +765,16 @@ function PanelEmpty({ label }: { label: string }) {
 }
 
 function EmptyState() {
-    return <div className="insights-panel-empty insights-empty-state">暂无可用来源，请先在首页添加关注来源。</div>;
+    return (
+        <div className="insights-panel-empty insights-empty-state">
+            <div>
+                <p>当前范围暂无可用来源。</p>
+                <Link to="/c/$column" params={{ column: "focus" }} className="insights-inline-link">
+                    管理关注来源
+                </Link>
+            </div>
+        </div>
+    );
 }
 
 function getSourceName(sourceId: SourceID, sourceName?: string) {
