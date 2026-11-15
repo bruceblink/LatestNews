@@ -9,7 +9,7 @@ import { readFile } from "node:fs/promises";
 export default function pwa(appTitle: string) {
     let shell: Buffer | undefined;
     const pwaOption: Partial<VitePWAOptions> = {
-        includeAssets: ["icon.svg", "apple-touch-icon.png"],
+        includeAssets: ["icon.svg", "apple-touch-icon.png", "theme-init.js"],
         filename: "swx.js",
         manifest: {
             name: appTitle,

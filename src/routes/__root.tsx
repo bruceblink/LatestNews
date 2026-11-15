@@ -1,4 +1,3 @@
-import "~/styles/globals.css";
 import "virtual:uno.css";
 
 import type { QueryClient } from "@tanstack/react-query";

@@ -1,11 +1,17 @@
 import { useAtom } from "jotai";
 import { useMedia } from "react-use";
 import { useMemo, useEffect } from "react";
-import { atomWithStorage } from "jotai/utils";
+import { atomWithStorage, createJSONStorage, unstable_withStorageValidator as withStorageValidator } from "jotai/utils";
 
 export declare type ColorScheme = "dark" | "light" | "auto";
 
-export const colorSchemeAtom = atomWithStorage<ColorScheme>("color-scheme", "light");
+const colorSchemeStorage = withStorageValidator(
+    (value): value is ColorScheme => value === "light" || value === "dark" || value === "auto"
+)(createJSONStorage());
+
+export const colorSchemeAtom = atomWithStorage<ColorScheme>("color-scheme", "light", colorSchemeStorage, {
+    getOnInit: true,
+});
 
 export function useDark() {
     const [colorScheme, setColorScheme] = useAtom(colorSchemeAtom);

@@ -313,6 +313,144 @@ const workspaceRoutes = [
     { path: "/settings", heading: "设置" },
 ] as const;
 
+for (const scenario of [
+    {
+        label: "saved light",
+        storageValue: JSON.stringify("light"),
+        system: "dark",
+        expectedDark: false,
+        expectedScheme: "light",
+    },
+    {
+        label: "saved dark",
+        storageValue: JSON.stringify("dark"),
+        system: "light",
+        expectedDark: true,
+        expectedScheme: "dark",
+    },
+    {
+        label: "auto with dark system",
+        storageValue: JSON.stringify("auto"),
+        system: "dark",
+        expectedDark: true,
+        expectedScheme: "auto",
+    },
+    {
+        label: "auto with light system",
+        storageValue: JSON.stringify("auto"),
+        system: "light",
+        expectedDark: false,
+        expectedScheme: "auto",
+    },
+    {
+        label: "malformed stored value",
+        storageValue: "{",
+        system: "dark",
+        expectedDark: false,
+        expectedScheme: "light",
+    },
+    {
+        label: "unknown stored value",
+        storageValue: JSON.stringify("sepia"),
+        system: "dark",
+        expectedDark: false,
+        expectedScheme: "light",
+    },
+    {
+        label: "null stored value",
+        storageValue: JSON.stringify(null),
+        system: "dark",
+        expectedDark: false,
+        expectedScheme: "light",
+    },
+] as const) {
+    test(`applies ${scenario.label} theme before the app mounts`, async ({ page }) => {
+        await page.emulateMedia({ colorScheme: scenario.system });
+        await page.addInitScript((storageValue) => {
+            localStorage.setItem("color-scheme", storageValue);
+            const themeToggles: boolean[] = [];
+            Object.defineProperty(window, "__latestNewsThemeToggles", { value: themeToggles });
+
+            const originalToggle = DOMTokenList.prototype.toggle;
+            DOMTokenList.prototype.toggle = function toggle(token, force) {
+                const result =
+                    force === undefined ? originalToggle.call(this, token) : originalToggle.call(this, token, force);
+                if (this === document.documentElement.classList && token === "dark") {
+                    themeToggles.push(result);
+                }
+                return result;
+            };
+        }, scenario.storageValue);
+        await installApiMocks(page);
+
+        let releaseCatalog!: () => void;
+        let markCatalogStarted!: () => void;
+        const catalogGate = new Promise<void>((resolve) => {
+            releaseCatalog = resolve;
+        });
+        const catalogStarted = new Promise<void>((resolve) => {
+            markCatalogStarted = resolve;
+        });
+        await page.route("**/api/v1/sources", async (route) => {
+            markCatalogStarted();
+            await catalogGate;
+            await route.fallback();
+        });
+
+        await page.goto("/settings", { waitUntil: "commit" });
+        await catalogStarted;
+
+        try {
+            expect(await page.locator("#app").locator("> *").count()).toBe(0);
+            expect(await page.locator("html").evaluate((element) => element.classList.contains("dark"))).toBe(
+                scenario.expectedDark
+            );
+            const initialBackground = await page.locator("body").evaluate((element) => {
+                const style = getComputedStyle(element);
+                return {
+                    background: style.backgroundColor,
+                    pageBackground: style.getPropertyValue("--page-bg").trim(),
+                };
+            });
+            expect(initialBackground.background).not.toBe("rgba(0, 0, 0, 0)");
+            expect(initialBackground.background).not.toBe("transparent");
+            expect(initialBackground.background).toBe(scenario.expectedDark ? "rgb(16, 23, 34)" : "rgb(247, 249, 251)");
+            expect(initialBackground.pageBackground).toBe(scenario.expectedDark ? "#101722" : "#f7f9fb");
+            expect(
+                await page.evaluate(
+                    () =>
+                        (
+                            window as Window & {
+                                __latestNewsThemeToggles: boolean[];
+                            }
+                        ).__latestNewsThemeToggles
+                )
+            ).toEqual([scenario.expectedDark]);
+        } finally {
+            releaseCatalog();
+        }
+
+        await expect(page.getByRole("heading", { name: "设置", level: 1 })).toBeVisible();
+        const schemeLabel = {
+            light: "浅色",
+            dark: "深色",
+            auto: "跟随系统",
+        }[scenario.expectedScheme];
+        await expect(page.getByRole("button", { name: schemeLabel, exact: true })).toHaveAttribute(
+            "aria-pressed",
+            "true"
+        );
+        expect(await page.locator("html").evaluate((element) => element.classList.contains("dark"))).toBe(
+            scenario.expectedDark
+        );
+        expect(
+            await page.evaluate(
+                () => (window as Window & { __latestNewsThemeToggles: boolean[] }).__latestNewsThemeToggles
+            )
+        ).toEqual([scenario.expectedDark, scenario.expectedDark]);
+    });
+}
+
 test("applies the saved theme immediately and keeps it across all workspace routes", async ({ page }) => {
     const errors: Error[] = [];
     page.on("pageerror", (error) => errors.push(error));
@@ -370,6 +508,28 @@ test("opens settings and returns home by keyboard using the same workspace menu"
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/insights$/);
     await expect(page.getByRole("heading", { name: /阅读洞察 Reading Insights/ })).toBeVisible();
+});
+
+test("keeps the workspace sidebar in natural keyboard tab order", async ({ page }) => {
+    await installApiMocks(page);
+    await page.goto("/insights");
+    await expect(page.getByRole("heading", { name: /阅读洞察 Reading Insights/ })).toBeVisible();
+
+    const expectedFocusOrder = [
+        page.locator(".skip-link"),
+        page.getByRole("link", { name: "LatestNews 首页" }),
+        page.getByRole("button", { name: "打开搜索" }),
+        page.getByRole("link", { name: "首页", exact: true }),
+        page.getByRole("link", { name: "统一 Feed", exact: true }),
+        page.getByRole("link", { name: "阅读历史", exact: true }),
+        page.getByRole("link", { name: "数据源健康", exact: true }),
+        page.getByRole("button", { name: "打开菜单", exact: true }),
+    ];
+
+    for (const locator of expectedFocusOrder) {
+        await page.keyboard.press("Tab");
+        await expect(locator).toBeFocused();
+    }
 });
 
 for (const width of [320, 390, 768, 1024, 1440]) {
