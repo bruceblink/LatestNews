@@ -2,6 +2,7 @@ import { hex2rgba } from "@unocss/rule-utils";
 import { presetIcons, presetWind3, defineConfig, transformerDirectives, transformerVariantGroup } from "unocss";
 
 import { dataSources } from "./shared/data-sources";
+import { appNavigation } from "./src/components/app-navigation";
 
 export default defineConfig({
     mergeSelectors: false,
@@ -41,6 +42,7 @@ export default defineConfig({
         btn: "op75 hover:op100 cursor-pointer transition-colors",
     },
     safelist: [
+        ...Object.values(appNavigation).map((item) => item.icon),
         ...["orange", ...new Set(Object.values(dataSources).map((k) => k.color))]
             .map((k) =>
                 `bg-${k} color-${k} border-${k} sprinkle-${k} shadow-${k}

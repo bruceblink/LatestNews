@@ -29,6 +29,45 @@ async function installApiMocks(page: Page) {
     await page.route("**/api/**", async (route) => {
         const url = new URL(route.request().url());
         const pathname = url.pathname;
+        if (pathname.endsWith("/s/insights")) {
+            const now = Date.now();
+            await route.fulfill({
+                json: {
+                    data: {
+                        generatedAt: now,
+                        sourceCount: 1,
+                        itemCount: 1,
+                        hotRankings: [
+                            {
+                                id: "workspace-1",
+                                rank: 1,
+                                title: "开源工具更新与开发者社区动态",
+                                url: "https://example.test/workspace-1",
+                                sourceId: "hackernews",
+                                score: 100,
+                                sources: ["hackernews"],
+                                sourceNames: ["Hacker News"],
+                                keywords: ["开源"],
+                            },
+                        ],
+                        topicEvents: [],
+                        keywordTrends: [],
+                        categoryShares: [],
+                        sourceActivity: [{ sourceId: "hackernews", itemCount: 1 }],
+                        updateFrequency: [{ startAt: now - 3_600_000, endAt: now, itemCount: 1, sourceCount: 1 }],
+                    },
+                    meta: {
+                        generatedAt: now,
+                        requestedSourceCount: 1,
+                        resolvedSourceCount: 1,
+                        partial: false,
+                        omittedSourceIds: [],
+                    },
+                    errors: [],
+                },
+            });
+            return;
+        }
         if (pathname.endsWith("/s/health") || pathname.endsWith("/v1/health/sources")) {
             await route.fulfill({ json: sourceHealth });
             return;
@@ -71,6 +110,29 @@ async function installApiMocks(page: Page) {
                         resolvedSourceCount: 0,
                         partial: false,
                         omittedSourceIds: [],
+                    },
+                    errors: [],
+                },
+            });
+            return;
+        }
+        if (pathname.endsWith("/v1/sources/hackernews")) {
+            await route.fulfill({
+                json: {
+                    data: {
+                        id: "hackernews",
+                        name: "Hacker News",
+                        interval: 600_000,
+                        color: "slate",
+                        type: "normal",
+                        disabled: false,
+                        home: "https://news.ycombinator.com/",
+                    },
+                    meta: {
+                        generatedAt: Date.now(),
+                        sourceId: "hackernews",
+                        canonicalSourceId: "hackernews",
+                        redirected: false,
                     },
                     errors: [],
                 },
@@ -229,7 +291,10 @@ test("scrolls a selected mobile navigation link into view", async ({ page }) => 
     await page.setViewportSize({ width: 390, height: 844 });
     await installApiMocks(page);
     await page.goto("/");
-    await page.locator(".insights-sidebar").getByRole("link", { name: "阅读历史", exact: true }).click();
+    await page
+        .getByRole("complementary", { name: "主要导航" })
+        .getByRole("link", { name: "阅读历史", exact: true })
+        .click();
 
     await expect(page).toHaveURL(/\/history$/);
     await expect(
@@ -237,6 +302,99 @@ test("scrolls a selected mobile navigation link into view", async ({ page }) => 
     ).toHaveAttribute("aria-current", "page");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+const workspaceRoutes = [
+    { path: "/insights", heading: /阅读洞察 Reading Insights/, navigation: "首页" },
+    { path: "/feed", heading: "统一 Feed", navigation: "统一 Feed" },
+    { path: "/history", heading: "阅读历史", navigation: "阅读历史" },
+    { path: "/health", heading: "数据源健康", navigation: "数据源健康" },
+    { path: "/source/hackernews", heading: "Hacker News", navigation: "数据源健康" },
+    { path: "/c/focus", heading: "我的关注", navigation: "统一 Feed" },
+    { path: "/settings", heading: "设置" },
+] as const;
+
+test("applies the saved theme immediately and keeps it across all workspace routes", async ({ page }) => {
+    const errors: Error[] = [];
+    page.on("pageerror", (error) => errors.push(error));
+    await installApiMocks(page);
+    await page.goto("/settings");
+    await page.getByRole("button", { name: "深色", exact: true }).click();
+    await expect(page.locator("html")).toHaveClass(/dark/);
+
+    for (const route of workspaceRoutes) {
+        await page.goto(route.path);
+        await expect(page.getByRole("heading", { name: route.heading, level: 1 })).toBeVisible();
+        await expect(page.locator("main")).toHaveCount(1);
+        await expect(page.locator("html")).toHaveClass(/dark/);
+        await expect(page.locator("vite-error-overlay")).toHaveCount(0);
+        const sidebar = page.getByRole("complementary", { name: "主要导航" });
+        await expect(sidebar).toBeVisible();
+        if ("navigation" in route) {
+            await expect(sidebar.getByRole("link", { name: route.navigation, exact: true })).toHaveAttribute(
+                "aria-current",
+                "page"
+            );
+        }
+        const colors = await page.locator(".app-modern-column").evaluate((element) => ({
+            background: getComputedStyle(element).backgroundColor,
+            expected: getComputedStyle(document.documentElement).getPropertyValue("--page-bg").trim(),
+        }));
+        expect(colors.background).toBe("rgb(16, 23, 34)");
+        expect(colors.expected).toBe("#101722");
+    }
+
+    await page.getByRole("button", { name: "浅色", exact: true }).click();
+    await expect(page.locator("html")).not.toHaveClass(/dark/);
+    await page.getByRole("button", { name: "跟随系统", exact: true }).click();
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(page.locator("html")).toHaveClass(/dark/);
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(page.locator("html")).not.toHaveClass(/dark/);
+    expect(errors).toEqual([]);
+});
+
+test("opens settings and returns home by keyboard using the same workspace menu", async ({ page }) => {
+    await installApiMocks(page);
+    await page.goto("/insights");
+    const sidebar = page.getByRole("complementary", { name: "主要导航" });
+    for (const name of ["首页", "统一 Feed", "阅读历史", "数据源健康"]) {
+        const icon = sidebar.getByRole("link", { name, exact: true }).locator("span").first();
+        expect(await icon.evaluate((element) => getComputedStyle(element).maskImage)).not.toBe("none");
+    }
+    await sidebar.getByRole("button", { name: "打开菜单", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    await page.getByRole("link", { name: "设置", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/settings$/);
+    await sidebar.getByRole("link", { name: "首页", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/insights$/);
+    await expect(page.getByRole("heading", { name: /阅读洞察 Reading Insights/ })).toBeVisible();
+});
+
+for (const width of [320, 390, 768, 1024, 1440]) {
+    test(`keeps all workspace pages within the ${width}px viewport`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await installApiMocks(page);
+        for (const route of workspaceRoutes) {
+            await page.goto(route.path);
+            await expect(page.getByRole("heading", { name: route.heading, level: 1 })).toBeVisible();
+            const layout = await page.locator("main").evaluate((main) => {
+                const rect = main.getBoundingClientRect();
+                return {
+                    left: rect.left,
+                    right: rect.right,
+                    contentWidth: main.scrollWidth,
+                    availableWidth: main.clientWidth,
+                    viewport: innerWidth,
+                };
+            });
+            expect(layout.left, route.path).toBeGreaterThanOrEqual(0);
+            expect(layout.right, route.path).toBeLessThanOrEqual(layout.viewport);
+            expect(layout.contentWidth, route.path).toBeLessThanOrEqual(layout.availableWidth + 1);
+        }
+    });
+}
 
 async function openInstallationGuide(page: Page) {
     const menu = page.getByRole("button", { name: "打开菜单", exact: true });

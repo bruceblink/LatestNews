@@ -20,7 +20,6 @@ import { APP_TITLE } from "~/utils/app-title";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
-import { SearchButton } from "~/components/header";
 import { useReadingState } from "~/hooks/useReadingState";
 import { getNewsInsightsCacheKey } from "@shared/source-api";
 import { fetchNewsInsights } from "~/services/source.service";
@@ -29,7 +28,6 @@ import { NEWS_INSIGHTS_TIME_ZONE } from "@shared/news-insights";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
 import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
-import { appNavigation, feedNavigationSearch } from "~/components/app-navigation";
 
 type InsightScope = UnifiedFeedScope;
 type SourceFilter = SourceID | "all";
@@ -115,42 +113,7 @@ function InsightsPage() {
 
     return (
         <div className="insights-design-surface">
-            <aside className="insights-sidebar" aria-label="洞察导航">
-                <Link to={appNavigation.home.path} className="insights-sidebar-brand" aria-label="LatestNews 首页">
-                    <img src="/icon.svg" alt="" width="36" height="36" />
-                    <span>
-                        <strong>LatestNews</strong>
-                        <small>新闻简阅</small>
-                    </span>
-                </Link>
-                <SearchButton className="insights-sidebar-search" />
-                <nav className="insights-sidebar-nav" aria-label="主要导航">
-                    <InsightNavLink
-                        to={appNavigation.home.path}
-                        icon={appNavigation.home.icon}
-                        label={appNavigation.home.label}
-                        active
-                    />
-                    <InsightNavLink
-                        to={appNavigation.feed.path}
-                        search={feedNavigationSearch}
-                        icon={appNavigation.feed.icon}
-                        label={appNavigation.feed.label}
-                    />
-                    <InsightNavLink
-                        to={appNavigation.history.path}
-                        icon={appNavigation.history.icon}
-                        label={appNavigation.history.label}
-                    />
-                    <InsightNavLink
-                        to={appNavigation.health.path}
-                        icon={appNavigation.health.icon}
-                        label={appNavigation.health.label}
-                    />
-                </nav>
-            </aside>
-
-            <main className="insights-workspace" id="insights-workspace">
+            <div className="insights-workspace" id="insights-workspace">
                 <header className="insights-workspace-header">
                     <div className="insights-workspace-title">
                         <div className="insights-page-kicker">READING INTELLIGENCE</div>
@@ -291,35 +254,8 @@ function InsightsPage() {
                         </>
                     )}
                 </div>
-            </main>
+            </div>
         </div>
-    );
-}
-
-/** 复用洞察工作区的左侧导航链接，保持移动端也有清晰的返回路径。 */
-function InsightNavLink({
-    to,
-    search,
-    icon,
-    label,
-    active = false,
-}: {
-    to: "/insights" | "/feed" | "/history" | "/health" | "/settings";
-    search?: { q?: string; scope?: InsightScope };
-    icon: string;
-    label: string;
-    active?: boolean;
-}) {
-    return (
-        <Link
-            to={to}
-            search={search}
-            className={clsx("app-nav-item", "insights-sidebar-link", active && "is-active")}
-            aria-current={active ? "page" : undefined}
-        >
-            <span className={icon} aria-hidden="true" />
-            <span>{label}</span>
-        </Link>
     );
 }
 

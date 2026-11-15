@@ -4,6 +4,7 @@ import "virtual:uno.css";
 import type { QueryClient } from "@tanstack/react-query";
 
 import clsx from "clsx";
+import { useDark } from "~/hooks/useDark";
 import { useSync } from "~/hooks/useSync.ts";
 import { Footer } from "~/components/footer";
 import { Toast } from "~/components/common/toast";
@@ -16,7 +17,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { DesktopUpdateNotice } from "~/components/desktop-update-notice";
 import { GlobalOverlayScrollbar } from "~/components/common/overlay-scrollbar";
-import { Outlet, Navigate, useRouterState, createRootRouteWithContext } from "@tanstack/react-router";
+import { Outlet, Navigate, createRootRouteWithContext } from "@tanstack/react-router";
 import { OfflineReadingSnapshotContext, usePersistOfflineReadingSnapshot } from "~/hooks/useOfflineReadingSnapshot.ts";
 
 export const Route = createRootRouteWithContext<{
@@ -31,8 +32,7 @@ function NotFoundComponent() {
 }
 
 function RootComponent() {
-    const isInsightsRoute = useRouterState({ select: (state) => state.location.pathname === "/insights" });
-    const isModernRoute = !isInsightsRoute;
+    useDark();
     useOnReload();
     useSync();
     const syncHub = useSyncHub();
@@ -44,15 +44,13 @@ function RootComponent() {
     return (
         <PWAStatusContext.Provider value={pwa}>
             <OfflineReadingSnapshotContext.Provider value={offlineReadingSnapshot}>
-                <GlobalOverlayScrollbar className={clsx("app-scroll h-full", isInsightsRoute && "insights-app-scroll")}>
+                <GlobalOverlayScrollbar className="app-scroll h-full">
                     <a className="skip-link" href="#main-content">
                         跳到主要内容
                     </a>
-                    <div
-                        className={clsx("app-content", isInsightsRoute ? "insights-app-content" : "app-modern-content")}
-                    >
-                        {isModernRoute && <AppShellSidebar />}
-                        <div className={isModernRoute ? "app-modern-column" : "insights-root-column"}>
+                    <div className="app-content app-modern-content">
+                        <AppShellSidebar />
+                        <div className="app-modern-column">
                             <DesktopUpdateNotice />
                             <PwaStatusBanner
                                 isOffline={pwa.isOffline}
@@ -61,14 +59,10 @@ function RootComponent() {
                                 justRecovered={pwa.justRecovered}
                                 onUpdate={pwa.applyUpdate}
                             />
-                            <main
-                                id="main-content"
-                                className={clsx("app-main", isInsightsRoute && "insights-root-main")}
-                                tabIndex={-1}
-                            >
+                            <main id="main-content" className="app-main" tabIndex={-1}>
                                 <Outlet />
                             </main>
-                            <footer className={clsx("app-footer", isInsightsRoute && "insights-root-footer")}>
+                            <footer className="app-footer">
                                 <Footer />
                             </footer>
                         </div>

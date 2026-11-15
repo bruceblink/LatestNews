@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { useRef, useEffect } from "react";
 import { Menu } from "~/components/header/menu";
 import { SearchButton } from "~/components/header";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -7,6 +8,14 @@ import { appNavigation, feedNavigationSearch, isAppNavigationActive } from "~/co
 /** 统一应用侧栏，提供所有页面都可访问的主要功能入口。 */
 export function AppShellSidebar() {
     const pathname = useRouterState({ select: (state) => state.location.pathname });
+    const navRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+        const nav = navRef.current;
+        const active = nav?.querySelector<HTMLElement>('[aria-current="page"]');
+        if (!nav || !active || nav.scrollWidth <= nav.clientWidth) return;
+        active.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }, [pathname]);
 
     return (
         <aside className="app-modern-sidebar" aria-label="主要导航">
@@ -18,7 +27,7 @@ export function AppShellSidebar() {
                 </span>
             </Link>
             <SearchButton className="app-modern-sidebar-search" />
-            <nav className="app-modern-nav" aria-label="工作区导航">
+            <nav ref={navRef} className="app-modern-nav" aria-label="工作区导航">
                 <span className="app-modern-nav-label">工作区</span>
                 <ModernNavLink
                     to={appNavigation.home.path}
