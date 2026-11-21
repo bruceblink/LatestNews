@@ -66,7 +66,11 @@ export async function resolveEntireSources({
             throw new RangeError("batchTimeoutMs must be a positive number.");
         }
         // Warm interactive reads let fast sources join the response without waiting on the slowest one.
-        const limitedByCache = preferCached && background && cacheEntries.some(({ items }) => items.length > 0);
+        const limitedByCache =
+            preferCached &&
+            background !== undefined &&
+            batchTimeoutMs > cachedBatchGraceMs &&
+            cacheEntries.some(({ items }) => items.length > 0);
         const waitMs = limitedByCache ? Math.min(batchTimeoutMs, cachedBatchGraceMs) : batchTimeoutMs;
         const states = new Map<SourceID, FetchState>();
         const tasks = missingIds.map((id) =>
@@ -105,7 +109,8 @@ export async function resolveEntireSources({
         for (const id of missingIds) {
             const state = states.get(id);
             if (!state) {
-                onFetchError?.(new SourceBatchTimeoutError(waitMs), id);
+                // A source still collecting after the cache response is omitted, but has not failed.
+                if (!limitedByCache) onFetchError?.(new SourceBatchTimeoutError(waitMs), id);
             } else if (state.status === "fulfilled") {
                 cachedResponses.set(state.value.id, state.value);
             } else {

@@ -163,7 +163,10 @@ describe("resolveEntireSources", () => {
             expect(responseReady).not.toHaveBeenCalled();
             await vi.advanceTimersByTimeAsync(1);
             expect(responseReady).toHaveBeenCalledWith(
-                expect.objectContaining({ meta: expect.objectContaining({ omittedSourceIds: ["hackernews"] }) })
+                expect.objectContaining({
+                    meta: expect.objectContaining({ partial: true, omittedSourceIds: ["hackernews"] }),
+                    errors: [],
+                })
             );
             expect((await read).data.map(({ id }) => id)).toEqual(["weibo", "v2ex"]);
             slow.resolve(createResponseItems("hackernews"));
