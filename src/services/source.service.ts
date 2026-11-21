@@ -165,12 +165,15 @@ async function fetchDesktopSourceBatch(payload: SourceBatchPayload): Promise<Sou
 
 async function fetchDesktopEntireSources(
     sources: SourceID[],
-    bridge: NonNullable<Window["latestNewsDesktop"]>
+    bridge: NonNullable<Window["latestNewsDesktop"]>,
+    localOnly = false
 ): Promise<EntireSourcesResponse> {
     // Remote data wins when available. Only omitted sources with a trusted local package
     // are collected locally, so one unavailable source does not discard the other results.
     const uniqueSourceIds = [...new Set(sources)];
-    const remoteConfig = await getDesktopNewsApiConfig();
+    const remoteConfig: DesktopNewsApiRuntimeSettings = localOnly
+        ? { mode: "local", remoteConfigured: false }
+        : await getDesktopNewsApiConfig();
     if (remoteConfig.mode === "remote" && !remoteConfig.remoteConfigured) {
         throw new Error("远端模式需要配置数据源 API 地址。");
     }
@@ -392,18 +395,22 @@ function createEmptyEntireSourcesEnvelope(sourceIds: SourceID[]): EntireSourcesR
 }
 
 export async function fetchNewsInsights(payload: NewsInsightsPayload): Promise<NewsInsightsResponse> {
-    const bridge = getDesktopBridge();
-    if (bridge) {
-        const remoteConfig = await getDesktopNewsApiConfig();
-        if (remoteConfig.mode === "local") throw new Error("本地模式暂不支持远端新闻洞察。");
-        if (!remoteConfig.remoteConfigured) throw new Error("未配置远端新闻 API，无法读取新闻洞察。");
-    }
     const requestKey = getNewsInsightsRequestKey(payload);
     return getOrCreateInFlightRequest(inFlightNewsInsights, requestKey, () =>
-        myFetch(sourceApi.insights, {
-            method: "POST",
-            body: payload,
-        })
+        fetchDesktopPreferred(
+            () => myFetch<NewsInsightsResponse>(sourceApi.insights, { method: "POST", body: payload }),
+            async (desktop) => {
+                // Load the shared aggregation code only when the desktop needs to compute locally.
+                const [local, { createNewsInsights }] = await Promise.all([
+                    fetchDesktopEntireSources(payload.sources, desktop, true),
+                    import("@shared/news-insights"),
+                ]);
+                return {
+                    ...local,
+                    data: createNewsInsights(local.data, { ...payload, generatedAt: local.meta.generatedAt }),
+                };
+            }
+        )
     );
 }
 

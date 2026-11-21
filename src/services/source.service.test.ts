@@ -413,8 +413,27 @@ describe("desktop local crawler routing", () => {
         });
         await expect(fetchSourceMetadataItem("hackernews")).resolves.toMatchObject({ data: { id: "hackernews" } });
         await expect(fetchSourceHealthSummary()).resolves.toEqual(health);
-        await expect(fetchNewsInsights({ sources: ["hackernews"] })).rejects.toThrow("本地模式暂不支持远端新闻洞察");
+        await expect(fetchNewsInsights({ sources: ["hackernews", "pcbeta-windows11"] })).resolves.toMatchObject({
+            data: { itemCount: 1, hotRankings: [{ title: localHackerNews.items[0].title }] },
+            meta: { partial: true, omittedSourceIds: ["pcbeta-windows11"] },
+        });
         expect(mockMyFetch).not.toHaveBeenCalled();
+    });
+
+    it("builds desktop insights from cached local headlines after a retryable remote failure", async () => {
+        const cached = {
+            ...createSource("hackernews", "Cached Hacker News headline", "cached-1"),
+            status: "stale-cache" as const,
+        };
+        const bridge = createDesktopBridge(["hackernews"], { hackernews: cached });
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+        mockMyFetch.mockRejectedValueOnce(Object.assign(new Error("unavailable"), { status: 503 }));
+
+        await expect(fetchNewsInsights({ sources: ["hackernews"] })).resolves.toMatchObject({
+            data: { itemCount: 1, hotRankings: [{ title: cached.items[0].title }] },
+        });
+        expect(mockMyFetch).toHaveBeenCalledOnce();
+        expect(bridge.fetchCrawlerSource).toHaveBeenCalledWith("hackernews");
     });
 
     it("keeps remote mode remote when a retryable request fails", async () => {
@@ -433,6 +452,7 @@ describe("desktop local crawler routing", () => {
         await expect(fetchSource({ id: "hackernews" })).rejects.toBe(error);
         await expect(fetchSourceBatchV1({ sources: ["hackernews"] })).rejects.toBe(error);
         await expect(fetchSourceMetadataItem("hackernews")).rejects.toBe(error);
+        await expect(fetchNewsInsights({ sources: ["hackernews"] })).rejects.toBe(error);
         expect(bridge.fetchCrawlerSource).not.toHaveBeenCalled();
         expect(bridge.listCrawlerSourceMetadata).not.toHaveBeenCalled();
     });
