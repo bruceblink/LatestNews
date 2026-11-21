@@ -46,7 +46,7 @@ export async function fetchSource(query: SourceQuery, headers?: Record<string, s
     );
     if (remoteConfig.mode === "local" || !remoteConfig.remoteConfigured) {
         if (localSupported && bridge) {
-            const localSource = await fetchDesktopLocalSource(bridge, query.id);
+            const localSource = await fetchDesktopLocalSource(bridge, query.id, query.latest || query.clearCache);
             if (localSource) return localSource;
         }
         if (remoteConfig.mode === "remote") throw new Error("远端模式需要配置数据源 API 地址。");
@@ -57,7 +57,7 @@ export async function fetchSource(query: SourceQuery, headers?: Record<string, s
         return await myFetch(sourceApi.single, { query, headers });
     } catch (error) {
         if (remoteConfig.mode === "remote" || !localSupported || !bridge || !shouldFallbackToLocal(error)) throw error;
-        const localSource = await fetchDesktopLocalSource(bridge, query.id);
+        const localSource = await fetchDesktopLocalSource(bridge, query.id, query.latest || query.clearCache);
         if (localSource) return localSource;
         throw error;
     }
@@ -75,7 +75,7 @@ export async function fetchSourceItemsV1(id: SourceID, query?: SourceItemsQuery)
     );
     if (remoteConfig.mode === "local" || !remoteConfig.remoteConfigured) {
         if (localSupported && bridge) {
-            const localSource = await fetchDesktopLocalSource(bridge, id);
+            const localSource = await fetchDesktopLocalSource(bridge, id, query?.latest || query?.clearCache);
             if (localSource) return createDesktopSourceItemsResponse(localSource, query);
         }
         if (remoteConfig.mode === "remote") throw new Error("远端模式需要配置数据源 API 地址。");
@@ -86,7 +86,7 @@ export async function fetchSourceItemsV1(id: SourceID, query?: SourceItemsQuery)
         return await myFetch(getSourceItemsPath(id), { query });
     } catch (error) {
         if (remoteConfig.mode === "remote" || !localSupported || !bridge || !shouldFallbackToLocal(error)) throw error;
-        const localSource = await fetchDesktopLocalSource(bridge, id);
+        const localSource = await fetchDesktopLocalSource(bridge, id, query?.latest || query?.clearCache);
         if (localSource) return createDesktopSourceItemsResponse(localSource, query);
         throw error;
     }
@@ -252,9 +252,16 @@ async function fetchDesktopEntireSources(
     };
 }
 
-async function fetchDesktopLocalSource(bridge: NonNullable<Window["latestNewsDesktop"]>, sourceId: SourceID) {
+async function fetchDesktopLocalSource(
+    bridge: NonNullable<Window["latestNewsDesktop"]>,
+    sourceId: SourceID,
+    refresh?: boolean
+) {
     try {
-        return (await bridge.fetchCrawlerSource(sourceId)) ?? undefined;
+        return (
+            (await (refresh ? bridge.fetchCrawlerSource(sourceId, true) : bridge.fetchCrawlerSource(sourceId))) ??
+            undefined
+        );
     } catch {
         return undefined;
     }

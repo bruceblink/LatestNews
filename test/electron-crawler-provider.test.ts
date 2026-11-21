@@ -97,7 +97,11 @@ describe("desktop crawler provider cache fallback", () => {
         });
 
         vi.setSystemTime(2_000);
-        await expect(runtime.fetchSource("juejin")).resolves.toMatchObject({ status: "empty", items: [] });
+        await expect(runtime.fetchSource("juejin")).resolves.toMatchObject({
+            status: "stale-cache",
+            updatedTime: 1_000,
+            items: [item],
+        });
 
         vi.setSystemTime(30_000);
         await expect(runtime.fetchSource("juejin")).resolves.toMatchObject({
@@ -126,6 +130,37 @@ describe("desktop crawler provider cache fallback", () => {
             status: "stale-cache",
             updatedTime: 1_000,
             items: [item],
+        });
+        runtime.dispose?.();
+    });
+
+    it("reads persisted history immediately and bounds the wait for a manual refresh", async () => {
+        const root = await mkdtemp(join(tmpdir(), "latestnews-read-cache-"));
+        temporaryDirectories.push(root);
+        const item = { id: "one", title: "Item one", url: "https://example.test/one" };
+        const nextItem = { ...item, title: "Updated" };
+        const slow = Promise.withResolvers<(typeof item)[]>();
+        collect.mockResolvedValueOnce([item]).mockReturnValueOnce(slow.promise);
+        const runtime = await createElectronCrawlerPluginRuntime({ userDataPath: root });
+
+        vi.useFakeTimers();
+        vi.setSystemTime(1_000);
+        await runtime.fetchSource("juejin");
+        vi.setSystemTime(61_001);
+        await expect(runtime.readLocalSource("juejin", false)).resolves.toMatchObject({
+            status: "stale-cache",
+            items: [item],
+        });
+        const forced = runtime.readLocalSource("juejin", true);
+        await vi.advanceTimersByTimeAsync(4_000);
+        await expect(forced).resolves.toMatchObject({ status: "stale-cache", items: [item] });
+        expect(collect).toHaveBeenCalledTimes(2);
+        const background = runtime.fetchSource("juejin");
+        slow.resolve([nextItem]);
+        await background;
+        await expect(runtime.readLocalSource("juejin", false)).resolves.toMatchObject({
+            status: "cache",
+            items: [nextItem],
         });
         runtime.dispose?.();
     });

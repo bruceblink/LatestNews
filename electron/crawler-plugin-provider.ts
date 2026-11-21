@@ -6,6 +6,7 @@ import dataSources from "../shared/data-sources";
 import { CrawlerCacheStore } from "./crawler-cache";
 import { createElectronCrawlerHost } from "./crawler-host";
 import { seedBuiltinCrawlerPlugins } from "./crawler-plugin-seeder";
+import { getCachedSourceResponseStatus } from "../shared/source-response-status";
 import { readEnabledCrawlerPluginIds } from "../crawler-platform/host/plugin-store";
 import { createCrawlerPluginProvider } from "../crawler-platform/host/plugin-provider";
 import { registerRuntimeSourceCatalog, createRuntimeSourceMetadataItem } from "../shared/runtime-source-catalog";
@@ -16,6 +17,7 @@ import type { NewsItem, SourceID, SourceResponse } from "../shared/types";
 import type { SourceHealthEvent, SourceHealthSummary, SourceHealthSnapshot } from "../shared/source-health-types";
 
 const MAX_RECENT_HEALTH_EVENTS = 12;
+const DESKTOP_READ_TIMEOUT_MS = 4_000;
 
 interface LocalSourceHealthRecord {
     status: SourceHealthSnapshot["status"];
@@ -107,6 +109,15 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
             return record;
         };
 
+        const pendingCollections = new Map<SourceID, Promise<SourceResponse | null>>();
+        function collectSource(id: SourceID) {
+            const existing = pendingCollections.get(id);
+            if (existing) return existing;
+            const pending = collectAndCache(id).finally(() => pendingCollections.delete(id));
+            pendingCollections.set(id, pending);
+            return pending;
+        }
+
         return {
             listSourceIds: provider.listSourceIds,
             listRefreshSources: () => provider.listSources().map(({ id, interval }) => ({ id, interval })),
@@ -156,78 +167,123 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                     sources,
                 };
             },
-            async fetchSource(sourceId: SourceID): Promise<SourceResponse | null> {
+            fetchSource: collectSource,
+            async readLocalSource(sourceId: SourceID, refresh: boolean): Promise<SourceResponse | null> {
                 const info = sourceInfo.get(sourceId);
-                const startedAt = Date.now();
+                if (!info) return null;
+                const cached = await cache.read(sourceId);
+                const now = Date.now();
+                const health = getHealthRecord(sourceId);
+                const history: SourceResponse | undefined = cached && {
+                    id: sourceId,
+                    name: dataSources[sourceId]?.name ?? info.name,
+                    status: getCachedSourceResponseStatus({
+                        cacheUpdatedAt: cached.updatedTime,
+                        degraded: health.cacheDegraded,
+                        now,
+                        ttl: info.interval,
+                    }),
+                    ...cached,
+                };
+                const lastAttempt = Math.max(
+                    cached?.updatedTime ?? 0,
+                    health.lastSuccessAt ?? 0,
+                    health.lastErrorAt ?? 0
+                );
+                if (history && !refresh) {
+                    if (now - lastAttempt >= info.interval) void collectSource(sourceId).catch(() => undefined);
+                    return history;
+                }
+                let timer: ReturnType<typeof setTimeout> | undefined;
                 try {
-                    const items = await provider.collect(sourceId);
-                    if (!items) return null;
-                    const updatedTime = Date.now();
-                    const response: SourceResponse = {
-                        status: items.length ? "success" : "empty",
-                        id: sourceId,
-                        name: dataSources[sourceId]?.name ?? info?.name ?? sourceId,
-                        updatedTime,
-                        items: items.map(toNewsItem),
-                    };
-                    if (response.items.length > 0) {
-                        await cache.write(sourceId, response.items, updatedTime).catch((error: unknown) => {
-                            console.warn("Desktop crawler cache write failed.", error);
-                        });
-                    }
-                    const previous = getHealthRecord(sourceId);
-                    healthBySource.set(sourceId, {
-                        ...previous,
-                        status: "healthy",
-                        successCount: previous.successCount + 1,
-                        consecutiveFailures: 0,
-                        cacheDegraded: false,
-                        lastDurationMs: Math.max(0, updatedTime - startedAt),
-                        lastSuccessAt: updatedTime,
-                        lastItemCount: response.items.length,
-                        recentEvents: appendHealthEvent(previous.recentEvents, {
-                            status: "healthy",
-                            occurredAt: updatedTime,
-                            durationMs: Math.max(0, updatedTime - startedAt),
-                            itemCount: response.items.length,
+                    return await Promise.race([
+                        collectSource(sourceId),
+                        new Promise<never>((_, reject) => {
+                            timer = setTimeout(() => reject(new Error("本地采集等待超时。")), DESKTOP_READ_TIMEOUT_MS);
                         }),
-                    });
-                    return response;
+                    ]);
                 } catch (error) {
-                    const cached = await cache.read(sourceId);
-                    const failedAt = Date.now();
-                    const previous = getHealthRecord(sourceId);
-                    const errorMessage = sanitizeCrawlerHealthError(error);
-                    const durationMs = Math.max(0, failedAt - startedAt);
-                    healthBySource.set(sourceId, {
-                        ...previous,
-                        status: "failing",
-                        errorCount: previous.errorCount + 1,
-                        consecutiveFailures: previous.consecutiveFailures + 1,
-                        cacheDegraded: Boolean(cached),
-                        lastDurationMs: durationMs,
-                        lastErrorAt: failedAt,
-                        lastErrorMessage: errorMessage,
-                        recentEvents: appendHealthEvent(previous.recentEvents, {
-                            status: "failing",
-                            occurredAt: failedAt,
-                            durationMs,
-                            errorMessage,
-                        }),
-                    });
-                    if (!cached) throw error;
-                    const interval = info?.interval ?? 600_000;
-                    const age = Math.max(0, failedAt - cached.updatedTime);
-                    return {
-                        status: age >= interval * 2 ? "stale-cache" : "degraded-cache",
-                        id: sourceId,
-                        name: dataSources[sourceId]?.name ?? info?.name ?? sourceId,
-                        updatedTime: cached.updatedTime,
-                        items: cached.items,
-                    };
+                    if (!history) throw error;
+                    return { ...history, status: "stale-cache" };
+                } finally {
+                    clearTimeout(timer);
                 }
             },
         };
+
+        async function collectAndCache(sourceId: SourceID): Promise<SourceResponse | null> {
+            const info = sourceInfo.get(sourceId);
+            const startedAt = Date.now();
+            try {
+                const items = await provider.collect(sourceId);
+                if (!items) return null;
+                const updatedTime = Date.now();
+                const response: SourceResponse = {
+                    status: items.length ? "success" : "empty",
+                    id: sourceId,
+                    name: dataSources[sourceId]?.name ?? info?.name ?? sourceId,
+                    updatedTime,
+                    items: items.map(toNewsItem),
+                };
+                if (response.items.length > 0) {
+                    await cache.write(sourceId, response.items, updatedTime).catch((error: unknown) => {
+                        console.warn("Desktop crawler cache write failed.", error);
+                    });
+                }
+                const previous = getHealthRecord(sourceId);
+                healthBySource.set(sourceId, {
+                    ...previous,
+                    status: "healthy",
+                    successCount: previous.successCount + 1,
+                    consecutiveFailures: 0,
+                    cacheDegraded: false,
+                    lastDurationMs: Math.max(0, updatedTime - startedAt),
+                    lastSuccessAt: updatedTime,
+                    lastItemCount: response.items.length,
+                    recentEvents: appendHealthEvent(previous.recentEvents, {
+                        status: "healthy",
+                        occurredAt: updatedTime,
+                        durationMs: Math.max(0, updatedTime - startedAt),
+                        itemCount: response.items.length,
+                    }),
+                });
+                if (response.items.length) return response;
+                const cached = await cache.read(sourceId);
+                return cached ? { ...response, ...cached, status: "stale-cache" } : response;
+            } catch (error) {
+                const cached = await cache.read(sourceId);
+                const failedAt = Date.now();
+                const previous = getHealthRecord(sourceId);
+                const errorMessage = sanitizeCrawlerHealthError(error);
+                const durationMs = Math.max(0, failedAt - startedAt);
+                healthBySource.set(sourceId, {
+                    ...previous,
+                    status: "failing",
+                    errorCount: previous.errorCount + 1,
+                    consecutiveFailures: previous.consecutiveFailures + 1,
+                    cacheDegraded: Boolean(cached),
+                    lastDurationMs: durationMs,
+                    lastErrorAt: failedAt,
+                    lastErrorMessage: errorMessage,
+                    recentEvents: appendHealthEvent(previous.recentEvents, {
+                        status: "failing",
+                        occurredAt: failedAt,
+                        durationMs,
+                        errorMessage,
+                    }),
+                });
+                if (!cached) throw error;
+                const interval = info?.interval ?? 600_000;
+                const age = Math.max(0, failedAt - cached.updatedTime);
+                return {
+                    status: age >= interval * 2 ? "stale-cache" : "degraded-cache",
+                    id: sourceId,
+                    name: dataSources[sourceId]?.name ?? info?.name ?? sourceId,
+                    updatedTime: cached.updatedTime,
+                    items: cached.items,
+                };
+            }
+        }
     } catch (error) {
         console.warn(
             "Desktop local crawler plugins were disabled.",
@@ -247,6 +303,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                 sources: [],
             }),
             fetchSource: async () => null,
+            readLocalSource: async () => null,
         };
     }
 }

@@ -28,7 +28,7 @@ declare global {
             listCrawlerSources: () => Promise<string[]>;
             listCrawlerSourceMetadata?: () => Promise<SourceMetadataItem[]>;
             getCrawlerSourceHealthSummary?: () => Promise<SourceHealthSummary>;
-            fetchCrawlerSource: (sourceId: string) => Promise<SourceResponse | null>;
+            fetchCrawlerSource: (sourceId: string, refresh?: boolean) => Promise<SourceResponse | null>;
         };
     }
 }
