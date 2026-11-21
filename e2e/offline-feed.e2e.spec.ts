@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
 import { sep, extname, resolve } from "node:path";
 
-test("restores a fresh Feed snapshot after an offline reload", async ({ page }) => {
+test("restores Feed snapshots after an offline reload and labels expired history", async ({ page }) => {
     test.skip(!process.env.LATESTNEWS_PWA_TEST_ROOT, "Requires a prepared production build.");
     const root = resolve(process.env.LATESTNEWS_PWA_TEST_ROOT ?? fileURLToPath(new URL("../dist/", import.meta.url)));
     const fixtureTitle = "Offline fixture headline";
@@ -113,8 +113,8 @@ test("restores a fresh Feed snapshot after an offline reload", async ({ page }) 
         });
         await page.context().setOffline(true);
         await page.reload({ waitUntil: "domcontentloaded" });
-        await expect(page.getByText(fixtureTitle, { exact: true })).toHaveCount(0);
-        await expect(page.getByText(/已保存的 Feed 快照.*已过期/)).toBeVisible();
+        await expect(page.getByText(fixtureTitle, { exact: true })).toBeVisible();
+        await expect(page.getByRole("status").filter({ hasText: "快照已过期，内容仅供回顾。" })).toBeVisible();
     } finally {
         await page.context().setOffline(false);
         await new Promise<void>((resolveClosed) => {

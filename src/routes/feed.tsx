@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import type { SourceID } from "@shared/types";
 import type { SourceBatchResponse } from "@shared/source-api";
-import type { SourceID, SourceResponse } from "@shared/types";
 import type {
     UnifiedFeedItem,
     UnifiedFeedScope,
@@ -116,16 +116,20 @@ function FeedPage() {
         () => readOfflineFeedSnapshotStatus(offlineSnapshotPayload),
         [offlineSnapshotPayload]
     );
+    const offlineSnapshot = savedSnapshot.snapshot;
     const { data, isFetching, isError, refetch } = useQuery({
         queryKey: getUnifiedFeedCacheKey(payload),
         queryFn: async ({ queryKey }) => {
             const response = await fetchUnifiedFeed(payload);
             const previous = queryClient.getQueryData<SourceBatchResponse>(queryKey);
-            const historical =
-                previous ?? (savedSnapshot.state === "fresh" ? savedSnapshot.snapshot?.response : undefined);
+            const historical = previous ?? offlineSnapshot?.response;
             const display = mergeFeedHistory(response, historical);
             // Preserve a complete offline snapshot across partial refreshes.
-            if ((!response.meta.partial || !historical) && response.data.some((source) => source.items.length)) {
+            if (
+                display === response &&
+                (!response.meta.partial || !historical) &&
+                response.data.some((source) => source.items.length)
+            ) {
                 saveOfflineFeedSnapshot(offlineSnapshotPayload, display);
             }
             return display;
@@ -135,9 +139,7 @@ function FeedPage() {
         retry: false,
     });
 
-    const offlineSnapshot = savedSnapshot.state === "fresh" ? savedSnapshot.snapshot : undefined;
     const isOfflineSnapshotActive = !data && Boolean(offlineSnapshot);
-    const isOfflineSnapshotStale = !data && savedSnapshot.state === "stale";
     const activeResponse = data ?? offlineSnapshot?.response;
     const loadedResponses = useMemo(
         () =>
@@ -147,6 +149,7 @@ function FeedPage() {
             }),
         [activeResponse, sinceValue]
     );
+    const hasLoadedItems = loadedResponses.some((source) => source.items.length > 0);
     const isShowingHistory = loadedResponses.some(
         (source) => source.items.length && (source.status === "stale-cache" || source.status === "degraded-cache")
     );
@@ -206,8 +209,6 @@ function FeedPage() {
                             )}
                             {isOfflineSnapshotActive && offlineSnapshot ? (
                                 <SnapshotSignalPill savedAt={offlineSnapshot.savedAt} />
-                            ) : isOfflineSnapshotStale && savedSnapshot.snapshot ? (
-                                <ExpiredSnapshotSignalPill savedAt={savedSnapshot.snapshot.savedAt} />
                             ) : (
                                 <SignalPill
                                     icon="i-ph:clock-clockwise-duotone"
@@ -338,10 +339,12 @@ function FeedPage() {
                 </div>
             </div>
 
-            {isOfflineSnapshotActive && offlineSnapshot && <OfflineSnapshotNotice savedAt={offlineSnapshot.savedAt} />}
-
-            {isOfflineSnapshotStale && savedSnapshot.snapshot && (
-                <ExpiredOfflineSnapshotNotice savedAt={savedSnapshot.snapshot.savedAt} />
+            {isOfflineSnapshotActive && offlineSnapshot && (
+                <OfflineSnapshotNotice
+                    savedAt={offlineSnapshot.savedAt}
+                    stale={savedSnapshot.state === "stale"}
+                    updateFailed={isError}
+                />
             )}
 
             {!isOfflineSnapshotActive && (isError || isShowingHistory || activeResponse?.meta.partial) && (
@@ -350,7 +353,7 @@ function FeedPage() {
                     role="status"
                 >
                     {isError
-                        ? loadedResponses.some((source) => source.items.length)
+                        ? hasLoadedItems
                             ? "Feed 更新失败，已保留上次内容。"
                             : "暂时无法加载 Feed。请点击刷新重试。"
                         : isShowingHistory
@@ -370,7 +373,7 @@ function FeedPage() {
                         emptyLabel={
                             isFetching && !activeResponse
                                 ? "正在加载 Feed"
-                                : isError && !activeResponse
+                                : (isError || activeResponse?.meta.partial) && !hasLoadedItems
                                   ? "暂无可用内容"
                                   : "暂无匹配内容"
                         }
@@ -402,14 +405,18 @@ function FeedPage() {
     );
 }
 
-/** Use the same feed scope and time window when restoring omitted sources. */
+/** Restore unavailable sources within the same scope and window, preserving successful filtered results. */
 function mergeFeedHistory(response: SourceBatchResponse, historical?: SourceBatchResponse): SourceBatchResponse {
-    if (!historical || !response.meta.omittedSourceIds.length) return response;
-    const missing = new Set(response.meta.omittedSourceIds);
-    const fallback = historical.data
-        .filter((source) => missing.has(source.id) && source.items.length)
-        .map((source): SourceResponse => ({ ...source, status: "stale-cache" }));
-    return fallback.length ? { ...response, data: [...response.data, ...fallback] } : response;
+    if (!historical) return response;
+    const available = new Map(response.data.map((source) => [source.id, source]));
+    const omitted = new Set(response.meta.omittedSourceIds);
+    let restored = false;
+    for (const source of historical.data) {
+        if (!source.items.length || (!omitted.has(source.id) && available.get(source.id)?.status !== "empty")) continue;
+        available.set(source.id, { ...source, status: "stale-cache" });
+        restored = true;
+    }
+    return restored ? { ...response, data: [...available.values()] } : response;
 }
 
 // Renders a bounded feed page and lets readers request more entries on demand.
@@ -617,30 +624,22 @@ function SnapshotSignalPill({ savedAt }: { savedAt: number }) {
     return <SignalPill icon="i-ph:hard-drives-duotone" label={`${relativeTime ?? "刚刚"}的快照`} tone="warning" />;
 }
 
-function ExpiredSnapshotSignalPill({ savedAt }: { savedAt: number }) {
+function OfflineSnapshotNotice({
+    savedAt,
+    stale,
+    updateFailed,
+}: {
+    savedAt: number;
+    stale: boolean;
+    updateFailed: boolean;
+}) {
     const relativeTime = useRelativeTime(savedAt);
 
     return (
-        <SignalPill icon="i-ph:warning-circle-duotone" label={`${relativeTime ?? "较早"}的快照已过期`} tone="warning" />
-    );
-}
-
-function OfflineSnapshotNotice({ savedAt }: { savedAt: number }) {
-    const relativeTime = useRelativeTime(savedAt);
-
-    return (
-        <div className="rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
-            当前展示{relativeTime ?? "刚刚"}保存的 Feed 快照，网络恢复后会自动切回最新内容。
-        </div>
-    );
-}
-
-function ExpiredOfflineSnapshotNotice({ savedAt }: { savedAt: number }) {
-    const relativeTime = useRelativeTime(savedAt);
-
-    return (
-        <div className="rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
-            已保存的 Feed 快照（{relativeTime ?? "较早"}）已过期，当前没有可用的离线内容。请恢复网络后刷新。
+        <div className="rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300" role="status">
+            当前展示{relativeTime ?? "较早"}保存的 Feed 快照。
+            {stale && "快照已过期，内容仅供回顾。"}
+            {updateFailed && "更新失败，可点击刷新重试。"}
         </div>
     );
 }

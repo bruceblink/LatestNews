@@ -7,6 +7,7 @@ test("keeps history visible during a slow feed refresh and restores omitted sour
     page.on("pageerror", (error) => pageErrors.push(error.message));
     const title = "Previously loaded headline";
     const newTitle = "New headline from another source";
+    const recoveredTitle = "Recovered source headline";
     let batchCalls = 0;
     await page.route("**/api/v1/sources/batch", async (route) => {
         const call = ++batchCalls;
@@ -16,21 +17,24 @@ test("keeps history visible during a slow feed refresh and restores omitted sour
         }
 
         const now = Date.now();
-        const partial = call > 1;
+        const partial = call === 2;
         await route.fulfill({
             json: {
                 data: [
                     {
-                        status: "success",
+                        status: call === 3 ? "empty" : "success",
                         id: partial ? "weibo" : "zhihu",
                         updatedTime: now,
-                        items: [
-                            {
-                                id: String(call),
-                                title: partial ? newTitle : title,
-                                url: `https://example.test/feed/${call}`,
-                            },
-                        ],
+                        items:
+                            call === 3
+                                ? []
+                                : [
+                                      {
+                                          id: String(call),
+                                          title: partial ? newTitle : call === 4 ? recoveredTitle : title,
+                                          url: `https://example.test/feed/${call}`,
+                                      },
+                                  ],
                     },
                 ],
                 meta: {
@@ -61,6 +65,15 @@ test("keeps history visible during a slow feed refresh and restores omitted sour
     await expect(page.getByRole("link", { name: newTitle })).toBeVisible();
     await expect(oldArticle).toBeVisible();
     await expect(page.getByRole("status").getByText("部分来源正在显示历史数据。")).toBeVisible();
-    await expect(page.getByRole("button", { name: "刷新", exact: true })).toBeEnabled();
+    const refreshButton = page.getByRole("button", { name: "刷新", exact: true });
+    await expect(refreshButton).toBeEnabled();
+    await refreshButton.click();
+    await expect(refreshButton).toBeEnabled();
+    await expect(oldArticle).toBeVisible();
+    await expect(page.getByRole("status").getByText("部分来源正在显示历史数据。")).toBeVisible();
+    await refreshButton.click();
+    await expect(page.getByRole("link", { name: recoveredTitle })).toBeVisible();
+    await expect(oldArticle).toHaveCount(0);
+    await expect(page.getByText("部分来源正在显示历史数据。")).toHaveCount(0);
     expect(pageErrors).toEqual([]);
 });
