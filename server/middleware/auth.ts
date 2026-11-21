@@ -1,12 +1,15 @@
 import { jwtVerify } from "jose";
 import process from "node:process";
 import { logger } from "#/utils/logger";
+import { sourceApi } from "@shared/source-api";
 import { isPublicApiPath } from "@shared/public-api-path";
 import { getHeader, createError, getRequestURL, defineEventHandler } from "h3";
 
 export default defineEventHandler(async (event) => {
     const url = getRequestURL(event);
     if (!url.pathname.startsWith("/api")) return;
+    // The refresh handler authenticates its own machine credential independently of login.
+    if (event.method === "POST" && url.pathname === `/api${sourceApi.sourceRefreshV1}`) return;
     if (["JWT_SECRET"].find((k) => !process.env[k])) {
         event.context.disabledLogin = true;
         if (!isPublicApiPath(url.pathname))

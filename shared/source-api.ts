@@ -11,6 +11,7 @@ export const sourceApi = {
     openApiV1: "/v1/openapi.json",
     sourcesV1: "/v1/sources",
     sourceBatchV1: "/v1/sources/batch",
+    sourceRefreshV1: "/v1/sources/refresh",
     sourceHealthV1: "/v1/health/sources",
     deploymentHealthV1: "/v1/health/deployment",
     sourceHealthDiagnosticsV1: "/v1/health/diagnostics",

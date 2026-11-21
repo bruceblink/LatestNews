@@ -35,7 +35,7 @@ export class Cache {
 
     async set(key: string, value: NewsItem[]) {
         const now = Date.now();
-        await this.db
+        const result = await this.db
             .prepare(
                 `INSERT INTO cache (id, data, updated) 
                         VALUES (?, ?, ?) 
@@ -44,6 +44,7 @@ export class Cache {
                             updated = EXCLUDED.updated;`
             )
             .run(key, JSON.stringify(value), now);
+        if (!result.success) throw new Error("News cache write failed.");
         logger.success(`set ${key} cache`);
     }
 

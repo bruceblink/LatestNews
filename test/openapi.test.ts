@@ -24,6 +24,7 @@ describe("OpenAPI document", () => {
                 "/api/v1/sources/{id}",
                 "/api/v1/sources/{id}/items",
                 "/api/v1/sources/batch",
+                "/api/v1/sources/refresh",
                 "/api/v1/health/sources",
                 "/api/v1/health/deployment",
                 "/api/v1/health/diagnostics",
@@ -37,6 +38,9 @@ describe("OpenAPI document", () => {
         expect(document.components.securitySchemes.FederationBearer).toMatchObject({
             type: "http",
             scheme: "bearer",
+        });
+        expect(document.paths["/api/v1/sources/refresh"]).toMatchObject({
+            post: { security: [{ SourceRefreshBearer: [] }] },
         });
         const sourceItemsPath = document.paths["/api/v1/sources/{id}/items"];
 

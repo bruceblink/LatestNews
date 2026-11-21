@@ -1,6 +1,6 @@
 # LatestNews API v1
 
-LatestNews exposes a small read-oriented API for automation, feed readers, diagnostics, and downstream collectors. All paths below are relative to the deployed site root and use the `/api` prefix at runtime.
+LatestNews exposes APIs for feed readers, diagnostics, downstream collectors, and scheduled source refresh. All paths below are relative to the deployed site root and use the `/api` prefix at runtime.
 
 ## Response Shape
 
@@ -52,6 +52,7 @@ curl https://news.example.com/api/v1/node
 | `GET` | `/api/v1/sources/{id}` | Metadata for one source, including canonical redirect information. |
 | `GET` | `/api/v1/sources/{id}/items` | Items for a single source. |
 | `POST` | `/api/v1/sources/batch` | Items for multiple sources, columns, or source types. |
+| `POST` | `/api/v1/sources/refresh` | 遍历当前部署可采集的来源，并刷新到期缓存。 |
 
 Single-source metadata keeps item payloads out of discovery responses. If `{id}` is a redirect alias, `meta.canonicalSourceId` points to the source used by item endpoints and `meta.redirected` is `true`.
 
@@ -82,6 +83,47 @@ curl -X POST https://news.example.com/api/v1/sources/batch \
   -H "content-type: application/json" \
   -d '{"column":"tech","limit":20}'
 ```
+
+### 定时刷新所有来源
+
+第三方调度程序以 `POST` 调用 `/api/v1/sources/refresh`。首次调用无需请求体或查询参数。每次处理最多 3 个来源。`meta.nextCursor` 有值时，使用同一路径追加 `?cursor=<nextCursor>`，串行调用直到它为 `null`。每轮定时任务从无游标的请求开始。启用的来源按 ID 排序，重定向别名、已停用来源和当前部署无法执行的来源不进入本轮。Cloudflare Pages 只采集其构建支持的来源。
+
+请求头使用 `Authorization: Bearer <令牌>`。令牌必须与服务端 `LATESTNEWS_REFRESH_TOKEN` 一致，使用 32–128 位字母、数字、连字符或下划线。令牌独立于用户登录和 SyncHub。Pages 需要绑定可写的 D1 `LATESTNEWS_DB`。生成令牌及配置方式见[部署说明](deployment.md#定时刷新)。
+
+第三方调度器可运行以下脚本。它使用 `curl` 和 `jq`，一轮结束后会以非零退出码报告本轮出现的采集失败。
+
+```bash
+set -eu
+url='https://news.example.com/api/v1/sources/refresh'
+cursor=''
+failed=0
+while :; do
+  request_url="$url"
+  if [ -n "$cursor" ]; then
+    request_url="$url?cursor=$cursor"
+  fi
+  result=$(curl -sS --fail-with-body -X POST "$request_url" \
+    -H "Authorization: Bearer ${LATESTNEWS_REFRESH_TOKEN}")
+  printf '%s\n' "$result" | jq -c '.data.sources[]'
+  if printf '%s\n' "$result" | jq -e '.errors | length > 0' >/dev/null; then
+    failed=1
+  fi
+  cursor=$(printf '%s\n' "$result" | jq -r '.meta.nextCursor // empty')
+  [ -n "$cursor" ] || break
+done
+exit "$failed"
+```
+
+`meta.totalSources` 是当前部署中符合条件的来源总数。检查每页的 `data.sources` 和 `errors`。HTTP 200 表示该页处理完成，仍可能包含失败来源。
+
+| `data.sources[].status` | 含义 |
+| --- | --- |
+| `refreshed` | 采集到条目并已写入缓存，`itemCount` 为写入条数。 |
+| `fresh` | 缓存未达到该来源的刷新间隔，本次继续使用已有缓存。 |
+| `empty` | 本次采集没有条目，保留旧缓存。 |
+| `failed` | 采集或缓存写入失败，保留旧缓存，并在 `errors` 中返回来源 ID。 |
+
+游标无效返回 HTTP 400，令牌缺失或错误返回 401，服务未配置令牌或缓存不可用返回 503。单次请求中断时可用相同游标重试。已写入且仍在刷新间隔内的来源会返回 `fresh`。计划任务应串行处理各页，并避免同一轮尚未结束时启动下一轮。
 
 ## Health And Diagnostics
 

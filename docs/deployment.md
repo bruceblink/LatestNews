@@ -23,6 +23,7 @@ Start from [example.env.server](../example.env.server) and configure secrets onl
 | `VITE_NEWS_API_URL` | No | Web build | Optional HTTPS origin for the remote Node news API. When empty, Web uses the same-origin `/api` path. Electron keeps using its main-process proxy. |
 | `LATESTNEWS_WEB_ORIGINS` | No | Node runtime | Comma-separated exact Web origins allowed by the Node API CORS middleware. Leave empty when clients use same-origin requests. |
 | `JWT_SECRET` | Login only | Runtime | Must match the external login service. Do not commit a real value. |
+| `LATESTNEWS_REFRESH_TOKEN` | 定时刷新需要 | 运行时密钥 | 第三方调度程序使用的独立 Bearer 令牌。 |
 | `ENABLE_CACHE` | No | Runtime | Set to `false` to disable cache reads and writes. |
 | `INIT_TABLE` | No | Runtime | Defaults to table initialization; set to `false` after managed schema setup if needed. |
 | `LATESTNEWS_NODE_ID` | No | Runtime | Stable node identifier exposed by `/api/v1/node`. |
@@ -157,7 +158,7 @@ Recommended Pages settings:
 - Output directory: `dist`
 - D1 binding: `LATESTNEWS_DB`
 - Runtime variables: `ENABLE_CACHE`, `INIT_TABLE`, `LATESTNEWS_NODE_ID`, and optional node endpoint hints.
-- Secrets: `JWT_SECRET` and source-specific API tokens.
+- Secrets: `JWT_SECRET`, `LATESTNEWS_REFRESH_TOKEN` when scheduled refresh is used, and source-specific API tokens.
 
 When Pages must read plugins from a separate Node API, set the Pages build variable `VITE_NEWS_API_URL` to the Node API origin, for example `https://api.example.com`. Set `LATESTNEWS_WEB_ORIGINS` on that Node service to the exact Pages origin, for example `https://news.example.com`. Keep `VITE_API_URL` for login and user synchronization; it does not select the news API.
 
@@ -170,6 +171,12 @@ curl -f https://news.example.com/api/v1/openapi.json
 ```
 
 The Pages build must emit a self-contained dist/_worker.js/index.js. The build command verifies that the worker has no split modules, that the PWA precache excludes _worker.js, and that source modules initialize without process.versions.node. The Pages configuration uses Cheerio's browser entry for HTML parsing so Undici's Node-only initialization is excluded from the worker. When the web shell should use a separate self-hosted edge collector, set VITE_NEWS_API_URL and configure LATESTNEWS_WEB_ORIGINS; do not run long-lived crawler jobs in Pages Functions.
+
+### 定时刷新
+
+使用 `openssl rand -hex 32` 生成独立随机令牌。将同一值分别保存到 Pages 生产环境的运行时密钥 `LATESTNEWS_REFRESH_TOKEN` 和第三方调度程序的密钥配置。重新部署后，先检查 `/api/v1/health/deployment` 的 `data.checks.cache.status` 为 `ok`。Web 使用 `VITE_NEWS_API_URL` 指向外部 Node 新闻服务时，将令牌和定时任务配置在该新闻服务上，使采集结果进入 Web 实际读取的缓存。
+
+第三方程序调用[定时刷新接口](api-v1.md#定时刷新所有来源)，按返回的游标串行遍历所有页。可从每 10 分钟开始。各来源继续遵守自身的刷新间隔。若平台只支持定时发出一条固定 HTTP 请求，需要由该平台运行一段脚本来读取游标并发出后续请求。
 
 ## Node Output
 

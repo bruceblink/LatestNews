@@ -14,7 +14,7 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
             title: options.title,
             version: options.version,
             description:
-                "Read-oriented LatestNews API for source metadata, source items, feed export, and diagnostics.",
+                "LatestNews API for source metadata, source items, feed export, diagnostics, and scheduled refresh.",
         },
         components: {
             securitySchemes: {
@@ -22,6 +22,11 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                     type: "http",
                     scheme: "bearer",
                     bearerFormat: "lnf_<key-id>_<secret>",
+                },
+                SourceRefreshBearer: {
+                    type: "http",
+                    scheme: "bearer",
+                    description: "Deployment-specific machine credential for scheduled source refresh.",
                 },
             },
         },
@@ -121,6 +126,20 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                         },
                     },
                     responses: okJsonResponse("Source batch envelope"),
+                },
+            },
+            [withApiPrefix(sourceApi.sourceRefreshV1)]: {
+                post: {
+                    summary: "Refresh due sources in one page of the active catalog",
+                    tags: ["Sources"],
+                    security: [{ SourceRefreshBearer: [] }],
+                    parameters: [queryParameter("cursor", "Pass the previous response's meta.nextCursor")],
+                    responses: {
+                        ...okJsonResponse("Per-source refresh results and continuation cursor"),
+                        400: { description: "Invalid cursor" },
+                        401: { description: "Missing or invalid source refresh token" },
+                        503: { description: "Source refresh is not configured or cache is unavailable" },
+                    },
                 },
             },
             [withApiPrefix(sourceApi.sourceHealthV1)]: {

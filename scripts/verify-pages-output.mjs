@@ -1,4 +1,5 @@
 import process from "node:process";
+import { randomBytes } from "node:crypto";
 import { join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { stat, readdir, readFile } from "node:fs/promises";
@@ -48,10 +49,26 @@ try {
             `Cloudflare Pages source initialization failed without process.versions.node: HTTP ${response.status}.`
         );
     }
+    const refreshUrl = "https://pages-output.invalid/api/v1/sources/refresh";
+    const refreshToken = randomBytes(32).toString("hex");
+    const env = { LATESTNEWS_REFRESH_TOKEN: refreshToken };
+    const context = { waitUntil() {} };
+    const unauthorized = await worker.fetch(new Request(refreshUrl, { method: "POST" }), env, context);
+    if (unauthorized.status !== 401) {
+        throw new Error(`Cloudflare Pages refresh authentication returned HTTP ${unauthorized.status}.`);
+    }
+    const noCache = await worker.fetch(
+        new Request(refreshUrl, { method: "POST", headers: { Authorization: `Bearer ${refreshToken}` } }),
+        env,
+        context
+    );
+    if (noCache.status !== 503) {
+        throw new Error(`Cloudflare Pages refresh without a cache returned HTTP ${noCache.status}.`);
+    }
 } finally {
     if (nodeVersion) Object.defineProperty(process.versions, "node", nodeVersion);
 }
 
 console.log(
-    "Cloudflare Pages output is self-contained, excludes Node-only Cheerio dependencies and PWA precache, and initializes source routes without a Node version."
+    "Cloudflare Pages output is self-contained and passes source initialization and refresh authentication checks."
 );
