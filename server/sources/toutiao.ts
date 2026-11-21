@@ -29,7 +29,7 @@ export default defineSource(async () => {
                 title: k.Title,
                 url: fulUrl,
                 extra: {
-                    icon: k.LabelUri?.url && proxyPicture(k.LabelUri.url, "encodeBase64URL"),
+                    icon: k.LabelUri?.url && proxyPicture(k.LabelUri.url),
                 },
             };
         })

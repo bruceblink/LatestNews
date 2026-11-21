@@ -128,6 +128,70 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                     responses: okJsonResponse("Source batch envelope"),
                 },
             },
+            [withApiPrefix(sourceApi.insightsV1)]: {
+                post: {
+                    summary: "Aggregate reading insights for selected sources",
+                    tags: ["Sources"],
+                    requestBody: {
+                        required: true,
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: "object",
+                                    required: ["sources"],
+                                    properties: {
+                                        sources: { type: "array", maxItems: 100, items: { type: "string" } },
+                                        hotLimit: { type: "integer", minimum: 1, maximum: 100 },
+                                        topicLimit: { type: "integer", minimum: 1, maximum: 100 },
+                                        wordLimit: { type: "integer", minimum: 1, maximum: 100 },
+                                        trendLimit: { type: "integer", minimum: 1, maximum: 100 },
+                                        trendWindow: { enum: ["24h", "7d"] },
+                                        minTopicItems: { type: "integer", minimum: 1, maximum: 20 },
+                                        readUrls: { type: "array", maxItems: 500, items: { type: "string" } },
+                                        hiddenUrls: { type: "array", maxItems: 500, items: { type: "string" } },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    responses: {
+                        ...okJsonResponse("Reading insights envelope"),
+                        400: { description: "Invalid payload" },
+                    },
+                },
+            },
+            [withApiPrefix(sourceApi.loginCapabilityV1)]: {
+                get: {
+                    summary: "Check whether user login is configured",
+                    tags: ["Auth"],
+                    responses: {
+                        200: {
+                            description: "Login capability",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        required: ["enable"],
+                                        properties: { enable: { type: "boolean" } },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            [withApiPrefix(sourceApi.imageProxyV1)]: {
+                get: {
+                    summary: "Fetch a source image",
+                    tags: ["Media"],
+                    parameters: [{ ...queryParameter("url", "Image URL"), required: true }],
+                    responses: {
+                        200: { description: "Image response" },
+                        400: { description: "Missing or invalid URL" },
+                        403: { description: "URL not allowed" },
+                    },
+                },
+            },
             [withApiPrefix(sourceApi.sourceRefreshV1)]: {
                 post: {
                     summary: "Refresh one page of the active source catalog",

@@ -284,16 +284,19 @@ async function installHistoryMocks(page: Page) {
             return;
         }
 
-        if (pathname.endsWith("/s/health")) {
+        if (pathname.endsWith("/v1/health/sources")) {
             await route.fulfill({
                 json: {
-                    updatedAt: Date.now(),
-                    total: 0,
-                    healthy: 0,
-                    failing: 0,
-                    idle: 0,
-                    cacheDegraded: 0,
-                    sources: [],
+                    meta: {
+                        generatedAt: Date.now(),
+                        totalSourceCount: 0,
+                        healthyCount: 0,
+                        failingCount: 0,
+                        idleCount: 0,
+                        cacheDegradedCount: 0,
+                    },
+                    data: [],
+                    errors: [],
                 },
             });
             return;

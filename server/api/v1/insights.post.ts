@@ -1,5 +1,5 @@
 import type { SourceID } from "@shared/types";
-import type { NewsInsightsPayload, NewsInsightsResponse } from "@shared/source-api";
+import type { NewsInsightsResponse } from "@shared/source-api";
 
 import { z } from "zod";
 import { logger } from "#/utils/logger";
@@ -49,7 +49,7 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
             await cacheTable.set(id, items);
         },
         now: Date.now(),
-        insightOptions: createInsightOptions(parsedBody.data),
+        insightOptions: parsedBody.data,
         background: (pending) => event.waitUntil(pending),
         onFetchError: (error, id) => logger.error(`fetch ${id} insights failed`, error),
         onCacheError: (error, id) => logger.warn(`Could not save ${id} insights cache.`, error),
@@ -71,17 +71,4 @@ function normalizeSourceIds(sources: string[]) {
     }
 
     return { ids, invalidIds };
-}
-
-function createInsightOptions(payload: Omit<NewsInsightsPayload, "sources">) {
-    return {
-        hotLimit: payload.hotLimit,
-        topicLimit: payload.topicLimit,
-        wordLimit: payload.wordLimit,
-        trendLimit: payload.trendLimit,
-        trendWindow: payload.trendWindow,
-        minTopicItems: payload.minTopicItems,
-        readUrls: payload.readUrls,
-        hiddenUrls: payload.hiddenUrls,
-    };
 }

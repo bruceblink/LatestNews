@@ -233,19 +233,22 @@ test("preserves the same-range result after a manual refresh fails and supports 
 
 test("does not style an unsampled source as healthy", async ({ page }) => {
     await installInsightsMocks(page);
-    await page.route("**/api/s/health", (route) =>
+    await page.route("**/api/v1/health/sources", (route) =>
         route.fulfill({
             json: {
-                updatedAt: Date.now(),
-                total: 2,
-                healthy: 1,
-                failing: 0,
-                idle: 1,
-                cacheDegraded: 0,
-                sources: [
+                meta: {
+                    generatedAt: Date.now(),
+                    totalSourceCount: 2,
+                    healthyCount: 1,
+                    failingCount: 0,
+                    idleCount: 1,
+                    cacheDegradedCount: 0,
+                },
+                data: [
                     { id: "hackernews", name: "Hacker News", status: "healthy", cacheDegraded: false },
                     { id: "weibo", name: "微博", status: "idle", cacheDegraded: false },
                 ],
+                errors: [],
             },
         })
     );
@@ -435,7 +438,7 @@ async function installInsightsMocks(page: Page, options: MockOptions = {}) {
             await route.fulfill({ json: { status: "unauthenticated" } });
             return;
         }
-        if (pathname.endsWith("/s/insights")) {
+        if (pathname.endsWith("/v1/insights")) {
             const payload = route.request().postDataJSON() as InsightsPayload;
             const requestIndex = insightsRequests.push(payload) - 1;
             if (options.holdFirstInsightsRequest && requestIndex === 0) {
@@ -453,16 +456,19 @@ async function installInsightsMocks(page: Page, options: MockOptions = {}) {
             });
             return;
         }
-        if (pathname.endsWith("/s/health")) {
+        if (pathname.endsWith("/v1/health/sources")) {
             await route.fulfill({
                 json: {
-                    updatedAt: Date.now(),
-                    total: 0,
-                    healthy: 0,
-                    failing: 0,
-                    idle: 0,
-                    cacheDegraded: 0,
-                    sources: [],
+                    meta: {
+                        generatedAt: Date.now(),
+                        totalSourceCount: 0,
+                        healthyCount: 0,
+                        failingCount: 0,
+                        idleCount: 0,
+                        cacheDegradedCount: 0,
+                    },
+                    data: [],
+                    errors: [],
                 },
             });
             return;

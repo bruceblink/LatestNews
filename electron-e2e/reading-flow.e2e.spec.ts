@@ -22,15 +22,17 @@ let apiOrigin: string;
 test.beforeAll(async () => {
     apiServer = createServer((request, response) => {
         const pathname = new URL(request.url ?? "/", "http://localhost").pathname.replace(/^\/api(?=\/|$)/, "");
-        if (pathname === "/s/health" || pathname === "/v1/health/sources") {
+        if (pathname === "/v1/health/sources") {
             sendJson(response, {
-                updatedAt: Date.now(),
-                total: 1,
-                healthy: 1,
-                failing: 0,
-                idle: 0,
-                cacheDegraded: 0,
-                sources: [
+                meta: {
+                    generatedAt: Date.now(),
+                    totalSourceCount: 1,
+                    healthyCount: 1,
+                    failingCount: 0,
+                    idleCount: 0,
+                    cacheDegradedCount: 0,
+                },
+                data: [
                     {
                         id: "hackernews",
                         name: "Hacker News",
@@ -45,6 +47,7 @@ test.beforeAll(async () => {
                         recentEvents: [],
                     },
                 ],
+                errors: [],
             });
             return;
         }

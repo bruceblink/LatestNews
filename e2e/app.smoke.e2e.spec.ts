@@ -1,5 +1,9 @@
 import { test, expect, type Page } from "@playwright/test";
 
+import { createSourceHealthSourcesResponse } from "../shared/source-health-api";
+
+import type { SourceHealthSummary } from "../shared/source-health-types";
+
 type AuthUser = {
     id: number;
     username: string;
@@ -17,7 +21,7 @@ type ApiMockOptions = {
     holdAuth?: boolean;
 };
 
-const sourceHealth = {
+const sourceHealth: SourceHealthSummary = {
     updatedAt: Date.parse("2026-10-24T00:00:00.000Z"),
     total: 1,
     healthy: 1,
@@ -86,7 +90,7 @@ async function installApiMocks(page: Page, options: ApiMockOptions = {}) {
             });
             return;
         }
-        if (pathname.endsWith("/enable-login")) {
+        if (pathname.endsWith("/v1/auth/capability")) {
             enableLoginRequests += 1;
             if (options.holdEnableLogin) {
                 enableLoginHeld = true;
@@ -105,7 +109,7 @@ async function installApiMocks(page: Page, options: ApiMockOptions = {}) {
             await route.fulfill({ json: { enable: options.enableLogin ?? true } });
             return;
         }
-        if (pathname.endsWith("/s/insights")) {
+        if (pathname.endsWith("/v1/insights")) {
             const now = Date.now();
             await route.fulfill({
                 json: {
@@ -144,8 +148,8 @@ async function installApiMocks(page: Page, options: ApiMockOptions = {}) {
             });
             return;
         }
-        if (pathname.endsWith("/s/health") || pathname.endsWith("/v1/health/sources")) {
-            await route.fulfill({ json: sourceHealth });
+        if (pathname.endsWith("/v1/health/sources")) {
+            await route.fulfill({ json: createSourceHealthSourcesResponse(sourceHealth) });
             return;
         }
         if (pathname.endsWith("/v1/sources")) {
@@ -176,7 +180,7 @@ async function installApiMocks(page: Page, options: ApiMockOptions = {}) {
             });
             return;
         }
-        if (pathname.endsWith("/s/entire") || pathname.endsWith("/v1/sources/batch")) {
+        if (pathname.endsWith("/v1/sources/batch")) {
             await route.fulfill({
                 json: {
                     data: [],

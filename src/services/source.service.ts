@@ -1,8 +1,8 @@
 import type { SourceID, SourceResponse } from "@shared/types";
 import type { SourceHealthSummary } from "@shared/source-health-types";
 import type { DesktopCollectionMode } from "@shared/desktop-collection-mode";
+import type { SourceHealthSourcesResponse } from "@shared/source-health-api";
 import type { SourceMetadataResponse, SourceMetadataItemResponse } from "@shared/source-metadata";
-import type { SourceHealthSourcesQuery, SourceHealthSourcesResponse } from "@shared/source-health-api";
 import type {
     SourceQuery,
     SourceApiError,
@@ -12,7 +12,6 @@ import type {
     NewsInsightsPayload,
     SourceItemsResponse,
     SourceBatchResponse,
-    EntireSourcesPayload,
     NewsInsightsResponse,
     EntireSourcesResponse,
 } from "@shared/source-api";
@@ -23,51 +22,29 @@ import { resolveSourceBatchSelection } from "@shared/source-batch";
 import { getOrCreateInFlightRequest } from "@shared/in-flight-request";
 import { createSourceBatchResponse } from "@shared/source-batch-response";
 import { isDesktopCollectionMode } from "@shared/desktop-collection-mode";
-import { createSourceHealthSourcesResponse } from "@shared/source-health-api";
 import { registerRuntimeSourceCatalog } from "@shared/runtime-source-catalog";
 import { createSourceMetadataResponse, createSourceMetadataItemResponse } from "@shared/source-metadata";
 import { filterSourceItems, parseSourceItemsSince, normalizeSourceItemsLimit } from "@shared/source-items";
 import {
     sourceApi,
     getSourceItemsPath,
+    createBearerHeaders,
     getSourceMetadataPath,
-    isEntireSourcesResponse,
     getNewsInsightsRequestKey,
-    normalizeEntireSourcesResponse,
 } from "@shared/source-api";
 
 const inFlightNewsInsights = new Map<string, Promise<NewsInsightsResponse>>();
 
 export async function fetchSource(query: SourceQuery, headers?: Record<string, string>): Promise<SourceResponse> {
-    const bridge = getDesktopBridge();
-    const remoteConfig = await getDesktopNewsApiConfig();
-    const localSupported = Boolean(
-        bridge && remoteConfig.mode !== "remote" && (await getDesktopLocalSourceIds()).has(query.id)
-    );
-    if (remoteConfig.mode === "local" || !remoteConfig.remoteConfigured) {
-        if (localSupported && bridge) {
-            const localSource = await fetchDesktopLocalSource(bridge, query.id, query.latest || query.clearCache);
-            if (localSource) return localSource;
-        }
-        if (remoteConfig.mode === "remote") throw new Error("远端模式需要配置数据源 API 地址。");
-        throw new Error("本地采集不可用，且未配置远端新闻 API。");
-    }
-
-    try {
-        return await myFetch(sourceApi.single, { query, headers });
-    } catch (error) {
-        if (remoteConfig.mode === "remote" || !localSupported || !bridge || !shouldFallbackToLocal(error)) throw error;
-        const localSource = await fetchDesktopLocalSource(bridge, query.id, query.latest || query.clearCache);
-        if (localSource) return localSource;
-        throw error;
-    }
+    const { id, ...itemsQuery } = query;
+    return (await fetchSourceItemsV1(id, itemsQuery, headers)).data;
 }
 
-export function fetchEntireSources(sources: SourceID[]): Promise<SourceResponse[] | undefined> {
-    return fetchEntireSourcesEnvelope(sources).then(normalizeEntireSourcesResponse);
-}
-
-export async function fetchSourceItemsV1(id: SourceID, query?: SourceItemsQuery): Promise<SourceItemsResponse> {
+export async function fetchSourceItemsV1(
+    id: SourceID,
+    query?: SourceItemsQuery,
+    headers?: Record<string, string>
+): Promise<SourceItemsResponse> {
     const bridge = getDesktopBridge();
     const remoteConfig = await getDesktopNewsApiConfig();
     const localSupported = Boolean(
@@ -83,7 +60,12 @@ export async function fetchSourceItemsV1(id: SourceID, query?: SourceItemsQuery)
     }
 
     try {
-        return await myFetch(getSourceItemsPath(id), { query });
+        const refreshHeaders =
+            headers ??
+            ((query?.latest || query?.clearCache) && typeof window !== "undefined"
+                ? createBearerHeaders(window.localStorage?.getItem("access_token"))
+                : undefined);
+        return await myFetch(getSourceItemsPath(id), { query, ...(refreshHeaders && { headers: refreshHeaders }) });
     } catch (error) {
         if (remoteConfig.mode === "remote" || !localSupported || !bridge || !shouldFallbackToLocal(error)) throw error;
         const localSource = await fetchDesktopLocalSource(bridge, id, query?.latest || query?.clearCache);
@@ -103,21 +85,6 @@ export function fetchUnifiedFeed(payload: UnifiedFeedPayload): Promise<SourceBat
     });
 }
 
-export function fetchEntireSourcesEnvelope(sources: SourceID[]): Promise<EntireSourcesResponse | SourceResponse[]> {
-    const bridge = getDesktopBridge();
-    if (bridge) return fetchDesktopEntireSources(sources, bridge);
-    return fetchRemoteEntireSources(sources);
-}
-
-function fetchRemoteEntireSources(sources: SourceID[]): Promise<EntireSourcesResponse | SourceResponse[]> {
-    const body: EntireSourcesPayload = { sources };
-
-    return myFetch(sourceApi.entire, {
-        method: "POST",
-        body,
-    });
-}
-
 function fetchRemoteSourceBatch(payload: SourceBatchPayload): Promise<SourceBatchResponse> {
     return myFetch(sourceApi.sourceBatchV1, {
         method: "POST",
@@ -126,6 +93,8 @@ function fetchRemoteSourceBatch(payload: SourceBatchPayload): Promise<SourceBatc
 }
 
 async function fetchDesktopSourceBatch(payload: SourceBatchPayload): Promise<SourceBatchResponse> {
+    const bridge = getDesktopBridge();
+    if (!bridge) return fetchRemoteSourceBatch(payload);
     const remoteConfig = await getDesktopNewsApiConfig();
     if (remoteConfig.mode === "remote") {
         if (!remoteConfig.remoteConfigured) throw new Error("远端模式需要配置数据源 API 地址。");
@@ -145,8 +114,7 @@ async function fetchDesktopSourceBatch(payload: SourceBatchPayload): Promise<Sou
         return fetchRemoteSourceBatch(payload);
     }
 
-    const entireResponse = await fetchEntireSourcesEnvelope(selection.sourceIds);
-    const envelope = toEntireSourcesEnvelope(entireResponse, selection.sourceIds);
+    const envelope = await fetchDesktopEntireSources(selection.sourceIds, bridge, remoteConfig);
     const validationErrors: SourceApiError[] = [
         ...selection.invalidSourceIds.map((sourceId) => ({ sourceId, message: "Invalid source id" })),
         ...selection.filterErrors,
@@ -166,20 +134,11 @@ async function fetchDesktopSourceBatch(payload: SourceBatchPayload): Promise<Sou
 async function fetchDesktopEntireSources(
     sources: SourceID[],
     bridge: NonNullable<Window["latestNewsDesktop"]>,
-    localOnly = false
+    remoteConfig: DesktopNewsApiRuntimeSettings
 ): Promise<EntireSourcesResponse> {
     // Remote data wins when available. Only omitted sources with a trusted local package
     // are collected locally, so one unavailable source does not discard the other results.
     const uniqueSourceIds = [...new Set(sources)];
-    const remoteConfig: DesktopNewsApiRuntimeSettings = localOnly
-        ? { mode: "local", remoteConfigured: false }
-        : await getDesktopNewsApiConfig();
-    if (remoteConfig.mode === "remote" && !remoteConfig.remoteConfigured) {
-        throw new Error("远端模式需要配置数据源 API 地址。");
-    }
-    if (remoteConfig.mode === "remote") {
-        return toEntireSourcesEnvelope(await fetchRemoteEntireSources(uniqueSourceIds), uniqueSourceIds);
-    }
     const localSourceIds = await getDesktopLocalSourceIds();
     const remoteConfigured = remoteConfig.remoteConfigured && remoteConfig.mode !== "local";
     let remoteEnvelope: EntireSourcesResponse = createEmptyEntireSourcesEnvelope(uniqueSourceIds);
@@ -187,7 +146,7 @@ async function fetchDesktopEntireSources(
 
     if (remoteConfigured && uniqueSourceIds.length > 0) {
         try {
-            remoteEnvelope = toEntireSourcesEnvelope(await fetchRemoteEntireSources(uniqueSourceIds), uniqueSourceIds);
+            remoteEnvelope = await fetchRemoteSourceBatch({ sources: uniqueSourceIds });
         } catch (error) {
             if (!shouldFallbackToLocal(error)) throw error;
             errors.push({ message: "Remote API request failed; local collection was used where available." });
@@ -360,26 +319,6 @@ async function getDesktopLocalSourceIds() {
     return desktopSourceIdsPromise;
 }
 
-function toEntireSourcesEnvelope(
-    response: EntireSourcesResponse | SourceResponse[] | undefined,
-    requestedSourceIds: SourceID[]
-): EntireSourcesResponse {
-    if (isEntireSourcesResponse(response)) return response;
-    const data = normalizeEntireSourcesResponse(response) ?? [];
-    const responseIds = new Set(data.map((source) => source.id));
-    return {
-        data,
-        meta: {
-            generatedAt: Date.now(),
-            requestedSourceCount: requestedSourceIds.length,
-            resolvedSourceCount: data.length,
-            partial: data.length < requestedSourceIds.length,
-            omittedSourceIds: requestedSourceIds.filter((sourceId) => !responseIds.has(sourceId)),
-        },
-        errors: [],
-    };
-}
-
 function createEmptyEntireSourcesEnvelope(sourceIds: SourceID[]): EntireSourcesResponse {
     return {
         data: [],
@@ -398,11 +337,11 @@ export async function fetchNewsInsights(payload: NewsInsightsPayload): Promise<N
     const requestKey = getNewsInsightsRequestKey(payload);
     return getOrCreateInFlightRequest(inFlightNewsInsights, requestKey, () =>
         fetchDesktopPreferred(
-            () => myFetch<NewsInsightsResponse>(sourceApi.insights, { method: "POST", body: payload }),
+            () => myFetch<NewsInsightsResponse>(sourceApi.insightsV1, { method: "POST", body: payload }),
             async (desktop) => {
                 // Load the shared aggregation code only when the desktop needs to compute locally.
                 const [local, { createNewsInsights }] = await Promise.all([
-                    fetchDesktopEntireSources(payload.sources, desktop, true),
+                    fetchDesktopEntireSources(payload.sources, desktop, { mode: "local", remoteConfigured: false }),
                     import("@shared/news-insights"),
                 ]);
                 return {
@@ -416,20 +355,22 @@ export async function fetchNewsInsights(payload: NewsInsightsPayload): Promise<N
 
 export function fetchSourceHealthSummary(): Promise<SourceHealthSummary> {
     return fetchDesktopPreferred(
-        () => myFetch(sourceApi.health),
+        async () => {
+            const { data, meta } = await myFetch<SourceHealthSourcesResponse>(sourceApi.sourceHealthV1);
+            return {
+                sources: data,
+                updatedAt: meta.generatedAt,
+                total: meta.totalSourceCount,
+                healthy: meta.healthyCount,
+                failing: meta.failingCount,
+                idle: meta.idleCount,
+                cacheDegraded: meta.cacheDegradedCount,
+                sampleWindowStartedAt: meta.sampleWindowStartedAt,
+            };
+        },
         async (bridge) => {
             if (!bridge.getCrawlerSourceHealthSummary) throw new Error("当前桌面版本不支持读取本地采集健康状态。");
             return bridge.getCrawlerSourceHealthSummary();
-        }
-    );
-}
-
-export function fetchSourceHealthSourcesV1(query?: SourceHealthSourcesQuery): Promise<SourceHealthSourcesResponse> {
-    return fetchDesktopPreferred(
-        () => myFetch(sourceApi.sourceHealthV1, { query }),
-        async (bridge) => {
-            if (!bridge.getCrawlerSourceHealthSummary) throw new Error("当前桌面版本不支持读取本地采集健康状态。");
-            return createSourceHealthSourcesResponse(await bridge.getCrawlerSourceHealthSummary(), query);
         }
     );
 }

@@ -1,8 +1,7 @@
 import type { NewsItem } from "@shared/types";
 
 import * as cheerio from "cheerio";
-import { HOME_PAGE } from "@shared/consts";
-import { proxySource, defineSource } from "#/utils/source";
+import { defineSource } from "#/utils/source";
 
 import { myFetch } from "../utils/fetch";
 
@@ -30,7 +29,7 @@ const relativeTimeToDate = function (timeStr: string) {
     return new Date(Date.now() - msAgo).valueOf();
 };
 
-const source = defineSource(async () => {
+export default defineSource(async () => {
     const html: any = await myFetch("https://www.ghxi.com/category/all");
     const $ = cheerio.load(html);
     const news: NewsItem[] = [];
@@ -62,5 +61,3 @@ const source = defineSource(async () => {
 
     return news;
 });
-
-export default proxySource(`${HOME_PAGE}/api/s?id=ghxi&latest=`, source);

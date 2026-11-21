@@ -78,16 +78,19 @@ async function installSourceMocks(
     await page.route("**/api/**", async (route) => {
         const url = new URL(route.request().url());
         const { pathname } = url;
-        if (pathname.endsWith("/v1/health/sources") || pathname.endsWith("/s/health")) {
+        if (pathname.endsWith("/v1/health/sources")) {
             await route.fulfill({
                 json: {
-                    updatedAt: Date.now(),
-                    total: 1,
-                    healthy: 1,
-                    failing: 0,
-                    idle: 0,
-                    cacheDegraded: 0,
-                    sources: [],
+                    data: [],
+                    meta: {
+                        generatedAt: Date.now(),
+                        totalSourceCount: 1,
+                        healthyCount: 1,
+                        failingCount: 0,
+                        idleCount: 0,
+                        cacheDegradedCount: 0,
+                    },
+                    errors: [],
                 },
             });
             return;
@@ -147,7 +150,7 @@ async function installSourceMocks(
             return;
         }
 
-        if (pathname.endsWith("/s/entire") || pathname.endsWith("/v1/sources/batch")) {
+        if (pathname.endsWith("/v1/sources/batch")) {
             await route.fulfill({
                 json: {
                     data: [],

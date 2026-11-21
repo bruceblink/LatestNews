@@ -19,6 +19,7 @@ export interface SourceHealthSourcesMeta {
     failingCount: number;
     idleCount: number;
     cacheDegradedCount: number;
+    sampleWindowStartedAt?: number;
     filters: {
         status: SourceHealthFilterStatus;
         adapterKind: SourceHealthFilterAdapterKind;
@@ -54,6 +55,7 @@ export function createSourceHealthSourcesResponse(
             failingCount: summary.failing,
             idleCount: summary.idle,
             cacheDegradedCount: summary.cacheDegraded,
+            sampleWindowStartedAt: summary.sampleWindowStartedAt,
             filters: {
                 status,
                 adapterKind,

@@ -11,7 +11,7 @@ import { fetchSourceItems } from "./source-fetch";
 import { getSourceHealthSnapshot } from "./source-health";
 import { resolveSourceResponse } from "./resolve-source-response";
 
-/** Share cache and refresh policy across the legacy and v1 read endpoints. */
+/** Read available news and apply the caller's refresh permissions and cache policy. */
 export async function readSource(id: SourceID, latest: boolean, clearCache: boolean, event: H3Event) {
     const cacheTable = await getCacheTable();
     const cache = await cacheTable?.get(id).catch((error: unknown) => {

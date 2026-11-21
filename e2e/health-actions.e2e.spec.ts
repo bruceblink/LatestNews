@@ -1,6 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
 
-const sourceHealth = {
+import { createSourceHealthSourcesResponse } from "../shared/source-health-api";
+
+import type { SourceHealthSummary } from "../shared/source-health-types";
+
+const sourceHealth: SourceHealthSummary = {
     updatedAt: Date.parse("2026-11-15T00:00:00.000Z"),
     total: 2,
     healthy: 1,
@@ -37,7 +41,7 @@ const sourceHealth = {
             recentEvents: [],
         },
     ],
-} as const;
+};
 
 test("prevents duplicate source probes and keeps failures retryable", async ({ page }) => {
     const mocks = await installHealthMocks(page, { deferFirstProbe: true });
@@ -147,21 +151,21 @@ function installHealthMocks(page: Page, options: { deferFirstProbe?: boolean; de
 
     const routeReady = page.route("**/api/**", async (route) => {
         const url = new URL(route.request().url());
-        if (url.pathname.endsWith("/s/health")) {
+        if (url.pathname.endsWith("/v1/health/sources")) {
             healthRequests += 1;
             if (shouldDeferManualRefresh && healthRequests > 1) {
                 shouldDeferManualRefresh = false;
                 markManualRefreshStarted();
                 await manualRefreshGate;
             }
-            await route.fulfill({ json: sourceHealth });
+            await route.fulfill({ json: createSourceHealthSourcesResponse(sourceHealth) });
             return;
         }
         if (url.pathname.endsWith("/api/me")) {
             await route.fulfill({ json: { status: "unauthenticated" } });
             return;
         }
-        if (url.pathname.endsWith("/enable-login")) {
+        if (url.pathname.endsWith("/v1/auth/capability")) {
             await route.fulfill({ json: { enable: false } });
             return;
         }
@@ -183,7 +187,7 @@ function installHealthMocks(page: Page, options: { deferFirstProbe?: boolean; de
             });
             return;
         }
-        if (url.pathname.endsWith("/s")) {
+        if (url.pathname.endsWith("/v1/sources/hackernews/items") && url.searchParams.get("clearCache") === "true") {
             probeRequests.push(url.searchParams);
             if (shouldDeferFirstProbe) {
                 shouldDeferFirstProbe = false;
@@ -198,17 +202,16 @@ function installHealthMocks(page: Page, options: { deferFirstProbe?: boolean; de
             }
             await route.fulfill({
                 json: {
-                    status: "success",
-                    id: "hackernews",
-                    name: "Hacker News",
-                    updatedTime: Date.now(),
-                    items: [
-                        {
-                            id: "probe-result",
-                            title: "Probe result",
-                            url: "https://example.test/probe-result",
-                        },
-                    ],
+                    data: {
+                        status: "success",
+                        id: "hackernews",
+                        name: "Hacker News",
+                        updatedTime: Date.now(),
+                        items: [
+                            { id: "probe-result", title: "Probe result", url: "https://example.test/probe-result" },
+                        ],
+                    },
+                    errors: [],
                 },
             });
             return;

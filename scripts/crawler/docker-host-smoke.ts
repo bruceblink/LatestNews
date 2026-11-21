@@ -65,14 +65,14 @@ try {
     containerStarted = true;
 
     const origin = `http://127.0.0.1:${port}`;
-    const response = await waitForPluginResponse(`${origin}/api/s?id=${encodeURIComponent(sourceId)}&latest=true`);
+    const response = await waitForPluginResponse(
+        `${origin}/api/v1/sources/${encodeURIComponent(sourceId)}/items?latest=true`
+    );
     assert.equal(response.status, 200, "The Node API should return HTTP 200 for a dynamic fixture source.");
     const body = await response.text();
     assert.ok(body.includes("server-smoke-1"), "The API response should contain the fixture item ID.");
     assert.ok(body.includes("Server plugin API smoke"), "The API response should contain the fixture title.");
-    const unknownSourceResponse = await fetch(
-        `${origin}/api/s?id=${encodeURIComponent("ext.org.latestnews.unknown.latest")}`
-    );
+    const unknownSourceResponse = await fetch(`${origin}/api/v1/sources/ext.org.latestnews.unknown.latest/items`);
     assert.equal(unknownSourceResponse.status, 400, "Unknown dynamic source namespaces must be rejected.");
 
     const corsPreflight = await fetch(`${origin}/api/v1/sources`, {
@@ -101,10 +101,6 @@ try {
         catalog.data.sources.some((source) => source.id === sourceId && source.name === "Server Smoke"),
         "The source catalog should expose the dynamic fixture metadata."
     );
-
-    const idsResponse = await fetch(`${origin}/api/s/ids`);
-    assert.equal(idsResponse.status, 200, "The legacy source ID endpoint should include dynamic sources.");
-    assert.ok(((await idsResponse.json()) as string[]).includes(sourceId));
 
     const detailResponse = await fetch(`${origin}/api/v1/sources/${encodeURIComponent(sourceId)}`);
     assert.equal(detailResponse.status, 200, "The source metadata API should resolve dynamic source IDs.");

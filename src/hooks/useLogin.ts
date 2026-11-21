@@ -1,6 +1,7 @@
 import { myFetch, apiFetch } from "~/utils";
 import { queryClient } from "~/query-client";
 import { atomWithStorage } from "jotai/utils";
+import { sourceApi } from "@shared/source-api";
 import { atom, useAtomValue, getDefaultStore } from "jotai";
 
 import { userAtom, authStatusAtom } from "../auth/authAtoms";
@@ -18,14 +19,11 @@ async function checkLoginCapability() {
     store.set(enableLoginErrorAtom, false);
 
     try {
-        store.set(enableLoginAtom, await myFetch("/enable-login"));
-    } catch (error) {
-        if (typeof error === "object" && error !== null && "statusCode" in error && error.statusCode === 506) {
-            store.set(enableLoginAtom, { enable: false });
-            localStorage.removeItem("access_token");
-        } else {
-            store.set(enableLoginErrorAtom, true);
-        }
+        const capability = await myFetch<{ enable: boolean }>(sourceApi.loginCapabilityV1);
+        store.set(enableLoginAtom, capability);
+        if (!capability.enable) localStorage.removeItem("access_token");
+    } catch {
+        store.set(enableLoginErrorAtom, true);
     } finally {
         store.set(enableLoginLoadingAtom, false);
     }

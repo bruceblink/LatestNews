@@ -12,22 +12,18 @@ import {
     sourceMetadataCacheKey,
     getUnifiedFeedCacheKey,
     getNewsInsightsCacheKey,
-    isEntireSourcesResponse,
     deploymentHealthCacheKey,
     getSourceItemsV1CacheKey,
-    getEntireSourcesCacheKey,
     getNewsInsightsRequestKey,
     getSourceMetadataItemCacheKey,
-    normalizeEntireSourcesResponse,
 } from "../shared/source-api";
 
 describe("source API contract", () => {
     it("keeps source endpoints centralized", () => {
         expect(sourceApi).toEqual({
-            single: "/s",
-            entire: "/s/entire",
-            health: "/s/health",
-            insights: "/s/insights",
+            insightsV1: "/v1/insights",
+            loginCapabilityV1: "/v1/auth/capability",
+            imageProxyV1: "/v1/media/image",
             nodeV1: "/v1/node",
             openApiV1: "/v1/openapi.json",
             sourcesV1: "/v1/sources",
@@ -46,7 +42,6 @@ describe("source API contract", () => {
         expect(getSourceMetadataPath("weibo" as SourceID)).toBe("/v1/sources/weibo");
         expect(getSourceMetadataItemCacheKey("weibo" as SourceID)).toEqual(["source-metadata-item", "weibo"]);
         expect(getSourceItemsPath("weibo" as SourceID)).toBe("/v1/sources/weibo/items");
-        expect(getEntireSourcesCacheKey(["weibo", "v2ex"] as SourceID[])).toEqual(["entire", ["v2ex", "weibo"]]);
         expect(
             getNewsInsightsCacheKey({
                 sources: ["weibo", "v2ex"] as SourceID[],
@@ -119,30 +114,5 @@ describe("source API contract", () => {
         expect(createBearerHeaders("token")).toEqual({ Authorization: "Bearer token" });
         expect(createBearerHeaders("")).toBeUndefined();
         expect(createBearerHeaders(null)).toBeUndefined();
-    });
-
-    it("normalizes entire source envelope responses", () => {
-        const item = {
-            status: "success" as const,
-            id: "weibo" as SourceID,
-            updatedTime: 1,
-            items: [],
-        };
-        const envelope = {
-            data: [item],
-            meta: {
-                generatedAt: 1,
-                requestedSourceCount: 1,
-                resolvedSourceCount: 1,
-                partial: false,
-                omittedSourceIds: [],
-            },
-            errors: [],
-        };
-
-        expect(isEntireSourcesResponse(envelope)).toBe(true);
-        expect(normalizeEntireSourcesResponse(envelope)).toEqual([item]);
-        expect(normalizeEntireSourcesResponse([item])).toEqual([item]);
-        expect(normalizeEntireSourcesResponse(undefined)).toBeUndefined();
     });
 });

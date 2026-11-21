@@ -53,8 +53,11 @@ curl https://news.example.com/api/v1/node
 | `GET` | `/api/v1/sources/{id}/items` | Items for a single source. |
 | `POST` | `/api/v1/sources/batch` | Items for multiple sources, columns, or source types. |
 | `POST` | `/api/v1/sources/refresh` | 分批刷新来源。默认只刷新到期缓存，`force=true` 采集全部可用来源。 |
+| `POST` | `/api/v1/insights` | 计算所选来源的阅读洞察。请求体包含 `sources`，可设置 `trendWindow` 等分析选项。 |
 
 Single-source metadata keeps item payloads out of discovery responses. If `{id}` is a redirect alias, `meta.canonicalSourceId` points to the source used by item endpoints and `meta.redirected` is `true`.
+
+从 `GET /api/v1/sources` 的 `data.sources[].id` 读取来源 ID。目录默认包含停用来源，省略重定向别名。应用版本可从 `/api/v1/node` 的 `data.node.version` 读取。
 
 Single-source query parameters:
 
@@ -130,6 +133,13 @@ exit "$failed"
 
 游标无效，或 `force` 的值超出 `true` 和 `false`，返回 HTTP 400。令牌缺失或错误返回 401。服务未配置令牌或缓存不可用返回 503。请求中断时可用相同游标重试。默认模式下，已写入且仍在刷新间隔内的来源返回 `fresh`。全量模式会再次采集该页。计划任务应串行处理各页，并在本轮结束后再启动下一轮。
 
+## 登录能力与媒体
+
+| 方法 | 路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/api/v1/auth/capability` | 返回 `{ "enable": true }` 或 `{ "enable": false }`。 |
+| `GET` | `/api/v1/media/image?url=<url>` | 请求来源图片。使用标准 URL 查询参数编码。 |
+
 ## Health And Diagnostics
 
 | Method | Path | Purpose |
@@ -164,6 +174,6 @@ Supported feed filters follow the source batch selectors where applicable, inclu
 
 ## Auth And Public Access
 
-The read-only v1 endpoints above are public when login is disabled. User sync endpoints such as `/api/me` remain private and require a valid deployment configuration.
+LatestNews uses the authentication service at `VITE_API_URL` for account details and OAuth, and SyncHub for reading-data synchronization. These services define their own paths and authentication.
 
 For private deployments, place any external access control at the platform layer unless the endpoint explicitly documents token handling.

@@ -228,17 +228,20 @@ function apiResponse(pathname: string) {
     }
     if (pathname.endsWith("/v1/health/sources")) {
         return {
-            updatedAt: generatedAt,
-            total: 1,
-            healthy: 1,
-            failing: 0,
-            idle: 0,
-            cacheDegraded: 0,
-            sources: [{ id: "zhihu", name: "知乎", status: "healthy", successCount: 1, errorCount: 0 }],
+            meta: {
+                generatedAt,
+                totalSourceCount: 1,
+                healthyCount: 1,
+                failingCount: 0,
+                idleCount: 0,
+                cacheDegradedCount: 0,
+            },
+            data: [{ id: "zhihu", name: "知乎", status: "healthy", successCount: 1, errorCount: 0 }],
+            errors: [],
         };
     }
     if (pathname.endsWith("/v1/health/deployment")) return { data: { status: "ready" }, errors: [] };
-    if (pathname.endsWith("/v1/sources/batch") || pathname.endsWith("/s/entire")) {
+    if (pathname.endsWith("/v1/sources/batch")) {
         return {
             data: [
                 {

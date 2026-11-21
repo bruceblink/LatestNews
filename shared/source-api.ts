@@ -3,10 +3,9 @@ import type { SourceResponseStatus } from "./source-response-status";
 import type { NewsInsights, InsightTrendWindow } from "./news-insights";
 
 export const sourceApi = {
-    single: "/s",
-    entire: "/s/entire",
-    health: "/s/health",
-    insights: "/s/insights",
+    insightsV1: "/v1/insights",
+    loginCapabilityV1: "/v1/auth/capability",
+    imageProxyV1: "/v1/media/image",
     nodeV1: "/v1/node",
     openApiV1: "/v1/openapi.json",
     sourcesV1: "/v1/sources",
@@ -39,10 +38,6 @@ export interface SourceBatchPayload {
     type?: string | string[];
     limit?: number | string;
     since?: number | string;
-}
-
-export interface EntireSourcesPayload {
-    sources: SourceID[];
 }
 
 export interface NewsInsightsPayload {
@@ -143,10 +138,6 @@ export function getSourceItemsV1CacheKey(id: SourceID, query: SourceItemsQuery =
     return ["source-items-v1", id, query.latest, query.clearCache, query.since, query.limit] as const;
 }
 
-export function getEntireSourcesCacheKey(ids: SourceID[]) {
-    return ["entire", [...ids].sort()] as const;
-}
-
 export function getNewsInsightsCacheKey(payload: NewsInsightsPayload) {
     return [
         "news-insights",
@@ -168,15 +159,6 @@ export function getNewsInsightsRequestKey(payload: NewsInsightsPayload) {
 
 export function getUnifiedFeedCacheKey(payload: UnifiedFeedPayload) {
     return ["unified-feed", [...payload.sources].sort(), payload.since] as const;
-}
-
-export function isEntireSourcesResponse(value: unknown): value is EntireSourcesResponse {
-    return Boolean(value && typeof value === "object" && "data" in value && Array.isArray(value.data));
-}
-
-export function normalizeEntireSourcesResponse(response: EntireSourcesResponse | SourceResponse[] | undefined) {
-    if (!response) return undefined;
-    return Array.isArray(response) ? response : response.data;
 }
 
 export const sourceHealthCacheKey = ["source-health"] as const;

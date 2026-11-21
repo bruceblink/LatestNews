@@ -14,11 +14,11 @@ const targets = {
 
 describe("Electron remote API boundaries", () => {
     it("routes the fixed news API and preserves its query string", () => {
-        const result = resolveApiProxyTarget("app://bundle/api/v1/source?id=github&latest=true", targets);
+        const result = resolveApiProxyTarget("app://bundle/api/v1/sources/hackernews/items?latest=true", targets);
 
         expect(result).toEqual({
             service: "news",
-            url: new URL("https://news.likanug.top/api/v1/source?id=github&latest=true"),
+            url: new URL("https://news.likanug.top/api/v1/sources/hackernews/items?latest=true"),
         });
     });
 

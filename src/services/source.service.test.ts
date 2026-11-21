@@ -16,8 +16,6 @@ import {
     fetchSourceMetadata,
     fetchSourceMetadataItem,
     fetchSourceHealthSummary,
-    fetchEntireSourcesEnvelope,
-    fetchSourceHealthSourcesV1,
 } from "./source.service";
 
 import type { SourceID, SourceResponse } from "../../shared/types";
@@ -42,13 +40,14 @@ describe("desktop local crawler routing", () => {
     it("uses the remote API before an enabled local source", async () => {
         const bridge = createDesktopBridge(["hackernews"], { hackernews: localSource });
         vi.stubGlobal("window", { latestNewsDesktop: bridge });
-        mockMyFetch.mockResolvedValue(remoteSource);
+        mockMyFetch.mockResolvedValue({ data: remoteSource });
 
-        await expect(fetchSource({ id: "hackernews", latest: true })).resolves.toEqual(remoteSource);
+        const headers = { Authorization: "Bearer test-token" };
+        await expect(fetchSource({ id: "hackernews", latest: true }, headers)).resolves.toEqual(remoteSource);
 
-        expect(mockMyFetch).toHaveBeenCalledWith(sourceApi.single, {
-            query: { id: "hackernews", latest: true },
-            headers: undefined,
+        expect(mockMyFetch).toHaveBeenCalledWith(getSourceItemsPath("hackernews"), {
+            query: { latest: true },
+            headers,
         });
         expect(bridge.fetchCrawlerSource).not.toHaveBeenCalled();
     });
@@ -75,7 +74,7 @@ describe("desktop local crawler routing", () => {
     it("keeps a successful empty remote result", async () => {
         const bridge = createDesktopBridge(["hackernews"], { hackernews: localSource });
         vi.stubGlobal("window", { latestNewsDesktop: bridge });
-        mockMyFetch.mockResolvedValue({ ...remoteSource, status: "empty", items: [] });
+        mockMyFetch.mockResolvedValue({ data: { ...remoteSource, status: "empty", items: [] } });
 
         await expect(fetchSource({ id: "hackernews" })).resolves.toMatchObject({ status: "empty", items: [] });
         expect(bridge.fetchCrawlerSource).not.toHaveBeenCalled();
@@ -135,13 +134,13 @@ describe("desktop local crawler routing", () => {
             errors: [],
         });
 
-        const response = await fetchEntireSourcesEnvelope(["hackernews", "pcbeta-windows11"]);
+        const response = await fetchSourceBatchV1({ sources: ["hackernews", "pcbeta-windows11"] });
 
         expect(response).toMatchObject({
             data: [remoteSource, localSource],
             meta: { requestedSourceCount: 2, resolvedSourceCount: 2, partial: false, omittedSourceIds: [] },
         });
-        expect(mockMyFetch).toHaveBeenCalledWith(sourceApi.entire, {
+        expect(mockMyFetch).toHaveBeenCalledWith(sourceApi.sourceBatchV1, {
             method: "POST",
             body: { sources: ["hackernews", "pcbeta-windows11"] },
         });
@@ -199,7 +198,7 @@ describe("desktop local crawler routing", () => {
 
         expect(response.data.map((source) => source.id)).toEqual(["hackernews", dynamicSourceId]);
         expect(bridge.fetchCrawlerSource).toHaveBeenCalledWith(dynamicSourceId);
-        expect(mockMyFetch).toHaveBeenCalledWith(sourceApi.entire, {
+        expect(mockMyFetch).toHaveBeenCalledWith(sourceApi.sourceBatchV1, {
             method: "POST",
             body: { sources: ["hackernews", dynamicSourceId] },
         });
@@ -359,16 +358,12 @@ describe("desktop local crawler routing", () => {
         expect(bridge.listCrawlerSourceMetadata).toHaveBeenCalledOnce();
     });
 
-    it("uses local health summaries and applies the shared health filters", async () => {
+    it("uses local health summaries without querying a remote host", async () => {
         const summary = createHealthSummary();
         const bridge = createDesktopBridge([], {}, "", [], summary);
         vi.stubGlobal("window", { latestNewsDesktop: bridge });
 
         await expect(fetchSourceHealthSummary()).resolves.toEqual(summary);
-        await expect(fetchSourceHealthSourcesV1({ status: "failing", keyword: "hacker" })).resolves.toMatchObject({
-            data: [expect.objectContaining({ id: "hackernews", status: "failing" })],
-            meta: { totalSourceCount: 2, returnedSourceCount: 1, filters: { status: "failing", keyword: "hacker" } },
-        });
         expect(mockMyFetch).not.toHaveBeenCalled();
     });
 
@@ -402,7 +397,7 @@ describe("desktop local crawler routing", () => {
         await expect(fetchSourceBatchV1({ sources: ["hackernews"] })).resolves.toMatchObject({
             data: [expect.objectContaining({ id: "hackernews" })],
         });
-        await expect(fetchEntireSourcesEnvelope(["hackernews", "pcbeta-windows11"])).resolves.toMatchObject({
+        await expect(fetchSourceBatchV1({ sources: ["hackernews", "pcbeta-windows11"] })).resolves.toMatchObject({
             data: [expect.objectContaining({ id: "hackernews" })],
             errors: expect.arrayContaining([
                 expect.objectContaining({

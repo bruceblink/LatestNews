@@ -14,3 +14,19 @@ test("loads source adapters before rejecting an unknown source", async ({ reques
 
     expect(response.status()).toBe(400);
 });
+
+test("does not serve retired APIs through the SPA renderer", async ({ request }) => {
+    for (const path of [
+        "/api/s",
+        "/api/s/ids",
+        "/api/s/health",
+        "/api/latest",
+        "/api/enable-login",
+        "/api/proxy/img.png",
+    ]) {
+        expect((await request.get(path)).status(), path).toBe(404);
+    }
+    expect((await request.post("/api/s/entire", { data: { sources: ["hackernews"] } })).status()).toBe(404);
+    expect((await request.post("/api/s/insights", { data: { sources: ["hackernews"] } })).status()).toBe(404);
+    expect(await (await request.get("/api/v1/auth/capability")).json()).toEqual({ enable: expect.any(Boolean) });
+});

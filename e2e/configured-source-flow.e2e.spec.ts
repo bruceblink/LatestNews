@@ -75,13 +75,15 @@ async function installConfiguredSourceMocks(page: Page) {
         if (pathname.endsWith("/v1/health/sources")) {
             await route.fulfill({
                 json: {
-                    updatedAt: Date.now(),
-                    total: 1,
-                    healthy: 1,
-                    failing: 0,
-                    idle: 0,
-                    cacheDegraded: 0,
-                    sources: [
+                    meta: {
+                        generatedAt: Date.now(),
+                        totalSourceCount: 1,
+                        healthyCount: 1,
+                        failingCount: 0,
+                        idleCount: 0,
+                        cacheDegradedCount: 0,
+                    },
+                    data: [
                         {
                             id: sourceId,
                             name: "Configured RSS",
@@ -96,6 +98,7 @@ async function installConfiguredSourceMocks(page: Page) {
                             recentEvents: [],
                         },
                     ],
+                    errors: [],
                 },
             });
             return;

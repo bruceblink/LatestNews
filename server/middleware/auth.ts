@@ -1,43 +1,26 @@
 import { jwtVerify } from "jose";
 import process from "node:process";
 import { logger } from "#/utils/logger";
-import { sourceApi } from "@shared/source-api";
-import { isPublicApiPath } from "@shared/public-api-path";
-import { getHeader, createError, getRequestURL, defineEventHandler } from "h3";
+import { getHeader, getRequestURL, defineEventHandler } from "h3";
 
 export default defineEventHandler(async (event) => {
-    const url = getRequestURL(event);
-    if (!url.pathname.startsWith("/api")) return;
-    // The refresh handler authenticates its own machine credential independently of login.
-    if (event.method === "POST" && url.pathname === `/api${sourceApi.sourceRefreshV1}`) return;
-    if (["JWT_SECRET"].find((k) => !process.env[k])) {
+    const { pathname } = getRequestURL(event);
+    // Only single-source reads can request a user-authorized refresh.
+    if (!/^\/api\/v1\/sources\/[^/]+\/items\/?$/.test(pathname)) return;
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
         event.context.disabledLogin = true;
-        if (!isPublicApiPath(url.pathname))
-            throw createError({ statusCode: 506, message: "Server not configured, disable login" });
-    } else {
-        if (["/api/s", "/api/me"].find((p) => url.pathname.startsWith(p))) {
-            const token = getHeader(event, "Authorization")
-                ?.replace(/Bearer\s*/, "")
-                ?.trim();
-            if (token) {
-                try {
-                    const { payload } = (await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET))) as {
-                        payload?: { id: string; type: string };
-                    };
-                    if (payload?.id) {
-                        event.context.user = {
-                            id: payload.id,
-                            type: payload.type,
-                        };
-                    }
-                } catch {
-                    if (url.pathname.startsWith("/api/me"))
-                        throw createError({ statusCode: 401, message: "JWT verification failed" });
-                    else logger.warn("JWT verification failed");
-                }
-            } else if (url.pathname.startsWith("/api/me")) {
-                throw createError({ statusCode: 401, message: "JWT verification failed" });
-            }
+        return;
+    }
+
+    const token = /^Bearer\s+(\S+)$/i.exec(getHeader(event, "authorization") ?? "")?.[1];
+    if (!token) return;
+    try {
+        const { payload } = await jwtVerify<{ id?: string; type: string }>(token, new TextEncoder().encode(secret));
+        if (payload.id) {
+            event.context.user = { id: payload.id, type: payload.type };
         }
+    } catch {
+        logger.warn("JWT verification failed");
     }
 });

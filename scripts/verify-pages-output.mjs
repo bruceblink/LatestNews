@@ -38,7 +38,7 @@ if (serviceWorkerSource.includes("_worker.js")) {
 
 // Reproduce the missing Node version reported by production. The invalid source
 // exercises source-module initialization without fetching news or requiring D1.
-const request = new Request("https://pages-output.invalid/api/s?id=__pages_output_invalid__");
+const request = new Request("https://pages-output.invalid/api/v1/sources/__pages_output_invalid__/items");
 const nodeVersion = Object.getOwnPropertyDescriptor(process.versions, "node");
 try {
     delete process.versions.node;
@@ -48,6 +48,10 @@ try {
         throw new Error(
             `Cloudflare Pages source initialization failed without process.versions.node: HTTP ${response.status}.`
         );
+    }
+    const retired = await worker.fetch(new Request("https://pages-output.invalid/api/s/ids"), {}, { waitUntil() {} });
+    if (retired.status !== 404) {
+        throw new Error(`Cloudflare Pages served the retired source ID endpoint: HTTP ${retired.status}.`);
     }
     const refreshUrl = "https://pages-output.invalid/api/v1/sources/refresh";
     const refreshToken = randomBytes(32).toString("hex");
