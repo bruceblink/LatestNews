@@ -120,10 +120,6 @@ export function createServerCrawlerPluginRuntime(options: NodeCrawlerPluginProvi
     };
 }
 
-export function hasCrawlerPluginSource(id: SourceID) {
-    return (pluginProvider?.hasSource(id) ?? false) || (configuredSourceProvider?.hasSource(id) ?? false);
-}
-
 /** Identify the runtime adapter while keeping plugin and configured-source security boundaries separate. */
 export function getCrawlerSourceKind(id: SourceID): "plugin" | "configured" | undefined {
     if (pluginProvider?.hasSource(id)) return "plugin";
@@ -146,9 +142,4 @@ export async function fetchInstalledCrawlerSource(id: SourceID): Promise<NewsIte
 export async function fetchConfiguredSource(id: SourceID): Promise<NewsItem[] | undefined> {
     if (!configuredSourceProvider?.hasSource(id)) return undefined;
     return configuredSourceProvider.fetchSource(id);
-}
-
-/** Backward-compatible combined lookup used by legacy API callers. */
-export async function fetchCrawlerPluginSource(id: SourceID): Promise<NewsItem[] | undefined> {
-    return (await fetchInstalledCrawlerSource(id)) ?? fetchConfiguredSource(id);
 }

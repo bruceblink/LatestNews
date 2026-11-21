@@ -5,9 +5,7 @@ import { getters } from "#/getters";
 import {
     getCrawlerSourceKind,
     fetchConfiguredSource,
-    hasCrawlerPluginSource,
     fetchInstalledCrawlerSource,
-    initializeCrawlerPluginCatalog,
 } from "#/utils/crawler-plugin-runtime";
 
 import { createSourceEngine } from "./source-engine";
@@ -15,7 +13,7 @@ import { recordSourceAdapter, recordSourceFailure, recordSourceQuality, recordSo
 
 import type { SourceAdapter } from "./source-engine";
 
-export interface SourceFetcherQueueOptions {
+interface SourceFetcherQueueOptions {
     /** Maximum number of source collectors that may execute at the same time. */
     maxConcurrent?: number;
     /** Maximum number of source collectors allowed to wait for a slot. */
@@ -32,25 +30,15 @@ interface CreateSourceFetcherOptions extends SourceFetcherQueueOptions {
     now?: () => number;
 }
 
-export function hasSourceGetter(id: SourceID) {
-    return typeof getters[id] === "function" || hasCrawlerPluginSource(id);
-}
-
-export const sourceFetcherQueueDefaults = {
-    maxConcurrent: 8,
-    maxQueued: 100,
-    queueTimeoutMs: 8_000,
-} as const satisfies Required<SourceFetcherQueueOptions>;
-
 export function createSourceFetcher({
     getItems,
     onSuccess,
     onQuality,
     onFailure,
-    now = Date.now,
-    maxConcurrent = sourceFetcherQueueDefaults.maxConcurrent,
-    maxQueued = sourceFetcherQueueDefaults.maxQueued,
-    queueTimeoutMs = sourceFetcherQueueDefaults.queueTimeoutMs,
+    now,
+    maxConcurrent,
+    maxQueued,
+    queueTimeoutMs,
 }: CreateSourceFetcherOptions) {
     const engine = createSourceEngine({
         resolveAdapter: (id): SourceAdapter => ({
@@ -70,7 +58,6 @@ export function createSourceFetcher({
 }
 
 const sourceEngine = createSourceEngine({
-    adapters: createRegisteredSourceAdapters(),
     resolveAdapter: (id) => {
         const crawlerSourceKind = getCrawlerSourceKind(id);
         if (crawlerSourceKind) {
@@ -99,32 +86,4 @@ const sourceEngine = createSourceEngine({
 });
 
 export const fetchSourceItems = sourceEngine.collect;
-
-function createRegisteredSourceAdapters(): SourceAdapter[] {
-    const runtimeAdapters = initializeCrawlerPluginCatalog().flatMap((source) => {
-        const id = source.id as SourceID;
-        const kind = getCrawlerSourceKind(id);
-        if (!kind) return [];
-
-        return [
-            {
-                descriptor: { id, kind },
-                collect: async () =>
-                    (await (kind === "plugin" ? fetchInstalledCrawlerSource(id) : fetchConfiguredSource(id))) ?? [],
-            } satisfies SourceAdapter,
-        ];
-    });
-    const runtimeIds = new Set(runtimeAdapters.map(({ descriptor }) => descriptor.id));
-    const legacyAdapters = Object.entries(getters).flatMap(([id, getter]) => {
-        const sourceId = id as SourceID;
-        if (runtimeIds.has(sourceId) || typeof getter !== "function") return [];
-        return [
-            {
-                descriptor: { id: sourceId, kind: "legacy" as const },
-                collect: () => getter(),
-            } satisfies SourceAdapter,
-        ];
-    });
-
-    return [...runtimeAdapters, ...legacyAdapters];
-}
+export const hasSourceGetter = sourceEngine.hasSource;

@@ -18,19 +18,17 @@ type ConfiguredRuntime = ReturnType<typeof createConfiguredSourceRuntime>;
 
 const { runtimeState } = vi.hoisted(() => ({ runtimeState: { current: null as ConfiguredRuntime | null } }));
 
-vi.mock("./utils/source-fetch", () => ({
-    hasSourceGetter: (id: string) => runtimeState.current?.hasSource(id as SourceID) ?? false,
-    fetchSourceItems: (id: string) => runtimeState.current?.fetchSource(id as SourceID) ?? Promise.resolve([]),
-}));
+vi.mock("#/getters", () => ({ getters: {} }));
 
 vi.mock("#/utils/crawler-plugin-runtime", () => ({
     initializeCrawlerPluginCatalog: () => runtimeState.current?.listSources() ?? [],
-    hasCrawlerPluginSource: (id: string) => runtimeState.current?.hasSource(id as SourceID) ?? false,
     getCrawlerSourceKind: (id: string) =>
         runtimeState.current?.hasSource(id as SourceID) ? ("configured" as const) : undefined,
-    fetchCrawlerPluginSource: (id: string) => runtimeState.current?.fetchSource(id as SourceID),
+    fetchConfiguredSource: (id: SourceID) => runtimeState.current?.fetchSource(id),
+    fetchInstalledCrawlerSource: async () => undefined,
 }));
 
+vi.mock("#/database/source-health-events", () => ({ getSourceHealthEventsTable: async () => undefined }));
 vi.mock("#/database/cache", () => ({ getCacheTable: async () => undefined }));
 
 const rssFixture = `<rss><channel><title>Fixture RSS</title><item>

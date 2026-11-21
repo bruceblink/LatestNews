@@ -47,10 +47,6 @@ export function shouldReturnCachedSourceResponse({
     return age < ttl && (degraded || !latest || !canRefresh);
 }
 
-export function isCacheSourceResponseStatus(status: SourceResponseStatus) {
-    return status === "cache" || status === "degraded-cache" || status === "stale-cache";
-}
-
 function getCacheAge(cacheUpdatedAt: number, now: number) {
     return Math.max(0, now - cacheUpdatedAt);
 }
