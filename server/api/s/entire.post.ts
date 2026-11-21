@@ -35,7 +35,11 @@ export default defineEventHandler(async (event): Promise<EntireSourcesResponse> 
             else invalidSourceIds.push(key);
         }
 
-        const caches = cacheTable ? await cacheTable.getEntire(ids) : [];
+        const caches =
+            (await cacheTable?.getEntire(ids).catch((error: unknown) => {
+                logger.warn("Could not read source batch cache.", error);
+                return [];
+            })) ?? [];
         const now = Date.now();
 
         return await resolveEntireSourcesWithDiagnostics({
@@ -48,7 +52,9 @@ export default defineEventHandler(async (event): Promise<EntireSourcesResponse> 
                 await cacheTable.set(id, items);
             },
             now,
+            background: (pending) => event.waitUntil(pending),
             onFetchError: (error, id) => logger.error(`fetch ${id} entire failed`, error),
+            onCacheError: (error, id) => logger.warn(`Could not save source cache for ${id}.`, error),
         });
     } catch (error) {
         if (error && typeof error === "object" && "statusCode" in error) throw error;

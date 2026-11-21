@@ -13,11 +13,12 @@ import { resolveEntireSourcesWithDiagnostics } from "./resolve-entire-sources";
 interface ResolveSourceBatchPayloadOptions {
     now?: number;
     logPrefix?: string;
+    background?: (pending: Promise<unknown>) => void;
 }
 
 export async function resolveSourceBatchPayload(
     payload: SourceBatchPayload,
-    { now = Date.now(), logPrefix = "v1 batch" }: ResolveSourceBatchPayloadOptions = {}
+    { now = Date.now(), logPrefix = "v1 batch", background }: ResolveSourceBatchPayloadOptions = {}
 ): Promise<SourceBatchResponse> {
     const selected = resolveSourceBatchSelection(payload);
     if (selected.sourceIds.length > 100) {
@@ -29,7 +30,11 @@ export async function resolveSourceBatchPayload(
 
     const { sourceIds, invalidSourceIds } = normalizeFetchableSources(selected);
     const cacheTable = await getCacheTable();
-    const caches = cacheTable ? await cacheTable.getEntire(sourceIds) : [];
+    const caches =
+        (await cacheTable?.getEntire(sourceIds).catch((error: unknown) => {
+            logger.warn(`Could not read ${logPrefix} cache.`, error);
+            return [];
+        })) ?? [];
     const response = await resolveEntireSourcesWithDiagnostics({
         sourceIds,
         invalidSourceIds,
@@ -40,7 +45,9 @@ export async function resolveSourceBatchPayload(
             await cacheTable.set(id, items);
         },
         now,
+        background,
         onFetchError: (error, id) => logger.error(`fetch ${id} ${logPrefix} failed`, error),
+        onCacheError: (error, id) => logger.warn(`Could not save ${id} ${logPrefix} cache.`, error),
     });
 
     return createSourceBatchResponse(

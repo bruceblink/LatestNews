@@ -163,4 +163,52 @@ describe("resolveSourceResponse", () => {
         expect(result.updatedTime).toBe(NOW - TTL - 1);
         expect(onFetchError).toHaveBeenCalledWith(expect.any(Error));
     });
+
+    it("returns expired history before the background collector finishes", async () => {
+        const historicalItems = createItems("weibo");
+        const freshItems = [{ ...historicalItems[0], title: "New title" }];
+        const collection = Promise.withResolvers<NewsItem[]>();
+        const background: Promise<unknown>[] = [];
+        const saveCache = vi.fn(async () => undefined);
+
+        const response = await resolveSourceResponse({
+            id: "weibo",
+            cache: { items: historicalItems, updated: NOW - TTL - 1 },
+            latest: false,
+            canRefresh: false,
+            degraded: false,
+            sourceInterval: INTERVAL,
+            now: NOW,
+            ttl: TTL,
+            fetchLatest: () => collection.promise,
+            saveCache,
+            background: (pending) => background.push(pending),
+        });
+
+        expect(response).toMatchObject({ status: "stale-cache", items: historicalItems });
+        expect(saveCache).not.toHaveBeenCalled();
+        collection.resolve(freshItems);
+        await Promise.all(background);
+        expect(saveCache).toHaveBeenCalledWith(freshItems);
+    });
+
+    it("returns history when a forced collection exceeds the response budget", async () => {
+        const historicalItems = createItems("weibo");
+        const collection = Promise.withResolvers<NewsItem[]>();
+        const response = await resolveSourceResponse({
+            id: "weibo",
+            cache: { items: historicalItems, updated: NOW - 1_000 },
+            latest: true,
+            canRefresh: true,
+            clearCache: true,
+            degraded: false,
+            sourceInterval: INTERVAL,
+            waitTimeoutMs: 10,
+            now: NOW,
+            fetchLatest: () => collection.promise,
+        });
+
+        expect(response).toMatchObject({ status: "stale-cache", updatedTime: NOW - 1_000, items: historicalItems });
+        collection.resolve([]);
+    });
 });

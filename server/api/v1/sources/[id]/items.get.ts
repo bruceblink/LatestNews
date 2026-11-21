@@ -3,15 +3,9 @@ import type { SourceID } from "@shared/types";
 import type { SourceItemsResponse } from "@shared/source-api";
 
 import { z } from "zod";
-import { TTL } from "@shared/consts";
 import { logger } from "#/utils/logger";
-import dataSources from "@shared/data-sources";
-import { getCacheTable } from "#/database/cache";
-import { fetchSourceItems } from "#/utils/source-fetch";
+import { readSource } from "#/utils/read-source";
 import { resolveSourceId } from "#/utils/resolve-source-id";
-import { getSourceHealthSnapshot } from "#/utils/source-health";
-import { resolveSourceResponse } from "#/utils/resolve-source-response";
-import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 import { getQuery, createError, getRouterParam, defineEventHandler } from "h3";
 import {
     filterSourceItems,
@@ -75,38 +69,12 @@ async function getSourceItemsResponse(
     event: H3Event
 ): Promise<SourceItemsResponse> {
     const now = Date.now();
-    const cacheTable = await getCacheTable();
-    const canRefresh = Boolean(event.context.disabledLogin || event.context.user);
-    const clearCache = isSourceItemsClearCacheRequest(query.clearCache) && canRefresh;
-    let cache = cacheTable ? await cacheTable.get(id) : undefined;
-
-    if (clearCache && cacheTable) {
-        await cacheTable.delete(id);
-        cache = undefined;
-    }
-
-    const sourceInterval = dataSources[id].interval ?? TTL;
-    const degraded = shouldDegradeSourceToCache(getSourceHealthSnapshot(id));
-    const response = await resolveSourceResponse({
+    const response = await readSource(
         id,
-        name: dataSources[id].name,
-        cache,
-        latest: isLatestRequest(query.latest),
-        canRefresh,
-        degraded,
-        clearCache,
-        sourceInterval,
-        now,
-        fetchLatest: () => fetchSourceItems(id),
-        saveCache: async (items) => {
-            if (!cacheTable) return;
-
-            const setCache = cacheTable.set(id, items);
-            if (event.context.waitUntil) event.context.waitUntil(setCache);
-            else await setCache;
-        },
-        onFetchError: (error) => logger.error(`fetch ${id} v1 items failed, fallback to stale cache`, error),
-    });
+        isLatestRequest(query.latest),
+        isSourceItemsClearCacheRequest(query.clearCache),
+        event
+    );
     const since = parseSourceItemsSince(query.since);
     const limit = normalizeSourceItemsLimit(query.limit);
     const items = filterSourceItems(response.items, { since, limit });

@@ -95,6 +95,31 @@ describe("resolveEntireSources", () => {
         expect(onFetchError).toHaveBeenCalledWith(expect.any(Error), "weibo");
     });
 
+    it("preserves cached and completed sources when another collector stalls", async () => {
+        const collection = Promise.withResolvers<SourceResponse["items"]>();
+        const cacheEntries = [{ id: "weibo" as const, items: createResponseItems("weibo"), updated: NOW - TTL - 1 }];
+        const background: Promise<unknown>[] = [];
+        const result = await resolveEntireSourcesWithDiagnostics({
+            sourceIds: ["weibo", "v2ex", "hackernews"],
+            cacheEntries,
+            fetchMissing: async (id) => (id === "hackernews" ? collection.promise : createResponseItems(id)),
+            saveCache: async () => {
+                throw new Error("cache cannot be written");
+            },
+            now: NOW,
+            batchTimeoutMs: 10,
+            background: (pending) => background.push(pending),
+        });
+
+        expect(result.data.map(({ id, status }) => [id, status])).toEqual([
+            ["weibo", "stale-cache"],
+            ["v2ex", "success"],
+        ]);
+        expect(result.meta).toMatchObject({ partial: true, omittedSourceIds: ["hackernews"] });
+        collection.resolve([]);
+        await Promise.all(background);
+    });
+
     it("marks stale cache entries when they exceed the cache TTL", async () => {
         const result = await resolveEntireSources({
             sourceIds: ["weibo" as SourceID],

@@ -32,7 +32,10 @@ export default defineEventHandler(async (event) => {
         }
 
         const url = getRequestURL(event);
-        const response = await resolveSourceBatchPayload(payload, { logPrefix: "json feed" });
+        const response = await resolveSourceBatchPayload(payload, {
+            logPrefix: "json feed",
+            background: (pending) => event.waitUntil(pending),
+        });
         setResponseHeader(event, "content-type", "application/feed+json; charset=utf-8");
         return createJsonFeed(response, {
             title: getFeedTitle(parsedQuery.data),

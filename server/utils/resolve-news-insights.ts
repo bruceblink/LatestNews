@@ -19,7 +19,9 @@ interface ResolveNewsInsightsOptions {
     saveCache: (id: SourceID, items: SourceResponse["items"]) => Promise<void>;
     now: number;
     insightOptions?: Omit<NewsInsightOptions, "generatedAt" | "sourceWeights">;
+    background?: (pending: Promise<unknown>) => void;
     onFetchError?: (error: unknown, id: SourceID) => void;
+    onCacheError?: (error: unknown, id: SourceID) => void;
 }
 
 export async function resolveNewsInsights({
@@ -30,7 +32,9 @@ export async function resolveNewsInsights({
     saveCache,
     now,
     insightOptions,
+    background,
     onFetchError,
+    onCacheError,
 }: ResolveNewsInsightsOptions): Promise<NewsInsightsResponse> {
     const errors: SourceApiError[] = invalidSourceIds.map((sourceId) => ({
         sourceId,
@@ -42,6 +46,8 @@ export async function resolveNewsInsights({
         fetchMissing,
         saveCache,
         now,
+        background,
+        onCacheError,
         onFetchError: (error, id) => {
             errors.push({
                 sourceId: id,

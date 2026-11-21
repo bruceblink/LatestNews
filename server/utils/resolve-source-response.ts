@@ -1,11 +1,14 @@
 import type { NewsItem, SourceID, SourceResponse } from "@shared/types";
 
+import { createError } from "h3";
 import { TTL } from "@shared/consts";
 import {
     getCachedSourceResponseStatus,
     getFetchedSourceResponseStatus,
     shouldReturnCachedSourceResponse,
 } from "@shared/source-response-status";
+
+export const sourceReadTimeoutMs = 4_000;
 
 interface SourceCacheEntry {
     items: NewsItem[];
@@ -22,9 +25,12 @@ interface ResolveSourceResponseOptions {
     clearCache?: boolean;
     sourceInterval: number;
     now: number;
+    lastAttemptAt?: number;
     ttl?: number;
+    waitTimeoutMs?: number;
     fetchLatest: () => Promise<NewsItem[]>;
     saveCache?: (items: NewsItem[]) => Promise<void>;
+    background?: (pending: Promise<unknown>) => void;
     onFetchError?: (error: unknown) => void;
 }
 
@@ -38,17 +44,17 @@ export async function resolveSourceResponse({
     clearCache = false,
     sourceInterval,
     now,
+    lastAttemptAt,
     ttl = TTL,
+    waitTimeoutMs = sourceReadTimeoutMs,
     fetchLatest,
     saveCache,
+    background,
     onFetchError,
 }: ResolveSourceResponseOptions): Promise<SourceResponse> {
-    if (clearCache && cache) {
-        cache = undefined;
-    }
-
     if (
         cache &&
+        !clearCache &&
         shouldReturnCachedSourceResponse({
             cacheUpdatedAt: cache.updated,
             canRefresh,
@@ -62,10 +68,42 @@ export async function resolveSourceResponse({
         return createCachedResponse({ cache, degraded, id, name, now, ttl });
     }
 
+    const collect = async () => {
+        try {
+            const items = await fetchLatest();
+            if (items.length && saveCache) {
+                const write = saveCache(items).catch((error: unknown) => onFetchError?.(error));
+                if (background) background(write);
+                else await write;
+            }
+            return items;
+        } catch (error) {
+            onFetchError?.(error);
+            throw error;
+        }
+    };
+
+    if (cache && !clearCache && (!latest || !canRefresh) && background) {
+        // A stale ordinary read must finish independently of the crawler.
+        if (lastAttemptAt === undefined || now - lastAttemptAt >= sourceInterval) {
+            background(collect().catch(() => undefined));
+        }
+        return createCachedResponse({ cache, degraded, id, name, now, ttl });
+    }
+
+    const pending = collect();
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-        const items = await fetchLatest();
+        const items = await Promise.race([
+            pending,
+            new Promise<never>((_, reject) => {
+                timer = setTimeout(() => {
+                    background?.(pending.catch(() => undefined));
+                    reject(createError({ statusCode: 504, message: "Source collection timed out." }));
+                }, waitTimeoutMs);
+            }),
+        ]);
         if (items.length) {
-            await saveCache?.(items);
             return createFetchedResponse({ id, items, name, now });
         }
 
@@ -76,8 +114,9 @@ export async function resolveSourceResponse({
         return createFetchedResponse({ id, items, name, now });
     } catch (error) {
         if (!cache) throw error;
-        onFetchError?.(error);
         return createCachedResponse({ cache, id, name, now, status: "stale-cache", ttl });
+    } finally {
+        clearTimeout(timer);
     }
 }
 

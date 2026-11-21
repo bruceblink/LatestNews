@@ -5,6 +5,8 @@ import { TTL } from "@shared/consts";
 import dataSources from "@shared/data-sources";
 import { getCachedSourceResponseStatus, getFetchedSourceResponseStatus } from "@shared/source-response-status";
 
+import { sourceReadTimeoutMs } from "./resolve-source-response";
+
 interface CacheEntry {
     id: SourceID;
     items: SourceResponse["items"];
@@ -18,7 +20,9 @@ interface ResolveEntireSourcesOptions {
     saveCache: (id: SourceID, items: SourceResponse["items"]) => Promise<void>;
     now: number;
     batchTimeoutMs?: number;
+    background?: (pending: Promise<unknown>) => void;
     onFetchError?: (error: unknown, id: SourceID) => void;
+    onCacheError?: (error: unknown, id: SourceID) => void;
 }
 
 interface ResolveEntireSourcesWithDiagnosticsOptions extends ResolveEntireSourcesOptions {
@@ -31,8 +35,10 @@ export async function resolveEntireSources({
     fetchMissing,
     saveCache,
     now,
-    batchTimeoutMs = 8_000,
+    batchTimeoutMs = sourceReadTimeoutMs,
+    background,
     onFetchError,
+    onCacheError,
 }: ResolveEntireSourcesOptions): Promise<SourceResponse[]> {
     const cachedResponses = new Map<SourceID, SourceResponse>();
 
@@ -59,7 +65,11 @@ export async function resolveEntireSources({
         const tasks = missingIds.map((id) =>
             (async () => {
                 const items = (await fetchMissing(id)).slice(0, 30);
-                if (items.length) await saveCache(id, items);
+                if (items.length) {
+                    const write = saveCache(id, items).catch((error: unknown) => onCacheError?.(error, id));
+                    if (background) background(write);
+                    else await write;
+                }
                 return {
                     status: getFetchedSourceResponseStatus(items.length),
                     id,
@@ -77,11 +87,13 @@ export async function resolveEntireSources({
         const timeout = new Promise<void>((resolve) => {
             timeoutTimer = setTimeout(resolve, batchTimeoutMs);
         });
+        const pending = Promise.allSettled(tasks);
         try {
-            await Promise.race([Promise.allSettled(tasks), timeout]);
+            await Promise.race([pending, timeout]);
         } finally {
             if (timeoutTimer) clearTimeout(timeoutTimer);
         }
+        if (states.size < missingIds.length) background?.(pending);
 
         for (const id of missingIds) {
             const state = states.get(id);

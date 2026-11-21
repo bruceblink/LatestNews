@@ -34,7 +34,7 @@ export default defineEventHandler(async (event): Promise<SourceBatchResponse> =>
             });
         }
 
-        return await resolveSourceBatchPayload(payload);
+        return await resolveSourceBatchPayload(payload, { background: (pending) => event.waitUntil(pending) });
     } catch (error) {
         if (error && typeof error === "object" && "statusCode" in error) throw error;
         logger.error(error);

@@ -63,7 +63,9 @@ Single-source query parameters:
 | `since` | Only return items at or after this timestamp. |
 | `limit` | Limit item count. |
 | `latest` | Prefer live source fetch where supported. |
-| `clearCache` | Clear the source cache before fetching. |
+| `clearCache` | Fetch immediately when refresh is authorized. Replace the cache after a non-empty result. |
+
+普通单来源读取可以直接返回过期缓存，同时在后台更新。需要等待采集的单来源请求最多等待 4 秒。采集失败、超时或返回空列表时，接口返回已有历史条目。首次采集超时且没有历史条目时返回 HTTP 504。批量读取在采集等待时间结束后返回已取得的条目，并在响应中列出未完成的来源。
 
 Batch payload selectors:
 

@@ -33,7 +33,11 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
 
     const cacheTable = await getCacheTable();
     const { ids, invalidIds } = normalizeSourceIds(parsedBody.data.sources);
-    const caches = cacheTable ? await cacheTable.getEntire(ids) : [];
+    const caches =
+        (await cacheTable?.getEntire(ids).catch((error: unknown) => {
+            logger.warn("Could not read insights cache.", error);
+            return [];
+        })) ?? [];
 
     return await resolveNewsInsights({
         sourceIds: ids,
@@ -46,7 +50,9 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
         },
         now: Date.now(),
         insightOptions: createInsightOptions(parsedBody.data),
+        background: (pending) => event.waitUntil(pending),
         onFetchError: (error, id) => logger.error(`fetch ${id} insights failed`, error),
+        onCacheError: (error, id) => logger.warn(`Could not save ${id} insights cache.`, error),
     });
 });
 
