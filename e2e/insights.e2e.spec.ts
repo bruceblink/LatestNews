@@ -148,6 +148,22 @@ test("preserves the prior result after a filtered request fails and supports ret
     await expect(page.getByRole("status").first()).toContainText("数据已更新");
 });
 
+test("keeps the previous chart when every source times out", async ({ page }) => {
+    await installInsightsMocks(page, {
+        respondToInsights: (_payload, requestIndex) => {
+            const body = createInsightsEnvelope(requestIndex === 1 ? { partial: true, headlines: [] } : {});
+            if (requestIndex === 1) body.meta.resolvedSourceCount = 0;
+            return { body };
+        },
+    });
+    await page.goto("/insights");
+    const oldHotItem = page.getByRole("link", { name: firstHeadline, exact: true });
+    await expect(oldHotItem).toBeVisible();
+    await page.getByRole("button", { name: "查询", exact: true }).filter({ visible: true }).click();
+    await expect(page.getByRole("alert")).toContainText("当前保留上次结果");
+    await expect(oldHotItem).toBeVisible();
+});
+
 test("preserves the 24-hour result and labels its range when a 7-day request fails", async ({ page }) => {
     const mocks = await installInsightsMocks(page, {
         respondToInsights: (_payload, requestIndex) =>

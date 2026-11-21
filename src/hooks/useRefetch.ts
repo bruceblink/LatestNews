@@ -25,7 +25,6 @@ export function useRefetch() {
                     },
                 });
             } else {
-                refetchSources.clear();
                 sources.forEach((id) => refetchSources.add(id));
                 updateQuery(...sources);
             }

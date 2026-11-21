@@ -1,7 +1,6 @@
 import type { SourceQuery } from "@shared/source-api";
 import type { SourceID, SourceResponse } from "@shared/types";
 
-import { delay } from "@root/shared/utils";
 import { useQuery } from "@tanstack/react-query";
 import dataSources from "@root/shared/data-sources";
 import { fetchSource } from "~/services/source.service";
@@ -30,34 +29,36 @@ export function useNewsSource(id: SourceID) {
                 query.latest = true;
                 headers = createBearerHeaders(localStorage.getItem("access_token"));
                 refetchSources.delete(id);
-            } else if (cacheSources.has(id)) {
-                // 使用缓存并延时，配合 UI 动画
-                await delay(200);
-                return cacheSources.get(id)!;
             }
 
             const response = await fetchSource(query, headers);
-
-            // diff 逻辑（仅 hottest 类型）
-            try {
-                if (response.items && dataSources[id].type === "hottest" && cacheSources.has(id)) {
-                    const old = cacheSources.get(id)!;
-                    response.items.forEach((item, i) => {
-                        const oldIdx = old.items.findIndex((k) => k.id === item.id);
-                        item.extra = { ...item.extra, diff: oldIdx === -1 ? undefined : oldIdx - i };
-                    });
-                }
-            } catch (e) {
-                console.error(e);
+            const previous = cacheSources.get(id);
+            if (response.status === "empty" && previous?.items.length) {
+                return { ...previous, status: "stale-cache" };
             }
 
-            cacheSources.set(id, response);
+            if (previous && response.updatedTime > previous.updatedTime && dataSources[id].type === "hottest") {
+                const oldRanks = new Map(previous.items.map((item, index) => [item.id, index]));
+                response.items = response.items.map((item, index) => {
+                    const oldRank = oldRanks.get(item.id);
+                    return {
+                        ...item,
+                        extra: { ...item.extra, diff: oldRank === undefined ? undefined : oldRank - index },
+                    };
+                });
+            }
+
+            if (response.items.length) cacheSources.set(id, response);
             return response;
         },
-        placeholderData: (prev) => prev,
+        initialData: () => cacheSources.get(id),
+        initialDataUpdatedAt: () => {
+            const updatedTime = cacheSources.get(id)?.updatedTime;
+            return typeof updatedTime === "string" ? Date.parse(updatedTime) || 0 : updatedTime;
+        },
         staleTime: schedule.staleTime,
         refetchInterval: schedule.refetchInterval,
-        refetchOnMount: false,
+        refetchOnMount: true,
         refetchOnReconnect: false,
         refetchOnWindowFocus: false,
         retry: false,

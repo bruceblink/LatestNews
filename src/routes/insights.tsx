@@ -131,7 +131,7 @@ function InsightsPage() {
         [hiddenUrls, readUrls, sources, trendWindow]
     );
 
-    const { data, isFetching, isError, error, refetch, isPlaceholderData } = useQuery({
+    const { data, isFetching, isError, refetch, isPlaceholderData } = useQuery({
         queryKey: getNewsInsightsCacheKey(payload),
         queryFn: () => fetchNewsInsights(payload),
         placeholderData: (previousData) => previousData,
@@ -139,17 +139,21 @@ function InsightsPage() {
         staleTime: 1000 * 60 * 3,
         retry: false,
     });
+    const allSourcesUnavailable = Boolean(data?.meta?.partial && data.meta.resolvedSourceCount === 0);
+    const updateFailed = isError || allSourcesUnavailable;
+    const previous = lastSuccessfulResult.current;
+    const usePreviousResult = Boolean(previous && (allSourcesUnavailable || (isError && !data)));
     useEffect(() => {
-        if (!data || isError || isPlaceholderData) return;
+        if (!data || updateFailed || isPlaceholderData) return;
         lastSuccessfulResult.current = {
             response: data,
             filters: { scope, source: selectedSource, trendWindow },
         };
-    }, [data, isError, isPlaceholderData, scope, selectedSource, trendWindow]);
+    }, [data, updateFailed, isPlaceholderData, scope, selectedSource, trendWindow]);
     const { data: healthSummary, isFetching: isHealthFetching, isError: isHealthError } = useSourceHealthSummary();
-    const displayedData = data ?? (isError ? lastSuccessfulResult.current?.response : undefined);
+    const displayedData = usePreviousResult ? previous?.response : data;
     // Cached fallback marks keep their original scope and time encoding, not the failed request's labels.
-    const displayedFilters = (isPlaceholderData || (isError && !data)
+    const displayedFilters = (isPlaceholderData || usePreviousResult
         ? lastSuccessfulResult.current?.filters
         : undefined) ?? { scope, source: selectedSource, trendWindow };
     const displayedFiltersLabel = formatActiveFilters(
@@ -160,7 +164,7 @@ function InsightsPage() {
     const isShowingPreviousFilter =
         Boolean(lastSuccessfulResult.current) &&
         displayedFiltersLabel !== formatActiveFilters(scope, selectedSource, trendWindow) &&
-        (isPlaceholderData || (isError && !data));
+        (isPlaceholderData || usePreviousResult);
     const insights = displayedData?.data;
     const generatedAt = insights?.generatedAt ?? displayedData?.meta?.generatedAt;
     const healthUpdatedAt = healthSummary?.updatedAt;
@@ -170,7 +174,7 @@ function InsightsPage() {
                 ? "查询中 · 显示上次范围"
                 : "更新中 · 显示上次结果"
             : "更新中"
-        : isError
+        : updateFailed
           ? insights
               ? isShowingPreviousFilter
                   ? "更新失败 · 显示上次范围"
@@ -223,7 +227,7 @@ function InsightsPage() {
                         className={clsx(
                             "insights-page-status",
                             "insights-page-status-desktop",
-                            (isError || displayedData?.meta?.partial) && "is-warning",
+                            (updateFailed || displayedData?.meta?.partial) && "is-warning",
                             isFetching && "is-fetching"
                         )}
                         role="status"
@@ -242,7 +246,7 @@ function InsightsPage() {
                         className={clsx(
                             "insights-page-status",
                             "insights-page-status-mobile",
-                            (isError || displayedData?.meta?.partial) && "is-warning",
+                            (updateFailed || displayedData?.meta?.partial) && "is-warning",
                             isFetching && "is-fetching"
                         )}
                         role="status"
@@ -358,7 +362,7 @@ function InsightsPage() {
                         onClick={() => void refetch()}
                     >
                         <span
-                            className={clsx("i-ph:magnifying-glass-duotone", isFetching && "animate-spin")}
+                            className={clsx("i-ph:magnifying-glass-duotone", isFetching && "motion-safe:animate-spin")}
                             aria-hidden="true"
                         />
                         <span>{isFetching ? "更新中" : "查询"}</span>
@@ -366,13 +370,13 @@ function InsightsPage() {
                 </section>
 
                 <div className="insights-content-stack">
-                    {isError && (
+                    {updateFailed && (
                         <div className="insights-data-error" role="alert">
                             <span>
-                                洞察加载失败{error instanceof Error ? `：${error.message}` : ""}
+                                洞察加载失败
                                 {isShowingPreviousFilter
                                     ? `。当前筛选失败，以下保留${displayedFiltersLabel}的上次结果。`
-                                    : insights
+                                    : usePreviousResult || (isError && insights)
                                       ? "。当前保留上次结果。"
                                       : "。"}
                             </span>

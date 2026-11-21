@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import type { SourceID } from "@shared/types";
+import type { SourceBatchResponse } from "@shared/source-api";
+import type { SourceID, SourceResponse } from "@shared/types";
 import type {
     UnifiedFeedItem,
     UnifiedFeedScope,
@@ -15,19 +16,16 @@ import { focusSourcesAtom } from "~/atoms";
 import { metadata } from "@shared/metadata";
 import { APP_TITLE } from "~/utils/app-title";
 import { useHistory } from "~/hooks/useHistory";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { filterSourceItems } from "@shared/source-items";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useReadingState } from "~/hooks/useReadingState";
 import { getUnifiedFeedCacheKey } from "@shared/source-api";
 import { fetchUnifiedFeed } from "~/services/source.service";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { memo, useMemo, useState, useEffect, useCallback } from "react";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
-import {
-    saveOfflineFeedSnapshot,
-    readOfflineFeedSnapshotStatus,
-    type OfflineFeedSnapshotReadResult,
-} from "~/services/offline-feed-snapshot.service";
+import { saveOfflineFeedSnapshot, readOfflineFeedSnapshotStatus } from "~/services/offline-feed-snapshot.service";
 import {
     unifiedFeedPageSize,
     createUnifiedFeedView,
@@ -65,6 +63,7 @@ export const Route = createFileRoute("/feed")({
 });
 
 function FeedPage() {
+    const queryClient = useQueryClient();
     useTitle(`${APP_TITLE} | 统一 Feed`);
 
     const search = Route.useSearch();
@@ -77,10 +76,6 @@ function FeedPage() {
     const [sourceId, setSourceId] = useState<SourceID | "all">(search.source ?? "all");
     const [categoryId, setCategoryId] = useState<UnifiedFeedCategoryID | "all">(search.category ?? "all");
     const [since, setSince] = useState<UnifiedFeedSince>(search.since ?? "24h");
-    const [offlineSnapshotStatus, setOfflineSnapshotStatus] = useState<OfflineFeedSnapshotReadResult>({
-        state: "missing",
-    });
-
     const updateSearch = useCallback(
         (patch: Partial<UnifiedFeedSearch>, replace = false) => {
             void navigate({
@@ -117,29 +112,44 @@ function FeedPage() {
         [scope, since, sources]
     );
 
-    const { data, isFetching, isError, error, refetch } = useQuery({
+    const savedSnapshot = useMemo(
+        () => readOfflineFeedSnapshotStatus(offlineSnapshotPayload),
+        [offlineSnapshotPayload]
+    );
+    const { data, isFetching, isError, refetch } = useQuery({
         queryKey: getUnifiedFeedCacheKey(payload),
-        queryFn: () => fetchUnifiedFeed(payload),
+        queryFn: async ({ queryKey }) => {
+            const response = await fetchUnifiedFeed(payload);
+            const previous = queryClient.getQueryData<SourceBatchResponse>(queryKey);
+            const historical =
+                previous ?? (savedSnapshot.state === "fresh" ? savedSnapshot.snapshot?.response : undefined);
+            const display = mergeFeedHistory(response, historical);
+            // Preserve a complete offline snapshot across partial refreshes.
+            if ((!response.meta.partial || !historical) && response.data.some((source) => source.items.length)) {
+                saveOfflineFeedSnapshot(offlineSnapshotPayload, display);
+            }
+            return display;
+        },
         enabled: sources.length > 0,
         staleTime: 1000 * 60 * 2,
         retry: false,
     });
 
-    useEffect(() => {
-        setOfflineSnapshotStatus(readOfflineFeedSnapshotStatus(offlineSnapshotPayload));
-    }, [offlineSnapshotPayload]);
-
-    useEffect(() => {
-        if (!data) return;
-        const snapshot = saveOfflineFeedSnapshot(offlineSnapshotPayload, data);
-        if (snapshot) setOfflineSnapshotStatus({ state: "fresh", snapshot });
-    }, [data, offlineSnapshotPayload]);
-
-    const offlineSnapshot = offlineSnapshotStatus.state === "fresh" ? offlineSnapshotStatus.snapshot : undefined;
+    const offlineSnapshot = savedSnapshot.state === "fresh" ? savedSnapshot.snapshot : undefined;
     const isOfflineSnapshotActive = !data && Boolean(offlineSnapshot);
-    const isOfflineSnapshotStale = !data && offlineSnapshotStatus.state === "stale";
+    const isOfflineSnapshotStale = !data && savedSnapshot.state === "stale";
     const activeResponse = data ?? offlineSnapshot?.response;
-    const loadedResponses = useMemo(() => activeResponse?.data ?? [], [activeResponse]);
+    const loadedResponses = useMemo(
+        () =>
+            (activeResponse?.data ?? []).map((source) => {
+                const items = filterSourceItems(source.items, { since: sinceValue });
+                return items === source.items ? source : { ...source, items };
+            }),
+        [activeResponse, sinceValue]
+    );
+    const isShowingHistory = loadedResponses.some(
+        (source) => source.items.length && (source.status === "stale-cache" || source.status === "degraded-cache")
+    );
     const sourceOptionView = useMemo(() => createUnifiedFeedView(loadedResponses), [loadedResponses]);
     const feedView = useMemo(
         () =>
@@ -196,12 +206,12 @@ function FeedPage() {
                             )}
                             {isOfflineSnapshotActive && offlineSnapshot ? (
                                 <SnapshotSignalPill savedAt={offlineSnapshot.savedAt} />
-                            ) : isOfflineSnapshotStale && offlineSnapshotStatus.snapshot ? (
-                                <ExpiredSnapshotSignalPill savedAt={offlineSnapshotStatus.snapshot.savedAt} />
+                            ) : isOfflineSnapshotStale && savedSnapshot.snapshot ? (
+                                <ExpiredSnapshotSignalPill savedAt={savedSnapshot.snapshot.savedAt} />
                             ) : (
                                 <SignalPill
                                     icon="i-ph:clock-clockwise-duotone"
-                                    label={isFetching ? "更新中" : "已就绪"}
+                                    label={isFetching ? "更新中" : isError ? "更新失败" : "已就绪"}
                                 />
                             )}
                         </div>
@@ -237,7 +247,10 @@ function FeedPage() {
                             onClick={() => void refetch()}
                         >
                             <span
-                                className={clsx("i-ph:arrow-clockwise-duotone", isFetching && "animate-spin")}
+                                className={clsx(
+                                    "i-ph:arrow-clockwise-duotone",
+                                    isFetching && "motion-safe:animate-spin"
+                                )}
                                 aria-hidden="true"
                             />
                             <span>{isFetching ? "刷新中" : "刷新"}</span>
@@ -327,13 +340,22 @@ function FeedPage() {
 
             {isOfflineSnapshotActive && offlineSnapshot && <OfflineSnapshotNotice savedAt={offlineSnapshot.savedAt} />}
 
-            {isOfflineSnapshotStale && offlineSnapshotStatus.snapshot && (
-                <ExpiredOfflineSnapshotNotice savedAt={offlineSnapshotStatus.snapshot.savedAt} />
+            {isOfflineSnapshotStale && savedSnapshot.snapshot && (
+                <ExpiredOfflineSnapshotNotice savedAt={savedSnapshot.snapshot.savedAt} />
             )}
 
-            {isError && !isOfflineSnapshotActive && (
-                <div className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
-                    Feed 加载失败{error instanceof Error ? `：${error.message}` : ""}
+            {!isOfflineSnapshotActive && (isError || isShowingHistory || activeResponse?.meta.partial) && (
+                <div
+                    className="rounded-lg border border-amber-500/25 px-4 py-3 text-sm text-amber-800 dark:text-amber-300"
+                    role="status"
+                >
+                    {isError
+                        ? loadedResponses.some((source) => source.items.length)
+                            ? "Feed 更新失败，已保留上次内容。"
+                            : "暂时无法加载 Feed。请点击刷新重试。"
+                        : isShowingHistory
+                          ? "部分来源正在显示历史数据。"
+                          : "部分来源暂未返回，已加载的内容仍可阅读。"}
                 </div>
             )}
 
@@ -345,6 +367,13 @@ function FeedPage() {
                         items={visibleItems}
                         availableCount={feedView.items.length}
                         filteredCount={feedView.filteredItemCount}
+                        emptyLabel={
+                            isFetching && !activeResponse
+                                ? "正在加载 Feed"
+                                : isError && !activeResponse
+                                  ? "暂无可用内容"
+                                  : "暂无匹配内容"
+                        }
                         readUrls={readUrls}
                         onRead={handleRead}
                         onLoadMore={() =>
@@ -369,19 +398,18 @@ function FeedPage() {
                     />
                 </div>
             )}
-
-            {!!activeResponse?.errors.length && (
-                <div className="rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
-                    {activeResponse.errors.slice(0, 3).map((item) => (
-                        <div key={`${item.sourceId ?? "source"}-${item.message}`}>
-                            {item.sourceId ? `${item.sourceId}: ` : ""}
-                            {item.message}
-                        </div>
-                    ))}
-                </div>
-            )}
         </section>
     );
+}
+
+/** Use the same feed scope and time window when restoring omitted sources. */
+function mergeFeedHistory(response: SourceBatchResponse, historical?: SourceBatchResponse): SourceBatchResponse {
+    if (!historical || !response.meta.omittedSourceIds.length) return response;
+    const missing = new Set(response.meta.omittedSourceIds);
+    const fallback = historical.data
+        .filter((source) => missing.has(source.id) && source.items.length)
+        .map((source): SourceResponse => ({ ...source, status: "stale-cache" }));
+    return fallback.length ? { ...response, data: [...response.data, ...fallback] } : response;
 }
 
 // Renders a bounded feed page and lets readers request more entries on demand.
@@ -389,6 +417,7 @@ const FeedList = memo(function FeedListContent({
     items,
     availableCount,
     filteredCount,
+    emptyLabel,
     readUrls,
     onRead,
     onLoadMore,
@@ -396,6 +425,7 @@ const FeedList = memo(function FeedListContent({
     items: UnifiedFeedItem[];
     availableCount: number;
     filteredCount: number;
+    emptyLabel: string;
     readUrls: Set<string>;
     onRead: (item: UnifiedFeedItem) => void;
     onLoadMore: () => void;
@@ -450,7 +480,7 @@ const FeedList = memo(function FeedListContent({
                         );
                     })
                 ) : (
-                    <PanelEmpty label="暂无匹配内容" />
+                    <PanelEmpty label={emptyLabel} />
                 )}
             </div>
             {items.length < availableCount && (

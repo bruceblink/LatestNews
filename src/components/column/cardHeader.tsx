@@ -24,7 +24,8 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
     const { isFocused, toggleFocus } = useFocusWith(id);
     const ds = dataSources[id];
     const healthStatusLabel = healthStatus === "failing" ? "异常" : healthStatus === "idle" ? "未采样" : undefined;
-    const sourceStatusLabel = getSourceStatusLabel(data?.status);
+    const sourceStatus = isError && data?.items.length ? "stale-cache" : data?.status;
+    const sourceStatusLabel = getSourceStatusLabel(sourceStatus);
 
     return (
         <div className="news-card-header">
@@ -61,7 +62,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                             <span
                                 className={clsx(
                                     "rounded px-1.5 py-0.5 text-xs",
-                                    getSourceStatusClassName(data?.status)
+                                    getSourceStatusClassName(sourceStatus)
                                 )}
                             >
                                 {sourceStatusLabel}
@@ -79,7 +80,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                         )}
                     </span>
                     <span className="source-updated">
-                        <UpdatedTime isError={isError} updatedTime={data?.updatedTime} />
+                        <UpdatedTime isError={isError} isFetching={isFetching} updatedTime={data?.updatedTime} />
                     </span>
                 </span>
             </div>
@@ -93,7 +94,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                         type="button"
                         className={clsx(
                             "source-action i-ph:arrow-counter-clockwise-duotone disabled:cursor-wait disabled:opacity-60",
-                            isFetching && "animate-spin i-ph:spinner-duotone"
+                            isFetching && "motion-safe:animate-spin i-ph:spinner-duotone"
                         )}
                         onClick={() => refresh(id)}
                     />
@@ -124,17 +125,25 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
     );
 }
 
-function UpdatedTime({ isError, updatedTime }: { updatedTime: any; isError: boolean }) {
+function UpdatedTime({
+    isError,
+    isFetching,
+    updatedTime,
+}: {
+    updatedTime?: string | number;
+    isError: boolean;
+    isFetching: boolean;
+}) {
     const relativeTime = useRelativeTime(updatedTime ?? "");
+    if (isFetching) return relativeTime ? "正在更新" : "正在加载";
     if (relativeTime) return `${relativeTime}更新`;
     if (isError) return "获取失败";
-    return "加载中...";
+    return "等待加载";
 }
 
 function getSourceStatusLabel(status?: SourceResponse["status"]) {
     if (status === "cache") return "缓存";
-    if (status === "degraded-cache") return "降级缓存";
-    if (status === "stale-cache") return "旧缓存";
+    if (status === "degraded-cache" || status === "stale-cache") return "历史数据";
     if (status === "empty") return "空数据";
     return undefined;
 }

@@ -1,4 +1,4 @@
-import type { SourceID } from "@shared/types";
+import type { SourceID, SourceResponse } from "@shared/types";
 import type { SourceMetadataItem } from "@shared/source-metadata";
 import type { SourceHealthEvent, SourceHealthSnapshot } from "@shared/source-health-types";
 
@@ -23,6 +23,7 @@ import {
     fetchSourceMetadataItem,
 } from "~/services/source.service";
 import {
+    getSourceCacheKey,
     sourceMetadataCacheKey,
     getUnifiedFeedCacheKey,
     getSourceItemsV1CacheKey,
@@ -41,6 +42,7 @@ function SourceDetailPage() {
     const { hiddenUrls, isHiddenUrl } = useReadingState();
     const [isClearingCache, setIsClearingCache] = useState(false);
     const [clearCacheError, setClearCacheError] = useState<string>();
+    const [refreshMessage, setRefreshMessage] = useState<string>();
 
     const metadataItemQuery = useQuery({
         queryKey: getSourceMetadataItemCacheKey(requestedId),
@@ -66,7 +68,18 @@ function SourceDetailPage() {
     const sourceItemsQueryKey = useMemo(() => getSourceItemsV1CacheKey(id, { limit: 20 }), [id]);
     const itemsQuery = useQuery({
         queryKey: sourceItemsQueryKey,
-        queryFn: () => fetchSourceItemsV1(id, { limit: 20 }),
+        queryFn: async () => {
+            const response = await fetchSourceItemsV1(id, { limit: 20 });
+            const previous = queryClient.getQueryData<typeof response>(sourceItemsQueryKey);
+            if (response.data.status === "empty" && previous?.data.items.length) {
+                return {
+                    ...previous,
+                    data: { ...previous.data, status: "stale-cache" as const },
+                    meta: { ...previous.meta, status: "stale-cache" as const },
+                };
+            }
+            return response;
+        },
         enabled: Boolean(metadataItem && !metadataItem.disabled),
         staleTime: 1000 * 60 * 2,
         retry: false,
@@ -100,18 +113,36 @@ function SourceDetailPage() {
         [hiddenUrls, relatedFeedQuery.data?.data]
     );
     const readUrls = useMemo(() => new Set(history.map((item) => item.url)), [history]);
+    const detailItems = itemsQuery.data?.data;
+    const cardItems = queryClient.getQueryData<SourceResponse>(getSourceCacheKey(id));
+    const previousItems = detailItems?.items.length ? detailItems : cardItems;
+    const displayedItems = detailItems?.status === "empty" ? previousItems : (detailItems ?? cardItems);
+    const isShowingHistory =
+        Boolean(displayedItems?.items.length) &&
+        (itemsQuery.isError ||
+            displayedItems !== detailItems ||
+            displayedItems?.status === "stale-cache" ||
+            displayedItems?.status === "degraded-cache");
     const visibleItems = useMemo(
-        () => itemsQuery.data?.data.items.filter((item) => !isHiddenUrl(item.url)) ?? [],
-        [isHiddenUrl, itemsQuery.data?.data.items]
+        () => displayedItems?.items.filter((item) => !isHiddenUrl(item.url)).slice(0, 20) ?? [],
+        [displayedItems?.items, isHiddenUrl]
     );
     const handleClearCacheRefresh = async () => {
         setIsClearingCache(true);
+        setClearCacheError(undefined);
+        setRefreshMessage(undefined);
         try {
             const response = await fetchSourceItemsV1(id, { limit: 20, latest: true, clearCache: true });
-            queryClient.setQueryData(sourceItemsQueryKey, response);
-            setClearCacheError(undefined);
-        } catch (error) {
-            setClearCacheError(error instanceof Error ? error.message : "未知错误");
+            if (response.data.items.length || !previousItems?.items.length) {
+                queryClient.setQueryData(sourceItemsQueryKey, response);
+            }
+            if (response.data.status === "stale-cache" || response.data.status === "degraded-cache") {
+                setRefreshMessage("来源暂未更新，正在显示历史数据。");
+            } else if (response.data.status === "empty" && previousItems?.items.length) {
+                setRefreshMessage("来源未返回新内容，已保留上次内容。");
+            }
+        } catch {
+            setClearCacheError(previousItems?.items.length ? "当前显示的内容已保留。" : "请稍后重试。");
         } finally {
             setIsClearingCache(false);
         }
@@ -257,12 +288,16 @@ function SourceDetailPage() {
                             className="inline-flex items-center gap-2 rounded-full bg-zinc-200/75 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 disabled:cursor-wait disabled:opacity-60 dark:bg-zinc-800/65 dark:text-zinc-300 dark:hover:bg-zinc-700/75"
                             disabled={itemsQuery.isFetching || isClearingCache}
                             aria-busy={itemsQuery.isFetching}
-                            onClick={() => void itemsQuery.refetch()}
+                            onClick={() => {
+                                setClearCacheError(undefined);
+                                setRefreshMessage(undefined);
+                                void itemsQuery.refetch();
+                            }}
                         >
                             <span
                                 className={clsx(
                                     "i-ph:arrow-clockwise-duotone",
-                                    itemsQuery.isFetching && "animate-spin"
+                                    itemsQuery.isFetching && "motion-safe:animate-spin"
                                 )}
                                 aria-hidden="true"
                             />
@@ -277,7 +312,9 @@ function SourceDetailPage() {
                         >
                             <span
                                 className={clsx(
-                                    isClearingCache ? "i-ph:spinner-gap-duotone animate-spin" : "i-ph:trash-duotone"
+                                    isClearingCache
+                                        ? "i-ph:spinner-gap-duotone motion-safe:animate-spin"
+                                        : "i-ph:arrow-counter-clockwise-duotone"
                                 )}
                                 aria-hidden="true"
                             />
@@ -292,7 +329,7 @@ function SourceDetailPage() {
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <MetricCard
                     label="最近条目"
-                    value={itemsQuery.data?.meta.itemCount ?? 0}
+                    value={Math.min(displayedItems?.items.length ?? 0, 20)}
                     icon="i-ph:newspaper-duotone"
                 />
                 <MetricCard label="健康状态" value={getHealthMetricLabel(health)} icon="i-ph:heartbeat-duotone" />
@@ -309,15 +346,23 @@ function SourceDetailPage() {
                                 className="rounded-xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
                                 role="alert"
                             >
-                                清缓存刷新失败，当前显示的内容已保留：{clearCacheError}
+                                清缓存刷新失败。{clearCacheError}
                             </div>
                         )}
-                        {itemsQuery.isError && (
+                        {!clearCacheError && (refreshMessage || isShowingHistory) && (
+                            <div
+                                className="rounded-lg border border-amber-500/25 px-3 py-2 text-sm text-amber-800 dark:text-amber-300"
+                                role="status"
+                            >
+                                {refreshMessage ?? "当前显示历史数据。"}
+                            </div>
+                        )}
+                        {itemsQuery.isError && !displayedItems?.items.length && (
                             <div
                                 className="rounded-xl bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
                                 role="alert"
                             >
-                                加载失败{itemsQuery.error instanceof Error ? `：${itemsQuery.error.message}` : ""}
+                                暂时无法加载最近更新。请点击刷新重试。
                             </div>
                         )}
                         {visibleItems.length ? (

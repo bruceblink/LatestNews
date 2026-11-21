@@ -4,7 +4,6 @@ import type { NewsItem, SourceID, SourceResponse } from "@shared/types";
 import clsx from "clsx";
 import { useWindowSize } from "react-use";
 import { useHistory } from "~/hooks/useHistory";
-import { useRefetch } from "~/hooks/useRefetch";
 import dataSources from "@shared/data-sources.ts";
 import { useNewsSource } from "~/hooks/useNewsSource";
 import { useReadingState } from "~/hooks/useReadingState";
@@ -61,7 +60,7 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(
 );
 
 function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
-    const { data, isFetching, isError, error } = useNewsSource(id);
+    const { data, isFetching, isError, refetch } = useNewsSource(id);
     const hasItems = !!data?.items?.length;
 
     return (
@@ -77,13 +76,13 @@ function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
 
             <OverlayScrollbar
                 className="news-card-scroll"
-                aria-busy={isFetching}
+                aria-busy={isFetching && !hasItems}
                 options={{
                     overflow: { x: "hidden" },
                 }}
                 defer
             >
-                <div className={clsx("min-h-full transition-opacity-500", isFetching && hasItems && "op-50")}>
+                <div className="min-h-full">
                     {hasItems ? (
                         RenderNewsList(id, data.items)
                     ) : (
@@ -93,7 +92,7 @@ function NewsCard({ id, healthStatus, setHandleRef }: NewsCardProps) {
                             healthStatus={healthStatus}
                             isError={isError}
                             isFetching={isFetching}
-                            error={error}
+                            onRetry={() => void refetch()}
                         />
                     )}
                 </div>
@@ -108,25 +107,20 @@ function CardState({
     healthStatus,
     isError,
     isFetching,
-    error,
+    onRetry,
 }: {
     id: SourceID;
     sourceStatus?: SourceResponse["status"];
     healthStatus?: SourceHealthStatus;
     isError: boolean;
     isFetching: boolean;
-    error: unknown;
+    onRetry: () => void;
 }) {
-    const { refresh } = useRefetch();
     const ds = dataSources[id];
-    const message = getCardStateMessage({ sourceStatus, healthStatus, isError, isFetching, error });
+    const message = getCardStateMessage({ sourceStatus, healthStatus, isError, isFetching });
 
     return (
-        <div
-            className="min-h-[360px] flex flex-col items-center justify-center px-5 py-8 text-center"
-            role={isFetching ? "status" : isError ? "alert" : "status"}
-            aria-live={isError ? "assertive" : "polite"}
-        >
+        <div className="min-h-[360px] flex flex-col items-center justify-center px-5 py-8 text-center">
             <div
                 className={clsx(
                     "mb-4 flex h-12 w-12 items-center justify-center rounded-full text-2xl",
@@ -138,11 +132,16 @@ function CardState({
                 )}
             >
                 <span
-                    className={clsx(isFetching ? "i-ph:spinner-duotone animate-spin" : message.icon)}
+                    className={clsx(isFetching ? "i-ph:spinner-duotone motion-safe:animate-spin" : message.icon)}
                     aria-hidden="true"
                 />
             </div>
-            <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{message.title}</div>
+            <div
+                className="text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+                role={isError ? "status" : undefined}
+            >
+                {message.title}
+            </div>
             <div className="mt-2 max-w-58 text-xs leading-5 text-zinc-600 dark:text-zinc-500">
                 {message.description}
             </div>
@@ -151,7 +150,7 @@ function CardState({
                     type="button"
                     className="mt-5 rounded-full bg-cyan-500 px-4 py-2 text-sm text-zinc-900 font-semibold transition-all hover:bg-cyan-400 disabled:cursor-wait disabled:opacity-60"
                     disabled={isFetching}
-                    onClick={() => refresh(id)}
+                    onClick={onRetry}
                 >
                     {isFetching ? "获取中..." : "重新获取"}
                 </button>
@@ -165,18 +164,16 @@ function getCardStateMessage({
     healthStatus,
     isError,
     isFetching,
-    error,
 }: {
     sourceStatus?: SourceResponse["status"];
     healthStatus?: SourceHealthStatus;
     isError: boolean;
     isFetching: boolean;
-    error: unknown;
 }) {
     if (isError) {
         return {
             title: "暂时获取失败",
-            description: getErrorMessage(error) || "这个数据源本次请求没有成功，可以稍后重试。",
+            description: "此来源暂时没有可用内容。其他来源仍可阅读。",
             icon: "i-ph:warning-circle-duotone",
             tone: "danger" as const,
         };
@@ -215,13 +212,6 @@ function getCardStateMessage({
         icon: "i-ph:tray-duotone",
         tone: "info" as const,
     };
-}
-
-function getErrorMessage(error: unknown) {
-    if (!error) return "";
-    if (error instanceof Error) return error.message;
-    if (typeof error === "string") return error;
-    return "";
 }
 
 /**

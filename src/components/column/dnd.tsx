@@ -10,7 +10,6 @@ import { createPortal } from "react-dom";
 import { useAtom, useAtomValue } from "jotai";
 import { useEffect, useCallback } from "react";
 import { useSearchBar } from "~/hooks/useSearch";
-import { useEntireQuery } from "~/hooks/query.ts";
 import dataSources from "@shared/data-sources.ts";
 import { goToTopAtom, currentSourcesAtom } from "~/atoms";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -30,7 +29,6 @@ export function Dnd() {
     const [parent] = useAutoAnimate({ duration: AnimationDuration });
     const { sourceHealthMap } = useSourceHealthSummary();
     const { toggle } = useSearchBar();
-    useEntireQuery(items);
 
     if (!items.length) {
         return (
