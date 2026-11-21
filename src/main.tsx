@@ -54,23 +54,34 @@ async function bootstrapRuntimeSourceCatalog() {
         }
     }
 
+    const unavailable = { available: false, sources: [] as SourceMetadataItem[] };
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<typeof unavailable>((resolve) => {
+        timeout = setTimeout(() => {
+            controller.abort();
+            resolve(unavailable);
+        }, 2000);
+    });
 
     const remoteCatalog = myFetch<SourceMetadataResponse>(sourceApi.sourcesV1, {
         signal: controller.signal,
     })
         .then((response) => ({ available: true, sources: response.data.sources }))
-        .catch(() => ({ available: false, sources: [] as SourceMetadataItem[] }));
+        .catch(() => unavailable);
     const listLocalSourceMetadata = window.latestNewsDesktop?.listCrawlerSourceMetadata;
     const localCatalog = listLocalSourceMetadata
         ? listLocalSourceMetadata()
               .then((sources) => ({ available: true, sources }))
-              .catch(() => ({ available: false, sources: [] as SourceMetadataItem[] }))
-        : Promise.resolve({ available: false, sources: [] as SourceMetadataItem[] });
+              .catch(() => unavailable)
+        : Promise.resolve(unavailable);
 
     try {
-        const [remoteResult, localResult] = await Promise.all([remoteCatalog, localCatalog]);
+        // An Electron IPC call cannot consume the abort signal, so bound both waits independently.
+        const [remoteResult, localResult] = await Promise.all([
+            Promise.race([remoteCatalog, deadline]),
+            Promise.race([localCatalog, deadline]),
+        ]);
         const liveSources = new Map<string, SourceMetadataItem>();
         for (const source of remoteResult.sources) {
             if (isDynamicSourceId(source.id)) liveSources.set(source.id, source);

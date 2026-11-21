@@ -10,6 +10,35 @@ const fixtureItem = {
     pubDate: "2026-11-06T08:00:00.000Z",
 };
 
+test("opens the workspace with cached sources when desktop metadata stalls", async ({ page }) => {
+    await installConfiguredSourceMocks(page);
+    await page.route("**/api/v1/sources", (route) => route.abort());
+    await page.addInitScript((id) => {
+        localStorage.setItem(
+            "latestnews:runtime-source-catalog",
+            JSON.stringify([
+                {
+                    id,
+                    name: "Cached configured RSS",
+                    interval: 300_000,
+                    color: "primary",
+                    type: "normal",
+                    disabled: false,
+                },
+            ])
+        );
+        localStorage.setItem("metadata", JSON.stringify({ data: { focus: [id] }, action: "manual", updatedTime: 1 }));
+        Object.defineProperty(window, "latestNewsDesktop", {
+            value: { listCrawlerSourceMetadata: () => new Promise(() => {}) },
+        });
+    }, sourceId);
+
+    await page.goto("/c/focus", { waitUntil: "commit" });
+
+    await expect(page.getByRole("heading", { level: 1, name: "我的关注" })).toBeVisible({ timeout: 7_000 });
+    await expect(page.getByRole("link", { name: "Cached configured RSS", exact: true })).toBeVisible();
+});
+
 test("reads a configured source through detail, saved state, and history", async ({ page }) => {
     await installConfiguredSourceMocks(page);
     await page.goto(`/source/${sourceId}`);
