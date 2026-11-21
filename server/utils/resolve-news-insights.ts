@@ -47,6 +47,7 @@ export async function resolveNewsInsights({
         saveCache,
         now,
         background,
+        preferCached: true,
         onCacheError,
         onFetchError: (error, id) => {
             errors.push({

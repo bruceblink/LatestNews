@@ -7,6 +7,8 @@ import { getCachedSourceResponseStatus, getFetchedSourceResponseStatus } from "@
 
 import { sourceReadTimeoutMs } from "./resolve-source-response";
 
+const cachedBatchGraceMs = 200;
+
 interface CacheEntry {
     id: SourceID;
     items: SourceResponse["items"];
@@ -20,6 +22,7 @@ interface ResolveEntireSourcesOptions {
     saveCache: (id: SourceID, items: SourceResponse["items"]) => Promise<void>;
     now: number;
     batchTimeoutMs?: number;
+    preferCached?: boolean;
     background?: (pending: Promise<unknown>) => void;
     onFetchError?: (error: unknown, id: SourceID) => void;
     onCacheError?: (error: unknown, id: SourceID) => void;
@@ -36,6 +39,7 @@ export async function resolveEntireSources({
     saveCache,
     now,
     batchTimeoutMs = sourceReadTimeoutMs,
+    preferCached = false,
     background,
     onFetchError,
     onCacheError,
@@ -61,6 +65,9 @@ export async function resolveEntireSources({
         if (!Number.isFinite(batchTimeoutMs) || batchTimeoutMs < 1) {
             throw new RangeError("batchTimeoutMs must be a positive number.");
         }
+        // Warm interactive reads let fast sources join the response without waiting on the slowest one.
+        const limitedByCache = preferCached && background && cacheEntries.some(({ items }) => items.length > 0);
+        const waitMs = limitedByCache ? Math.min(batchTimeoutMs, cachedBatchGraceMs) : batchTimeoutMs;
         const states = new Map<SourceID, FetchState>();
         const tasks = missingIds.map((id) =>
             (async () => {
@@ -85,7 +92,7 @@ export async function resolveEntireSources({
 
         let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
         const timeout = new Promise<void>((resolve) => {
-            timeoutTimer = setTimeout(resolve, batchTimeoutMs);
+            timeoutTimer = setTimeout(resolve, waitMs);
         });
         const pending = Promise.allSettled(tasks);
         try {
@@ -98,7 +105,7 @@ export async function resolveEntireSources({
         for (const id of missingIds) {
             const state = states.get(id);
             if (!state) {
-                onFetchError?.(new SourceBatchTimeoutError(batchTimeoutMs), id);
+                onFetchError?.(new SourceBatchTimeoutError(waitMs), id);
             } else if (state.status === "fulfilled") {
                 cachedResponses.set(state.value.id, state.value);
             } else {

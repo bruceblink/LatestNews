@@ -142,6 +142,38 @@ describe("resolveEntireSources", () => {
         });
     });
 
+    it("returns cache and fast results after 200 ms while remaining collectors keep working", async () => {
+        vi.useFakeTimers();
+        try {
+            const slow = Promise.withResolvers<SourceResponse["items"]>();
+            const background: Promise<unknown>[] = [];
+            const saveCache = vi.fn(async () => undefined);
+            const read = resolveEntireSourcesWithDiagnostics({
+                sourceIds: ["weibo", "v2ex", "hackernews"],
+                cacheEntries: [{ id: "weibo", items: createResponseItems("weibo"), updated: NOW - TTL - 1 }],
+                fetchMissing: async (id) => (id === "hackernews" ? slow.promise : createResponseItems(id)),
+                saveCache,
+                now: NOW,
+                preferCached: true,
+                background: (pending) => background.push(pending),
+            });
+            const responseReady = vi.fn();
+            void read.then(responseReady);
+            await vi.advanceTimersByTimeAsync(199);
+            expect(responseReady).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(1);
+            expect(responseReady).toHaveBeenCalledWith(
+                expect.objectContaining({ meta: expect.objectContaining({ omittedSourceIds: ["hackernews"] }) })
+            );
+            expect((await read).data.map(({ id }) => id)).toEqual(["weibo", "v2ex"]);
+            slow.resolve(createResponseItems("hackernews"));
+            await Promise.all(background);
+            expect(saveCache).toHaveBeenCalledWith("hackernews", createResponseItems("hackernews"));
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it("returns empty responses for fetched sources without cacheable items", async () => {
         const saveCache = vi.fn(async () => undefined);
 

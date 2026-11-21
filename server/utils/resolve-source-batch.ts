@@ -14,11 +14,12 @@ interface ResolveSourceBatchPayloadOptions {
     now?: number;
     logPrefix?: string;
     background?: (pending: Promise<unknown>) => void;
+    preferCached?: boolean;
 }
 
 export async function resolveSourceBatchPayload(
     payload: SourceBatchPayload,
-    { now = Date.now(), logPrefix = "v1 batch", background }: ResolveSourceBatchPayloadOptions = {}
+    { now = Date.now(), logPrefix = "v1 batch", background, preferCached }: ResolveSourceBatchPayloadOptions = {}
 ): Promise<SourceBatchResponse> {
     const selected = resolveSourceBatchSelection(payload);
     if (selected.sourceIds.length > 100) {
@@ -46,6 +47,7 @@ export async function resolveSourceBatchPayload(
         },
         now,
         background,
+        preferCached,
         onFetchError: (error, id) => logger.error(`fetch ${id} ${logPrefix} failed`, error),
         onCacheError: (error, id) => logger.warn(`Could not save ${id} ${logPrefix} cache.`, error),
     });

@@ -53,6 +53,7 @@ export default defineEventHandler(async (event): Promise<EntireSourcesResponse> 
             },
             now,
             background: (pending) => event.waitUntil(pending),
+            preferCached: true,
             onFetchError: (error, id) => logger.error(`fetch ${id} entire failed`, error),
             onCacheError: (error, id) => logger.warn(`Could not save source cache for ${id}.`, error),
         });

@@ -65,7 +65,7 @@ Single-source query parameters:
 | `latest` | Prefer live source fetch where supported. |
 | `clearCache` | Fetch immediately when refresh is authorized. Replace the cache after a non-empty result. |
 
-普通单来源读取可以直接返回过期缓存，同时在后台更新。需要等待采集的单来源请求最多等待 4 秒。采集失败、超时或返回空列表时，接口返回已有历史条目。首次采集超时且没有历史条目时返回 HTTP 504。批量读取在采集等待时间结束后返回已取得的条目，并在响应中列出未完成的来源。
+普通单来源读取可以直接返回过期缓存，同时在后台更新。需要等待采集的单来源请求最多等待 4 秒。采集失败、超时或返回空列表时，接口返回已有历史条目。首次采集超时且没有历史条目时返回 HTTP 504。网页批量读取和阅读洞察已有缓存条目时，最多再等缺缓存的来源 200 毫秒。接口返回已取得的条目，并列出未完成的来源，采集在后台继续。没有缓存时，批量接口最多等待采集 4 秒。
 
 Batch payload selectors:
 
