@@ -17,7 +17,7 @@
     "homepage": "https://news.likanug.top",
     "scripts": {
         "brand:assets": "node ./scripts/brand-assets.mjs",
-        "dev": "pnpm presource && vite dev",
+        "dev": "vite dev",
         "build": "pnpm presource && vite build",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
