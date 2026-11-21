@@ -52,7 +52,7 @@ curl https://news.example.com/api/v1/node
 | `GET` | `/api/v1/sources/{id}` | Metadata for one source, including canonical redirect information. |
 | `GET` | `/api/v1/sources/{id}/items` | Items for a single source. |
 | `POST` | `/api/v1/sources/batch` | Items for multiple sources, columns, or source types. |
-| `POST` | `/api/v1/sources/refresh` | 遍历当前部署可采集的来源，并刷新到期缓存。 |
+| `POST` | `/api/v1/sources/refresh` | 分批刷新来源。默认只刷新到期缓存，`force=true` 采集全部可用来源。 |
 
 Single-source metadata keeps item payloads out of discovery responses. If `{id}` is a redirect alias, `meta.canonicalSourceId` points to the source used by item endpoints and `meta.redirected` is `true`.
 
@@ -88,21 +88,24 @@ curl -X POST https://news.example.com/api/v1/sources/batch \
 
 ### 定时刷新所有来源
 
-第三方调度程序以 `POST` 调用 `/api/v1/sources/refresh`。首次调用无需请求体或查询参数。每次处理最多 3 个来源。`meta.nextCursor` 有值时，使用同一路径追加 `?cursor=<nextCursor>`，串行调用直到它为 `null`。每轮定时任务从无游标的请求开始。启用的来源按 ID 排序，重定向别名、已停用来源和当前部署无法执行的来源不进入本轮。Cloudflare Pages 只采集其构建支持的来源。
+第三方调度程序以 `POST` 调用 `/api/v1/sources/refresh`，无需请求体。默认按各来源的刷新间隔更新到期缓存。要重新采集全部可用来源，发送 `POST /api/v1/sources/refresh?force=true`，已有新鲜缓存的来源也会重新采集。
+
+每次请求最多处理 3 个来源。每轮从无游标的请求开始。`meta.nextCursor` 有值时，将它作为下一次请求的 `cursor` 参数，串行请求，直到其值为 `null`。全量采集时，每一页都传入 `force=true`。来源按 ID 排序，范围包括当前部署可执行且已启用的来源。Cloudflare Pages 使用其构建支持的来源。Node 还包括启用的插件和配置型来源。重定向别名不单独采集。
 
 请求头使用 `Authorization: Bearer <令牌>`。令牌必须与服务端 `LATESTNEWS_REFRESH_TOKEN` 一致，使用 32–128 位字母、数字、连字符或下划线。令牌独立于用户登录和 SyncHub。Pages 需要绑定可写的 D1 `LATESTNEWS_DB`。生成令牌及配置方式见[部署说明](deployment.md#定时刷新)。
 
-第三方调度器可运行以下脚本。它使用 `curl` 和 `jq`，一轮结束后会以非零退出码报告本轮出现的采集失败。
+第三方调度器可运行以下脚本。脚本使用 `curl` 和 `jq`。如有来源失败，脚本会处理完余下各页，再以非零退出码结束。将 `force` 设为 `true` 可执行全量采集。
 
 ```bash
 set -eu
 url='https://news.example.com/api/v1/sources/refresh'
+force=false
 cursor=''
 failed=0
 while :; do
-  request_url="$url"
+  request_url="$url?force=$force"
   if [ -n "$cursor" ]; then
-    request_url="$url?cursor=$cursor"
+    request_url="$request_url&cursor=$cursor"
   fi
   result=$(curl -sS --fail-with-body -X POST "$request_url" \
     -H "Authorization: Bearer ${LATESTNEWS_REFRESH_TOKEN}")
@@ -125,7 +128,7 @@ exit "$failed"
 | `empty` | 本次采集没有条目，保留旧缓存。 |
 | `failed` | 采集或缓存写入失败，保留旧缓存，并在 `errors` 中返回来源 ID。 |
 
-游标无效返回 HTTP 400，令牌缺失或错误返回 401，服务未配置令牌或缓存不可用返回 503。单次请求中断时可用相同游标重试。已写入且仍在刷新间隔内的来源会返回 `fresh`。计划任务应串行处理各页，并避免同一轮尚未结束时启动下一轮。
+游标无效，或 `force` 的值超出 `true` 和 `false`，返回 HTTP 400。令牌缺失或错误返回 401。服务未配置令牌或缓存不可用返回 503。请求中断时可用相同游标重试。默认模式下，已写入且仍在刷新间隔内的来源返回 `fresh`。全量模式会再次采集该页。计划任务应串行处理各页，并在本轮结束后再启动下一轮。
 
 ## Health And Diagnostics
 

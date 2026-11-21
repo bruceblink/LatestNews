@@ -176,7 +176,7 @@ The Pages build must emit a self-contained dist/_worker.js/index.js. The build c
 
 使用 `openssl rand -hex 32` 生成独立随机令牌。将同一值分别保存到 Pages 生产环境的运行时密钥 `LATESTNEWS_REFRESH_TOKEN` 和第三方调度程序的密钥配置。重新部署后，先检查 `/api/v1/health/deployment` 的 `data.checks.cache.status` 为 `ok`。Web 使用 `VITE_NEWS_API_URL` 指向外部 Node 新闻服务时，将令牌和定时任务配置在该新闻服务上，使采集结果进入 Web 实际读取的缓存。
 
-第三方程序调用[定时刷新接口](api-v1.md#定时刷新所有来源)，按返回的游标串行遍历所有页。可从每 10 分钟开始。各来源继续遵守自身的刷新间隔。若平台只支持定时发出一条固定 HTTP 请求，需要由该平台运行一段脚本来读取游标并发出后续请求。
+第三方程序调用[定时刷新接口](api-v1.md#定时刷新所有来源)，按返回的游标串行遍历所有页。可从每 10 分钟开始，使用默认模式更新到期的来源。需要重新采集全部来源时，在每一页请求中传入 `force=true`。调度程序需能运行脚本或读取响应后发出后续请求。一条固定 HTTP 请求只处理第一页。
 
 ## Node Output
 

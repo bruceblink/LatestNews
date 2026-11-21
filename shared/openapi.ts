@@ -130,13 +130,22 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
             },
             [withApiPrefix(sourceApi.sourceRefreshV1)]: {
                 post: {
-                    summary: "Refresh due sources in one page of the active catalog",
+                    summary: "Refresh one page of the active source catalog",
                     tags: ["Sources"],
                     security: [{ SourceRefreshBearer: [] }],
-                    parameters: [queryParameter("cursor", "Pass the previous response's meta.nextCursor")],
+                    parameters: [
+                        queryParameter("cursor", "Pass the previous response's meta.nextCursor"),
+                        {
+                            name: "force",
+                            in: "query",
+                            description:
+                                "Collect every source on the page, including sources with fresh cache. Keep this value on each page.",
+                            schema: { type: "boolean", default: false },
+                        },
+                    ],
                     responses: {
                         ...okJsonResponse("Per-source refresh results and continuation cursor"),
-                        400: { description: "Invalid cursor" },
+                        400: { description: "Invalid cursor or force parameter" },
                         401: { description: "Missing or invalid source refresh token" },
                         503: { description: "Source refresh is not configured or cache is unavailable" },
                     },

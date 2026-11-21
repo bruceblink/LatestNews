@@ -6,6 +6,7 @@ import { it, vi, expect, describe, afterEach, beforeEach } from "vitest";
 import cacheAuth from "./middleware/auth";
 import { getCacheTable } from "./database/cache";
 import refreshHandler from "./api/v1/sources/refresh.post";
+import { clearRuntimeSourceCatalog, registerRuntimeSourceCatalog } from "../shared/runtime-source-catalog";
 
 const { getDatabase, fetchSourceItems, hasSourceGetter } = vi.hoisted(() => ({
     getDatabase: vi.fn(),
@@ -32,14 +33,17 @@ describe("scheduled source refresh", () => {
     });
 
     afterEach(() => {
+        clearRuntimeSourceCatalog();
         vi.unstubAllEnvs();
         vi.resetAllMocks();
     });
 
-    it("requires a configured token and validates the cursor before touching storage", async () => {
+    it("requires a configured token and validates query parameters before touching storage", async () => {
         expect((await app.request(path, { method: "POST" })).status).toBe(401);
         expect((await request(path, "incorrect-token-for-this-endpoint")).status).toBe(401);
         expect((await request(`${path}?cursor=a&cursor=b`)).status).toBe(400);
+        expect((await request(`${path}?force=1`)).status).toBe(400);
+        expect((await request(`${path}?force=true&force=false`)).status).toBe(400);
         vi.stubEnv("LATESTNEWS_REFRESH_TOKEN", "");
         expect((await request(path)).status).toBe(503);
         expect(getDatabase).not.toHaveBeenCalled();
@@ -91,6 +95,56 @@ describe("scheduled source refresh", () => {
             expect(await cache.get("hackernews")).toMatchObject({ items: [currentItem] });
             expect(await cache.get("ithome")).toMatchObject({ updated: 0, items: [previousItem] });
             expect(await cache.get("juejin")).toMatchObject({ updated: 0, items: [previousItem] });
+
+            registerRuntimeSourceCatalog([
+                {
+                    id: "ext.config.scheduled",
+                    name: "Configured source",
+                    interval: 300_000,
+                    color: "primary",
+                    type: "normal",
+                    disabled: false,
+                },
+            ]);
+            hasSourceGetter.mockImplementation((id) =>
+                ["ext.config.scheduled", "github-trending-today", "hackernews", "ithome", "juejin"].includes(id)
+            );
+            fetchSourceItems.mockResolvedValue([currentItem]);
+            fetchSourceItems.mockClear();
+            await cache.set("ext.config.scheduled", [previousItem]);
+
+            const forcedResponse = await request(`${path}?force=true`);
+            expect(forcedResponse.status).toBe(200);
+            expect(await forcedResponse.json()).toMatchObject({
+                data: {
+                    sources: [
+                        { id: "ext.config.scheduled", status: "refreshed", itemCount: 1 },
+                        { id: "github-trending-today", status: "refreshed", itemCount: 1 },
+                        { id: "hackernews", status: "refreshed", itemCount: 1 },
+                    ],
+                },
+                meta: { totalSources: 5, nextCursor: "hackernews" },
+                errors: [],
+            });
+            expect(fetchSourceItems.mock.calls.flat()).toEqual([
+                "ext.config.scheduled",
+                "github-trending-today",
+                "hackernews",
+            ]);
+            expect(await cache.get("ext.config.scheduled")).toMatchObject({ items: [currentItem] });
+
+            const forcedFinalResponse = await request(`${path}?force=true&cursor=hackernews`);
+            expect(forcedFinalResponse.status).toBe(200);
+            expect(await forcedFinalResponse.json()).toMatchObject({
+                data: {
+                    sources: [
+                        { id: "ithome", status: "refreshed", itemCount: 1 },
+                        { id: "juejin", status: "refreshed", itemCount: 1 },
+                    ],
+                },
+                meta: { totalSources: 5, nextCursor: null },
+                errors: [],
+            });
         } finally {
             await database.dispose();
         }

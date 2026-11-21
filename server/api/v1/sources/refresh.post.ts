@@ -26,9 +26,12 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 401, message: "A valid source refresh token is required." });
     }
 
-    const { cursor } = getQuery(event);
+    const { cursor, force } = getQuery(event);
     if (cursor !== undefined && (typeof cursor !== "string" || !/^[A-Za-z0-9_.-]{1,120}$/.test(cursor))) {
         throw createError({ statusCode: 400, message: "Invalid source refresh cursor." });
+    }
+    if (force !== undefined && force !== "true" && force !== "false") {
+        throw createError({ statusCode: 400, message: "Invalid source refresh force. Use true or false." });
     }
 
     const cache = await getCacheTable();
@@ -40,7 +43,8 @@ export default defineEventHandler(async (event) => {
     const remaining = ids.filter((id) => cursor === undefined || id > cursor);
     const sourceIds = remaining.slice(0, batchSize);
     const now = Date.now();
-    const cached = new Map((await cache.getEntire(sourceIds)).map((entry) => [entry.id, entry.updated]));
+    const cacheEntries = force === "true" ? [] : await cache.getEntire(sourceIds);
+    const cached = new Map(cacheEntries.map((entry) => [entry.id, entry.updated]));
     const results = await Promise.all(
         sourceIds.map(async (id) => {
             const updatedAt = cached.get(id);
