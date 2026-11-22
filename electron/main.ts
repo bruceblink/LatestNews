@@ -63,6 +63,7 @@ const MAX_API_REQUEST_BYTES = 5 * 1024 * 1024;
 const MAX_API_RESPONSE_BYTES = 25 * 1024 * 1024;
 const MAX_SYNC_HUB_BODY_BYTES = 2 * 1024 * 1024;
 const MAX_SYNC_HUB_RESPONSE_BYTES = 8 * 1024 * 1024;
+const rendererRecoveryWindowMs = 60_000;
 const NEWS_API_CONFIG_FILE = "news-api-config.json";
 const DESKTOP_PREFERENCES_FILE = "desktop-preferences.json";
 const SYNC_HUB_CONFIG_FILE = "synchub-config.enc";
@@ -125,6 +126,9 @@ let updateIpc: Awaited<ReturnType<typeof registerUpdateIpc>> | null = null;
 let isQuitting = false;
 let isHidingMainWindow = false;
 let rendererRecoveryInFlight = false;
+let lastRendererRecoveryAt = -Infinity;
+let rendererRecoveryBlocked = false;
+let rendererRecoveryDialogOpen = false;
 let lifecycleProbeActive = false;
 const lifecycle = createDesktopLifecycleTracker();
 
@@ -241,12 +245,14 @@ function attachWindowLifecycle(window: BrowserWindow, role: "main" | "auth") {
             reason: details.reason,
             exitCode: details.exitCode,
         });
-        if (role === "main" && !isQuitting && !lifecycleProbeActive && !rendererRecoveryInFlight) {
-            rendererRecoveryInFlight = true;
-            void recoverMainWindow(window).finally(() => {
-                rendererRecoveryInFlight = false;
-            });
+        if (role !== "main" || mainWindow !== window || isQuitting || lifecycleProbeActive) return;
+        if (rendererRecoveryInFlight || performance.now() - lastRendererRecoveryAt < rendererRecoveryWindowMs) {
+            rendererRecoveryBlocked = true;
+            console.warn("Main renderer crashed during the recovery window.", { reason: details.reason });
+            void showRendererRecoveryDialog(window);
+            return;
         }
+        void recoverMainWindow(window);
     });
     window.webContents.on("unresponsive", () => update("window-unresponsive", "ready"));
     window.webContents.on("responsive", () => update("window-responsive", "ready"));
@@ -255,6 +261,11 @@ function attachWindowLifecycle(window: BrowserWindow, role: "main" | "auth") {
     window.on("hide", () => update("window-hide", "hidden"));
     window.on("minimize", () => update("window-minimize", "minimized"));
     window.on("restore", () => update("window-restore", "visible"));
+    if (role === "main") {
+        window.on("restore", () => {
+            if (rendererRecoveryBlocked) void showRendererRecoveryDialog(window);
+        });
+    }
     window.on("closed", () => update("window-closed", "closed"));
 }
 
@@ -784,6 +795,7 @@ function showMainWindow() {
     mainWindow.show();
     mainWindow.focus();
     syncBackgroundRefreshState();
+    if (rendererRecoveryBlocked) void showRendererRecoveryDialog(mainWindow);
 }
 
 function hideMainWindowToTray(window: BrowserWindow) {
@@ -1269,6 +1281,8 @@ async function createMainWindow({ show = true }: { show?: boolean } = {}) {
     window.removeMenu();
     window.setMenuBarVisibility(false);
     mainWindow = window;
+    rendererRecoveryBlocked = false;
+    lastRendererRecoveryAt = -Infinity;
     attachWindowLifecycle(window, "main");
     attachMainWindowSecurity(window.webContents);
     window.once("ready-to-show", () => {
@@ -1287,25 +1301,54 @@ async function createMainWindow({ show = true }: { show?: boolean } = {}) {
 }
 
 async function recoverMainWindow(window: BrowserWindow) {
-    if (window.isDestroyed() || mainWindow !== window) return;
+    if (window.isDestroyed() || mainWindow !== window || rendererRecoveryInFlight) return;
 
-    const wasVisible = window.isVisible();
-    const wasMinimized = window.isMinimized();
+    rendererRecoveryBlocked = false;
+    rendererRecoveryInFlight = true;
+    lastRendererRecoveryAt = performance.now();
     try {
         await window.loadURL(rendererDevUrl?.href ?? APP_BASE_URL);
-        if (!wasVisible || window.isDestroyed()) return;
-        window.show();
-        if (wasMinimized) window.minimize();
-        else window.focus();
     } catch (error) {
         console.warn("Main renderer could not be reloaded after it exited.", error);
-        if (!window.isDestroyed()) window.destroy();
-        if (isQuitting || mainWindow) return;
-        try {
-            await createMainWindow({ show: wasVisible });
-            syncBackgroundRefreshState();
-        } catch (recoveryError) {
-            console.error("LatestNews Desktop could not recreate its main window.", recoveryError);
+        rendererRecoveryBlocked = true;
+    } finally {
+        rendererRecoveryInFlight = false;
+        if (rendererRecoveryBlocked) void showRendererRecoveryDialog(window);
+    }
+}
+
+/** A hidden or minimized window keeps its state. Opening it from the tray shows the recovery action. */
+async function showRendererRecoveryDialog(window: BrowserWindow) {
+    if (
+        isQuitting ||
+        window.isDestroyed() ||
+        mainWindow !== window ||
+        rendererRecoveryInFlight ||
+        rendererRecoveryDialogOpen ||
+        !window.isVisible() ||
+        window.isMinimized()
+    )
+        return;
+    rendererRecoveryDialogOpen = true;
+    try {
+        const { response } = await dialog.showMessageBox(window, {
+            type: "error",
+            title: "LatestNews 恢复失败",
+            message: "桌面页面未能恢复",
+            detail: "可以重新加载页面，或退出 LatestNews 后重新打开。",
+            buttons: ["重新加载", "退出 LatestNews"],
+            cancelId: 1,
+        });
+        if (isQuitting || window.isDestroyed()) return;
+        if (response === 0) {
+            rendererRecoveryDialogOpen = false;
+            await recoverMainWindow(window);
+        } else {
+            app.quit();
         }
+    } catch (error) {
+        console.error("Could not show the desktop recovery dialog.", error);
+    } finally {
+        rendererRecoveryDialogOpen = false;
     }
 }

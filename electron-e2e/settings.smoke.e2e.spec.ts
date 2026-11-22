@@ -304,3 +304,68 @@ test("saves an empty desktop API URL as local-only mode", async () => {
         .poll(async () => (await page.evaluate(() => window.latestNewsDesktop?.getNewsApiUrl?.()))?.url)
         .toMatch(/^https?:\/\//);
 });
+
+// Playwright retains the crashed page handle, so run this after the renderer UI tests.
+test("recovers one renderer crash and prompts after a second crash", async () => {
+    await page.goto("app://bundle/settings");
+    await expect(page.getByRole("heading", { name: "设置", level: 1 })).toBeVisible();
+    const initial = await electronApp.evaluate(({ BrowserWindow, dialog }) => {
+        const window = BrowserWindow.getAllWindows()[0];
+        const originalDialog = dialog.showMessageBox;
+        const state = {
+            crashes: 0,
+            prompts: 0,
+            retry: () => {},
+            restore: () => {
+                dialog.showMessageBox = originalDialog;
+            },
+        };
+        const appGlobal = globalThis as typeof globalThis & { recoveryTest?: typeof state };
+        appGlobal.recoveryTest = state;
+        window.webContents.on("render-process-gone", () => state.crashes++);
+        dialog.showMessageBox = () =>
+            new Promise((resolve) => {
+                state.prompts++;
+                state.retry = () => resolve({ response: 0, checkboxChecked: false });
+            });
+        setTimeout(() => window.webContents.forcefullyCrashRenderer(), 50);
+        return window.id;
+    });
+    const getRecovery = () =>
+        electronApp.evaluate(({ BrowserWindow }) => {
+            const window = BrowserWindow.getAllWindows()[0];
+            const { recoveryTest } = globalThis as typeof globalThis & {
+                recoveryTest?: { crashes: number; prompts: number };
+            };
+            return {
+                id: window.id,
+                crashed: window.webContents.isCrashed(),
+                url: window.webContents.getURL(),
+                visible: window.isVisible(),
+                crashes: recoveryTest?.crashes,
+                prompts: recoveryTest?.prompts,
+            };
+        });
+    await expect.poll(getRecovery).toMatchObject({
+        id: initial,
+        crashed: false,
+        url: "app://bundle/insights",
+        visible: true,
+        crashes: 1,
+        prompts: 0,
+    });
+
+    await electronApp.evaluate(({ BrowserWindow }) => {
+        setTimeout(() => BrowserWindow.getAllWindows()[0].webContents.forcefullyCrashRenderer(), 50);
+    });
+    await expect.poll(getRecovery).toMatchObject({ id: initial, crashed: true, crashes: 2, prompts: 1 });
+
+    await electronApp.evaluate(() => {
+        const { recoveryTest } = globalThis as typeof globalThis & {
+            recoveryTest?: { retry: () => void; restore: () => void };
+        };
+        recoveryTest?.restore();
+        recoveryTest?.retry();
+    });
+    await expect.poll(getRecovery).toMatchObject({ id: initial, crashed: false, crashes: 2, prompts: 1 });
+});
