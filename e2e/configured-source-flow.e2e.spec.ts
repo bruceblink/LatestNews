@@ -9,6 +9,81 @@ const fixtureItem = {
     url: "https://publisher.example.test/configured/1",
     pubDate: "2026-11-06T08:00:00.000Z",
 };
+const catalogStorageKey = "latestnews:runtime-source-catalog";
+const desktopSourceId = "ext.org.latestnews.test.latest";
+const remoteSource = {
+    id: sourceId,
+    name: "Cached remote RSS",
+    interval: 300_000,
+    color: "primary",
+    type: "normal",
+    disabled: false,
+};
+const desktopSource = { ...remoteSource, id: desktopSourceId, name: "Cached desktop RSS" };
+
+for (const failedSide of ["remote", "desktop"] as const) {
+    test(`keeps the saved ${failedSide} directory when only the other directory responds`, async ({ page }) => {
+        await installConfiguredSourceMocks(page);
+        if (failedSide === "remote") await page.route("**/api/v1/sources", (route) => route.abort());
+        else await page.route("**/api/v1/sources", (route) => route.fulfill({ json: { data: { sources: [] } } }));
+        await page.addInitScript(
+            ({ storageKey, remote, desktop, failDesktop }) => {
+                localStorage.setItem(
+                    storageKey,
+                    JSON.stringify({ remote: [remote], desktop: [desktop], unassigned: [] })
+                );
+                localStorage.setItem(
+                    "metadata",
+                    JSON.stringify({ data: { focus: [remote.id, desktop.id] }, updatedTime: 1 })
+                );
+                Object.defineProperty(window, "latestNewsDesktop", {
+                    value: {
+                        listCrawlerSourceMetadata: () =>
+                            failDesktop ? Promise.reject(new Error("offline")) : Promise.resolve([]),
+                    },
+                });
+            },
+            {
+                storageKey: catalogStorageKey,
+                remote: remoteSource,
+                desktop: desktopSource,
+                failDesktop: failedSide === "desktop",
+            }
+        );
+
+        await page.goto("/c/focus");
+        for (const [side, source] of [
+            ["remote", remoteSource],
+            ["desktop", desktopSource],
+        ] as const) {
+            const card = page
+                .locator(".news-card")
+                .filter({ has: page.getByRole("link", { name: source.name, exact: true }) });
+            await expect(card).toBeVisible();
+            await expect(card.getByText("已停用", { exact: true })).toHaveCount(side === failedSide ? 0 : 1);
+        }
+    });
+}
+
+test("shows a saved follow and discovery entry when the catalog arrives after the first render", async ({ page }) => {
+    const releaseCatalog = Promise.withResolvers<void>();
+    await installConfiguredSourceMocks(page);
+    await page.route("**/api/v1/sources", async (route) => {
+        await releaseCatalog.promise;
+        await route.fulfill({ json: { data: { sources: [remoteSource] } } });
+    });
+    await page.addInitScript((id) => {
+        localStorage.setItem("metadata", JSON.stringify({ data: { focus: [id] }, updatedTime: 1 }));
+    }, sourceId);
+    await page.goto("/c/focus", { waitUntil: "commit" });
+    await expect(page.getByRole("heading", { name: "我的关注", level: 1 })).toBeVisible();
+    await expect(page.getByRole("link", { name: remoteSource.name, exact: true })).toHaveCount(0);
+    releaseCatalog.resolve();
+    await expect(page.getByRole("link", { name: remoteSource.name, exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "打开搜索", exact: true }).click();
+    await page.getByRole("combobox").fill(remoteSource.name);
+    await expect(page.getByRole("option", { name: remoteSource.name, exact: true })).toBeVisible();
+});
 
 test("opens the workspace with cached sources when desktop metadata stalls", async ({ page }) => {
     await installConfiguredSourceMocks(page);

@@ -1,11 +1,13 @@
 import type { SourceQuery } from "@shared/source-api";
 import type { SourceID, SourceResponse } from "@shared/types";
 
+import { useAtomValue } from "jotai";
 import { useQuery } from "@tanstack/react-query";
 import dataSources from "@root/shared/data-sources";
 import { fetchSource } from "~/services/source.service";
 import { getSourceQuerySchedule } from "@shared/source-query-schedule";
 import { getSourceCacheKey, createBearerHeaders } from "@shared/source-api";
+import { runtimeCatalogRevisionAtom } from "~/services/runtime-source-catalog.service";
 
 import { useSourceHealthSummary } from "./useSourceHealth";
 import { cacheSources, refetchSources } from "../utils/data";
@@ -14,11 +16,13 @@ import { cacheSources, refetchSources } from "../utils/data";
  * 自定义 Hook: 管理单个新闻源的数据获取与缓存
  */
 export function useNewsSource(id: SourceID) {
+    useAtomValue(runtimeCatalogRevisionAtom);
     const { sourceHealthMap } = useSourceHealthSummary();
     const sourceHealth = sourceHealthMap.get(id);
     const schedule = getSourceQuerySchedule(id, sourceHealth?.status === "failing");
 
     return useQuery<SourceResponse>({
+        enabled: !dataSources[id].disable,
         queryKey: getSourceCacheKey(id),
         queryFn: async () => {
             const query: SourceQuery = { id };

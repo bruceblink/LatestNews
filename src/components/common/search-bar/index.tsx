@@ -7,14 +7,16 @@ import clsx from "clsx";
 import { Command } from "cmdk";
 import { useMount } from "react-use";
 import pinyin from "@shared/pinyin.json";
+import { useRef, useState } from "react";
+import { atom, useAtomValue } from "jotai";
 import { metadata } from "@shared/metadata";
 import { useFocusWith } from "~/hooks/useFocus";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useSearchBar } from "~/hooks/useSearch";
-import { useRef, useMemo, useState } from "react";
 import dataSources from "@shared/data-sources.ts";
 import { objectEntries } from "@shared/type.util";
 import { CardWrapper } from "~/components/column/card";
+import { runtimeCatalogRevisionAtom } from "~/services/runtime-source-catalog.service";
 
 import { OverlayScrollbar } from "../overlay-scrollbar";
 
@@ -63,23 +65,24 @@ function groupByColumn(items: SourceItemProps[]) {
         });
 }
 
+const searchSourcesAtom = atom((get) => {
+    get(runtimeCatalogRevisionAtom);
+    return groupByColumn(
+        objectEntries(dataSources)
+            .filter(([_, source]) => !source.redirect)
+            .map(([id, source]) => ({
+                id,
+                title: source.title,
+                column: source.column ? metadata[source.column].name : "未分类",
+                name: source.name,
+                pinyin: pinyin?.[id as keyof typeof pinyin] ?? "",
+            }))
+    );
+});
+
 export function SearchBar() {
     const { opened, toggle } = useSearchBar();
-    const sourceItems = useMemo(
-        () =>
-            groupByColumn(
-                objectEntries(dataSources)
-                    .filter(([_, source]) => !source.redirect)
-                    .map(([k, source]) => ({
-                        id: k,
-                        title: source.title,
-                        column: source.column ? metadata[source.column].name : "未分类",
-                        name: source.name,
-                        pinyin: pinyin?.[k as keyof typeof pinyin] ?? "",
-                    }))
-            ),
-        []
-    );
+    const sourceItems = useAtomValue(searchSourcesAtom);
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     const [value, setValue] = useState<SourceID>("github-trending-today");

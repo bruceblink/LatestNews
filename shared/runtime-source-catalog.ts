@@ -59,8 +59,7 @@ export function createRuntimeSourceMetadataItem(source: RuntimeSourceDefinition)
     };
 }
 
-/** Register only validated namespaced sources, preserving the static source catalog. */
-export function registerRuntimeSourceCatalog(input: unknown): SourceMetadataItem[] {
+export function parseRuntimeSourceCatalog(input: unknown): SourceMetadataItem[] {
     if (!Array.isArray(input)) throw new Error("Runtime source catalog must be an array.");
 
     const validated: SourceMetadataItem[] = [];
@@ -72,11 +71,19 @@ export function registerRuntimeSourceCatalog(input: unknown): SourceMetadataItem
             throw new Error(`Invalid runtime source metadata for ${candidate.id}.`);
         }
         if (seen.has(parsed.data.id)) throw new Error(`Duplicate runtime source ID ${parsed.data.id}.`);
-        if (Object.hasOwn(dataSources, parsed.data.id) && !registeredSourceIds.has(parsed.data.id)) {
-            throw new Error(`Runtime source ${parsed.data.id} conflicts with an application source.`);
-        }
         seen.add(parsed.data.id);
         validated.push(parsed.data as SourceMetadataItem);
+    }
+    return validated;
+}
+
+/** Register only validated namespaced sources, preserving the static source catalog. */
+export function registerRuntimeSourceCatalog(input: unknown): SourceMetadataItem[] {
+    const validated = parseRuntimeSourceCatalog(input);
+    for (const { id } of validated) {
+        if (Object.hasOwn(dataSources, id) && !registeredSourceIds.has(id)) {
+            throw new Error(`Runtime source ${id} conflicts with an application source.`);
+        }
     }
 
     clearRuntimeSourceCatalog();

@@ -2,7 +2,10 @@ import type { Getter, Setter } from "jotai";
 import type { SourceID, FixedColumnID, PrimitiveMetadata } from "@shared/types";
 
 import { atom } from "jotai";
-import { primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom.ts";
+import dataSources from "@shared/data-sources";
+import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
+import { runtimeCatalogRevisionAtom } from "~/services/runtime-source-catalog.service";
+import { preprocessMetadata, primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom.ts";
 
 import type { Update } from "./types";
 
@@ -58,24 +61,46 @@ export function createDataAtom<T>(key: FixedColumnID, defaultValue: T) {
  */
 export const focusSourcesAtom = createDataAtom<SourceID[]>("focus", [] as SourceID[]);
 
+export const feedScopeSourcesAtom = atom((get) => {
+    get(runtimeCatalogRevisionAtom);
+    const focus = get(focusSourcesAtom);
+    return {
+        focus: getUnifiedFeedScopeSources("focus", focus),
+        hottest: getUnifiedFeedScopeSources("hottest", focus),
+        realtime: getUnifiedFeedScopeSources("realtime", focus),
+        broad: getUnifiedFeedScopeSources("broad", focus),
+    };
+});
+
 /**
  * currentColumnIDAtom —— 当前固定列（FixedColumnID）的选择
  */
 export const currentColumnIDAtom = atom<FixedColumnID>("focus");
+
+export const visibleColumnsAtom = atom((get) => {
+    get(runtimeCatalogRevisionAtom);
+    const { data } = preprocessMetadata(get(primitiveMetadataAtom));
+    return {
+        focus: data.focus.filter((id) => Object.hasOwn(dataSources, id)),
+        hottest: data.hottest.filter((id) => Object.hasOwn(dataSources, id)),
+        realtime: data.realtime.filter((id) => Object.hasOwn(dataSources, id)),
+    };
+});
 
 /**
  * currentSourcesAtom —— 根据 currentColumnIDAtom 动态读取 / 写入对应的 primitiveMetadataAtom.data[key]
  * （写入统一委托给 updatePrimitiveData）
  */
 export const currentSourcesAtom = atom<SourceID[], [Update<SourceID[]>], void>(
-    (get) => {
-        const key = get(currentColumnIDAtom);
-        const meta = get(primitiveMetadataAtom) as PrimitiveMetadata;
-        return (meta.data[key] ?? []) as SourceID[];
-    },
+    (get) => get(visibleColumnsAtom)[get(currentColumnIDAtom)],
     (get, set, update) => {
         const key = get(currentColumnIDAtom);
-        updatePrimitiveData(get, set, key, update);
+        const visible = get(visibleColumnsAtom)[key];
+        const next = resolveUpdate(visible, update);
+        updatePrimitiveData<SourceID[]>(get, set, key, (stored) => [
+            ...next,
+            ...stored.filter((id) => !Object.hasOwn(dataSources, id)),
+        ]);
     }
 );
 

@@ -4,10 +4,9 @@ import { useEffect } from "react";
 import { useTitle } from "react-use";
 import { useAtom, useAtomValue } from "jotai";
 import { APP_TITLE } from "~/utils/app-title";
-import { currentColumnIDAtom } from "~/atoms";
 import { metadata } from "@shared/metadata.ts";
 import { useSearchBar } from "~/hooks/useSearch";
-import { primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom";
+import { visibleColumnsAtom, currentColumnIDAtom } from "~/atoms";
 
 import { Dnd } from "./dnd";
 
@@ -23,7 +22,7 @@ const columnDescriptions = {
 
 export function Column({ id, isHome = false }: { id: FixedColumnID; isHome?: boolean }) {
     const [currentColumnID, setCurrentColumnID] = useAtom(currentColumnIDAtom);
-    const { data } = useAtomValue(primitiveMetadataAtom);
+    const sources = useAtomValue(visibleColumnsAtom)[id];
     const { toggle } = useSearchBar();
     useEffect(() => {
         setCurrentColumnID(id);
@@ -39,7 +38,7 @@ export function Column({ id, isHome = false }: { id: FixedColumnID; isHome?: boo
                     <div className="column-title-line">
                         <span className={description.icon} aria-hidden="true" />
                         <Heading id={`column-${id}-title`}>{description.title}</Heading>
-                        <span className="source-count">{data[id].length} 个来源</span>
+                        <span className="source-count">{sources.length} 个来源</span>
                     </div>
                     <p>{description.description}</p>
                 </div>

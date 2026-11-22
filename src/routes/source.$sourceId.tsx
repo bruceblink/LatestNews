@@ -3,6 +3,7 @@ import type { SourceMetadataItem } from "@shared/source-metadata";
 import type { SourceHealthEvent, SourceHealthSnapshot } from "@shared/source-health-types";
 
 import clsx from "clsx";
+import { useAtomValue } from "jotai";
 import { useTitle } from "react-use";
 import { useMemo, useState } from "react";
 import { APP_TITLE } from "~/utils/app-title";
@@ -11,11 +12,13 @@ import { useHistory } from "~/hooks/useHistory";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useReadingState } from "~/hooks/useReadingState";
 import { createUnifiedFeedView } from "@shared/unified-feed";
+import { isDynamicSourceId } from "@shared/dynamic-source-id";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
 import { getSourceAdapterKindLabel } from "@shared/source-adapter";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
+import { runtimeCatalogRevisionAtom } from "~/services/runtime-source-catalog.service";
 import {
     fetchUnifiedFeed,
     fetchSourceItemsV1,
@@ -37,6 +40,7 @@ export const Route = createFileRoute("/source/$sourceId")({
 function SourceDetailPage() {
     const { sourceId } = Route.useParams();
     const requestedId = sourceId as SourceID;
+    const catalogRevision = useAtomValue(runtimeCatalogRevisionAtom);
     const queryClient = useQueryClient();
     const { history, addHistory } = useHistory();
     const { hiddenUrls, isHiddenUrl } = useReadingState();
@@ -45,7 +49,7 @@ function SourceDetailPage() {
     const [refreshMessage, setRefreshMessage] = useState<string>();
 
     const metadataItemQuery = useQuery({
-        queryKey: getSourceMetadataItemCacheKey(requestedId),
+        queryKey: [...getSourceMetadataItemCacheKey(requestedId), isDynamicSourceId(requestedId) ? catalogRevision : 0],
         queryFn: () => fetchSourceMetadataItem(requestedId),
         staleTime: 1000 * 60 * 10,
         retry: false,
@@ -234,6 +238,7 @@ function SourceDetailPage() {
                                     </span>
                                 )}
                                 <HealthBadge health={health} />
+                                {metadataItem.disabled && <span className="text-xs text-neutral-500">已停用</span>}
                             </div>
                             <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-500">{metadataItem.id}</div>
                             {metadataItem.description && (
@@ -286,7 +291,7 @@ function SourceDetailPage() {
                         <button
                             type="button"
                             className="inline-flex items-center gap-2 rounded-full bg-zinc-200/75 px-3 py-1.5 text-sm text-zinc-700 transition-all hover:bg-zinc-300/80 disabled:cursor-wait disabled:opacity-60 dark:bg-zinc-800/65 dark:text-zinc-300 dark:hover:bg-zinc-700/75"
-                            disabled={itemsQuery.isFetching || isClearingCache}
+                            disabled={metadataItem.disabled || itemsQuery.isFetching || isClearingCache}
                             aria-busy={itemsQuery.isFetching}
                             onClick={() => {
                                 setClearCacheError(undefined);
@@ -306,7 +311,7 @@ function SourceDetailPage() {
                         <button
                             type="button"
                             className="inline-flex items-center gap-2 rounded-full bg-amber-500/12 px-3 py-1.5 text-sm text-amber-800 transition-all hover:bg-amber-500/18 disabled:cursor-wait disabled:opacity-60 dark:text-amber-300"
-                            disabled={isClearingCache || itemsQuery.isFetching}
+                            disabled={metadataItem.disabled || isClearingCache || itemsQuery.isFetching}
                             aria-busy={isClearingCache}
                             onClick={() => void handleClearCacheRefresh()}
                         >

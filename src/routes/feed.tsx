@@ -12,9 +12,9 @@ import type {
 import clsx from "clsx";
 import { useTitle } from "react-use";
 import { useAtomValue } from "jotai";
-import { focusSourcesAtom } from "~/atoms";
 import { metadata } from "@shared/metadata";
 import { APP_TITLE } from "~/utils/app-title";
+import { feedScopeSourcesAtom } from "~/atoms";
 import { useHistory } from "~/hooks/useHistory";
 import { createFileRoute } from "@tanstack/react-router";
 import { filterSourceItems } from "@shared/source-items";
@@ -29,7 +29,6 @@ import { saveOfflineFeedSnapshot, readOfflineFeedSnapshotStatus } from "~/servic
 import {
     unifiedFeedPageSize,
     createUnifiedFeedView,
-    getUnifiedFeedScopeSources,
     getUnifiedFeedVisibleItems,
     normalizeUnifiedFeedSearch,
     unifiedFeedInitialVisibleItems,
@@ -68,10 +67,11 @@ function FeedPage() {
 
     const search = Route.useSearch();
     const navigate = Route.useNavigate();
-    const focusSources = useAtomValue(focusSourcesAtom);
+    const scopeSources = useAtomValue(feedScopeSourcesAtom);
+    const hasFocus = scopeSources.focus.length > 0;
     const { history, addHistory } = useHistory();
     const { hiddenUrls } = useReadingState();
-    const [scope, setScope] = useState<UnifiedFeedScope>(search.scope ?? (focusSources.length ? "focus" : "hottest"));
+    const [scope, setScope] = useState<UnifiedFeedScope>(search.scope ?? (hasFocus ? "focus" : "hottest"));
     const [keyword, setKeyword] = useState(search.q ?? "");
     const [sourceId, setSourceId] = useState<SourceID | "all">(search.source ?? "all");
     const [categoryId, setCategoryId] = useState<UnifiedFeedCategoryID | "all">(search.category ?? "all");
@@ -88,13 +88,13 @@ function FeedPage() {
 
     useEffect(() => {
         setKeyword(search.q ?? "");
-        setScope(search.scope ?? (focusSources.length ? "focus" : "hottest"));
+        setScope(search.scope ?? (hasFocus ? "focus" : "hottest"));
         setSourceId(search.source ?? "all");
         setCategoryId(search.category ?? "all");
         setSince(search.since ?? "24h");
-    }, [focusSources.length, search.category, search.q, search.scope, search.since, search.source]);
+    }, [hasFocus, search.category, search.q, search.scope, search.since, search.source]);
 
-    const sources = useMemo(() => getUnifiedFeedScopeSources(scope, focusSources), [focusSources, scope]);
+    const sources = scopeSources[scope];
     const sinceValue = useMemo(() => getSinceValue(since), [since]);
     const payload = useMemo(
         () => ({

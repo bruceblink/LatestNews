@@ -18,8 +18,8 @@ import clsx from "clsx";
 import { useTitle } from "react-use";
 import { useAtomValue } from "jotai";
 import { useDark } from "~/hooks/useDark";
-import { focusSourcesAtom } from "~/atoms";
 import { APP_TITLE } from "~/utils/app-title";
+import { feedScopeSourcesAtom } from "~/atoms";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
@@ -30,7 +30,6 @@ import { fetchNewsInsights } from "~/services/source.service";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { NEWS_INSIGHTS_TIME_ZONE } from "@shared/news-insights";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
-import { getUnifiedFeedScopeSources } from "@shared/unified-feed";
 type InsightScope = UnifiedFeedScope;
 type SourceFilter = SourceID | "all";
 type InsightFilters = {
@@ -55,7 +54,7 @@ export const Route = createFileRoute("/insights")({
 function InsightsPage() {
     useTitle(`${APP_TITLE} | 阅读洞察`);
 
-    const focusSources = useAtomValue(focusSourcesAtom);
+    const availableSources = useAtomValue(feedScopeSourcesAtom);
     const { history, addHistory } = useHistory();
     const { hiddenUrls, toggleLater, toggleFavorite, toggleHidden, isLaterUrl, isFavoriteUrl } = useReadingState();
     const { isDark, toggleDark } = useDark();
@@ -100,15 +99,15 @@ function InsightsPage() {
         };
     }, [isFilterOpen, isMobile]);
 
-    const scopeSources = useMemo(() => getScopeSources(scope, focusSources), [focusSources, scope]);
+    const scopeSources = useMemo(() => getScopeSources(scope, availableSources), [scope, availableSources]);
     const selectedSource = sourceFilter !== "all" && scopeSources.includes(sourceFilter) ? sourceFilter : "all";
     const sources = useMemo(
         () => (selectedSource === "all" ? scopeSources : [selectedSource]),
         [scopeSources, selectedSource]
     );
     const draftScopeSources = useMemo(
-        () => getScopeSources(draftFilters.scope, focusSources),
-        [draftFilters.scope, focusSources]
+        () => getScopeSources(draftFilters.scope, availableSources),
+        [draftFilters.scope, availableSources]
     );
     const draftSourceOptions = useMemo(
         () => draftScopeSources.map((id) => ({ id, label: getSourceName(id) })),
@@ -1048,8 +1047,8 @@ function getSourceName(sourceId: SourceID, sourceName?: string) {
     return sourceName ?? dataSources[sourceId]?.name ?? sourceId;
 }
 
-function getScopeSources(scope: InsightScope, focusSources: SourceID[]) {
-    return getUnifiedFeedScopeSources(scope, focusSources, scope === "focus" ? 100 : 30);
+function getScopeSources(scope: InsightScope, availableSources: Record<InsightScope, SourceID[]>) {
+    return scope === "focus" ? availableSources.focus : availableSources[scope].slice(0, 30);
 }
 
 function getScopeLabel(scope: InsightScope) {

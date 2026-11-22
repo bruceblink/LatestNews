@@ -6,6 +6,7 @@ import { fixedColumnIds } from "@shared/types";
 import { metadata } from "@shared/metadata.ts";
 import dataSources from "@shared/data-sources.ts";
 import { verifyPrimitiveMetadata } from "@shared/verify.ts";
+import { isDynamicSourceId } from "@shared/dynamic-source-id";
 import { objectEntries, objectFromEntries } from "@shared/type.util.ts";
 import { shouldUseOfflineReadingSnapshot } from "@shared/offline-reading-state";
 
@@ -14,13 +15,16 @@ import { isBrowserOffline, readOfflineReadingSnapshot } from "../services/offlin
 import type { Update } from "./types";
 
 // 生成初始的 metadata（只保留 fixedColumnIds）
-const initialMetadata = objectFromEntries(fixedColumnIds.map((id) => [id, metadata[id].sources] as const)) as Record<
-    FixedColumnID,
-    SourceID[]
->;
+function defaultColumns() {
+    return objectFromEntries(fixedColumnIds.map((id) => [id, metadata[id].sources] as const)) as Record<
+        FixedColumnID,
+        SourceID[]
+    >;
+}
 
 // 预处理 metadata：校正非法 source，补全缺失项
 export function preprocessMetadata(target: PrimitiveMetadata): PrimitiveMetadata {
+    const initialMetadata = defaultColumns();
     return {
         data: {
             ...initialMetadata,
@@ -32,13 +36,15 @@ export function preprocessMetadata(target: PrimitiveMetadata): PrimitiveMetadata
                             // focus 特殊处理：只保留有效 source，替换 redirect
                             return [
                                 id,
-                                s.filter((k) => Object.hasOwn(dataSources, k)).map((k) => dataSources[k].redirect ?? k),
+                                s
+                                    .filter((k) => Object.hasOwn(dataSources, k) || isDynamicSourceId(k))
+                                    .map((k) => dataSources[k]?.redirect ?? k),
                             ];
                         }
                         // 旧数据：只保留 initialMetadata 中存在的，并替换 redirect
                         const oldS = s
-                            .filter((k) => initialMetadata[id].includes(k))
-                            .map((k) => dataSources[k].redirect ?? k);
+                            .filter((k) => initialMetadata[id].includes(k) || isDynamicSourceId(k))
+                            .map((k) => dataSources[k]?.redirect ?? k);
 
                         // 新数据：initialMetadata 中有但旧数据没有的
                         const newS = initialMetadata[id].filter((k) => !oldS.includes(k));
@@ -55,7 +61,7 @@ export function preprocessMetadata(target: PrimitiveMetadata): PrimitiveMetadata
 export function createDefaultPrimitiveMetadata(action: PrimitiveMetadata["action"] = "init"): PrimitiveMetadata {
     return {
         updatedTime: action === "init" ? 0 : Date.now(),
-        data: initialMetadata,
+        data: defaultColumns(),
         action,
     };
 }

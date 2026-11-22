@@ -18,11 +18,11 @@ import type {
 
 import { myFetch } from "~/utils";
 import dataSources from "@shared/data-sources";
+import { isDynamicSourceId } from "@shared/dynamic-source-id";
 import { resolveSourceBatchSelection } from "@shared/source-batch";
 import { getOrCreateInFlightRequest } from "@shared/in-flight-request";
 import { createSourceBatchResponse } from "@shared/source-batch-response";
 import { isDesktopCollectionMode } from "@shared/desktop-collection-mode";
-import { registerRuntimeSourceCatalog } from "@shared/runtime-source-catalog";
 import { createSourceMetadataResponse, createSourceMetadataItemResponse } from "@shared/source-metadata";
 import { filterSourceItems, parseSourceItemsSince, normalizeSourceItemsLimit } from "@shared/source-items";
 import {
@@ -32,6 +32,12 @@ import {
     getSourceMetadataPath,
     getNewsInsightsRequestKey,
 } from "@shared/source-api";
+
+import {
+    waitForRuntimeCatalog,
+    isDesktopOnlyRuntimeSource,
+    loadDesktopRuntimeSourceCatalog,
+} from "./runtime-source-catalog.service";
 
 const inFlightNewsInsights = new Map<string, Promise<NewsInsightsResponse>>();
 
@@ -47,11 +53,9 @@ export async function fetchSourceItemsV1(
 ): Promise<SourceItemsResponse> {
     const bridge = getDesktopBridge();
     const remoteConfig = await getDesktopNewsApiConfig();
-    const localSupported = Boolean(
-        bridge && remoteConfig.mode !== "remote" && (await getDesktopLocalSourceIds()).has(id)
-    );
-    if (remoteConfig.mode === "local" || !remoteConfig.remoteConfigured) {
-        if (localSupported && bridge) {
+    const localOnly = remoteConfig.mode !== "remote" && bridge && isDesktopOnlyRuntimeSource(id);
+    if (localOnly || remoteConfig.mode === "local" || !remoteConfig.remoteConfigured) {
+        if (bridge && remoteConfig.mode !== "remote" && (await getDesktopLocalSourceIds()).has(id)) {
             const localSource = await fetchDesktopLocalSource(bridge, id, query?.latest || query?.clearCache);
             if (localSource) return createDesktopSourceItemsResponse(localSource, query);
         }
@@ -67,7 +71,8 @@ export async function fetchSourceItemsV1(
                 : undefined);
         return await myFetch(getSourceItemsPath(id), { query, ...(refreshHeaders && { headers: refreshHeaders }) });
     } catch (error) {
-        if (remoteConfig.mode === "remote" || !localSupported || !bridge || !shouldFallbackToLocal(error)) throw error;
+        if (remoteConfig.mode === "remote" || !bridge || !shouldFallbackToLocal(error)) throw error;
+        if (!(await getDesktopLocalSourceIds()).has(id)) throw error;
         const localSource = await fetchDesktopLocalSource(bridge, id, query?.latest || query?.clearCache);
         if (localSource) return createDesktopSourceItemsResponse(localSource, query);
         throw error;
@@ -157,7 +162,7 @@ async function fetchDesktopEntireSources(
     const localResponses = new Map<SourceID, SourceResponse>();
     const localFailures = new Set<SourceID>();
     const fallbackSourceIds = uniqueSourceIds.filter(
-        (sourceId) => localSourceIds.has(sourceId) && (remoteConfig.mode === "local" || !remoteResponses.has(sourceId))
+        (sourceId) => localSourceIds.has(sourceId) && !remoteResponses.has(sourceId)
     );
     await Promise.all(
         fallbackSourceIds.map(async (sourceId) => {
@@ -312,11 +317,20 @@ async function getDesktopLocalSourceIds() {
         desktopSourceIdsBridge = bridge;
         desktopSourceIdsPromise = undefined;
     }
-    desktopSourceIdsPromise ??= ensureDesktopRuntimeSourceCatalog(bridge)
-        .then(() => bridge.listCrawlerSources())
-        .then((sourceIds) => new Set(sourceIds.filter((id): id is SourceID => Object.hasOwn(dataSources, id))))
-        .catch(() => new Set<SourceID>());
-    return desktopSourceIdsPromise;
+    desktopSourceIdsPromise ??= bridge
+        .listCrawlerSources()
+        .then((ids) => new Set(ids as SourceID[]))
+        .catch(() => {
+            desktopSourceIdsPromise = undefined;
+            return new Set<SourceID>();
+        });
+    let sourceIds = new Set<SourceID>();
+    await waitForRuntimeCatalog(
+        desktopSourceIdsPromise.then((ids) => {
+            sourceIds = ids;
+        })
+    );
+    return sourceIds;
 }
 
 function createEmptyEntireSourcesEnvelope(sourceIds: SourceID[]): EntireSourcesResponse {
@@ -379,29 +393,43 @@ export function fetchSourceMetadata(): Promise<SourceMetadataResponse> {
     return fetchDesktopPreferred(
         () => myFetch(sourceApi.sourcesV1),
         async (bridge) => {
-            await ensureDesktopRuntimeSourceCatalog(bridge);
+            await waitForRuntimeCatalog(loadDesktopRuntimeSourceCatalog(bridge));
             return createSourceMetadataResponse();
         }
     );
 }
 
 export function fetchSourceMetadataItem(id: SourceID): Promise<SourceMetadataItemResponse> {
+    if (isDynamicSourceId(id) && dataSources[id]?.disable) {
+        return Promise.resolve(createSourceMetadataItemResponse({ sourceId: id })!);
+    }
     return fetchDesktopPreferred(
         () => myFetch(getSourceMetadataPath(id)),
         async (bridge) => {
-            await ensureDesktopRuntimeSourceCatalog(bridge);
+            await waitForRuntimeCatalog(loadDesktopRuntimeSourceCatalog(bridge));
             const response = createSourceMetadataItemResponse({ sourceId: id });
             if (!response) throw new Error(`本地来源目录不包含来源 ${id}。`);
             return response;
-        }
+        },
+        id
     );
 }
 
-async function fetchDesktopPreferred<T>(remote: () => Promise<T>, local: (bridge: DesktopBridge) => Promise<T>) {
+type DesktopBridge = NonNullable<Window["latestNewsDesktop"]>;
+
+async function fetchDesktopPreferred<T>(
+    remote: () => Promise<T>,
+    local: (bridge: DesktopBridge) => Promise<T>,
+    id?: SourceID
+) {
     const bridge = getDesktopBridge();
     if (!bridge) return remote();
     const remoteConfig = await getDesktopNewsApiConfig();
-    if (remoteConfig.mode === "local" || !remoteConfig.remoteConfigured) {
+    if (
+        remoteConfig.mode === "local" ||
+        !remoteConfig.remoteConfigured ||
+        (id && remoteConfig.mode === "auto" && isDesktopOnlyRuntimeSource(id))
+    ) {
         if (remoteConfig.mode === "remote") throw new Error("远端模式需要配置数据源 API 地址。");
         return local(bridge);
     }
@@ -412,38 +440,4 @@ async function fetchDesktopPreferred<T>(remote: () => Promise<T>, local: (bridge
         if (remoteConfig.mode === "remote" || !shouldFallbackToLocal(error)) throw error;
         return local(bridge);
     }
-}
-
-type DesktopBridge = NonNullable<Window["latestNewsDesktop"]>;
-
-let desktopRuntimeCatalogPromise: Promise<void> | undefined;
-let desktopRuntimeCatalogBridge: DesktopBridge | undefined;
-
-async function ensureDesktopRuntimeSourceCatalog(bridge: DesktopBridge) {
-    if (bridge !== desktopRuntimeCatalogBridge) {
-        desktopRuntimeCatalogBridge = bridge;
-        desktopRuntimeCatalogPromise = undefined;
-    }
-    if (!bridge.listCrawlerSourceMetadata) return;
-
-    desktopRuntimeCatalogPromise ??= bridge
-        .listCrawlerSourceMetadata()
-        .then((sources) => {
-            const merged = new Map(
-                createSourceMetadataResponse({ includeRedirects: true })
-                    .data.sources.filter((source) => source.id.startsWith("ext."))
-                    .map((source) => [source.id, source])
-            );
-            for (const source of sources) merged.set(source.id, source);
-            registerRuntimeSourceCatalog([...merged.values()]);
-        })
-        .catch((error: unknown) => {
-            desktopRuntimeCatalogPromise = undefined;
-            const hasCachedRuntimeSources = createSourceMetadataResponse({ includeRedirects: true }).data.sources.some(
-                (source) => source.id.startsWith("ext.")
-            );
-            if (hasCachedRuntimeSources) return;
-            throw error;
-        });
-    await desktopRuntimeCatalogPromise;
 }

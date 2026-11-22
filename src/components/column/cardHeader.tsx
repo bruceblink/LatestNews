@@ -58,15 +58,19 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                                 {healthStatusLabel}
                             </span>
                         )}
-                        {sourceStatusLabel && (
-                            <span
-                                className={clsx(
-                                    "rounded px-1.5 py-0.5 text-xs",
-                                    getSourceStatusClassName(sourceStatus)
-                                )}
-                            >
-                                {sourceStatusLabel}
-                            </span>
+                        {ds.disable ? (
+                            <span className="text-xs text-neutral-500">已停用</span>
+                        ) : (
+                            sourceStatusLabel && (
+                                <span
+                                    className={clsx(
+                                        "rounded px-1.5 py-0.5 text-xs",
+                                        getSourceStatusClassName(sourceStatus)
+                                    )}
+                                >
+                                    {sourceStatusLabel}
+                                </span>
+                            )
                         )}
                         {ds?.title && (
                             <span
@@ -85,7 +89,7 @@ export function CardHeader({ id, data, healthStatus, isFetching, isError, setHan
                 </span>
             </div>
             <div className="source-actions">
-                {enableLogin.enable && (
+                {enableLogin.enable && !ds.disable && (
                     <button
                         title={isFetching ? "正在刷新" : "刷新数据"}
                         aria-label={isFetching ? "正在刷新" : "刷新数据"}
