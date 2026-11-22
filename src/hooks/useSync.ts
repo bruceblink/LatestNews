@@ -1,100 +1,46 @@
 import { useEffect } from "react";
 import { useDebounce } from "react-use";
-import { useAtom, useSetAtom } from "jotai";
-import {
-    toErrorStatus,
-    toMergedStatus,
-    toQueuedStatus,
-    toSuccessStatus,
-    toSyncingStatus,
-    toConflictResolvedStatus,
-} from "@shared/metadata-sync-flow";
-import {
-    uploadMetadata,
-    handleAuthError,
-    downloadMetadata,
-    getSyncErrorMessage,
-    takeAuthSyncFeedback,
-    mergePrimitiveMetadata,
-    markPrimitiveMetadataSynced,
-} from "~/services/metadata.service.ts";
+import { useSetAtom, useAtomValue } from "jotai";
+import { syncMetadataAtom } from "~/atoms/syncMetadataAtom";
+import { primitiveMetadataAtom } from "~/atoms/primitiveMetadataAtom";
+import { handleAuthError, getSyncErrorMessage, authLayoutCallbackKey } from "~/services/metadata.service";
 
 import { useToast } from "./useToast";
 import { useLoginState } from "./useLogin";
-import { metadataSyncStatusAtom } from "../atoms/syncStatusAtom";
-import { primitiveMetadataAtom } from "../atoms/primitiveMetadataAtom";
 
-/** Hook: 自动同步 primitiveMetadataAtom */
 export function useSync() {
-    const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
-    const setSyncStatus = useSetAtom(metadataSyncStatusAtom);
+    const metadata = useAtomValue(primitiveMetadataAtom);
+    const syncMetadata = useSetAtom(syncMetadataAtom);
     const toaster = useToast();
-    const { loggedIn } = useLoginState();
-
-    useEffect(() => {
-        const feedback = takeAuthSyncFeedback();
-        if (feedback === "success") {
-            setSyncStatus((prev) => toSuccessStatus(prev, "auth-feedback"));
-            toaster("登录成功，已同步最新布局", { type: "success" });
-        } else if (feedback === "error") {
-            setSyncStatus((prev) => toErrorStatus(prev, "auth-feedback", "登录后首次同步失败，已继续使用本地布局"));
-            toaster("登录成功，但远程布局同步失败，已继续使用本地布局", { type: "warning" });
-        }
-    }, [setSyncStatus, toaster]);
+    const { loggedIn, userInfo } = useLoginState();
 
     useDebounce(
-        async () => {
-            if (!loggedIn || primitiveMetadata.action !== "manual") return;
+        () => {
+            if (!loggedIn || metadata.action !== "manual") return;
 
-            setSyncStatus((prev) => toQueuedStatus(prev, "auto-upload"));
-            setSyncStatus((prev) => toSyncingStatus(prev, "auto-upload"));
-
-            try {
-                await uploadMetadata(primitiveMetadata);
-                setPrimitiveMetadata((prev) => markPrimitiveMetadataSynced(prev));
-                setSyncStatus((prev) => toSuccessStatus(prev, "auto-upload"));
-            } catch (err: unknown) {
-                setSyncStatus((prev) => toErrorStatus(prev, "auto-upload", getSyncErrorMessage(err)));
-                if (!handleAuthError(toaster, err)) {
-                    toaster(getSyncErrorMessage(err), { type: "error" });
-                }
-            }
+            void syncMetadata("auto-upload").catch((error: unknown) => {
+                if (!handleAuthError(toaster, error)) toaster(getSyncErrorMessage(error), { type: "error" });
+            });
         },
         5000,
-        [primitiveMetadata, loggedIn, setPrimitiveMetadata, setSyncStatus, toaster]
+        [metadata, loggedIn, userInfo, syncMetadata, toaster]
     );
 
-    /** 登录状态变化时自动同步配置 */
     useEffect(() => {
-        if (!loggedIn) return;
+        if (!loggedIn || !userInfo) return;
 
-        const trySync = async () => {
-            setSyncStatus((prev) => toSyncingStatus(prev, "login-sync"));
-
-            try {
-                const remoteMetadata = await downloadMetadata();
-                if (remoteMetadata) {
-                    setPrimitiveMetadata((prev) => {
-                        const merged = mergePrimitiveMetadata(prev, remoteMetadata);
-                        setSyncStatus((current) =>
-                            merged.updatedTime === prev.updatedTime
-                                ? toConflictResolvedStatus(current, "login-sync")
-                                : toMergedStatus(current, "login-sync")
-                        );
-                        return merged;
-                    });
-                }
-                setSyncStatus((prev) => toSuccessStatus(prev, "login-sync"));
-            } catch (err: unknown) {
-                setSyncStatus((prev) => toErrorStatus(prev, "login-sync", getSyncErrorMessage(err)));
-                if (!handleAuthError(toaster, err)) {
+        const fromCallback = sessionStorage.getItem(authLayoutCallbackKey) === "true";
+        if (fromCallback) sessionStorage.removeItem(authLayoutCallbackKey);
+        void syncMetadata("login-sync")
+            .then((result) => {
+                if (!fromCallback || result === "skipped") return;
+                const message = result === "pending" ? "登录成功，已保留本地布局" : "登录成功，布局同步完成";
+                toaster(message, { type: "success" });
+            })
+            .catch((error: unknown) => {
+                if (!handleAuthError(toaster, error)) {
                     toaster("云端布局同步失败，已继续使用本地布局", { type: "warning" });
                 }
-            }
-        };
-
-        void trySync();
-    }, [loggedIn, setPrimitiveMetadata, setSyncStatus, toaster]);
-
-    return { uploadMetadata, downloadMetadata };
+            });
+    }, [loggedIn, userInfo, syncMetadata, toaster]);
 }

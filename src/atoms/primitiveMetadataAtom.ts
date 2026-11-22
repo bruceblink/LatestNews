@@ -1,7 +1,7 @@
-import type { PrimitiveAtom } from "jotai";
 import type { SourceID, FixedColumnID, PrimitiveMetadata } from "@shared/types";
 
 import { atom } from "jotai";
+import { userAtom } from "~/auth/authAtoms";
 import { fixedColumnIds } from "@shared/types";
 import { metadata } from "@shared/metadata.ts";
 import dataSources from "@shared/data-sources.ts";
@@ -26,11 +26,14 @@ export function preprocessMetadata(target: PrimitiveMetadata): PrimitiveMetadata
             ...initialMetadata,
             ...objectFromEntries(
                 objectEntries(target.data)
-                    .filter(([id]) => initialMetadata[id])
+                    .filter(([id]) => Object.hasOwn(initialMetadata, id))
                     .map(([id, s]) => {
                         if (id === "focus") {
                             // focus 特殊处理：只保留有效 source，替换 redirect
-                            return [id, s.filter((k) => dataSources[k]).map((k) => dataSources[k].redirect ?? k)];
+                            return [
+                                id,
+                                s.filter((k) => Object.hasOwn(dataSources, k)).map((k) => dataSources[k].redirect ?? k),
+                            ];
                         }
                         // 旧数据：只保留 initialMetadata 中存在的，并替换 redirect
                         const oldS = s
@@ -49,69 +52,6 @@ export function preprocessMetadata(target: PrimitiveMetadata): PrimitiveMetadata
     };
 }
 
-// ========== 创建 Atom 工厂函数 ==========
-
-function createPrimitiveMetadataAtom(
-    key: string,
-    initialValue: PrimitiveMetadata,
-    preprocess: (stored: PrimitiveMetadata) => PrimitiveMetadata
-): PrimitiveAtom<PrimitiveMetadata> {
-    const getInitialValue = (): PrimitiveMetadata => {
-        try {
-            const item = localStorage.getItem(key);
-            if (item) {
-                const stored = JSON.parse(item) as PrimitiveMetadata;
-                verifyPrimitiveMetadata(stored);
-                return preprocess({
-                    ...stored,
-                    action: "init",
-                });
-            }
-        } catch {}
-
-        const snapshotResult = readOfflineReadingSnapshot();
-        if (
-            !shouldUseOfflineReadingSnapshot({
-                isOffline: isBrowserOffline(),
-                hasPersistedLiveValue: false,
-                snapshotState: snapshotResult.state,
-            })
-        ) {
-            return initialValue;
-        }
-
-        /** Rehydrates only the personal focus column; all built-in columns still use their normal defaults. */
-        return preprocess({
-            ...initialValue,
-            data: {
-                ...initialValue.data,
-                focus: snapshotResult.snapshot?.focusSources ?? [],
-            },
-        });
-    };
-
-    const baseAtom = atom(getInitialValue());
-
-    return atom<
-        PrimitiveMetadata,
-        [Update<PrimitiveMetadata>], // 明确指定 Args 是元组
-        void
-    >(
-        (get) => get(baseAtom),
-        (get, set, ...args) => {
-            const update = args[0]; // 正确取出 Update<PrimitiveMetadata>
-            const current = get(baseAtom);
-
-            const nextValue = update instanceof Function ? update(current) : update;
-
-            if (nextValue.updatedTime >= current.updatedTime) {
-                set(baseAtom, nextValue);
-                localStorage.setItem(key, JSON.stringify(nextValue));
-            }
-        }
-    );
-}
-
 export function createDefaultPrimitiveMetadata(action: PrimitiveMetadata["action"] = "init"): PrimitiveMetadata {
     return {
         updatedTime: action === "init" ? 0 : Date.now(),
@@ -120,10 +60,62 @@ export function createDefaultPrimitiveMetadata(action: PrimitiveMetadata["action
     };
 }
 
-// ========== 导出全局唯一 atom ==========
+const storageKey = "metadata";
+type StoredMetadata = PrimitiveMetadata & { pendingAccountId?: number };
 
-export const primitiveMetadataAtom = createPrimitiveMetadataAtom(
-    "metadata",
-    createDefaultPrimitiveMetadata(),
-    preprocessMetadata
+function readInitialMetadata(): { layout: PrimitiveMetadata; pendingAccountId?: number } {
+    try {
+        const item = localStorage.getItem(storageKey);
+        if (item) {
+            const { pendingAccountId, ...stored } = JSON.parse(item) as StoredMetadata;
+            verifyPrimitiveMetadata(stored);
+            const action = stored.action === "manual" ? "manual" : "init";
+            return {
+                layout: preprocessMetadata({ ...stored, action }),
+                pendingAccountId:
+                    action === "manual" && Number.isSafeInteger(pendingAccountId) ? pendingAccountId : undefined,
+            };
+        }
+    } catch {}
+
+    const initialValue = createDefaultPrimitiveMetadata();
+    const snapshot = readOfflineReadingSnapshot();
+    if (
+        !shouldUseOfflineReadingSnapshot({
+            isOffline: isBrowserOffline(),
+            hasPersistedLiveValue: false,
+            snapshotState: snapshot.state,
+        })
+    ) {
+        return { layout: initialValue };
+    }
+
+    return {
+        layout: preprocessMetadata({
+            ...initialValue,
+            data: { ...initialValue.data, focus: snapshot.snapshot?.focusSources ?? [] },
+        }),
+    };
+}
+
+const storedMetadataAtom = atom(readInitialMetadata());
+export const pendingLayoutAccountIdAtom = atom((get) => get(storedMetadataAtom).pendingAccountId);
+
+export const primitiveMetadataAtom = atom(
+    (get) => get(storedMetadataAtom).layout,
+    (get, set, update: Update<PrimitiveMetadata>) => {
+        const { layout: current, pendingAccountId } = get(storedMetadataAtom);
+        const next = typeof update === "function" ? update(current) : update;
+        if (next === current) return;
+        if (next.action !== "manual" && next.updatedTime < current.updatedTime) return;
+
+        // Keep the draft's owner so a different account cannot upload it on login.
+        const owner = next.action === "manual" ? (pendingAccountId ?? get(userAtom)?.id) : undefined;
+        const layout =
+            next.action === "manual"
+                ? { ...next, updatedTime: Math.max(next.updatedTime, current.updatedTime + 1) }
+                : next;
+        localStorage.setItem(storageKey, JSON.stringify({ ...layout, pendingAccountId: owner }));
+        set(storedMetadataAtom, { layout, pendingAccountId: owner });
+    }
 );

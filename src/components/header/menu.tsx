@@ -1,5 +1,4 @@
 import type { MouseEvent } from "react";
-import type { PrimitiveMetadata } from "@shared/types";
 
 import clsx from "clsx";
 import { motion } from "framer-motion";
@@ -10,13 +9,14 @@ import { useSearchBar } from "~/hooks/useSearch";
 import { useRef, useState, useEffect } from "react";
 import { useAtom, useSetAtom, useAtomValue } from "jotai";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
+import { syncMetadataAtom } from "~/atoms/syncMetadataAtom";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { metadataSyncStatusAtom } from "~/atoms/syncStatusAtom";
 import { isSyncHubConfigured } from "~/services/synchub.service";
 import { appNavigation, columnNavigation } from "@shared/app-navigation";
+import { handleAuthError, getSyncErrorMessage } from "~/services/metadata.service";
 import { syncHubStatusAtom, syncHubRetryRequestAtom } from "~/atoms/syncHubStatusAtom";
 import { login, logout, useLoginState, retryEnableLoginCheckAtom } from "~/hooks/useLogin";
-import { toErrorStatus, toSuccessStatus, toSyncingStatus } from "@shared/metadata-sync-flow";
 import { primitiveMetadataAtom, createDefaultPrimitiveMetadata } from "~/atoms/primitiveMetadataAtom";
 import { getSyncHubStatusTone, getSyncHubStatusLabel, getSyncHubStatusDescription } from "@shared/synchub-status";
 import {
@@ -25,14 +25,6 @@ import {
     getSyncStatusDescription,
     getSyncTransitionSourceLabel,
 } from "@shared/metadata-sync-view";
-import {
-    uploadMetadata,
-    handleAuthError,
-    downloadMetadata,
-    getSyncErrorMessage,
-    mergePrimitiveMetadata,
-    markPrimitiveMetadataSynced,
-} from "~/services/metadata.service.ts";
 
 import { InstallationGuide } from "./installation-guide";
 
@@ -126,11 +118,11 @@ export function Menu({
         show(false);
         triggerRef.current?.focus();
     }, [pathname, shown]);
-    const [syncing, setSyncing] = useState(false);
     const toaster = useToast();
     const [primitiveMetadata, setPrimitiveMetadata] = useAtom(primitiveMetadataAtom);
     const syncStatus = useAtomValue(metadataSyncStatusAtom);
-    const setSyncStatus = useSetAtom(metadataSyncStatusAtom);
+    const syncMetadata = useSetAtom(syncMetadataAtom);
+    const syncing = syncStatus.phase === "syncing";
     const syncHubStatus = useAtomValue(syncHubStatusAtom);
     const requestSyncHubRetry = useSetAtom(syncHubRetryRequestAtom);
     const retryEnableLoginCheck = useSetAtom(retryEnableLoginCheckAtom);
@@ -146,118 +138,27 @@ export function Menu({
         if (!window.confirm("确认重置当前布局到默认配置吗？")) return;
 
         setPrimitiveMetadata(createDefaultPrimitiveMetadata("manual"));
-        toaster(loggedIn ? "布局已重置，稍后会自动同步到云端" : "布局已重置为默认配置", {
-            type: "success",
-        });
+        toaster("布局已重置为默认配置", { type: "success" });
     };
 
-    const handleManualSync = async () => {
+    const handleLayoutSync = async (
+        source: "manual-sync" | "retry-sync" | "restore-from-remote" | "restore-to-remote",
+        successMessage: string,
+        confirmation?: string
+    ) => {
         if (!loggedIn) {
             login();
             return;
         }
-
-        setSyncing(true);
-        setSyncStatus((prev) => toSyncingStatus(prev, "manual-sync"));
-        try {
-            await uploadMetadata(primitiveMetadata);
-            setPrimitiveMetadata((prev: PrimitiveMetadata) => markPrimitiveMetadataSynced(prev));
-            setSyncStatus((prev) => toSuccessStatus(prev, "manual-sync"));
-            toaster("布局已同步到云端", { type: "success" });
-        } catch (error) {
-            setSyncStatus((prev) => toErrorStatus(prev, "manual-sync", getSyncErrorMessage(error)));
-            if (!handleAuthError(toaster, error)) {
-                toaster(getSyncErrorMessage(error), { type: "error" });
-            }
-        } finally {
-            setSyncing(false);
-        }
-    };
-
-    const handleRetrySync = async () => {
-        if (!loggedIn) {
-            login();
-            return;
-        }
-
-        setSyncing(true);
-        setSyncStatus((prev) => toSyncingStatus(prev, "retry-sync"));
+        if (confirmation && !window.confirm(confirmation)) return;
 
         try {
-            if (primitiveMetadata.action === "manual") {
-                await uploadMetadata(primitiveMetadata);
-                setPrimitiveMetadata((prev) => markPrimitiveMetadataSynced(prev));
-            } else {
-                const remote = await downloadMetadata();
-                if (remote) {
-                    setPrimitiveMetadata((prev) => mergePrimitiveMetadata(prev, remote));
-                }
-            }
-
-            setSyncStatus((prev) => toSuccessStatus(prev, "retry-sync"));
-            toaster("同步已重试并成功", { type: "success" });
+            const result = await syncMetadata(source);
+            if (result === "synced") toaster(successMessage, { type: "success" });
+            if (result === "empty") toaster("云端暂无可用布局", { type: "info" });
+            if (result === "pending") toaster("布局在同步期间已更改，请检查当前布局后重试", { type: "info" });
         } catch (error) {
-            setSyncStatus((prev) => toErrorStatus(prev, "retry-sync", getSyncErrorMessage(error)));
-            if (!handleAuthError(toaster, error)) {
-                toaster(getSyncErrorMessage(error), { type: "error" });
-            }
-        } finally {
-            setSyncing(false);
-        }
-    };
-
-    const handleRestoreFromRemote = async () => {
-        if (!loggedIn) {
-            login();
-            return;
-        }
-        if (!window.confirm("确认使用云端布局覆盖当前本地布局吗？")) return;
-
-        setSyncing(true);
-        setSyncStatus((prev) => toSyncingStatus(prev, "restore-from-remote"));
-
-        try {
-            const remote = await downloadMetadata();
-            if (!remote) {
-                toaster("云端暂无可用布局", { type: "info" });
-                return;
-            }
-
-            setPrimitiveMetadata(remote);
-            setSyncStatus((prev) => toSuccessStatus(prev, "restore-from-remote"));
-            toaster("已使用云端布局恢复本地配置", { type: "success" });
-        } catch (error) {
-            setSyncStatus((prev) => toErrorStatus(prev, "restore-from-remote", getSyncErrorMessage(error)));
-            if (!handleAuthError(toaster, error)) {
-                toaster(getSyncErrorMessage(error), { type: "error" });
-            }
-        } finally {
-            setSyncing(false);
-        }
-    };
-
-    const handleRestoreToRemote = async () => {
-        if (!loggedIn) {
-            login();
-            return;
-        }
-        if (!window.confirm("确认使用当前本地布局覆盖云端布局吗？")) return;
-
-        setSyncing(true);
-        setSyncStatus((prev) => toSyncingStatus(prev, "restore-to-remote"));
-
-        try {
-            await uploadMetadata(primitiveMetadata);
-            setPrimitiveMetadata((prev) => markPrimitiveMetadataSynced(prev));
-            setSyncStatus((prev) => toSuccessStatus(prev, "restore-to-remote"));
-            toaster("已使用本地布局覆盖云端配置", { type: "success" });
-        } catch (error) {
-            setSyncStatus((prev) => toErrorStatus(prev, "restore-to-remote", getSyncErrorMessage(error)));
-            if (!handleAuthError(toaster, error)) {
-                toaster(getSyncErrorMessage(error), { type: "error" });
-            }
-        } finally {
-            setSyncing(false);
+            if (!handleAuthError(toaster, error)) toaster(getSyncErrorMessage(error), { type: "error" });
         }
     };
 
@@ -527,7 +428,7 @@ export function Menu({
                                         type="button"
                                         disabled={syncing}
                                         aria-busy={syncing}
-                                        onClick={() => void handleManualSync()}
+                                        onClick={() => void handleLayoutSync("manual-sync", "布局已同步到云端")}
                                     >
                                         <span
                                             className={clsx(
@@ -555,7 +456,7 @@ export function Menu({
                                         type="button"
                                         disabled={syncing}
                                         aria-busy={syncing}
-                                        onClick={() => void handleRetrySync()}
+                                        onClick={() => void handleLayoutSync("retry-sync", "同步已重试并成功")}
                                     >
                                         <span className="i-ph:arrows-clockwise-duotone inline-block" />
                                         <span>立即重试同步</span>
@@ -569,7 +470,13 @@ export function Menu({
                                             type="button"
                                             disabled={syncing}
                                             aria-busy={syncing}
-                                            onClick={() => void handleRestoreFromRemote()}
+                                            onClick={() =>
+                                                void handleLayoutSync(
+                                                    "restore-from-remote",
+                                                    "已使用云端布局恢复本地配置",
+                                                    "确认使用云端布局覆盖当前本地布局吗？"
+                                                )
+                                            }
                                         >
                                             <span className="i-ph:cloud-arrow-down-duotone inline-block" />
                                             <span>使用云端恢复本地</span>
@@ -580,7 +487,13 @@ export function Menu({
                                             type="button"
                                             disabled={syncing}
                                             aria-busy={syncing}
-                                            onClick={() => void handleRestoreToRemote()}
+                                            onClick={() =>
+                                                void handleLayoutSync(
+                                                    "restore-to-remote",
+                                                    "已使用本地布局覆盖云端配置",
+                                                    "确认使用当前本地布局覆盖云端布局吗？"
+                                                )
+                                            }
                                         >
                                             <span className="i-ph:cloud-arrow-up-duotone inline-block" />
                                             <span>使用本地覆盖云端</span>

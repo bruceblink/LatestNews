@@ -2,8 +2,8 @@ import { test, expect, type Page } from "@playwright/test";
 
 import { createSourceHealthSourcesResponse } from "../shared/source-health-api";
 
-import type { NewsItem } from "../shared/types";
 import type { SourceHealthSummary } from "../shared/source-health-types";
+import type { SourceID, NewsItem, PrimitiveMetadata } from "../shared/types";
 
 type AuthUser = {
     id: number;
@@ -90,6 +90,10 @@ async function installApiMocks(page: Page, options: ApiMockOptions = {}) {
             await route.fulfill({
                 json: options.user ? { status: "ok", data: options.user } : { status: "unauthenticated" },
             });
+            return;
+        }
+        if (pathname.endsWith("/api/sync/me")) {
+            await route.fulfill({ json: { data: null } });
             return;
         }
         if (pathname.endsWith("/v1/auth/capability")) {
@@ -441,6 +445,189 @@ test("shows the real username and falls back when the user's avatar fails", asyn
     await page.keyboard.press("Escape");
     await expect(page.locator("#account-dropdown")).toHaveCount(0);
     await expect(account).toBeFocused();
+});
+
+test.describe("account layout sync", () => {
+    const user = { id: 7, username: "layout-test-user", roles: [] };
+    const layoutPath = (url: URL) => url.pathname.endsWith("/api/sync/me");
+
+    async function storedLayout(page: Page) {
+        return page.evaluate(() => JSON.parse(localStorage.getItem("metadata") ?? "null") as PrimitiveMetadata | null);
+    }
+
+    test("uploads edits in order when an earlier response is delayed", async ({ page }) => {
+        const firstResponse = Promise.withResolvers<void>();
+        const secondResponse = Promise.withResolvers<void>();
+        const pendingResponses = [firstResponse, secondResponse];
+        const uploads: SourceID[][] = [];
+        await installApiMocks(page, { user });
+        await page.route(layoutPath, async (route) => {
+            if (route.request().method() === "GET") {
+                await route.fulfill({ json: { data: null } });
+                return;
+            }
+            const body = route.request().postDataJSON() as { data: PrimitiveMetadata["data"]; settingType: string };
+            expect(body.settingType).toBe("news");
+            const response = pendingResponses[uploads.length];
+            uploads.push(body.data.focus);
+            await response.promise;
+            await route.fulfill({ json: {} });
+        });
+
+        await page.clock.install();
+        await page.goto("/source/hackernews");
+        await expect(page.locator(".app-shell-account-trigger")).toContainText(user.username);
+        await page.getByRole("button", { name: "加入关注", exact: true }).click();
+        await page.clock.runFor(5100);
+        await expect.poll(() => uploads).toEqual([["hackernews"]]);
+
+        await page.getByRole("button", { name: "已关注", exact: true }).click();
+        await page.clock.runFor(5100);
+        expect(uploads).toEqual([["hackernews"]]);
+        firstResponse.resolve();
+        await expect.poll(() => uploads).toEqual([["hackernews"], []]);
+        await expect.poll(() => storedLayout(page)).toMatchObject({ action: "manual", data: { focus: [] } });
+
+        secondResponse.resolve();
+        await expect.poll(() => storedLayout(page)).toMatchObject({ action: "sync", data: { focus: [] } });
+    });
+
+    test("keeps a failed local layout across reload and can retry from the account menu", async ({ page }) => {
+        let downloads = 0;
+        const uploads: SourceID[][] = [];
+        await installApiMocks(page, { user });
+        await page.route(layoutPath, async (route) => {
+            if (route.request().method() === "GET") {
+                downloads += 1;
+                await route.fulfill({ json: { data: { focus: ["ithome"] }, updatedTime: 1 } });
+                return;
+            }
+            const body = route.request().postDataJSON() as { data: PrimitiveMetadata["data"] };
+            uploads.push(body.data.focus);
+            if (uploads.length === 1) await route.fulfill({ status: 503, json: { message: "Unavailable" } });
+            else await route.fulfill({ json: {} });
+        });
+
+        await page.clock.install();
+        await page.goto("/source/hackernews");
+        await expect.poll(() => storedLayout(page)).toMatchObject({ action: "sync", data: { focus: ["ithome"] } });
+        const account = page.locator(".app-shell-account-trigger");
+        const menu = page.locator("#account-dropdown");
+        await page.getByRole("button", { name: "加入关注", exact: true }).click();
+        await account.click();
+        await menu.getByRole("button", { name: "同步待保存更改", exact: true }).click();
+        await expect
+            .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("metadata-sync-status") ?? "{}").phase))
+            .toBe("error");
+        await account.click();
+        await expect(menu.getByText("本地改动已保留，可以重试同步", { exact: true })).toBeVisible();
+
+        await page.reload();
+        await expect(page.getByRole("button", { name: "已关注", exact: true })).toBeVisible();
+        await expect.poll(() => storedLayout(page)).toMatchObject({ action: "manual" });
+        await account.click();
+        await menu.getByRole("button", { name: "立即重试同步" }).click();
+        await expect
+            .poll(() => storedLayout(page))
+            .toMatchObject({
+                action: "sync",
+                data: { focus: ["ithome", "hackernews"] },
+            });
+        expect(downloads).toBe(1);
+        expect(uploads).toEqual([
+            ["ithome", "hackernews"],
+            ["ithome", "hackernews"],
+        ]);
+    });
+
+    test("reads the cloud once after login and discards its response after a local edit", async ({ page }) => {
+        const loginRead = Promise.withResolvers<void>();
+        const releaseLoginRead = Promise.withResolvers<void>();
+        let downloads = 0;
+        await installApiMocks(page, { user });
+        await page.route(layoutPath, async (route) => {
+            expect(route.request().method()).toBe("GET");
+            downloads += 1;
+            if (downloads === 1) {
+                loginRead.resolve();
+                await releaseLoginRead.promise;
+            }
+            await route.fulfill({ json: { data: { focus: ["ithome"] }, updatedTime: 1 } });
+        });
+
+        await page.clock.install();
+        await page.goto("/auth/callback");
+        await expect(page).toHaveURL(/\/insights$/);
+        await loginRead.promise;
+        await page.getByRole("button", { name: "打开搜索", exact: true }).click();
+        await page.getByRole("combobox").fill("Hacker News");
+        await page.getByRole("option", { name: /Hacker News/ }).click();
+        await expect(page.getByRole("button", { name: "取消关注", exact: true })).toBeVisible();
+        await page.keyboard.press("Escape");
+        releaseLoginRead.resolve();
+
+        await expect(page.getByText("登录成功，已保留本地布局")).toBeVisible();
+        expect(downloads).toBe(1);
+        expect(await storedLayout(page)).toMatchObject({ action: "manual", data: { focus: ["hackernews"] } });
+    });
+
+    test("keeps a stored draft local when a different account signs in", async ({ page }) => {
+        const otherAccount = { id: 8, username: "other-layout-user", roles: [] };
+        await installApiMocks(page, { user: otherAccount });
+        let requests = 0;
+        await page.route(layoutPath, async (route) => {
+            requests += 1;
+            await route.fulfill({ json: { data: null } });
+        });
+        await page.addInitScript((pendingAccountId) => {
+            localStorage.setItem(
+                "metadata",
+                JSON.stringify({ data: { focus: ["hackernews"] }, action: "manual", updatedTime: 1, pendingAccountId })
+            );
+        }, user.id);
+        await page.clock.install();
+        await page.goto("/source/hackernews");
+        await expect(page.locator(".app-shell-account-trigger")).toContainText(otherAccount.username);
+        await expect(page.getByRole("button", { name: "已关注", exact: true })).toBeVisible();
+        await page.clock.runFor(5100);
+        expect(requests).toBe(0);
+        expect(await storedLayout(page)).toMatchObject({ action: "manual", data: { focus: ["hackernews"] } });
+    });
+
+    test("restores an older cloud layout only after explicit confirmation", async ({ page }) => {
+        let downloads = 0;
+        const uploads: SourceID[][] = [];
+        await installApiMocks(page, { user });
+        await page.route(layoutPath, async (route) => {
+            if (route.request().method() === "GET") {
+                downloads += 1;
+                await route.fulfill({ json: { data: { focus: downloads === 1 ? [] : ["ithome"] }, updatedTime: 1 } });
+                return;
+            }
+            const body = route.request().postDataJSON() as { data: PrimitiveMetadata["data"] };
+            uploads.push(body.data.focus);
+            await route.fulfill({ json: {} });
+        });
+
+        await page.clock.install();
+        await page.goto("/source/hackernews");
+        await expect.poll(() => storedLayout(page)).toMatchObject({ action: "sync" });
+        await page.getByRole("button", { name: "加入关注", exact: true }).click();
+        const account = page.locator(".app-shell-account-trigger");
+        const menu = page.locator("#account-dropdown");
+        await account.click();
+        page.once("dialog", (dialog) => dialog.accept());
+        await menu.getByRole("button", { name: "使用本地覆盖云端", exact: true }).click();
+        await expect.poll(() => storedLayout(page)).toMatchObject({ action: "sync", data: { focus: ["hackernews"] } });
+        expect(uploads).toEqual([["hackernews"]]);
+
+        await account.click();
+        page.once("dialog", (dialog) => dialog.accept());
+        await menu.getByRole("button", { name: "使用云端恢复本地", exact: true }).click();
+        await expect.poll(() => storedLayout(page)).toMatchObject({ action: "sync", data: { focus: ["ithome"] } });
+        await expect(page.getByRole("button", { name: "加入关注", exact: true })).toBeVisible();
+        expect(downloads).toBe(2);
+    });
 });
 
 test("opens the reading insights workspace as the application home", async ({ page }) => {

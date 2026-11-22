@@ -107,6 +107,7 @@ export function useSyncHub() {
         let active = true;
 
         const bootstrap = async () => {
+            const initialMetadata = metadataRef.current;
             const [historyResult, favoritesResult, preferencesResult] = await Promise.allSettled([
                 downloadReadingHistory(),
                 downloadFavorites(),
@@ -149,7 +150,14 @@ export function useSyncHub() {
             }
             if (merged.upload.preferences) {
                 setColorScheme(merged.state.preferences.colorScheme);
-                setMetadata(preprocessMetadata(merged.state.preferences.metadata));
+                const nextMetadata = merged.state.preferences.metadata;
+                setMetadata((current) => {
+                    // Account sync and local edits can change the layout while SyncHub is loading.
+                    if (current !== initialMetadata || current.action === "manual" || current === nextMetadata) {
+                        return current;
+                    }
+                    return preprocessMetadata({ ...nextMetadata, action: "sync" });
+                });
             }
 
             setReady(true);

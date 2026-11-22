@@ -15,6 +15,7 @@ function readStoredSyncStatus(): MetadataSyncStatus {
             return createDefaultMetadataSyncStatus();
         }
 
+        if (parsed.phase === "syncing" || parsed.phase === "queued") return { ...parsed, phase: "idle" };
         return parsed;
     } catch {
         return createDefaultMetadataSyncStatus();
