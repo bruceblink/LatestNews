@@ -113,7 +113,11 @@ export function createFetchScheduler(options: FetchSchedulerOptions) {
         }, options.taskTimeoutMs);
 
         void Promise.resolve()
-            .then(() => job.task(job.controller!.signal))
+            .then(() => {
+                const signal = job.controller!.signal;
+                signal.throwIfAborted();
+                return job.task(signal);
+            })
             .then(
                 (value) => settleResolved(job, value),
                 (error) => settleRejected(job, error)

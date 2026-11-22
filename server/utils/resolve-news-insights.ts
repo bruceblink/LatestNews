@@ -15,7 +15,8 @@ interface ResolveNewsInsightsOptions {
     sourceIds: SourceID[];
     cacheEntries: CacheEntry[];
     invalidSourceIds?: string[];
-    fetchMissing: (id: SourceID) => Promise<SourceResponse["items"]>;
+    signal?: AbortSignal;
+    fetchMissing: (id: SourceID, signal?: AbortSignal) => Promise<SourceResponse["items"]>;
     saveCache: (id: SourceID, items: SourceResponse["items"]) => Promise<void>;
     now: number;
     insightOptions?: Omit<NewsInsightOptions, "generatedAt" | "sourceWeights">;
@@ -28,6 +29,7 @@ export async function resolveNewsInsights({
     sourceIds,
     cacheEntries,
     invalidSourceIds = [],
+    signal,
     fetchMissing,
     saveCache,
     now,
@@ -43,6 +45,7 @@ export async function resolveNewsInsights({
     const responses = await resolveEntireSources({
         sourceIds,
         cacheEntries,
+        signal,
         fetchMissing,
         saveCache,
         now,

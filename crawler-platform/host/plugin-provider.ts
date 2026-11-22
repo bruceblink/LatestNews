@@ -103,21 +103,22 @@ export function createCrawlerPluginProvider(options: CrawlerPluginProviderOption
             queue.close();
             host?.dispose?.();
         },
-        async collect(sourceId: string) {
+        async collect(sourceId: string, signal?: AbortSignal) {
             if (disposed) {
                 throw new CrawlerPlatformError("CANCELLED", "Crawler plugin provider is disposed.");
             }
             const source = sources.get(sourceId);
             if (!source) return undefined;
             host ??= options.createHost();
-            const context = createProviderContext();
-            return queue.run(() =>
-                host!.collect({
-                    manifest: source.manifest,
-                    entryPath: source.entryPath,
-                    sourceId: source.channelId,
-                    context,
-                })
+            return queue.run(
+                (taskSignal) =>
+                    host!.collect({
+                        manifest: source.manifest,
+                        entryPath: source.entryPath,
+                        sourceId: source.channelId,
+                        context: createProviderContext(taskSignal),
+                    }),
+                signal
             );
         },
     };
@@ -243,9 +244,9 @@ function assertPathWithin(root: string, candidate: string) {
     }
 }
 
-function createProviderContext(): CrawlerContext {
+function createProviderContext(signal: AbortSignal): CrawlerContext {
     return {
-        signal: new AbortController().signal,
+        signal,
         now: Date.now,
         http: {
             request: async (): Promise<CrawlerHttpResponse> => {

@@ -35,6 +35,7 @@ export default defineEventHandler(async (event): Promise<SourceBatchResponse> =>
         }
 
         return await resolveSourceBatchPayload(payload, {
+            signal: event.req.signal,
             background: (pending) => event.waitUntil(pending),
             preferCached: true,
         });

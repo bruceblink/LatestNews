@@ -200,6 +200,40 @@ describe("crawler plugin SDK and core", () => {
         }
     });
 
+    it("propagates cancellation through the Node plugin provider to its HTTP broker", async () => {
+        const outputParent = await mkdtemp(join(tmpdir(), "latestnews-crawler-node-cancel-"));
+        const started = Promise.withResolvers<AbortSignal>();
+        const controller = new AbortController();
+        let runtime: ReturnType<typeof createServerCrawlerPluginRuntime> | undefined;
+        try {
+            await bundlePluginPackage(join(fixtureRoot, "json"), join(outputParent, jsonExamplePlugin.manifest.id));
+            runtime = createServerCrawlerPluginRuntime({
+                pluginDirectory: outputParent,
+                enabledPluginIds: [jsonExamplePlugin.manifest.id],
+                acceptedSourceIds: new Set(),
+                workerPath: join(process.cwd(), "crawler-platform", "runtime", "worker-entry.mjs"),
+                requestHandler: (_request, signal) =>
+                    new Promise((_resolve, reject) => {
+                        started.resolve(signal);
+                        signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+                    }),
+            });
+            const id = createDynamicSourceId(jsonExamplePlugin.manifest.id, "latest");
+            const pending = expect(runtime.fetchSource(id, controller.signal)).rejects.toMatchObject({
+                code: "CANCELLED",
+            });
+            const brokerSignal = await started.promise;
+
+            controller.abort();
+
+            await pending;
+            expect(brokerSignal.aborted).toBe(true);
+        } finally {
+            runtime?.dispose();
+            await rm(outputParent, { recursive: true, force: true });
+        }
+    });
+
     it("registers undeclared application channels under a stable dynamic source namespace", async () => {
         const pluginDirectory = join(fixtureRoot, "json");
         const outputParent = await mkdtemp(join(tmpdir(), "latestnews-crawler-dynamic-node-"));

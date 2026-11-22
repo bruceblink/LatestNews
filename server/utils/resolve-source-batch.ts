@@ -13,13 +13,20 @@ import { resolveEntireSourcesWithDiagnostics } from "./resolve-entire-sources";
 interface ResolveSourceBatchPayloadOptions {
     now?: number;
     logPrefix?: string;
+    signal?: AbortSignal;
     background?: (pending: Promise<unknown>) => void;
     preferCached?: boolean;
 }
 
 export async function resolveSourceBatchPayload(
     payload: SourceBatchPayload,
-    { now = Date.now(), logPrefix = "v1 batch", background, preferCached }: ResolveSourceBatchPayloadOptions = {}
+    {
+        now = Date.now(),
+        logPrefix = "v1 batch",
+        signal,
+        background,
+        preferCached,
+    }: ResolveSourceBatchPayloadOptions = {}
 ): Promise<SourceBatchResponse> {
     const selected = resolveSourceBatchSelection(payload);
     if (selected.sourceIds.length > 100) {
@@ -40,7 +47,8 @@ export async function resolveSourceBatchPayload(
         sourceIds,
         invalidSourceIds,
         cacheEntries: caches,
-        fetchMissing: fetchSourceItems,
+        signal,
+        fetchMissing: (id, collectionSignal) => fetchSourceItems(id, { signal: collectionSignal }),
         saveCache: async (id, items) => {
             if (!cacheTable) return;
             await cacheTable.set(id, items);

@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { $fetch, type FetchOptions, type FetchResponse } from "ofetch";
 
 import { createFetchScheduler } from "./fetch-scheduler";
@@ -44,6 +45,7 @@ const baseFetch = $fetch.create(
 );
 
 const fetchScheduler = createFetchScheduler(fetchSchedulerDefaults);
+export const legacySourceSignal = new AsyncLocalStorage<AbortSignal>();
 
 function normalizeHeaders(h?: FetchOptions["headers"]): Record<string, string> {
     if (!h) return {};
@@ -69,7 +71,7 @@ export function myFetch<T>(url: string, options: FetchOptions<any> = {}): Promis
                     ...normalizeHeaders(options.headers),
                 },
             }),
-        externalSignal ?? undefined
+        externalSignal ?? legacySourceSignal.getStore()
     );
 }
 
@@ -86,7 +88,7 @@ export function myFetchRaw<T>(url: string, options: FetchOptions<any> = {}): Pro
                     ...normalizeHeaders(options.headers),
                 },
             }),
-        externalSignal ?? undefined
+        externalSignal ?? legacySourceSignal.getStore()
     );
 }
 
@@ -96,6 +98,8 @@ export function createBoundedFetch(maxBytes: number, fetchImpl: typeof globalThi
     }
 
     return async (input: Parameters<typeof globalThis.fetch>[0], init?: Parameters<typeof globalThis.fetch>[1]) => {
+        // ofetch can retry aborted requests when a default timeout is configured.
+        init?.signal?.throwIfAborted();
         const response = await fetchImpl(input, init);
         const contentLength = Number(response.headers.get("content-length"));
         if (response.body && Number.isSafeInteger(contentLength) && contentLength > maxBytes) {

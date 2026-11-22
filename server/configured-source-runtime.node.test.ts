@@ -85,6 +85,44 @@ const jsonFixture = JSON.stringify({
 describe("configured source runtime", () => {
     afterEach(() => clearRuntimeSourceCatalog());
 
+    it("cancels active configured-source requests and releases the scheduler slot", async () => {
+        const started = Promise.withResolvers<AbortSignal>();
+        const client = new AbortController();
+        const request = vi
+            .fn<
+                (
+                    url: URL,
+                    address: string,
+                    signal: AbortSignal
+                ) => Promise<{
+                    status: number;
+                    headers: Record<string, string>;
+                    body: string;
+                }>
+            >()
+            .mockImplementationOnce(
+                (_url, _address, signal) =>
+                    new Promise((_resolve, reject) => {
+                        started.resolve(signal);
+                        signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+                    })
+            )
+            .mockResolvedValueOnce({ status: 200, headers: {}, body: rssFixture });
+        const runtime = createConfiguredSourceRuntime(manifest, "feeds.example.test,api.example.test", {
+            resolveIpv4: async () => "93.184.216.34",
+            request,
+        });
+        const id = "ext.config.rss-feed" as SourceID;
+        const result = expect(runtime.fetchSource(id, client.signal)).rejects.toMatchObject({ code: "CANCELLED" });
+        const transportSignal = await started.promise;
+
+        client.abort();
+
+        await result;
+        expect(transportSignal.aborted).toBe(true);
+        await expect(runtime.fetchSource(id)).resolves.toMatchObject([{ id: "rss-1" }]);
+    });
+
     it("registers enabled RSS and JSON sources and maps local fixture responses", async () => {
         const request = vi.fn(async (url: URL, address: string) => {
             expect(address).toBe("93.184.216.34");

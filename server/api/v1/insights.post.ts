@@ -43,7 +43,8 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
         sourceIds: ids,
         cacheEntries: caches,
         invalidSourceIds: invalidIds,
-        fetchMissing: fetchSourceItems,
+        signal: event.req.signal,
+        fetchMissing: (id, signal) => fetchSourceItems(id, { signal }),
         saveCache: async (id, items) => {
             if (!cacheTable) return;
             await cacheTable.set(id, items);

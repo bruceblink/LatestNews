@@ -100,7 +100,11 @@ export function createCrawlerTaskQueue(options: CrawlerTaskQueueOptions) {
         job.controller = new AbortController();
         activeCount += 1;
         void Promise.resolve()
-            .then(() => job.task(job.controller!.signal))
+            .then(() => {
+                const signal = job.controller!.signal;
+                signal.throwIfAborted();
+                return job.task(signal);
+            })
             .then(
                 (value) => settleResolved(job, value),
                 (error) => settleRejected(job, error)

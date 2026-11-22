@@ -105,8 +105,8 @@ export function createServerCrawlerPluginRuntime(options: NodeCrawlerPluginProvi
         listSourceIds: provider.listSourceIds,
         listSources: provider.listSources,
         dispose: () => provider.dispose(),
-        async fetchSource(id: SourceID): Promise<NewsItem[] | undefined> {
-            const items = await provider.collect(id);
+        async fetchSource(id: SourceID, signal?: AbortSignal): Promise<NewsItem[] | undefined> {
+            const items = await provider.collect(id, signal);
             if (!items) return undefined;
             return items.map((item) => ({
                 id: item.id,
@@ -133,13 +133,17 @@ export function initializeCrawlerPluginCatalog() {
 }
 
 /** Collect a source from the installed plugin provider only. */
-export async function fetchInstalledCrawlerSource(id: SourceID): Promise<NewsItem[] | undefined> {
+export async function fetchInstalledCrawlerSource(id: SourceID, signal?: AbortSignal): Promise<NewsItem[] | undefined> {
     if (!pluginProvider?.hasSource(id)) return undefined;
-    return pluginProvider.fetchSource(id);
+    return pluginProvider.fetchSource(id, signal);
 }
 
 /** Collect a source from the operator-owned RSS/JSON runtime only. */
-export async function fetchConfiguredSource(id: SourceID): Promise<NewsItem[] | undefined> {
+export async function fetchConfiguredSource(id: SourceID, signal?: AbortSignal): Promise<NewsItem[] | undefined> {
     if (!configuredSourceProvider?.hasSource(id)) return undefined;
-    return configuredSourceProvider.fetchSource(id);
+    return configuredSourceProvider.fetchSource(id, signal);
+}
+
+export function disposeCrawlerPluginRuntime() {
+    pluginProvider?.dispose();
 }

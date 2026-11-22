@@ -157,6 +157,7 @@ Recommended Pages settings:
 
 - Build command: `pnpm build:pages`
 - Output directory: `dist`
+- Workers compatibility date: `2026-11-17` or later for client disconnect notifications. On an earlier date, enable `enable_request_signal`. For dates before `2026-08-04`, also enable `nodejs_compat` for the async context used by source collection. See the [Workers compatibility flags](https://developers.cloudflare.com/workers/configuration/compatibility-flags/).
 - D1 binding: `LATESTNEWS_DB`
 - Runtime variables: `ENABLE_CACHE`, `INIT_TABLE`, `LATESTNEWS_NODE_ID`, and optional node endpoint hints.
 - Secrets: `JWT_SECRET`, `LATESTNEWS_REFRESH_TOKEN` when scheduled refresh is used, and source-specific API tokens.

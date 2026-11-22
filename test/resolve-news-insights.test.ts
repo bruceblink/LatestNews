@@ -57,7 +57,7 @@ describe("resolveNewsInsights", () => {
         expect(result.data.keywordTrends).toHaveLength(1);
         expect(result.data.updateFrequency.reduce((total, bucket) => total + bucket.itemCount, 0)).toBe(1);
         expect(result.data.hotRankings[0].sourceId).toBe("v2ex");
-        expect(fetchMissing).toHaveBeenCalledWith("v2ex");
+        expect(fetchMissing).toHaveBeenCalledWith("v2ex", expect.any(AbortSignal));
         expect(saveCache).toHaveBeenCalledWith("v2ex", expect.any(Array));
     });
 

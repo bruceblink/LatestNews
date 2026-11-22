@@ -8,6 +8,8 @@ import {
     shouldReturnCachedSourceResponse,
 } from "@shared/source-response-status";
 
+import { isCancellationError } from "./source-engine";
+
 export const sourceReadTimeoutMs = 4_000;
 
 interface SourceCacheEntry {
@@ -28,7 +30,8 @@ interface ResolveSourceResponseOptions {
     lastAttemptAt?: number;
     ttl?: number;
     waitTimeoutMs?: number;
-    fetchLatest: () => Promise<NewsItem[]>;
+    signal?: AbortSignal;
+    fetchLatest: (signal?: AbortSignal) => Promise<NewsItem[]>;
     saveCache?: (items: NewsItem[]) => Promise<void>;
     background?: (pending: Promise<unknown>) => void;
     onFetchError?: (error: unknown) => void;
@@ -47,6 +50,7 @@ export async function resolveSourceResponse({
     lastAttemptAt,
     ttl = TTL,
     waitTimeoutMs = sourceReadTimeoutMs,
+    signal,
     fetchLatest,
     saveCache,
     background,
@@ -68,9 +72,10 @@ export async function resolveSourceResponse({
         return createCachedResponse({ cache, degraded, id, name, now, ttl });
     }
 
-    const collect = async () => {
+    const collect = async (collectionSignal?: AbortSignal) => {
         try {
-            const items = await fetchLatest();
+            const items = await fetchLatest(collectionSignal);
+            collectionSignal?.throwIfAborted();
             if (items.length && saveCache) {
                 const write = saveCache(items).catch((error: unknown) => onFetchError?.(error));
                 if (background) background(write);
@@ -78,27 +83,37 @@ export async function resolveSourceResponse({
             }
             return items;
         } catch (error) {
-            onFetchError?.(error);
+            if (!collectionSignal?.aborted && !isCancellationError(error)) onFetchError?.(error);
             throw error;
         }
     };
 
     if (cache && !clearCache && (!latest || !canRefresh) && background) {
         // A stale ordinary read must finish independently of the crawler.
-        if (lastAttemptAt === undefined || now - lastAttemptAt >= sourceInterval) {
+        if (!signal?.aborted && (lastAttemptAt === undefined || now - lastAttemptAt >= sourceInterval)) {
             background(collect().catch(() => undefined));
         }
         return createCachedResponse({ cache, degraded, id, name, now, ttl });
     }
 
-    const pending = collect();
+    const controller = new AbortController();
+    const onAbort = () => controller.abort();
+    signal?.addEventListener("abort", onAbort, { once: true });
+    if (signal?.aborted) controller.abort();
+    const pending = collect(controller.signal);
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
         const items = await Promise.race([
             pending,
             new Promise<never>((_, reject) => {
                 timer = setTimeout(() => {
-                    background?.(pending.catch(() => undefined));
+                    if (background) {
+                        // Past the response deadline the request no longer owns the cache fill.
+                        signal?.removeEventListener("abort", onAbort);
+                        background(pending.catch(() => undefined));
+                    } else {
+                        controller.abort();
+                    }
                     reject(createError({ statusCode: 504, message: "Source collection timed out." }));
                 }, waitTimeoutMs);
             }),
@@ -117,6 +132,7 @@ export async function resolveSourceResponse({
         return createCachedResponse({ cache, id, name, now, status: "stale-cache", ttl });
     } finally {
         clearTimeout(timer);
+        signal?.removeEventListener("abort", onAbort);
     }
 }
 

@@ -24,7 +24,7 @@ vi.mock("#/utils/crawler-plugin-runtime", () => ({
     initializeCrawlerPluginCatalog: () => runtimeState.current?.listSources() ?? [],
     getCrawlerSourceKind: (id: string) =>
         runtimeState.current?.hasSource(id as SourceID) ? ("configured" as const) : undefined,
-    fetchConfiguredSource: (id: SourceID) => runtimeState.current?.fetchSource(id),
+    fetchConfiguredSource: (id: SourceID, signal?: AbortSignal) => runtimeState.current?.fetchSource(id, signal),
     fetchInstalledCrawlerSource: async () => undefined,
 }));
 

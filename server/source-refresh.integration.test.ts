@@ -1,11 +1,12 @@
 import { createApp } from "h3";
 import { createDatabase } from "db0";
 import sqliteConnector from "db0/connectors/better-sqlite3";
-import { it, vi, expect, describe, afterEach, beforeEach } from "vitest";
+import { it, vi, expect, describe, afterAll, afterEach, beforeEach } from "vitest";
 
 import cacheAuth from "./middleware/auth";
 import { getCacheTable } from "./database/cache";
 import refreshHandler from "./api/v1/sources/refresh.post";
+import { CrawlerPlatformError } from "../crawler-platform/core/errors";
 import { clearRuntimeSourceCatalog, registerRuntimeSourceCatalog } from "../shared/runtime-source-catalog";
 
 const { getDatabase, fetchSourceItems, hasSourceGetter } = vi.hoisted(() => ({
@@ -25,7 +26,11 @@ app.use(cacheAuth);
 app.post(path, refreshHandler);
 
 describe("scheduled source refresh", () => {
+    // The cache module keeps a single database connector for the server process.
+    const database = createDatabase(sqliteConnector({ name: ":memory:" }));
+
     beforeEach(() => {
+        getDatabase.mockReturnValue(database);
         vi.stubEnv("LATESTNEWS_REFRESH_TOKEN", testToken);
         vi.stubEnv("JWT_SECRET", undefined);
         vi.stubEnv("ENABLE_CACHE", "true");
@@ -37,6 +42,8 @@ describe("scheduled source refresh", () => {
         vi.unstubAllEnvs();
         vi.resetAllMocks();
     });
+
+    afterAll(() => database.dispose());
 
     it("requires a configured token and validates query parameters before touching storage", async () => {
         expect((await app.request(path, { method: "POST" })).status).toBe(401);
@@ -50,9 +57,34 @@ describe("scheduled source refresh", () => {
         expect(fetchSourceItems).not.toHaveBeenCalled();
     });
 
+    it("returns 503 without advancing the cursor when collection is interrupted", async () => {
+        hasSourceGetter.mockImplementation((id) => id === "hackernews");
+        fetchSourceItems.mockRejectedValueOnce(new CrawlerPlatformError("CANCELLED", "Collection has stopped."));
+        fetchSourceItems.mockResolvedValueOnce([currentItem]);
+        const url = `${path}?cursor=hackernewr&force=true`;
+
+        try {
+            const cache = (await getCacheTable())!;
+            await cache.set("hackernews", [previousItem]);
+
+            const interrupted = await request(url);
+            expect(interrupted.status).toBe(503);
+            expect(await interrupted.json()).not.toHaveProperty("meta.nextCursor");
+            expect(await cache.get("hackernews")).toMatchObject({ items: [previousItem] });
+
+            const retry = await request(url);
+            expect(retry.status).toBe(200);
+            expect(await retry.json()).toMatchObject({
+                data: { sources: [{ id: "hackernews", status: "refreshed", itemCount: 1 }] },
+                meta: { nextCursor: null },
+            });
+            expect(await cache.get("hackernews")).toMatchObject({ items: [currentItem] });
+        } finally {
+            await cacheCleanup();
+        }
+    });
+
     it("scans enabled canonical sources, persists new data and keeps older items on empty or failed collection", async () => {
-        const database = createDatabase(sqliteConnector({ name: ":memory:" }));
-        getDatabase.mockReturnValue(database);
         hasSourceGetter.mockImplementation((id) =>
             ["github-trending-today", "hackernews", "ithome", "juejin", "v2ex", "bilibili-hot-video"].includes(id)
         );
@@ -91,7 +123,7 @@ describe("scheduled source refresh", () => {
                 meta: { totalSources: 4, nextCursor: null },
                 errors: [],
             });
-            expect(fetchSourceItems.mock.calls.flat()).toEqual(["hackernews", "ithome", "juejin"]);
+            expect(fetchSourceItems.mock.calls.map(([id]) => id)).toEqual(["hackernews", "ithome", "juejin"]);
             expect(await cache.get("hackernews")).toMatchObject({ items: [currentItem] });
             expect(await cache.get("ithome")).toMatchObject({ updated: 0, items: [previousItem] });
             expect(await cache.get("juejin")).toMatchObject({ updated: 0, items: [previousItem] });
@@ -126,7 +158,7 @@ describe("scheduled source refresh", () => {
                 meta: { totalSources: 5, nextCursor: "hackernews" },
                 errors: [],
             });
-            expect(fetchSourceItems.mock.calls.flat()).toEqual([
+            expect(fetchSourceItems.mock.calls.map(([id]) => id)).toEqual([
                 "ext.config.scheduled",
                 "github-trending-today",
                 "hackernews",
@@ -146,9 +178,13 @@ describe("scheduled source refresh", () => {
                 errors: [],
             });
         } finally {
-            await database.dispose();
+            await cacheCleanup();
         }
     });
+
+    async function cacheCleanup() {
+        await database.prepare("DELETE FROM cache").run();
+    }
 });
 
 function request(url: string, token = testToken) {

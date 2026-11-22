@@ -9,10 +9,15 @@ export function initializeCrawlerPluginCatalog() {
     return [];
 }
 
-export async function fetchInstalledCrawlerSource(_id: SourceID): Promise<NewsItem[] | undefined> {
+export async function fetchInstalledCrawlerSource(
+    _id: SourceID,
+    _signal?: AbortSignal
+): Promise<NewsItem[] | undefined> {
     return undefined;
 }
 
-export async function fetchConfiguredSource(_id: SourceID): Promise<NewsItem[] | undefined> {
+export async function fetchConfiguredSource(_id: SourceID, _signal?: AbortSignal): Promise<NewsItem[] | undefined> {
     return undefined;
 }
+
+export function disposeCrawlerPluginRuntime() {}

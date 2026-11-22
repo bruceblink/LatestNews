@@ -47,7 +47,7 @@ describe("resolveEntireSources", () => {
         expect(result[1].id).toBe("weibo");
         expect(result[1].status).toBe("success");
         expect(fetchMissing).toHaveBeenCalledTimes(1);
-        expect(fetchMissing).toHaveBeenCalledWith("weibo");
+        expect(fetchMissing).toHaveBeenCalledWith("weibo", expect.any(AbortSignal));
         expect(saveCache).toHaveBeenCalledTimes(1);
         expect(saveCache).toHaveBeenCalledWith("weibo", expect.any(Array));
     });
@@ -145,13 +145,18 @@ describe("resolveEntireSources", () => {
     it("returns cache and fast results after 200 ms while remaining collectors keep working", async () => {
         vi.useFakeTimers();
         try {
+            const client = new AbortController();
             const slow = Promise.withResolvers<SourceResponse["items"]>();
             const background: Promise<unknown>[] = [];
             const saveCache = vi.fn(async () => undefined);
+            const fetchMissing = vi.fn((id: SourceID, _signal?: AbortSignal) =>
+                id === "hackernews" ? slow.promise : Promise.resolve(createResponseItems(id))
+            );
             const read = resolveEntireSourcesWithDiagnostics({
                 sourceIds: ["weibo", "v2ex", "hackernews"],
                 cacheEntries: [{ id: "weibo", items: createResponseItems("weibo"), updated: NOW - TTL - 1 }],
-                fetchMissing: async (id) => (id === "hackernews" ? slow.promise : createResponseItems(id)),
+                signal: client.signal,
+                fetchMissing,
                 saveCache,
                 now: NOW,
                 preferCached: true,
@@ -169,6 +174,8 @@ describe("resolveEntireSources", () => {
                 })
             );
             expect((await read).data.map(({ id }) => id)).toEqual(["weibo", "v2ex"]);
+            client.abort();
+            expect(fetchMissing.mock.calls.find(([id]) => id === "hackernews")?.[1]?.aborted).toBe(false);
             slow.resolve(createResponseItems("hackernews"));
             await Promise.all(background);
             expect(saveCache).toHaveBeenCalledWith("hackernews", createResponseItems("hackernews"));

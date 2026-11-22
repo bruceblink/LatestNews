@@ -5,6 +5,7 @@ import { TTL } from "@shared/consts";
 import dataSources from "@shared/data-sources";
 import { getCachedSourceResponseStatus, getFetchedSourceResponseStatus } from "@shared/source-response-status";
 
+import { isCancellationError } from "./source-engine";
 import { sourceReadTimeoutMs } from "./resolve-source-response";
 
 const cachedBatchGraceMs = 200;
@@ -18,7 +19,8 @@ interface CacheEntry {
 interface ResolveEntireSourcesOptions {
     sourceIds: SourceID[];
     cacheEntries: CacheEntry[];
-    fetchMissing: (id: SourceID) => Promise<SourceResponse["items"]>;
+    signal?: AbortSignal;
+    fetchMissing: (id: SourceID, signal?: AbortSignal) => Promise<SourceResponse["items"]>;
     saveCache: (id: SourceID, items: SourceResponse["items"]) => Promise<void>;
     now: number;
     batchTimeoutMs?: number;
@@ -35,6 +37,7 @@ interface ResolveEntireSourcesWithDiagnosticsOptions extends ResolveEntireSource
 export async function resolveEntireSources({
     sourceIds,
     cacheEntries,
+    signal,
     fetchMissing,
     saveCache,
     now,
@@ -73,9 +76,17 @@ export async function resolveEntireSources({
             cacheEntries.some(({ items }) => items.length > 0);
         const waitMs = limitedByCache ? Math.min(batchTimeoutMs, cachedBatchGraceMs) : batchTimeoutMs;
         const states = new Map<SourceID, FetchState>();
+        // All foreground reads in this batch leave together on disconnect. The
+        // response deadline detaches that listener when cache work is retained.
+        const controller = new AbortController();
+        const onAbort = () => controller.abort();
+        signal?.addEventListener("abort", onAbort, { once: true });
+        if (signal?.aborted) controller.abort();
         const tasks = missingIds.map((id) =>
             (async () => {
-                const items = (await fetchMissing(id)).slice(0, 30);
+                // Each source listens on its own signal, even for a large batch.
+                const items = (await fetchMissing(id, AbortSignal.any([controller.signal]))).slice(0, 30);
+                controller.signal.throwIfAborted();
                 if (items.length) {
                     const write = saveCache(id, items).catch((error: unknown) => onCacheError?.(error, id));
                     if (background) background(write);
@@ -103,17 +114,21 @@ export async function resolveEntireSources({
             await Promise.race([pending, timeout]);
         } finally {
             if (timeoutTimer) clearTimeout(timeoutTimer);
+            signal?.removeEventListener("abort", onAbort);
         }
-        if (states.size < missingIds.length) background?.(pending);
+        if (states.size < missingIds.length) {
+            if (background) background(pending);
+            else controller.abort();
+        }
 
         for (const id of missingIds) {
             const state = states.get(id);
             if (!state) {
-                // A source still collecting after the cache response is omitted, but has not failed.
-                if (!limitedByCache) onFetchError?.(new SourceBatchTimeoutError(waitMs), id);
+                // A source still collecting for the cache is pending.
+                if (!background && !signal?.aborted) onFetchError?.(new SourceBatchTimeoutError(waitMs), id);
             } else if (state.status === "fulfilled") {
                 cachedResponses.set(state.value.id, state.value);
-            } else {
+            } else if (!signal?.aborted && !isCancellationError(state.reason)) {
                 onFetchError?.(state.reason, id);
             }
         }

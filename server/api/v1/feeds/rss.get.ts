@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
         const url = getRequestURL(event);
         const response = await resolveSourceBatchPayload(payload, {
             logPrefix: "rss feed",
+            signal: event.req.signal,
             background: (pending) => event.waitUntil(pending),
         });
         setResponseHeader(event, "content-type", "application/rss+xml; charset=utf-8");

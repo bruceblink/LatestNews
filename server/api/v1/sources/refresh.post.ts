@@ -5,6 +5,7 @@ import { logger } from "#/utils/logger";
 import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
 import { createHash, timingSafeEqual } from "node:crypto";
+import { isCancellationError } from "#/utils/source-engine";
 import { hasSourceGetter, fetchSourceItems } from "#/utils/source-fetch";
 import { getQuery, getHeader, setHeader, createError, defineEventHandler } from "h3";
 
@@ -45,7 +46,8 @@ export default defineEventHandler(async (event) => {
     const now = Date.now();
     const cacheEntries = force === "true" ? [] : await cache.getEntire(sourceIds);
     const cached = new Map(cacheEntries.map((entry) => [entry.id, entry.updated]));
-    const results = await Promise.all(
+    const signal = event.req.signal;
+    const results = await Promise.allSettled(
         sourceIds.map(async (id) => {
             const updatedAt = cached.get(id);
             if (updatedAt !== undefined && now - updatedAt < dataSources[id].interval) {
@@ -53,26 +55,34 @@ export default defineEventHandler(async (event) => {
             }
 
             try {
-                const items = await fetchSourceItems(id);
+                const items = await fetchSourceItems(id, { signal });
+                signal.throwIfAborted();
                 if (!items.length) return { id, status: "empty" as const };
                 await cache.set(id, items);
                 return { id, status: "refreshed" as const, itemCount: items.length };
-            } catch {
+            } catch (error) {
+                if (signal.aborted || isCancellationError(error)) {
+                    throw createError({ statusCode: 503, message: "Source refresh was interrupted. Retry this page." });
+                }
                 logger.warn(`Source refresh could not update ${id}.`);
                 return { id, status: "failed" as const };
             }
         })
     );
 
-    logger.info(`Source refresh processed ${results.length} of ${ids.length} eligible sources.`);
+    const sources = results.map((result) => {
+        if (result.status === "rejected") throw result.reason;
+        return result.value;
+    });
+    logger.info(`Source refresh processed ${sources.length} of ${ids.length} eligible sources.`);
     return {
-        data: { sources: results },
+        data: { sources },
         meta: {
             generatedAt: now,
             totalSources: ids.length,
             nextCursor: remaining.length > batchSize ? sourceIds.at(-1)! : null,
         },
-        errors: results
+        errors: sources
             .filter(({ status }) => status === "failed")
             .map(({ id }) => ({ sourceId: id, message: "Source collection or cache write failed." })),
     };

@@ -187,21 +187,25 @@ export function createConfiguredSourceRuntime(
         hasSource(id: string) {
             return sources.has(id);
         },
-        async fetchSource(id: SourceID): Promise<NewsItem[] | undefined> {
+        async fetchSource(id: SourceID, signal?: AbortSignal): Promise<NewsItem[] | undefined> {
             const source = sources.get(id);
             if (!source) return undefined;
 
-            return scheduler.run(source.endpoint.origin, async (signal) => {
-                const body = await fetchConfiguredSourceText(
-                    source.endpoint,
-                    allowedHosts,
-                    resolveIpv4,
-                    request,
-                    signal
-                );
-                if (source.config.type === "rss") return parseRssItems(body, source.endpoint);
-                return parseJsonItems(body, source.config.mapping, source.endpoint);
-            });
+            return scheduler.run(
+                source.endpoint.origin,
+                async (taskSignal) => {
+                    const body = await fetchConfiguredSourceText(
+                        source.endpoint,
+                        allowedHosts,
+                        resolveIpv4,
+                        request,
+                        taskSignal
+                    );
+                    if (source.config.type === "rss") return parseRssItems(body, source.endpoint);
+                    return parseJsonItems(body, source.config.mapping, source.endpoint);
+                },
+                signal
+            );
         },
     };
 }
@@ -224,6 +228,7 @@ async function fetchConfiguredSourceText(
 
         const hostname = normalizeHostname(url.hostname);
         const pinnedAddress = await resolveIpv4(hostname);
+        signal.throwIfAborted();
         if (!isPublicIpv4(pinnedAddress)) {
             throw new Error("Configured source DNS did not resolve to a public IPv4 address.");
         }

@@ -199,7 +199,7 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                         ...okJsonResponse("Per-source refresh results and continuation cursor"),
                         400: { description: "Invalid cursor or force parameter" },
                         401: { description: "Missing or invalid source refresh token" },
-                        503: { description: "Source refresh is not configured or cache is unavailable" },
+                        503: { description: "Source refresh is unavailable or was interrupted" },
                     },
                 },
             },

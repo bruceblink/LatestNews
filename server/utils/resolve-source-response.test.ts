@@ -211,4 +211,66 @@ describe("resolveSourceResponse", () => {
         expect(response).toMatchObject({ status: "stale-cache", updatedTime: NOW - 1_000, items: historicalItems });
         collection.resolve([]);
     });
+
+    it("keeps a timed-out cache fill alive after the response disconnects", async () => {
+        const client = new AbortController();
+        const collection = Promise.withResolvers<NewsItem[]>();
+        const background: Promise<unknown>[] = [];
+        const saveCache = vi.fn(async () => undefined);
+        const fetchLatest = vi.fn((_signal?: AbortSignal) => collection.promise);
+        const items = createItems("weibo");
+
+        const response = await resolveSourceResponse({
+            id: "weibo",
+            cache: { items, updated: NOW - TTL },
+            latest: true,
+            canRefresh: true,
+            degraded: false,
+            sourceInterval: INTERVAL,
+            now: NOW,
+            waitTimeoutMs: 10,
+            signal: client.signal,
+            fetchLatest,
+            saveCache,
+            background: (pending) => background.push(pending),
+        });
+
+        expect(response.status).toBe("stale-cache");
+        client.abort();
+        expect(fetchLatest.mock.calls[0]?.[0]?.aborted).toBe(false);
+        collection.resolve(items);
+        await Promise.all(background);
+        expect(saveCache).toHaveBeenCalledWith(items);
+    });
+
+    it("cancels a foreground read without saving or reporting a source failure", async () => {
+        const client = new AbortController();
+        const items = createItems("weibo");
+        const saveCache = vi.fn(async () => undefined);
+        const onFetchError = vi.fn();
+        const fetchLatest = vi.fn(
+            (signal?: AbortSignal) =>
+                new Promise<NewsItem[]>((resolve) => {
+                    signal?.addEventListener("abort", () => resolve(items), { once: true });
+                })
+        );
+        const pending = resolveSourceResponse({
+            id: "weibo",
+            latest: true,
+            canRefresh: true,
+            degraded: false,
+            sourceInterval: INTERVAL,
+            now: NOW,
+            signal: client.signal,
+            fetchLatest,
+            saveCache,
+            onFetchError,
+        });
+
+        client.abort();
+        await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+        expect(fetchLatest.mock.calls[0]?.[0]?.aborted).toBe(true);
+        expect(saveCache).not.toHaveBeenCalled();
+        expect(onFetchError).not.toHaveBeenCalled();
+    });
 });

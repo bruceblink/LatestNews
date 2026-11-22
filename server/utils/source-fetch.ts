@@ -5,9 +5,11 @@ import { getters } from "#/getters";
 import {
     getCrawlerSourceKind,
     fetchConfiguredSource,
+    disposeCrawlerPluginRuntime,
     fetchInstalledCrawlerSource,
 } from "#/utils/crawler-plugin-runtime";
 
+import { legacySourceSignal } from "./fetch";
 import { createSourceEngine } from "./source-engine";
 import { recordSourceAdapter, recordSourceFailure, recordSourceQuality, recordSourceSuccess } from "./source-health";
 
@@ -63,17 +65,17 @@ const sourceEngine = createSourceEngine({
         if (crawlerSourceKind) {
             return {
                 descriptor: { id, kind: crawlerSourceKind },
-                collect: async () =>
+                collect: async ({ signal }) =>
                     (await (crawlerSourceKind === "plugin"
-                        ? fetchInstalledCrawlerSource(id)
-                        : fetchConfiguredSource(id))) ?? [],
+                        ? fetchInstalledCrawlerSource(id, signal)
+                        : fetchConfiguredSource(id, signal))) ?? [],
             } satisfies SourceAdapter;
         }
 
         if (typeof getters[id] === "function") {
             return {
                 descriptor: { id, kind: "legacy" },
-                collect: () => getters[id](),
+                collect: ({ signal }) => legacySourceSignal.run(signal, getters[id]),
             } satisfies SourceAdapter;
         }
 
@@ -87,3 +89,8 @@ const sourceEngine = createSourceEngine({
 
 export const fetchSourceItems = sourceEngine.collect;
 export const hasSourceGetter = sourceEngine.hasSource;
+
+export function stopSourceCollection() {
+    sourceEngine.close();
+    disposeCrawlerPluginRuntime();
+}
