@@ -131,6 +131,7 @@ Operational notes:
 - Keep runtime data in the named Docker volume instead of binding the repo directory into the container.
 - Alpine builds include Python 3, make and g++ for native SQLite compilation when prebuilt binaries are unavailable. The final image contains libstdc++ and runs a SQLite query during image construction; build tools remain in the builder stage.
 - Set `JWT_SECRET` through an `.env` file or the host secret manager, not in `docker-compose.yml`.
+- 如需定时刷新，在宿主机的 `.env` 或部署密钥存储中设置 `LATESTNEWS_REFRESH_TOKEN`，再用对应的 Compose 文件重新创建容器。将同一令牌配置到第三方调度程序。调用方式见[定时刷新](#定时刷新)。
 - Set `LATESTNEWS_NODE_ID` when multiple deployments feed the same downstream system.
 
 ## Cloudflare Pages
