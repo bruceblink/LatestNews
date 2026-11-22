@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 
 interface SqliteStatement {
     run(...values: Array<number | string>): { changes: number };
+    get(...values: Array<number | string>): unknown;
 }
 
 interface SqliteDatabase {
@@ -32,6 +33,14 @@ export function createPerformanceCacheController(databasePath: string) {
     }
 
     return {
+        hasAll(sourceIds: string[]) {
+            validateSourceIds(sourceIds);
+            const placeholders = sourceIds.map(() => "?").join(", ");
+            const row = database
+                .prepare(`SELECT count(*) AS count FROM cache WHERE id IN (${placeholders})`)
+                .get(...sourceIds) as { count: number };
+            return row.count === sourceIds.length;
+        },
         clear(sourceIds: string[]) {
             validateSourceIds(sourceIds);
             const placeholders = sourceIds.map(() => "?").join(", ");

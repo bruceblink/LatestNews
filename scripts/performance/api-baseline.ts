@@ -79,6 +79,7 @@ interface RequestSpec {
     path: string;
     body?: string;
     expectedSourceIds: string[];
+    mayBePending?: string[];
 }
 
 interface RequestSample {
@@ -87,6 +88,7 @@ interface RequestSample {
     responseBytes: number;
     httpStatus: number;
     responseStatuses: string[];
+    pendingSourceCount: number;
     errorCount: number;
 }
 
@@ -100,6 +102,7 @@ interface ScenarioReport {
     requestsPerSecond: number;
     errorRate: number;
     cacheHitRate: number;
+    pendingSourceCount: number;
     meanDecodedResponseBytes: number;
     responseStatuses: Record<string, number>;
     httpStatuses: Record<string, number>;
@@ -113,6 +116,7 @@ interface ScenarioDefinition {
     request: RequestSpec & { baseUrl: string };
     expectedStatusesPerRequest: Record<string, number>;
     prepareCache: () => void;
+    waitForCache: () => Promise<void>;
 }
 
 async function main() {
@@ -208,13 +212,22 @@ async function main() {
                     reportPath,
                     startupMs,
                     scenarios: scenarios.map(
-                        ({ name, latencyMs, requestsPerSecond, errorRate, cacheHitRate, statusMismatchCount }) => ({
+                        ({
+                            name,
+                            latencyMs,
+                            requestsPerSecond,
+                            errorRate,
+                            cacheHitRate,
+                            statusMismatchCount,
+                            pendingSourceCount,
+                        }) => ({
                             name,
                             latencyMs,
                             requestsPerSecond: round(requestsPerSecond),
                             errorRate,
                             cacheHitRate,
                             statusMismatchCount,
+                            pendingSourceCount,
                         })
                     ),
                 },
@@ -350,7 +363,10 @@ async function warmSourceCache(baseUrl: string) {
     }
 
     const verify = await executeRequest(baseUrl, createSingleRequest(sourceIds[0]!));
-    assertExpectedSample(verify, { cache: 1 }, "cache warmup verification");
+    assertExpectedSample(
+        verify,
+        createScenario(baseUrl, "cache warmup verification", createSingleRequest(sourceIds[0]!), { cache: 1 })
+    );
 }
 
 function createScenarios(baseUrl: string, cacheController: PerformanceCacheController) {
@@ -387,9 +403,17 @@ function createScenarios(baseUrl: string, cacheController: PerformanceCacheContr
         createScenario(
             baseUrl,
             "batch-30-sources-partial-cache-miss",
-            createBatchRequest(sourceIds),
+            { ...createBatchRequest(sourceIds), mayBePending: missingHalf },
             { cache: cachedHalf.length, success: missingHalf.length },
-            () => cacheController.clear(missingHalf)
+            () => cacheController.clear(missingHalf),
+            async () => {
+                // Separate request latency from the time needed to finish writing the background cache.
+                const deadline = Date.now() + requestTimeoutMs;
+                while (!cacheController.hasAll(missingHalf)) {
+                    if (Date.now() >= deadline) throw new Error("Partial batch did not fill the background cache.");
+                    await delay(25);
+                }
+            }
         ),
         createScenario(
             baseUrl,
@@ -406,9 +430,10 @@ function createScenario(
     name: string,
     request: RequestSpec,
     expectedStatusesPerRequest: Record<string, number>,
-    prepareCache: () => void = () => undefined
+    prepareCache: () => void = () => undefined,
+    waitForCache: () => Promise<void> = () => Promise.resolve()
 ): ScenarioDefinition {
-    return { name, request: { ...request, baseUrl }, expectedStatusesPerRequest, prepareCache };
+    return { name, request: { ...request, baseUrl }, expectedStatusesPerRequest, prepareCache, waitForCache };
 }
 
 function createSingleRequest(sourceId: string): RequestSpec {
@@ -432,7 +457,8 @@ async function runScenario(scenario: ScenarioDefinition, options: Options): Prom
     for (let index = 0; index < warmupRequestsPerScenario; index += 1) {
         scenario.prepareCache();
         const sample = await executeRequest(scenario.request.baseUrl, scenario.request);
-        assertExpectedSample(sample, scenario.expectedStatusesPerRequest, scenario.name);
+        assertExpectedSample(sample, scenario);
+        await scenario.waitForCache();
     }
 
     const samples: RequestSample[] = [];
@@ -446,13 +472,12 @@ async function runScenario(scenario: ScenarioDefinition, options: Options): Prom
         );
         elapsedMs += Math.max(0.001, performance.now() - startedAt);
         samples.push(...wave);
+        await scenario.waitForCache();
     }
 
     const statuses = countValues(samples.flatMap((sample) => sample.responseStatuses));
     const httpStatuses = countValues(samples.map((sample) => String(sample.httpStatus)));
-    const statusMismatchCount = samples.filter(
-        (sample) => !hasExpectedResponseStatuses(sample.responseStatuses, scenario.expectedStatusesPerRequest)
-    ).length;
+    const statusMismatchCount = samples.filter((sample) => !hasExpectedResponseStatuses(sample, scenario)).length;
     const cacheResponses = samples.reduce(
         (count, sample) =>
             count +
@@ -473,6 +498,7 @@ async function runScenario(scenario: ScenarioDefinition, options: Options): Prom
         requestsPerSecond: round((samples.length / elapsedMs) * 1000, 2),
         errorRate: round(errorCount / samples.length, 6),
         cacheHitRate: round(totalResponses === 0 ? 0 : cacheResponses / totalResponses, 6),
+        pendingSourceCount: samples.reduce((count, sample) => count + sample.pendingSourceCount, 0),
         meanDecodedResponseBytes: Math.round(
             samples.reduce((total, sample) => total + sample.responseBytes, 0) / samples.length
         ),
@@ -505,7 +531,8 @@ async function executeRequest(baseUrl: string, request: RequestSpec): Promise<Re
         }
         const parsedAt = performance.now();
         const responseStatuses = extractResponseStatuses(payload);
-        if (!hasExpectedSources(payload, request.expectedSourceIds)) errorCount += 1;
+        const pendingSourceIds = getPendingSourceIds(payload);
+        if (!hasExpectedSources(payload, request, pendingSourceIds)) errorCount += 1;
         if (extractApiErrorCount(payload) > 0) errorCount += 1;
 
         return {
@@ -514,6 +541,7 @@ async function executeRequest(baseUrl: string, request: RequestSpec): Promise<Re
             responseBytes: Buffer.byteLength(body),
             httpStatus: response.status,
             responseStatuses,
+            pendingSourceCount: pendingSourceIds.length,
             errorCount,
         };
     } catch {
@@ -523,6 +551,7 @@ async function executeRequest(baseUrl: string, request: RequestSpec): Promise<Re
             responseBytes: 0,
             httpStatus: 0,
             responseStatuses: [],
+            pendingSourceCount: 0,
             errorCount: 1,
         };
     }
@@ -535,12 +564,27 @@ function extractResponseStatuses(payload: unknown) {
     return rows.map((row) => (isRecord(row) && typeof row.status === "string" ? row.status : "unknown"));
 }
 
-function hasExpectedSources(payload: unknown, expectedIds: string[]) {
+function getPendingSourceIds(payload: unknown): unknown[] {
+    if (!isRecord(payload) || !isRecord(payload.meta) || !Array.isArray(payload.meta.omittedSourceIds)) return [];
+    return payload.meta.omittedSourceIds;
+}
+
+function hasExpectedSources(payload: unknown, request: RequestSpec, pendingSourceIds: unknown[]) {
     if (!isRecord(payload)) return false;
     const data = payload.data;
     const rows = Array.isArray(data) ? data : isRecord(data) ? [data] : [];
+    const expectedIds = new Set<unknown>(request.expectedSourceIds);
+    const mayBePending = new Set<unknown>(request.mayBePending);
     const actualIds = new Set(rows.map((row) => (isRecord(row) ? row.id : undefined)));
-    return expectedIds.every((id) => actualIds.has(id));
+    if (actualIds.size !== rows.length || rows.length + pendingSourceIds.length !== expectedIds.size) return false;
+    if (pendingSourceIds.length && (!isRecord(payload.meta) || payload.meta.partial !== true)) return false;
+    if (!rows.every((row) => isRecord(row) && expectedIds.has(row.id))) return false;
+    if (!pendingSourceIds.every((id) => mayBePending.has(id) && !actualIds.has(id))) return false;
+    if (new Set(pendingSourceIds).size !== pendingSourceIds.length) return false;
+    return (
+        !request.mayBePending ||
+        rows.every((row) => isRecord(row) && (mayBePending.has(row.id) || row.status === "cache"))
+    );
 }
 
 function extractApiErrorCount(payload: unknown) {
@@ -548,22 +592,30 @@ function extractApiErrorCount(payload: unknown) {
     return payload.errors.length;
 }
 
-function assertExpectedSample(sample: RequestSample, expectedStatuses: Record<string, number>, scenario: string) {
+function assertExpectedSample(sample: RequestSample, scenario: ScenarioDefinition) {
     if (
         sample.httpStatus < 200 ||
         sample.httpStatus >= 300 ||
         sample.errorCount > 0 ||
-        !hasExpectedResponseStatuses(sample.responseStatuses, expectedStatuses)
+        !hasExpectedResponseStatuses(sample, scenario)
     ) {
         throw new Error(
-            `Scenario ${scenario} expected ${JSON.stringify(expectedStatuses)} but received HTTP ${sample.httpStatus} ` +
-                `with statuses ${JSON.stringify(countValues(sample.responseStatuses))}.`
+            `Scenario ${scenario.name} expected ${JSON.stringify(scenario.expectedStatusesPerRequest)} but received HTTP ${sample.httpStatus} ` +
+                `with statuses ${JSON.stringify(countValues(sample.responseStatuses))}, ${sample.pendingSourceCount} pending and ${sample.errorCount} errors.`
         );
     }
 }
 
-function hasExpectedResponseStatuses(responseStatuses: string[], expectedStatuses: Record<string, number>) {
-    const actualStatuses = countValues(responseStatuses);
+function hasExpectedResponseStatuses(sample: RequestSample, scenario: ScenarioDefinition) {
+    const expectedStatuses = scenario.expectedStatusesPerRequest;
+    const actualStatuses = countValues(sample.responseStatuses);
+    if (scenario.request.mayBePending) {
+        return (
+            (actualStatuses.cache ?? 0) >= expectedStatuses.cache! &&
+            (actualStatuses.cache ?? 0) + (actualStatuses.success ?? 0) + sample.pendingSourceCount ===
+                scenario.request.expectedSourceIds.length
+        );
+    }
     const expectedKeys = Object.keys(expectedStatuses).sort();
     const actualKeys = Object.keys(actualStatuses).sort();
     return (
