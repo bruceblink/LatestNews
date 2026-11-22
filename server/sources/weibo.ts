@@ -3,7 +3,6 @@ import type { NewsItem } from "@root/shared/types";
 import * as cheerio from "cheerio";
 
 import { myFetch } from "../utils/fetch";
-import { proxyPicture } from "../utils/proxy";
 import { defineSource, generateUrlHashId } from "../utils/source";
 
 export default defineSource(async () => {
@@ -61,7 +60,7 @@ export default defineSource(async () => {
                 title: item.title,
                 url: item.fullUrl,
                 mobileUrl: item.fullUrl,
-                extra: item.flagUrl ? { icon: { url: proxyPicture(item.flagUrl), scale: 1.5 } } : {},
+                extra: item.flagUrl ? { icon: { url: item.flagUrl, scale: 1.5 } } : {},
             } as NewsItem;
         })
     );

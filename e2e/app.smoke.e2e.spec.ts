@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 
 import { createSourceHealthSourcesResponse } from "../shared/source-health-api";
 
+import type { NewsItem } from "../shared/types";
 import type { SourceHealthSummary } from "../shared/source-health-types";
 
 type AuthUser = {
@@ -13,6 +14,7 @@ type AuthUser = {
 };
 
 type ApiMockOptions = {
+    hackerNewsItems?: NewsItem[];
     enableLogin?: boolean;
     user?: AuthUser | null;
     holdEnableLogin?: boolean;
@@ -220,21 +222,23 @@ async function installApiMocks(page: Page, options: ApiMockOptions = {}) {
             return;
         }
         if (pathname.includes("/v1/sources/") && pathname.endsWith("/items")) {
+            const items = pathname.endsWith("/v1/sources/hackernews/items") ? (options.hackerNewsItems ?? []) : [];
+            const status = items.length ? "success" : "empty";
             await route.fulfill({
                 json: {
                     data: {
-                        status: "empty",
+                        status,
                         id: "hackernews",
                         name: "Hacker News",
-                        items: [],
+                        items,
                         updatedTime: Date.now(),
                     },
                     meta: {
                         generatedAt: Date.now(),
                         sourceId: "hackernews",
-                        status: "empty",
-                        itemCount: 0,
-                        unfilteredItemCount: 0,
+                        status,
+                        itemCount: items.length,
+                        unfilteredItemCount: items.length,
                     },
                     errors: [],
                 },
@@ -259,6 +263,61 @@ async function installApiMocks(page: Page, options: ApiMockOptions = {}) {
         },
     };
 }
+
+test("loads article icons directly and keeps articles readable when icons are unavailable", async ({ page }) => {
+    const imageUrl = "https://images.example.test/article.svg";
+    const items: NewsItem[] = [
+        {
+            id: "direct",
+            title: "Direct icon",
+            url: "https://example.test/direct",
+            extra: { icon: { url: "//images.example.test/article.svg", scale: 1.5 } },
+        },
+        {
+            id: "failed",
+            title: "Unavailable icon",
+            url: "https://example.test/failed",
+            extra: { icon: "https://images.example.test/unavailable.svg" },
+        },
+        {
+            id: "cached",
+            title: "Old cached icon",
+            url: "https://example.test/cached",
+            extra: { icon: `/api/v1/media/image?url=${encodeURIComponent(imageUrl)}` },
+        },
+        { id: "invalid", title: "Invalid icon", url: "https://example.test/invalid", extra: { icon: "invalid url" } },
+        { id: "plain", title: "No icon", url: "https://example.test/plain" },
+    ];
+    await installApiMocks(page, { hackerNewsItems: items });
+    await page.addInitScript(() => {
+        localStorage.setItem("metadata", JSON.stringify({ data: { focus: ["hackernews"] }, updatedTime: 0 }));
+    });
+    await page.route("https://images.example.test/**", async (route) => {
+        if (route.request().url() === imageUrl) {
+            await route.fulfill({
+                contentType: "image/svg+xml",
+                body: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16"/></svg>',
+            });
+        } else {
+            await route.fulfill({ status: 404 });
+        }
+    });
+
+    const imageRequest = page.waitForRequest(imageUrl);
+    await page.goto("/c/focus");
+    expect((await imageRequest).headers()).not.toHaveProperty("referer");
+    const direct = page.getByRole("link", { name: "Direct icon", exact: true }).locator("img");
+    await expect(direct).toBeVisible();
+    await expect.poll(() => direct.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(16);
+    const unavailable = page.getByRole("link", { name: "Unavailable icon", exact: true }).locator("img");
+    await expect(unavailable).toHaveCount(1);
+    await expect(unavailable).toBeHidden();
+    for (const item of items.slice(2)) {
+        const link = page.getByRole("link", { name: item.title, exact: true });
+        await expect(link).toHaveAttribute("href", item.url);
+        await expect(link.locator("img")).toHaveCount(0);
+    }
+});
 
 test("renders the shared web shell and exposes a direct desktop settings entry", async ({ page }) => {
     await installApiMocks(page);

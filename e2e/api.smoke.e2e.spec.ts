@@ -23,6 +23,7 @@ test("does not serve retired APIs through the SPA renderer", async ({ request })
         "/api/latest",
         "/api/enable-login",
         "/api/proxy/img.png",
+        "/api/v1/media/image",
     ]) {
         expect((await request.get(path)).status(), path).toBe(404);
     }

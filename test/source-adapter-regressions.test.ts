@@ -40,6 +40,7 @@ describe("source adapter regressions", () => {
         expect(items[0]).toMatchObject({
             title: "Serverless crawler",
             url: "https://search.bilibili.com/all?keyword=serverless%20crawler",
+            extra: { icon: "https://example.com/icon.png" },
         });
     });
 

@@ -257,29 +257,31 @@ function DiffNumber({ diff }: { diff: number }) {
 }
 
 function ExtraInfo({ item }: { item: NewsItem }) {
-    if (item?.extra?.info) {
-        return <>{item.extra.info}</>;
+    const { info, icon } = item.extra ?? {};
+    if (info) return <>{info}</>;
+    if (!icon) return null;
+
+    const { url, scale } = typeof icon === "string" ? { url: icon } : icon;
+    let imageUrl: URL;
+    try {
+        // Keep protocol-relative CDN URLs, but never resolve cached proxy paths against the app origin.
+        imageUrl = new URL(url.startsWith("//") ? `https:${url}` : url);
+    } catch {
+        return null;
     }
-    if (item?.extra?.icon) {
-        const { url, scale } =
-            typeof item.extra.icon === "string"
-                ? {
-                      url: item.extra.icon,
-                      scale: undefined,
-                  }
-                : item.extra.icon;
-        return (
-            <img
-                src={url}
-                style={{
-                    transform: `scale(${scale ?? 1})`,
-                }}
-                className="h-4 inline mt--1"
-                onError={(e) => (e.currentTarget.style.display = "none")}
-                alt=""
-            />
-        );
-    }
+    if (imageUrl.protocol !== "https:" || imageUrl.username || imageUrl.password) return null;
+
+    return (
+        <img
+            key={imageUrl.href}
+            referrerPolicy="no-referrer"
+            src={imageUrl.href}
+            style={{ transform: `scale(${scale ?? 1})` }}
+            className="h-4 inline mt--1"
+            onError={(e) => (e.currentTarget.style.display = "none")}
+            alt=""
+        />
+    );
 }
 
 function ReadBadge() {

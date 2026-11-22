@@ -180,18 +180,6 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                     },
                 },
             },
-            [withApiPrefix(sourceApi.imageProxyV1)]: {
-                get: {
-                    summary: "Fetch a source image",
-                    tags: ["Media"],
-                    parameters: [{ ...queryParameter("url", "Image URL"), required: true }],
-                    responses: {
-                        200: { description: "Image response" },
-                        400: { description: "Missing or invalid URL" },
-                        403: { description: "URL not allowed" },
-                    },
-                },
-            },
             [withApiPrefix(sourceApi.sourceRefreshV1)]: {
                 post: {
                     summary: "Refresh one page of the active source catalog",

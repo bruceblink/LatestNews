@@ -133,12 +133,11 @@ exit "$failed"
 
 游标无效，或 `force` 的值超出 `true` 和 `false`，返回 HTTP 400。令牌缺失或错误返回 401。服务未配置令牌或缓存不可用返回 503。请求中断时可用相同游标重试。默认模式下，已写入且仍在刷新间隔内的来源返回 `fresh`。全量模式会再次采集该页。计划任务应串行处理各页，并在本轮结束后再启动下一轮。
 
-## 登录能力与媒体
+## 登录能力
 
 | 方法 | 路径 | 用途 |
 | --- | --- | --- |
 | `GET` | `/api/v1/auth/capability` | 返回 `{ "enable": true }` 或 `{ "enable": false }`。 |
-| `GET` | `/api/v1/media/image?url=<url>` | 请求来源图片。使用标准 URL 查询参数编码。 |
 
 ## Health And Diagnostics
 

@@ -27,7 +27,6 @@ describe("OpenAPI document", () => {
                 "/api/v1/sources/refresh",
                 "/api/v1/insights",
                 "/api/v1/auth/capability",
-                "/api/v1/media/image",
                 "/api/v1/health/sources",
                 "/api/v1/health/deployment",
                 "/api/v1/health/diagnostics",
@@ -35,6 +34,7 @@ describe("OpenAPI document", () => {
                 "/api/v1/feeds/rss",
             ])
         );
+        expect(document.paths).not.toHaveProperty("/api/v1/media/image");
         expect(document.paths["/api/v1/federation/downstream/node"].get).toMatchObject({
             security: [{ FederationBearer: [] }],
         });

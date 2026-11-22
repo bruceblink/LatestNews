@@ -1,5 +1,4 @@
 import { myFetch } from "../utils/fetch";
-import { proxyPicture } from "../utils/proxy";
 import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface Res {
@@ -29,7 +28,7 @@ export default defineSource(async () => {
                 title: k.Title,
                 url: fulUrl,
                 extra: {
-                    icon: k.LabelUri?.url && proxyPicture(k.LabelUri.url),
+                    icon: k.LabelUri?.url,
                 },
             };
         })

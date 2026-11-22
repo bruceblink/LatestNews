@@ -1,5 +1,4 @@
 import { myFetch } from "../utils/fetch";
-import { proxyPicture } from "../utils/proxy";
 import { defineSource, generateUrlHashId } from "../utils/source";
 
 interface KuaishouRes {
@@ -63,7 +62,7 @@ export default defineSource(async () => {
                     title: hotItem.name,
                     url: fulUrl,
                     extra: {
-                        icon: hotItem.iconUrl && proxyPicture(hotItem.iconUrl),
+                        icon: hotItem.iconUrl,
                     },
                 };
             })

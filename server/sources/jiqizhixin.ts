@@ -1,5 +1,3 @@
-import { proxyPicture } from "#/utils/proxy.ts";
-
 import { myFetch } from "../utils/fetch";
 import { defineSource, generateUrlHashId } from "../utils/source";
 
@@ -49,7 +47,7 @@ export default defineSource(async () => {
                 extra: {
                     info: article.tagList.join("  |  "),
                     hover: article.content,
-                    icon: proxyPicture(article.coverImageUrl),
+                    icon: article.coverImageUrl,
                 },
             };
         })

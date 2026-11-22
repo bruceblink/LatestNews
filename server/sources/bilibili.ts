@@ -2,7 +2,6 @@ import type { NewsItem } from "@shared/types";
 
 import dayjs from "dayjs/esm";
 import { myFetch } from "#/utils/fetch";
-import { proxyPicture } from "#/utils/proxy";
 import { defineSource, generateUrlHashId } from "#/utils/source";
 
 interface HotSearchRes {
@@ -30,7 +29,7 @@ export async function mapBilibiliHotSearchResponse(res: HotSearchRes): Promise<N
                 title: item.show_name,
                 url: fullUrl,
                 extra: {
-                    icon: item.icon && proxyPicture(item.icon),
+                    icon: item.icon,
                 },
             };
         })
@@ -128,7 +127,7 @@ const hotVideo = defineSource(async () => {
                 extra: {
                     info: `${video.owner.name} · ${formatNumber(video.stat.view)}观看 · ${formatNumber(video.stat.like)}点赞`,
                     hover: video.desc,
-                    icon: proxyPicture(video.pic),
+                    icon: video.pic,
                 },
             };
         })
@@ -158,7 +157,7 @@ const ranking = defineSource(async () => {
                 extra: {
                     info: `${video.owner.name} · ${formatNumber(video.stat.view)}观看 · ${formatNumber(video.stat.like)}点赞`,
                     hover: video.desc,
-                    icon: proxyPicture(video.pic),
+                    icon: video.pic,
                 },
             };
         })
@@ -239,7 +238,7 @@ const animeToday = defineSource(async () => {
                 extra: {
                     info: `${video?.date} ${video?.pub_time}更新 更新至${video?.pub_index}`,
                     hover: video?.desc,
-                    icon: proxyPicture(video?.square_cover ?? video?.cover),
+                    icon: video?.square_cover ?? video?.cover,
                 },
             };
         });

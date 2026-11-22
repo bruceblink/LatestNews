@@ -6,11 +6,13 @@ import { rm, mkdtemp } from "node:fs/promises";
 import { test, expect, _electron } from "@playwright/test";
 import { createServer, type ServerResponse } from "node:http";
 
+const imageUrl = "https://images.example.test/electron-article.svg";
 const fixtureItem = {
     id: "electron-fixture-1",
     title: "Electron fixture headline",
     url: "https://example.test/electron-fixture-1",
     pubDate: "2026-11-04T00:00:00.000Z",
+    extra: { icon: imageUrl },
 };
 
 let electronApp: ElectronApplication;
@@ -167,6 +169,19 @@ test("keeps reading history and saved states across Electron source and history 
     await expect(page.getByRole("heading", { name: "Hacker News", level: 1 })).toBeVisible();
     const itemLink = page.getByRole("link", { name: new RegExp(fixtureItem.title) });
     await expect(itemLink).toBeVisible();
+
+    await page.route(imageUrl, async (route) => {
+        await route.fulfill({
+            contentType: "image/svg+xml",
+            body: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16"/></svg>',
+        });
+    });
+    await page.getByRole("button", { name: "加入关注", exact: true }).click();
+    await page.goto("app://bundle/c/focus");
+    const focusImage = itemLink.locator("img");
+    await expect(focusImage).toBeVisible();
+    await expect.poll(() => focusImage.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(16);
+    await page.goto("app://bundle/source/hackernews");
 
     await page.getByRole("button", { name: "稍后读", exact: true }).click();
     await page.getByRole("button", { name: "收藏", exact: true }).click();

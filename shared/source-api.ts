@@ -5,7 +5,6 @@ import type { NewsInsights, InsightTrendWindow } from "./news-insights";
 export const sourceApi = {
     insightsV1: "/v1/insights",
     loginCapabilityV1: "/v1/auth/capability",
-    imageProxyV1: "/v1/media/image",
     nodeV1: "/v1/node",
     openApiV1: "/v1/openapi.json",
     sourcesV1: "/v1/sources",
