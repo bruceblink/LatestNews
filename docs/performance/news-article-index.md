@@ -22,11 +22,19 @@ Node SQLite 使用 FTS5 保存标题检索数据，并提供重建入口。启�
 
 当前切片只验证 Node better-sqlite3 的 FTS5。Cloudflare D1 文档列出 FTS5 为支持的 SQLite 扩展，但仓库没有目标 Pages D1 的真实数据库验收证据。Electron 使用 JSON 缓存，不接入这套 SQLite 索引。
 
-2026-11-23 的环境探针没有发现 Wrangler 配置、D1 绑定、`LATESTNEWS_DB`、Cloudflare 凭据或目标 Pages 地址。生成的 `dist/_worker.js/wrangler.json` 只有兼容性配置。因此本轮不能验证目标 D1 的建表、FTS5、重启持久化和搜索 API。
+2026-11-23 的初始环境探针没有发现本地 Wrangler 配置、D1 绑定、`LATESTNEWS_DB`、Cloudflare 凭据或目标 Pages 地址。随后通过 Cloudflare 控制台连接补充了生产绑定。
 
 同日对 `https://news.likanug.top` 进行只读探针。OpenAPI 已包含 `/api/v1/articles/search`。部署健康接口返回 HTTP 200，但 `data.checks.cache.status` 为 `unavailable`。文章搜索请求返回 HTTP 503，消息为缓存不可写。当前证据证明 API 已部署，尚未证明线上 D1 绑定已在运行时生效。
 
-Cloudflare API 只读检查确认账户中存在 `latestnews` D1 数据库，数据库当前有 `cache` 和 `user` 表。`latestnews` Pages 项目的生产配置没有返回 `d1_databases.LATESTNEWS_DB`。要完成线上验收，需要在 Pages 生产配置中把 `LATESTNEWS_DB` 绑定到该数据库，然后重新部署。
+Cloudflare API 检查确认账户中存在 `latestnews` D1 数据库。生产绑定已应用到 Pages 项目，配置为 `LATESTNEWS_DB` → `67688767-d6c3-452d-b8ac-6974f6fbefaa`。
+
+生产验收结果如下。
+
+- 部署 `026f15c4` 的 queued、initialize、clone、build、deploy 阶段全部成功。
+- 健康接口的 `cache.status` 为 `ok`。
+- D1 已创建 `articles`、`article_sources` 和 `article_search` 表。
+- 采集写入后，三张文章索引表各有 16 行。
+- 重试部署后，`GET /api/v1/articles/search?q=Nvidia` 返回 `searchMode: "fts"` 和 1 条结果。
 
 Node 服务提供 `GET /api/v1/articles/search`。响应中的 `searchMode` 会标记 `fts`、`like` 或 `unavailable`。文章索引不可用时返回 HTTP 503，并保留来源读取路径。
 

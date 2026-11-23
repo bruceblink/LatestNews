@@ -186,7 +186,7 @@ Node/Docker 支持完整服务端采集和受信插件，Pages 使用兼容 Work
 
 2026-11-23 线上只读探针确认 `https://news.likanug.top` 的 OpenAPI 已发布文章搜索接口。部署健康接口返回 HTTP 200，但缓存状态为 `unavailable`。文章搜索返回 HTTP 503，线上 D1 读写和重启持久化仍未验收。
 
-Cloudflare API 只读检查确认 `latestnews` D1 数据库存在，Pages 项目生产配置没有返回 `d1_databases.LATESTNEWS_DB`。线上验收需要补充该绑定并重新部署。
+Cloudflare API 检查确认 `latestnews` D1 数据库已绑定到 Pages 生产配置的 `LATESTNEWS_DB`。部署 `026f15c4` 的所有阶段成功，健康接口缓存状态为 `ok`。D1 已创建 `articles`、`article_sources` 和 `article_search` 表，采集写入后各有 16 行。重试部署后，`/api/v1/articles/search?q=Nvidia` 返回 `searchMode: "fts"` 和 1 条结果，线上 D1 读写、FTS5 和重启持久化已取得证据。
 
 ### 切片通用交付、顺序与安全限制
 
