@@ -24,6 +24,8 @@ Node SQLite 使用 FTS5 保存标题检索数据，并提供重建入口。启�
 
 2026-11-23 的环境探针没有发现 Wrangler 配置、D1 绑定、`LATESTNEWS_DB`、Cloudflare 凭据或目标 Pages 地址。生成的 `dist/_worker.js/wrangler.json` 只有兼容性配置。因此本轮不能验证目标 D1 的建表、FTS5、重启持久化和搜索 API。
 
+同日对 `https://news.likanug.top` 进行只读探针。OpenAPI 已包含 `/api/v1/articles/search`。部署健康接口返回 HTTP 200，但 `data.checks.cache.status` 为 `unavailable`。文章搜索请求返回 HTTP 503，消息为缓存不可写。当前证据证明 API 已部署，尚未证明线上 D1 绑定已在运行时生效。
+
 Node 服务提供 `GET /api/v1/articles/search`。响应中的 `searchMode` 会标记 `fts`、`like` 或 `unavailable`。文章索引不可用时返回 HTTP 503，并保留来源读取路径。
 
 ## 验收

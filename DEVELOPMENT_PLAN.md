@@ -184,6 +184,8 @@ Node/Docker 支持完整服务端采集和受信插件，Pages 使用兼容 Work
 
 2026-11-23 已完成 N4-E 首个 Node SQLite 切片。新增文章记录、来源映射、规范化 URL、原始 ID、内容指纹和可选 `eventId`。缓存写入会尝试幂等 Upsert，文章索引失败只记录警告。Node better-sqlite3 已验证 FTS5 建表、启动缺行重建、文件重启持久化、失败回退、英文查询、中文短查询模式、事件关联和 `/api/v1/articles/search`。1,000 篇测试文章、200 次查询的本地基准为 SQLite 文件 806,912 bytes、P95 0.184 ms，复现命令为 `pnpm performance:article-index`。Pages D1 的 FTS5 兼容性已有官方文档依据，但目标 D1 尚未实测。Electron 仍使用 JSON 缓存，不接入该索引。真实 D1 验收和中文分词质量继续作为后续切片。
 
+2026-11-23 线上只读探针确认 `https://news.likanug.top` 的 OpenAPI 已发布文章搜索接口。部署健康接口返回 HTTP 200，但缓存状态为 `unavailable`。文章搜索返回 HTTP 503，线上 D1 读写和重启持久化仍未验收。
+
 ### 切片通用交付、顺序与安全限制
 
 顺序为 N4-B 计划 PR → 审阅与合并 → N4-B 代码 PR → N4-C 基准 PR → N4-D → N4-E。阶段一仅包括 N4-B；N4-C 需要单独的对照测试与评审。每个 PR 包含影响文件、用例、实测与未测项、向后兼容声明及回退策略。运行 `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run`，影响构建时运行 `pnpm build`；基准脚本需在隔离缓存和回环网络下运行。
