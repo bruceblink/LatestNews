@@ -28,4 +28,14 @@ Node 服务提供 `GET /api/v1/articles/search`。文章索引不可用时返回
 
 使用内存 SQLite 运行文章索引测试，覆盖重复 URL、原始 ID、内容指纹、标题更新、来源映射、事件关联、FTS 重建和查询结果。完整仓库检查继续使用 `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run` 和 `pnpm build`。
 
-中文分词、短查询限制、索引大小和查询 P95 需要后续使用真实标注数据和目标运行时补充测量。
+Node 22.23.4、better-sqlite3 13.0.3、1,000 篇测试文章和 200 次查询的基准结果如下。
+
+| 指标 | 结果 |
+| --- | ---: |
+| SQLite 文件大小 | 806,912 bytes |
+| SQLite 页数 | 197 |
+| 查询 P50 | 0.150 ms |
+| 查询 P95 | 0.183 ms |
+| 查询 P99 | 0.253 ms |
+
+复现命令为 `pnpm performance:article-index`。该结果只代表本地 Node SQLite 数据集。中文分词质量和目标 Pages D1 的实际查询 P95 仍需要独立测量。
