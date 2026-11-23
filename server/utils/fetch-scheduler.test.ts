@@ -2,6 +2,8 @@ import { it, expect, describe } from "vitest";
 
 import { createFetchScheduler } from "./fetch-scheduler";
 
+import type { CollectionTraceSpan } from "./collection-trace";
+
 describe("fetch scheduler", () => {
     it("limits total and per-key concurrency while preserving fair progress", async () => {
         const releases = [createDeferred<number>(), createDeferred<number>(), createDeferred<number>()];
@@ -97,6 +99,66 @@ describe("fetch scheduler", () => {
         release.resolve();
         await expect(running).resolves.toBeUndefined();
         expect(scheduler.queuedCount).toBe(0);
+    });
+
+    it("records request and queue spans", async () => {
+        const spans: CollectionTraceSpan[] = [];
+        const scheduler = createFetchScheduler({
+            maxConcurrent: 1,
+            maxPerKey: 1,
+            maxQueued: 1,
+            queueTimeoutMs: 100,
+            taskTimeoutMs: 100,
+            trace: {
+                record(span: CollectionTraceSpan) {
+                    spans.push(span);
+                },
+            },
+        });
+
+        await expect(scheduler.run("https://example.test", async () => "ok")).resolves.toBe("ok");
+
+        expect(spans.map(({ phase }) => phase)).toEqual(expect.arrayContaining(["http.queue", "http.request"]));
+        expect(new Set(spans.map(({ fetchId }) => fetchId)).size).toBe(1);
+        expect(spans.every(({ outcome }) => outcome === "success")).toBe(true);
+    });
+
+    it("records queued timeout and ignores trace sink failures", async () => {
+        const spans: CollectionTraceSpan[] = [];
+        const release = createDeferred<void>();
+        const scheduler = createFetchScheduler({
+            maxConcurrent: 1,
+            maxPerKey: 1,
+            maxQueued: 1,
+            queueTimeoutMs: 10,
+            taskTimeoutMs: 100,
+            trace: {
+                record(span: CollectionTraceSpan) {
+                    spans.push(span);
+                },
+            },
+        });
+        const running = scheduler.run("same", () => release.promise);
+        const waiting = scheduler.run("same", async () => undefined);
+
+        await expect(waiting).rejects.toMatchObject({ code: "TIMEOUT" });
+        expect(spans).toContainEqual(expect.objectContaining({ phase: "http.queue", outcome: "timeout" }));
+        release.resolve();
+        await expect(running).resolves.toBeUndefined();
+
+        const sinkFailureScheduler = createFetchScheduler({
+            maxConcurrent: 1,
+            maxPerKey: 1,
+            maxQueued: 0,
+            queueTimeoutMs: 100,
+            taskTimeoutMs: 100,
+            trace: {
+                record() {
+                    throw new Error("trace sink failed");
+                },
+            },
+        });
+        await expect(sinkFailureScheduler.run("same", async () => "ok")).resolves.toBe("ok");
     });
 });
 

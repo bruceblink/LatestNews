@@ -6,6 +6,14 @@ import { normalizeNewsItemsWithQuality } from "@shared/news-item-schema";
 
 import { CrawlerPlatformError } from "../../crawler-platform/core/errors";
 import { createCrawlerTaskQueue } from "../../crawler-platform/host/task-queue";
+import {
+    recordTrace,
+    monotonicNow,
+    createTraceId,
+    getTraceOutcome,
+    type CollectionTrace,
+    type CollectionTraceOutcome,
+} from "./collection-trace";
 
 export interface SourceExecutionContext {
     sourceId: SourceID;
@@ -32,10 +40,24 @@ export interface SourceEngineOptions extends SourceEngineQueueOptions {
     onFailure: (id: SourceID, durationMs: number, error: unknown) => void;
     onAdapter?: (id: SourceID, descriptor: SourceDescriptor) => void;
     now?: () => number;
+    trace?: CollectionTrace;
 }
 
 export interface SourceCollectOptions {
     signal?: AbortSignal;
+    requestId?: string;
+}
+
+interface SourceTraceState {
+    trace: CollectionTrace;
+    collectionId: string;
+    requestId?: string;
+    queuedAt: number;
+    adapterStartedAt?: number;
+    collectEndedAt?: number;
+    normalizeStartedAt?: number;
+    normalizeEndedAt?: number;
+    recorded: boolean;
 }
 
 interface SourceCollection {
@@ -44,10 +66,7 @@ interface SourceCollection {
     callers: number;
 }
 
-/**
- * Shared source execution boundary for legacy getters, trusted plugins and configured sources.
- * Adapters own collection details; the engine owns scheduling, normalization and health hooks.
- */
+/** Shared source execution boundary for legacy getters, trusted plugins and configured sources. */
 export function createSourceEngine({
     adapters: initialAdapters = [],
     resolveAdapter,
@@ -59,14 +78,14 @@ export function createSourceEngine({
     maxConcurrent = 8,
     maxQueued = 100,
     queueTimeoutMs = 8_000,
+    trace: initialTrace,
 }: SourceEngineOptions) {
     const adapters = new Map<SourceID, SourceAdapter>();
-    for (const adapter of initialAdapters) {
-        registerAdapter(adapter);
-    }
+    for (const adapter of initialAdapters) registerAdapter(adapter);
     const inflightRequests = new Map<SourceID, SourceCollection>();
     const queue = createCrawlerTaskQueue({ maxConcurrent, maxQueued, queueTimeoutMs });
     let closed = false;
+    let trace = initialTrace;
 
     return {
         collect,
@@ -82,17 +101,18 @@ export function createSourceEngine({
         register(adapter: SourceAdapter) {
             registerAdapter(adapter);
         },
+        setTrace(nextTrace?: CollectionTrace) {
+            trace = nextTrace;
+        },
         listDescriptors(): SourceDescriptor[] {
             return [...adapters.values()].map(({ descriptor }) => descriptor);
         },
     };
 
-    function collect(id: SourceID, { signal }: SourceCollectOptions = {}): Promise<NewsItem[]> {
+    function collect(id: SourceID, { signal, requestId }: SourceCollectOptions = {}): Promise<NewsItem[]> {
         if (closed || signal?.aborted) return Promise.reject(cancelledCollection(id));
-
         const pending = inflightRequests.get(id);
-        const collection = pending && !pending.controller.signal.aborted ? pending : startCollection(id);
-        // A caller without a signal keeps the collection alive until the source settles.
+        const collection = pending && !pending.controller.signal.aborted ? pending : startCollection(id, requestId);
         collection.callers += 1;
         if (!signal) return collection.result;
 
@@ -116,26 +136,52 @@ export function createSourceEngine({
         });
     }
 
-    function startCollection(id: SourceID): SourceCollection {
+    function startCollection(id: SourceID, requestId?: string): SourceCollection {
         const controller = new AbortController();
         const startTime = now();
+        const traceState: SourceTraceState | undefined = trace
+            ? {
+                  trace,
+                  collectionId: createTraceId("collection"),
+                  ...(requestId ? { requestId } : {}),
+                  queuedAt: monotonicNow(),
+                  recorded: false,
+              }
+            : undefined;
+
         const result = queue
             .run(async (signal) => {
+                if (traceState) traceState.adapterStartedAt = monotonicNow();
                 const adapter = adapters.get(id) ?? resolveAdapter?.(id);
-                if (!adapter) throw new Error(`Source ${id} is not registered.`);
+                if (!adapter) throw new Error("Source " + id + " is not registered.");
                 onAdapter?.(id, adapter.descriptor);
-                return adapter.collect({ sourceId: id, signal, now });
+                try {
+                    const items = await adapter.collect({ sourceId: id, signal, now });
+                    if (traceState) traceState.collectEndedAt = monotonicNow();
+                    return items;
+                } catch (error) {
+                    if (traceState) traceState.collectEndedAt = monotonicNow();
+                    throw error;
+                }
             }, controller.signal)
             .then((items) => {
                 if (controller.signal.aborted) throw cancelledCollection(id);
-                if (!Array.isArray(items)) throw new Error(`Source ${id} returned a non-array result.`);
+                if (!Array.isArray(items)) throw new Error("Source " + id + " returned a non-array result.");
+                if (traceState) traceState.normalizeStartedAt = monotonicNow();
                 const normalized = normalizeNewsItemsWithQuality(items, { sourceId: id });
+                if (traceState) traceState.normalizeEndedAt = monotonicNow();
                 const completedAt = now();
                 onSuccess(id, completedAt - startTime, normalized.items.length);
                 onQuality?.(id, normalized.quality, completedAt);
                 return normalized.items;
             })
+            .then((items) => {
+                if (traceState) finishSourceTrace(traceState, "success", id);
+                return items;
+            })
             .catch((error: unknown) => {
+                const outcome = controller.signal.aborted ? "cancelled" : getTraceOutcome(error);
+                if (traceState) finishSourceTrace(traceState, outcome, id);
                 if (controller.signal.aborted) throw cancelledCollection(id);
                 if (!isCancellationError(error)) onFailure(id, now() - startTime, error);
                 throw error;
@@ -152,14 +198,49 @@ export function createSourceEngine({
     function registerAdapter(adapter: SourceAdapter) {
         const existing = adapters.get(adapter.descriptor.id);
         if (existing && existing !== adapter) {
-            throw new Error(`Source ${adapter.descriptor.id} is already registered.`);
+            throw new Error("Source " + adapter.descriptor.id + " is already registered.");
         }
         adapters.set(adapter.descriptor.id, adapter);
     }
 }
 
+function finishSourceTrace(state: SourceTraceState, outcome: CollectionTraceOutcome, sourceId: SourceID) {
+    if (state.recorded) return;
+    state.recorded = true;
+    const finishedAt = monotonicNow();
+    const queueEndedAt = state.adapterStartedAt ?? finishedAt;
+    recordTrace(state.trace, {
+        phase: "source.queue",
+        durationMs: queueEndedAt - state.queuedAt,
+        outcome,
+        sourceId,
+        requestId: state.requestId,
+        collectionId: state.collectionId,
+    });
+    if (state.adapterStartedAt !== undefined) {
+        recordTrace(state.trace, {
+            phase: "source.collect",
+            durationMs: (state.collectEndedAt ?? finishedAt) - state.adapterStartedAt,
+            outcome,
+            sourceId,
+            requestId: state.requestId,
+            collectionId: state.collectionId,
+        });
+    }
+    if (state.normalizeStartedAt !== undefined) {
+        recordTrace(state.trace, {
+            phase: "source.normalize",
+            durationMs: (state.normalizeEndedAt ?? finishedAt) - state.normalizeStartedAt,
+            outcome,
+            sourceId,
+            requestId: state.requestId,
+            collectionId: state.collectionId,
+        });
+    }
+}
+
 function cancelledCollection(id: SourceID) {
-    return new CrawlerPlatformError("CANCELLED", `Collection for ${id} was cancelled.`);
+    return new CrawlerPlatformError("CANCELLED", "Collection for " + id + " was cancelled.");
 }
 
 export function isCancellationError(error: unknown) {
