@@ -59,6 +59,10 @@ describe("cache database availability", () => {
             const items = [{ id: "article-1", title: "News", url: "https://example.com/news/1" }];
             await table!.set("juejin", items);
             expect(await table!.get("juejin")).toMatchObject({ id: "juejin", items });
+            await expect(table!.searchArticles({ query: "News" })).resolves.toMatchObject({
+                status: "ok",
+                items: [expect.objectContaining({ title: "News", sourceIds: ["juejin"] })],
+            });
             expect(getRuntimeDatabase).toHaveBeenCalledOnce();
         } finally {
             await database.dispose();

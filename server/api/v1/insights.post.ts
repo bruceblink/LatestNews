@@ -39,7 +39,7 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
             return [];
         })) ?? [];
 
-    return await resolveNewsInsights({
+    const response = await resolveNewsInsights({
         sourceIds: ids,
         cacheEntries: caches,
         invalidSourceIds: invalidIds,
@@ -55,6 +55,12 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
         onFetchError: (error, id) => logger.error(`fetch ${id} insights failed`, error),
         onCacheError: (error, id) => logger.warn(`Could not save ${id} insights cache.`, error),
     });
+
+    if (cacheTable && response.data.topicEvents.length) {
+        event.waitUntil(cacheTable.updateArticleEventIds(response.data.topicEvents));
+    }
+
+    return response;
 });
 
 function normalizeSourceIds(sources: string[]) {

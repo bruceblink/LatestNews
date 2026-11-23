@@ -1,15 +1,19 @@
 import type { Database } from "db0";
-import type { NewsItem } from "@shared/types";
+import type { NewsItem, SourceID } from "@shared/types";
+import type { TopicEvent } from "@shared/news-insights";
 
 import process from "node:process";
 import { useDatabase } from "nitro/database";
 
 import { logger } from "../utils/logger";
+import { ArticleIndex } from "./article-index";
 
 import type { CacheRow, CacheInfo } from "../types";
+import type { ArticleIndexSearchQuery, ArticleIndexSearchResult } from "./article-index";
 
 export class Cache {
     private db: Database;
+    private articleIndex?: ArticleIndex;
     constructor(db: Database) {
         this.db = db;
     }
@@ -26,6 +30,13 @@ export class Cache {
               `
             )
             .run();
+        try {
+            this.articleIndex = new ArticleIndex(this.db);
+            await this.articleIndex.init();
+        } catch (error) {
+            this.articleIndex = undefined;
+            logger.warn("Could not initialize article index. Source cache remains available.", error);
+        }
         logger.success("init cache table");
     }
 
@@ -45,7 +56,31 @@ export class Cache {
             )
             .run(key, JSON.stringify(value), now);
         if (!result.success) throw new Error("News cache write failed.");
+        try {
+            await this.articleIndex?.upsertSourceItems(key as SourceID, value);
+        } catch (error) {
+            logger.warn(`Could not update article index for ${key}.`, error);
+        }
         logger.success(`set ${key} cache`);
+    }
+
+    async updateArticleEventIds(topicEvents: TopicEvent[]) {
+        try {
+            return (await this.articleIndex?.updateEventIds(topicEvents)) ?? 0;
+        } catch (error) {
+            logger.warn("Could not update article event IDs.", error);
+            return 0;
+        }
+    }
+
+    async searchArticles(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {
+        if (!this.articleIndex) return { status: "unavailable", items: [] };
+        return this.articleIndex.search(query);
+    }
+
+    async rebuildArticleSearchIndex() {
+        if (!this.articleIndex) return { status: "unavailable" as const, indexed: 0 };
+        return this.articleIndex.rebuildSearchIndex();
     }
 
     async get(key: string): Promise<CacheInfo | undefined> {
