@@ -26,6 +26,8 @@ Node SQLite 使用 FTS5 保存标题检索数据，并提供重建入口。启�
 
 同日对 `https://news.likanug.top` 进行只读探针。OpenAPI 已包含 `/api/v1/articles/search`。部署健康接口返回 HTTP 200，但 `data.checks.cache.status` 为 `unavailable`。文章搜索请求返回 HTTP 503，消息为缓存不可写。当前证据证明 API 已部署，尚未证明线上 D1 绑定已在运行时生效。
 
+Cloudflare API 只读检查确认账户中存在 `latestnews` D1 数据库，数据库当前有 `cache` 和 `user` 表。`latestnews` Pages 项目的生产配置没有返回 `d1_databases.LATESTNEWS_DB`。要完成线上验收，需要在 Pages 生产配置中把 `LATESTNEWS_DB` 绑定到该数据库，然后重新部署。
+
 Node 服务提供 `GET /api/v1/articles/search`。响应中的 `searchMode` 会标记 `fts`、`like` 或 `unavailable`。文章索引不可用时返回 HTTP 503，并保留来源读取路径。
 
 ## 验收

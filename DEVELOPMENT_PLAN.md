@@ -186,6 +186,8 @@ Node/Docker 支持完整服务端采集和受信插件，Pages 使用兼容 Work
 
 2026-11-23 线上只读探针确认 `https://news.likanug.top` 的 OpenAPI 已发布文章搜索接口。部署健康接口返回 HTTP 200，但缓存状态为 `unavailable`。文章搜索返回 HTTP 503，线上 D1 读写和重启持久化仍未验收。
 
+Cloudflare API 只读检查确认 `latestnews` D1 数据库存在，Pages 项目生产配置没有返回 `d1_databases.LATESTNEWS_DB`。线上验收需要补充该绑定并重新部署。
+
 ### 切片通用交付、顺序与安全限制
 
 顺序为 N4-B 计划 PR → 审阅与合并 → N4-B 代码 PR → N4-C 基准 PR → N4-D → N4-E。阶段一仅包括 N4-B；N4-C 需要单独的对照测试与评审。每个 PR 包含影响文件、用例、实测与未测项、向后兼容声明及回退策略。运行 `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run`，影响构建时运行 `pnpm build`；基准脚本需在隔离缓存和回环网络下运行。
