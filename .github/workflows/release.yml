@@ -265,8 +265,17 @@ jobs:
       - name: Check out source and tags
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ inputs.artifact_run_id && github.sha || env.RELEASE_TAG }}
           fetch-depth: 0
+
+      - name: Prepare local recovery tag
+        if: inputs.artifact_run_id
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_RUN_ID: ${{ inputs.artifact_run_id }}
+        run: |
+          source_sha=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}" --jq .head_sha)
+          git tag --force "${RELEASE_TAG}" "${source_sha}"
 
       - name: Check release tag and package version
         run: |
