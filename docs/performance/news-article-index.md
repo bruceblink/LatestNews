@@ -22,6 +22,8 @@ Node SQLite 使用 FTS5 保存标题检索数据，并提供重建入口。启�
 
 当前切片只验证 Node better-sqlite3 的 FTS5。Cloudflare D1 文档列出 FTS5 为支持的 SQLite 扩展，但仓库没有目标 Pages D1 的真实数据库验收证据。Electron 使用 JSON 缓存，不接入这套 SQLite 索引。
 
+2026-11-23 的环境探针没有发现 Wrangler 配置、D1 绑定、`LATESTNEWS_DB`、Cloudflare 凭据或目标 Pages 地址。生成的 `dist/_worker.js/wrangler.json` 只有兼容性配置。因此本轮不能验证目标 D1 的建表、FTS5、重启持久化和搜索 API。
+
 Node 服务提供 `GET /api/v1/articles/search`。响应中的 `searchMode` 会标记 `fts`、`like` 或 `unavailable`。文章索引不可用时返回 HTTP 503，并保留来源读取路径。
 
 ## 验收
