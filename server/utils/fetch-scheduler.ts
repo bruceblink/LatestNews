@@ -1,3 +1,12 @@
+import {
+    recordTrace,
+    monotonicNow,
+    createTraceId,
+    getTraceOutcome,
+    type CollectionTrace,
+    type CollectionTraceOutcome,
+} from "./collection-trace";
+
 export type FetchSchedulerErrorCode = "CANCELLED" | "QUEUE_FULL" | "TIMEOUT";
 
 export interface FetchSchedulerOptions {
@@ -6,6 +15,7 @@ export interface FetchSchedulerOptions {
     maxQueued: number;
     queueTimeoutMs: number;
     taskTimeoutMs: number;
+    trace?: CollectionTrace;
 }
 
 interface FetchJob<T> {
@@ -20,6 +30,12 @@ interface FetchJob<T> {
     queueTimer?: ReturnType<typeof setTimeout>;
     taskTimer?: ReturnType<typeof setTimeout>;
     removeExternalAbort?: () => void;
+    trace?: CollectionTrace;
+    fetchId?: string;
+    queuedAt?: number;
+    startedAt?: number;
+    traceOutcome?: CollectionTraceOutcome;
+    traceRecorded?: boolean;
 }
 
 export class FetchSchedulerError extends Error {
@@ -39,6 +55,7 @@ export function createFetchScheduler(options: FetchSchedulerOptions) {
     const jobs: FetchJob<unknown>[] = [];
     const activeByKey = new Map<string, number>();
     let activeCount = 0;
+    let trace = options.trace;
 
     return {
         run<T>(key: string, task: (signal: AbortSignal) => Promise<T>, externalSignal?: AbortSignal): Promise<T> {
@@ -52,9 +69,14 @@ export function createFetchScheduler(options: FetchSchedulerOptions) {
                     started: false,
                     settled: false,
                 };
+                if (trace) {
+                    job.trace = trace;
+                    job.fetchId = createTraceId("fetch");
+                    job.queuedAt = monotonicNow();
+                }
 
                 if (externalSignal?.aborted) {
-                    reject(createCancelledError());
+                    settleRejected(job, createCancelledError());
                     return;
                 }
 
@@ -76,7 +98,7 @@ export function createFetchScheduler(options: FetchSchedulerOptions) {
                 }
                 if (jobs.length >= options.maxQueued) {
                     job.removeExternalAbort();
-                    reject(new FetchSchedulerError("QUEUE_FULL", "Fetch request queue is full."));
+                    settleRejected(job, new FetchSchedulerError("QUEUE_FULL", "Fetch request queue is full."));
                     return;
                 }
 
@@ -89,6 +111,9 @@ export function createFetchScheduler(options: FetchSchedulerOptions) {
                 }, options.queueTimeoutMs);
                 jobs.push(job as FetchJob<unknown>);
             });
+        },
+        setTrace(nextTrace?: CollectionTrace) {
+            trace = nextTrace;
         },
         get activeCount() {
             return activeCount;
@@ -105,6 +130,7 @@ export function createFetchScheduler(options: FetchSchedulerOptions) {
         if (job.queueTimer) clearTimeout(job.queueTimer);
         job.started = true;
         job.controller = new AbortController();
+        if (job.trace) job.startedAt = monotonicNow();
         activeCount += 1;
         activeByKey.set(job.key, (activeByKey.get(job.key) ?? 0) + 1);
         job.taskTimer = setTimeout(() => {
@@ -127,6 +153,7 @@ export function createFetchScheduler(options: FetchSchedulerOptions) {
 
     function release<T>(job: FetchJob<T>) {
         if (!job.started) return;
+        finishFetchTrace(job);
         if (job.taskTimer) clearTimeout(job.taskTimer);
         job.removeExternalAbort?.();
         activeCount -= 1;
@@ -159,21 +186,56 @@ export function createFetchScheduler(options: FetchSchedulerOptions) {
     function settleResolved<T>(job: FetchJob<T>, value: T) {
         if (job.settled) return;
         job.settled = true;
+        job.traceOutcome = "success";
         job.resolve(value);
     }
 
     function settleRejected<T>(job: FetchJob<T>, error: unknown) {
         if (job.settled) return;
         job.settled = true;
+        job.traceOutcome = getTraceOutcome(error);
         job.reject(error);
+        if (!job.started) finishFetchTrace(job);
+    }
+
+    function finishFetchTrace<T>(job: FetchJob<T>) {
+        if (!job.trace || job.traceRecorded) return;
+        job.traceRecorded = true;
+        const finishedAt = monotonicNow();
+        const outcome = job.traceOutcome ?? "error";
+        if (job.startedAt === undefined) {
+            recordTrace(job.trace, {
+                phase: "http.queue",
+                durationMs: finishedAt - (job.queuedAt ?? finishedAt),
+                outcome,
+                fetchId: job.fetchId,
+                key: job.key,
+            });
+            return;
+        }
+        recordTrace(job.trace, {
+            phase: "http.queue",
+            durationMs: job.startedAt - (job.queuedAt ?? job.startedAt),
+            outcome,
+            fetchId: job.fetchId,
+            key: job.key,
+        });
+        recordTrace(job.trace, {
+            phase: "http.request",
+            durationMs: finishedAt - job.startedAt,
+            outcome,
+            fetchId: job.fetchId,
+            key: job.key,
+        });
     }
 }
 
 function validateOptions(options: FetchSchedulerOptions) {
     for (const [name, value] of Object.entries(options)) {
+        if (name === "trace") continue;
         const minimum = name === "maxQueued" ? 0 : 1;
         if (!Number.isInteger(value) || value < minimum) {
-            throw new RangeError(`${name} must be ${minimum === 0 ? "a nonnegative" : "a positive"} integer.`);
+            throw new RangeError(name + " must be " + (minimum === 0 ? "a nonnegative" : "a positive") + " integer.");
         }
     }
 }

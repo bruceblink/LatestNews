@@ -3,6 +3,8 @@ import { $fetch, type FetchOptions, type FetchResponse } from "ofetch";
 
 import { createFetchScheduler } from "./fetch-scheduler";
 
+import type { CollectionTrace } from "./collection-trace";
+
 const RETRY_DELAY_MS = 500;
 
 export const fetchSchedulerDefaults = {
@@ -45,6 +47,10 @@ const baseFetch = $fetch.create(
 );
 
 const fetchScheduler = createFetchScheduler(fetchSchedulerDefaults);
+
+export function setFetchTrace(trace?: CollectionTrace) {
+    fetchScheduler.setTrace(trace);
+}
 export const legacySourceSignal = new AsyncLocalStorage<AbortSignal>();
 
 function normalizeHeaders(h?: FetchOptions["headers"]): Record<string, string> {

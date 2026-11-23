@@ -14,6 +14,7 @@ import { createSourceEngine } from "./source-engine";
 import { recordSourceAdapter, recordSourceFailure, recordSourceQuality, recordSourceSuccess } from "./source-health";
 
 import type { SourceAdapter } from "./source-engine";
+import type { CollectionTrace } from "./collection-trace";
 
 interface SourceFetcherQueueOptions {
     /** Maximum number of source collectors that may execute at the same time. */
@@ -30,6 +31,7 @@ interface CreateSourceFetcherOptions extends SourceFetcherQueueOptions {
     onQuality?: (id: SourceID, quality: NewsItemsNormalizationQuality, sampledAt: number) => void;
     onFailure: (id: SourceID, durationMs: number, error: unknown) => void;
     now?: () => number;
+    trace?: CollectionTrace;
 }
 
 export function createSourceFetcher({
@@ -41,6 +43,7 @@ export function createSourceFetcher({
     maxConcurrent,
     maxQueued,
     queueTimeoutMs,
+    trace,
 }: CreateSourceFetcherOptions) {
     const engine = createSourceEngine({
         resolveAdapter: (id): SourceAdapter => ({
@@ -54,6 +57,7 @@ export function createSourceFetcher({
         maxConcurrent,
         maxQueued,
         queueTimeoutMs,
+        trace,
     });
 
     return engine.collect;
@@ -89,6 +93,10 @@ const sourceEngine = createSourceEngine({
 
 export const fetchSourceItems = sourceEngine.collect;
 export const hasSourceGetter = sourceEngine.hasSource;
+
+export function setSourceCollectionTrace(trace?: CollectionTrace) {
+    sourceEngine.setTrace(trace);
+}
 
 export function stopSourceCollection() {
     sourceEngine.close();

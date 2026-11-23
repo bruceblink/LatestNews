@@ -4,6 +4,8 @@ import { it, vi, expect, describe } from "vitest";
 
 import { createSourceEngine } from "./source-engine";
 
+import type { CollectionTraceSpan } from "./collection-trace";
+
 const sourceId = "engine-test" as SourceID;
 
 function createItems(): NewsItem[] {
@@ -227,5 +229,44 @@ describe("createSourceEngine", () => {
         await expect(queued).rejects.toMatchObject({ code: "CANCELLED" });
         release(createItems());
         await expect(running).resolves.toHaveLength(1);
+    });
+
+    it("records optional phase spans and shares a collection id", async () => {
+        const spans: CollectionTraceSpan[] = [];
+        const collect = vi.fn(async () => createItems());
+        const engine = createSourceEngine({
+            adapters: [{ descriptor: { id: sourceId, kind: "legacy" }, collect }],
+            onSuccess: vi.fn(),
+            onFailure: vi.fn(),
+            trace: {
+                record(span: CollectionTraceSpan) {
+                    spans.push(span);
+                },
+            },
+        });
+
+        await Promise.all([engine.collect(sourceId), engine.collect(sourceId)]);
+
+        expect(collect).toHaveBeenCalledOnce();
+        expect(spans.map(({ phase }) => phase)).toEqual(
+            expect.arrayContaining(["source.queue", "source.collect", "source.normalize"])
+        );
+        expect(new Set(spans.map(({ collectionId }) => collectionId)).size).toBe(1);
+        expect(spans.every(({ outcome }) => outcome === "success")).toBe(true);
+    });
+
+    it("ignores trace sink failures", async () => {
+        const engine = createSourceEngine({
+            adapters: [{ descriptor: { id: sourceId, kind: "legacy" }, collect: async () => createItems() }],
+            onSuccess: vi.fn(),
+            onFailure: vi.fn(),
+            trace: {
+                record() {
+                    throw new Error("trace sink failed");
+                },
+            },
+        });
+
+        await expect(engine.collect(sourceId)).resolves.toHaveLength(1);
     });
 });
