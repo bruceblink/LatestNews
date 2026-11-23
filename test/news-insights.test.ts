@@ -1,7 +1,15 @@
 import type { NewsItem, SourceID, SourceResponse } from "@shared/types";
 
 import { it, expect, describe } from "vitest";
-import { normalizeNewsUrl, createNewsInsights, extractInsightTerms } from "@shared/news-insights";
+import {
+    normalizeNewsUrl,
+    createTopicEvents,
+    createNewsInsights,
+    collectInsightItems,
+    extractInsightTerms,
+} from "@shared/news-insights";
+
+import { NEWS_EVENT_LABELED_PAIRS } from "./fixtures/news-event-labeled-pairs";
 
 const NOW = Date.parse("2026-07-05T08:00:00.000Z");
 
@@ -134,6 +142,103 @@ describe("news insights", () => {
         expect(insights.topicEvents[0].keywords).toEqual(expect.arrayContaining(["openai", "gpt-5"]));
         expect(insights.topicEvents[0].firstPublishedAt).toBe(NOW - 30 * 60 * 1000);
         expect(insights.topicEvents[0].latestPublishedAt).toBe(NOW - 10 * 60 * 1000);
+        expect(insights.topicEvents[0].eventId).toMatch(/^event-v1-/);
+    });
+
+    it("keeps eventId stable when a later report is added", () => {
+        const original = createNewsInsights(
+            [
+                createResponse("weibo" as SourceID, "Weibo", [
+                    createItem("weibo-gpt", "OpenAI 发布 GPT-5 模型", "https://news.example.com/gpt5", 30),
+                ]),
+                createResponse("v2ex" as SourceID, "V2EX", [
+                    createItem("v2ex-gpt", "GPT-5 发布，OpenAI 更新模型", "https://news.example.com/gpt5?ref=v2ex", 10),
+                ]),
+            ],
+            { generatedAt: NOW }
+        );
+        const withLaterReport = createNewsInsights(
+            [
+                createResponse("weibo" as SourceID, "Weibo", [
+                    createItem("weibo-gpt", "OpenAI 发布 GPT-5 模型", "https://news.example.com/gpt5", 30),
+                ]),
+                createResponse("v2ex" as SourceID, "V2EX", [
+                    createItem("v2ex-gpt", "GPT-5 发布，OpenAI 更新模型", "https://news.example.com/gpt5?ref=v2ex", 10),
+                ]),
+                createResponse("ithome" as SourceID, "IT Home", [
+                    createItem("ithome-gpt", "OpenAI GPT-5 模型能力解读", "https://ithome.example.com/openai-gpt5", 1),
+                ]),
+            ],
+            { generatedAt: NOW }
+        );
+
+        expect(withLaterReport.topicEvents[0].eventId).toBe(original.topicEvents[0].eventId);
+        expect(withLaterReport.topicEvents[0].id).not.toBe(original.topicEvents[0].id);
+    });
+
+    it("does not merge two events through a bridge headline", () => {
+        const items = collectInsightItems(
+            [
+                createResponse("weibo" as SourceID, "Weibo", [
+                    createItem("openai", "OpenAI GPT-5 模型", "https://news.example.com/openai", 30),
+                ]),
+                createResponse("v2ex" as SourceID, "V2EX", [
+                    createItem(
+                        "bridge",
+                        "OpenAI GPT-5 模型与 Anthropic Claude-4 模型对比",
+                        "https://news.example.com/bridge",
+                        20
+                    ),
+                ]),
+                createResponse("ithome" as SourceID, "IT Home", [
+                    createItem("anthropic", "Anthropic Claude-4 模型", "https://news.example.com/anthropic", 10),
+                ]),
+            ],
+            { generatedAt: NOW }
+        );
+
+        const events = createTopicEvents(items, { generatedAt: NOW, minTopicItems: 1 });
+        expect(events.map((event) => event.itemCount).sort()).toEqual([1, 2]);
+    });
+
+    it("measures topic matching against 200 labeled pairs", () => {
+        const results = NEWS_EVENT_LABELED_PAIRS.map((pair, index) => {
+            const items = collectInsightItems(
+                [
+                    createResponse("weibo" as SourceID, "Weibo", [
+                        {
+                            id: `left-${index}`,
+                            title: pair.left.title,
+                            url: pair.left.url,
+                            pubDate: pair.left.publishedAt,
+                        },
+                    ]),
+                    createResponse("v2ex" as SourceID, "V2EX", [
+                        {
+                            id: `right-${index}`,
+                            title: pair.right.title,
+                            url: pair.right.url,
+                            pubDate: pair.right.publishedAt,
+                        },
+                    ]),
+                ],
+                { generatedAt: NOW }
+            );
+            const events = createTopicEvents(items, { generatedAt: NOW, minTopicItems: 1 });
+            return {
+                expected: pair.label === "same",
+                actual: events.length === 1 && events[0].itemCount === 2,
+            };
+        });
+        const truePositive = results.filter(({ expected, actual }) => expected && actual).length;
+        const falsePositive = results.filter(({ expected, actual }) => !expected && actual).length;
+        const falseNegative = results.filter(({ expected, actual }) => expected && !actual).length;
+        const precision = truePositive / (truePositive + falsePositive);
+        const recall = truePositive / (truePositive + falseNegative);
+
+        expect(NEWS_EVENT_LABELED_PAIRS).toHaveLength(200);
+        expect(precision).toBeGreaterThanOrEqual(0.98);
+        expect(recall).toBeGreaterThanOrEqual(0.98);
     });
 
     it("creates word cloud and source activity summaries", () => {

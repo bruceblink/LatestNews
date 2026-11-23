@@ -733,7 +733,7 @@ function TopicPanel({
     onRead: (item: TopicEvent["items"][number]) => void;
 }) {
     const [expandedTopicId, setExpandedTopicId] = useState<string | null>();
-    const visibleExpandedId = expandedTopicId === undefined ? topics[0]?.id : expandedTopicId;
+    const visibleExpandedId = expandedTopicId === undefined ? getTopicKey(topics[0]) : expandedTopicId;
 
     return (
         <article className="insights-panel insights-topic-panel">
@@ -744,14 +744,15 @@ function TopicPanel({
             <div className="insights-topic-list">
                 {topics.length ? (
                     topics.slice(0, 5).map((topic) => {
-                        const expanded = visibleExpandedId === topic.id;
+                        const topicKey = getTopicKey(topic);
+                        const expanded = visibleExpandedId === topicKey;
                         return (
-                            <article key={topic.id} className={clsx("insights-topic-row", expanded && "is-expanded")}>
+                            <article key={topicKey} className={clsx("insights-topic-row", expanded && "is-expanded")}>
                                 <button
                                     type="button"
                                     className="insights-topic-button"
                                     aria-expanded={expanded}
-                                    onClick={() => setExpandedTopicId(expanded ? null : topic.id)}
+                                    onClick={() => setExpandedTopicId(expanded ? null : topicKey)}
                                 >
                                     <span className="insights-topic-title">{topic.title}</span>
                                     <span className="insights-topic-count">
@@ -793,6 +794,11 @@ function TopicPanel({
             </div>
         </article>
     );
+}
+
+/** 使用新稳定事件 ID，兼容仍只返回旧 id 的缓存响应。 */
+function getTopicKey(topic: TopicEvent | undefined) {
+    return topic?.eventId ?? topic?.id;
 }
 
 /** Health is a separate global snapshot and is not affected by insight filters. */

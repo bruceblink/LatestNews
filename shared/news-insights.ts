@@ -18,6 +18,7 @@ const DEFAULT_TOPIC_LIMIT = 20;
 const DEFAULT_WORD_LIMIT = 40;
 const DEFAULT_TREND_LIMIT = 12;
 const DEFAULT_MIN_TOPIC_ITEMS = 2;
+const TOPIC_EVENT_WINDOW_MS = 7 * DAY_MS;
 const TREND_WINDOW_CONFIG = {
     "24h": {
         durationMs: DAY_MS,
@@ -29,6 +30,74 @@ const TREND_WINDOW_CONFIG = {
     },
 } as const;
 const TRACKING_QUERY_PATTERN = /^(utm_|spm$|from$|ref$|source$|share$|fbclid$|gclid$|igshid$|yclid$)/i;
+
+/** 事件聚合忽略这些常见描述词，避免弱关键词把不同事件连成一组。 */
+const TOPIC_GENERIC_TERMS = new Set([
+    "a",
+    "an",
+    "and",
+    "announcement",
+    "announced",
+    "analysis",
+    "article",
+    "company",
+    "event",
+    "feature",
+    "features",
+    "issue",
+    "issues",
+    "launch",
+    "launched",
+    "model",
+    "models",
+    "new",
+    "news",
+    "official",
+    "platform",
+    "release",
+    "released",
+    "report",
+    "reports",
+    "review",
+    "system",
+    "update",
+    "updates",
+    "users",
+    "version",
+    "产品",
+    "公司",
+    "功能",
+    "官方",
+    "平台",
+    "报告",
+    "事件",
+    "安全",
+    "系统",
+    "新闻",
+    "消息",
+    "模型",
+    "版本",
+    "项目",
+    "文章",
+    "更新",
+    "发布",
+    "上线",
+    "宣布",
+    "回应",
+    "确认",
+    "相关",
+    "进行",
+    "新增",
+]);
+
+/** 用于阻止不同事件类型或版本被相同实体误合并。 */
+const TOPIC_EVENT_TYPE_TERMS = new Map<string, string[]>([
+    ["release", ["发布", "上线", "推出", "release", "released", "launch", "launched", "announce", "announced"]],
+    ["security", ["安全", "漏洞", "攻击", "入侵", "security", "vulnerability", "attack", "breach"]],
+    ["finance", ["融资", "收购", "投资", "ipo", "funding", "acquisition", "investment"]],
+    ["outage", ["宕机", "故障", "中断", "崩溃", "outage", "incident", "downtime", "crash"]],
+    ["policy", ["政策", "监管", "禁令", "policy", "regulation", "ban"]],
+]);
 
 /** 按北京时间边界对时间戳向下取整，避免运行环境本地时区影响结果。 */
 function floorBucketStart(timestamp: number, bucketMs: number) {
@@ -158,6 +227,8 @@ export interface TopicEventItem {
 
 export interface TopicEvent {
     id: string;
+    /** 稳定事件标识。旧客户端继续使用 id，新的持久化记录应使用 eventId。 */
+    eventId: string;
     title: string;
     canonicalUrl?: string;
     sources: SourceID[];
@@ -223,7 +294,23 @@ export interface NewsInsights {
 
 interface TopicGroup {
     id: string;
+    eventId: string;
     items: InsightSourceItem[];
+}
+
+interface TopicMatchProfile {
+    candidateKeys: string[];
+    eventTypes: Set<string>;
+    identityTerms: Set<string>;
+    publishedAt?: number;
+    titleFingerprint: string;
+    versions: Set<string>;
+}
+
+interface TopicMatch {
+    left: number;
+    right: number;
+    score: number;
 }
 
 interface MutableInsightTimeBucket {
@@ -573,19 +660,53 @@ export function normalizeNewsUrl(url: string): string {
     }
 }
 
+/** 创建确定性的候选组，并在并查集合并前逐对检查事件关系。 */
 function createTopicGroups(items: InsightSourceItem[]): TopicGroup[] {
     if (!items.length) return [];
 
-    const parents = items.map((_, index) => index);
-    const keyIndex = new Map<string, number>();
+    const profiles = items.map(createTopicMatchProfile);
+    const candidateIndexes = new Map<string, number[]>();
+    const candidates = new Set<string>();
 
-    items.forEach((item, index) => {
-        for (const key of createTopicKeys(item)) {
-            const existing = keyIndex.get(key);
-            if (existing === undefined) keyIndex.set(key, index);
-            else union(parents, existing, index);
+    profiles.forEach((profile, index) => {
+        for (const key of profile.candidateKeys) {
+            const previous = candidateIndexes.get(key) ?? [];
+            for (const previousIndex of previous) {
+                candidates.add(createPairKey(previousIndex, index));
+            }
+            previous.push(index);
+            candidateIndexes.set(key, previous);
         }
     });
+
+    const matches: TopicMatch[] = [];
+    for (const pairKey of candidates) {
+        const [left, right] = pairKey.split(":").map(Number);
+        const score = scoreTopicMatch(items[left], profiles[left], items[right], profiles[right]);
+        if (score > 0) matches.push({ left, right, score });
+    }
+    matches.sort((a, b) => b.score - a.score || a.left - b.left || a.right - b.right);
+
+    const parents = items.map((_, index) => index);
+    const members = new Map<number, number[]>();
+    items.forEach((_, index) => members.set(index, [index]));
+
+    for (const match of matches) {
+        const leftRoot = find(parents, match.left);
+        const rightRoot = find(parents, match.right);
+        if (leftRoot === rightRoot) continue;
+
+        const leftIndexes = members.get(leftRoot) ?? [];
+        const rightIndexes = members.get(rightRoot) ?? [];
+        const leftItems = leftIndexes.map((index) => items[index]);
+        const rightItems = rightIndexes.map((index) => items[index]);
+        if (!canMergeTopicGroups(leftItems, rightItems, profiles, items)) continue;
+
+        union(parents, leftRoot, rightRoot);
+        const mergedRoot = find(parents, leftRoot);
+        members.set(mergedRoot, [...leftIndexes, ...rightIndexes]);
+        members.delete(leftRoot === mergedRoot ? rightRoot : leftRoot);
+    }
 
     const groups = new Map<number, InsightSourceItem[]>();
     items.forEach((item, index) => {
@@ -600,6 +721,7 @@ function createTopicGroups(items: InsightSourceItem[]): TopicGroup[] {
                 .sort()
                 .join("|")
         )}`,
+        eventId: createStableEventId(groupItems),
         items: groupItems.sort(
             (a, b) =>
                 (b.publishedAt ?? b.responseUpdatedTime ?? 0) - (a.publishedAt ?? a.responseUpdatedTime ?? 0) ||
@@ -608,23 +730,127 @@ function createTopicGroups(items: InsightSourceItem[]): TopicGroup[] {
     }));
 }
 
-function createTopicKeys(item: InsightSourceItem) {
-    const keys = new Set<string>();
-    if (item.canonicalUrl) keys.add(`url:${item.canonicalUrl}`);
+function createTopicMatchProfile(item: InsightSourceItem): TopicMatchProfile {
+    const identityTerms = new Set(
+        item.terms.filter((term) => !TOPIC_GENERIC_TERMS.has(term) && isTopicIdentityTerm(term))
+    );
+    const candidateKeys = new Set<string>();
 
-    const importantTerms = item.terms
-        .filter((term) => term.length > 1)
-        .sort((a, b) => b.length - a.length || a.localeCompare(b))
-        .slice(0, 6);
+    if (item.canonicalUrl) candidateKeys.add(`url:${item.canonicalUrl}`);
+    if (titleFingerprint(item.title)) candidateKeys.add(`title:${titleFingerprint(item.title)}`);
+    for (const term of identityTerms) candidateKeys.add(`term:${term}`);
 
-    if (importantTerms.length === 1) keys.add(`term:${importantTerms[0]}`);
-    for (let i = 0; i < importantTerms.length; i += 1) {
-        for (let j = i + 1; j < importantTerms.length; j += 1) {
-            keys.add(`terms:${[importantTerms[i], importantTerms[j]].sort().join("|")}`);
-        }
+    return {
+        candidateKeys: [...candidateKeys].sort(),
+        eventTypes: extractTopicEventTypes(item.title),
+        identityTerms,
+        publishedAt: item.publishedAt ?? item.responseUpdatedTime,
+        titleFingerprint: titleFingerprint(item.title),
+        versions: new Set(item.terms.filter(isTopicVersionTerm)),
+    };
+}
+
+function scoreTopicMatch(
+    left: InsightSourceItem,
+    leftProfile: TopicMatchProfile,
+    right: InsightSourceItem,
+    rightProfile: TopicMatchProfile
+) {
+    if (left.canonicalUrl && left.canonicalUrl === right.canonicalUrl) return 100;
+    if (leftProfile.titleFingerprint && leftProfile.titleFingerprint === rightProfile.titleFingerprint) return 90;
+    if (!isWithinTopicWindow(leftProfile.publishedAt, rightProfile.publishedAt)) return 0;
+    if (hasConflictingTopicSignals(leftProfile, rightProfile)) return 0;
+
+    const sharedIdentityTerms = intersectionSize(leftProfile.identityTerms, rightProfile.identityTerms);
+    const sharedTerms = intersectionSize(
+        new Set(left.terms.filter((term) => !TOPIC_GENERIC_TERMS.has(term))),
+        new Set(right.terms.filter((term) => !TOPIC_GENERIC_TERMS.has(term)))
+    );
+    if (sharedIdentityTerms >= 1 && sharedTerms >= 2) return 60 + sharedIdentityTerms * 3 + sharedTerms;
+    return 0;
+}
+
+function canMergeTopicGroups(
+    leftItems: InsightSourceItem[],
+    rightItems: InsightSourceItem[],
+    profiles: TopicMatchProfile[],
+    allItems: InsightSourceItem[]
+) {
+    const leftAnchor = selectStableTopicAnchor(leftItems);
+    const rightAnchor = selectStableTopicAnchor(rightItems);
+    const leftProfile = profiles[allItems.indexOf(leftAnchor)];
+    const rightProfile = profiles[allItems.indexOf(rightAnchor)];
+    if (!leftProfile || !rightProfile || scoreTopicMatch(leftAnchor, leftProfile, rightAnchor, rightProfile) <= 0)
+        return false;
+
+    const mergedItems = [...leftItems, ...rightItems];
+    const mergedTimes = mergedItems
+        .map((item) => item.publishedAt ?? item.responseUpdatedTime)
+        .filter((value): value is number => typeof value === "number");
+    if (mergedTimes.length && Math.max(...mergedTimes) - Math.min(...mergedTimes) > TOPIC_EVENT_WINDOW_MS) return false;
+    return true;
+}
+
+function createStableEventId(items: InsightSourceItem[]) {
+    const anchor = selectStableTopicAnchor(items);
+    const identity = anchor.canonicalUrl || titleFingerprint(anchor.title) || anchor.id;
+    return `event-v1-${hashString(identity)}`;
+}
+
+function selectStableTopicAnchor(items: InsightSourceItem[]) {
+    return [...items].sort(
+        (a, b) =>
+            (a.publishedAt ?? a.responseUpdatedTime ?? Number.MAX_SAFE_INTEGER) -
+                (b.publishedAt ?? b.responseUpdatedTime ?? Number.MAX_SAFE_INTEGER) ||
+            (a.canonicalUrl || a.title).localeCompare(b.canonicalUrl || b.title) ||
+            a.id.localeCompare(b.id)
+    )[0];
+}
+
+function createPairKey(left: number, right: number) {
+    return `${Math.min(left, right)}:${Math.max(left, right)}`;
+}
+
+function isWithinTopicWindow(left: number | undefined, right: number | undefined) {
+    return left === undefined || right === undefined || Math.abs(left - right) <= TOPIC_EVENT_WINDOW_MS;
+}
+
+function hasConflictingTopicSignals(left: TopicMatchProfile, right: TopicMatchProfile) {
+    return (
+        (left.versions.size > 0 && right.versions.size > 0 && intersectionSize(left.versions, right.versions) === 0) ||
+        (left.eventTypes.size > 0 &&
+            right.eventTypes.size > 0 &&
+            intersectionSize(left.eventTypes, right.eventTypes) === 0)
+    );
+}
+
+function intersectionSize(left: Set<string>, right: Set<string>) {
+    let count = 0;
+    for (const value of left) {
+        if (right.has(value)) count += 1;
     }
+    return count;
+}
 
-    return keys;
+function isTopicIdentityTerm(term: string) {
+    return /[a-z]/i.test(term) || isTopicVersionTerm(term) || /[\p{Script=Han}]{3,}/u.test(term);
+}
+
+function isTopicVersionTerm(term: string) {
+    return (/[a-z]/i.test(term) && /\d/.test(term)) || /^\d+(?:\.\d+)+$/.test(term) || /^\d{4}$/.test(term);
+}
+
+function titleFingerprint(title: string) {
+    return title.toLowerCase().replace(/[\p{P}\p{S}\s]+/gu, "");
+}
+
+function extractTopicEventTypes(title: string) {
+    const normalized = title.toLowerCase();
+    const types = new Set<string>();
+    for (const [type, terms] of TOPIC_EVENT_TYPE_TERMS) {
+        if (terms.some((term) => normalized.includes(term))) types.add(type);
+    }
+    return types;
 }
 
 function createHotNewsItem(group: TopicGroup, generatedAt: number): HotNewsItem {
@@ -721,6 +947,7 @@ function createTopicEvent(group: TopicGroup): TopicEvent {
 
     return {
         id: group.id,
+        eventId: group.eventId,
         title: representative.title,
         canonicalUrl: representative.canonicalUrl || undefined,
         sources: uniqueSourceIds(group.items),

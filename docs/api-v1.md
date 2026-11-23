@@ -55,6 +55,8 @@ curl https://news.example.com/api/v1/node
 | `POST` | `/api/v1/sources/refresh` | 分批刷新来源。默认只刷新到期缓存，`force=true` 采集全部可用来源。 |
 | `POST` | `/api/v1/insights` | 计算所选来源的阅读洞察。请求体包含 `sources`，可设置 `trendWindow` 等分析选项。 |
 
+洞察响应的 `data.topicEvents[]` 同时返回旧 `id` 和稳定 `eventId`。旧客户端继续读取 `id`。需要保存或关联事件的客户端使用 `eventId`。新增较晚报道不会改变同一事件的 `eventId`。
+
 Single-source metadata keeps item payloads out of discovery responses. If `{id}` is a redirect alias, `meta.canonicalSourceId` points to the source used by item endpoints and `meta.redirected` is `true`.
 
 从 `GET /api/v1/sources` 的 `data.sources[].id` 读取来源 ID。目录默认包含停用来源，省略重定向别名。应用版本可从 `/api/v1/node` 的 `data.node.version` 读取。
