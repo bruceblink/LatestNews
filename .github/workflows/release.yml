@@ -211,6 +211,7 @@ jobs:
     name: Publish multi-architecture Docker image
     needs: verify
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: read
       packages: write
@@ -317,7 +318,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SOURCE_RUN_ID: ${{ inputs.artifact_run_id }}
-        run: node .release-tools/scripts/verify-release-run.mjs "$SOURCE_RUN_ID" "Verify release source" "Build Web deployment package" "Publish multi-architecture Docker image" "Build Windows x64" "Build Windows ARM64" "Build macOS Intel" "Build macOS Apple Silicon" "Build Linux x64" "Build Linux ARM64"
+        run: node .release-tools/scripts/verify-release-run.mjs "$SOURCE_RUN_ID" "Verify release source" "Build Web deployment package" "Build Windows x64" "Build Windows ARM64" "Build macOS Intel" "Build macOS Apple Silicon" "Build Linux x64" "Build Linux ARM64"
+
+      - name: Record recovered Docker limitation
+        if: inputs.artifact_run_id
+        run: |
+          cat >> release-notes.md <<'EOF'
+
+          ### 发布验证 / Release Verification
+
+          - Web package and six desktop targets passed the source release workflow and checksum verification.
+          - The Docker job from the source run was cancelled during the arm64 pnpm installation. This recovered release publishes the verified desktop and Web assets without a new Docker image.
+          EOF
 
       - name: Set up pnpm for update metadata
         uses: pnpm/action-setup@v4
