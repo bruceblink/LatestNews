@@ -74,7 +74,7 @@ export class Cache {
     }
 
     async searchArticles(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {
-        if (!this.articleIndex) return { status: "unavailable", items: [] };
+        if (!this.articleIndex) return { status: "unavailable", mode: "unavailable", items: [] };
         return this.articleIndex.search(query);
     }
 

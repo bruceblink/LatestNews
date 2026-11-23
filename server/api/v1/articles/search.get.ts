@@ -49,6 +49,7 @@ export default defineEventHandler(async (event): Promise<ArticleSearchResponse> 
     return {
         data: {
             status: result.status,
+            searchMode: result.mode,
             query: parsed.data.q.trim(),
             items: result.items,
         },

@@ -31,7 +31,12 @@ describe("article search API", () => {
 
         expect(response.status).toBe(200);
         expect(await response.json()).toMatchObject({
-            data: { status: "ok", query: "GPT-5", items: [expect.objectContaining({ title: "OpenAI GPT-5 发布" })] },
+            data: {
+                status: "ok",
+                searchMode: "fts",
+                query: "GPT-5",
+                items: [expect.objectContaining({ title: "OpenAI GPT-5 发布" })],
+            },
             meta: { itemCount: 1, limit: 30 },
         });
     });

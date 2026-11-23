@@ -128,6 +128,7 @@ export interface ArticleSearchItem {
 export interface ArticleSearchResponse {
     data: {
         status: "ok" | "unavailable";
+        searchMode: "fts" | "like" | "unavailable";
         query: string;
         items: ArticleSearchItem[];
     };

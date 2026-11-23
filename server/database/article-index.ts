@@ -29,6 +29,7 @@ export interface ArticleIndexItem {
 
 export interface ArticleIndexSearchResult {
     status: "ok" | "unavailable";
+    mode: "fts" | "like" | "unavailable";
     items: ArticleIndexItem[];
 }
 
@@ -98,6 +99,7 @@ export class ArticleIndex {
                 )
                 .run();
             this.ftsAvailable = true;
+            await this.rebuildIfOutOfDate();
         } catch (error) {
             this.ftsAvailable = false;
             logger.warn("Article FTS5 index is unavailable. Article persistence remains enabled.", error);
@@ -207,7 +209,13 @@ export class ArticleIndex {
 
     async search(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {
         const text = query.query.trim();
-        if (!this.ftsAvailable || !text) return { status: this.ftsAvailable ? "ok" : "unavailable", items: [] };
+        if (!this.ftsAvailable || !text) {
+            return {
+                status: this.ftsAvailable ? "ok" : "unavailable",
+                mode: this.ftsAvailable ? "fts" : "unavailable",
+                items: [],
+            };
+        }
 
         const limit = Math.min(Math.max(query.limit ?? DEFAULT_SEARCH_LIMIT, 1), MAX_SEARCH_LIMIT);
         const conditions = ["article_search MATCH ?"];
@@ -237,7 +245,7 @@ export class ArticleIndex {
                 )
                 .all(...parameters);
             const ftsRows = getRows(rows) as ArticleRow[];
-            if (ftsRows.length) return { status: "ok", items: await this.mapRows(ftsRows) };
+            if (ftsRows.length) return { status: "ok", mode: "fts", items: await this.mapRows(ftsRows) };
 
             const fallbackConditions = ["(articles.title LIKE ? OR articles.canonical_url LIKE ?)"];
             const fallbackParameters: Array<string | number> = [`%${text}%`, `%${text}%`];
@@ -262,12 +270,20 @@ export class ArticleIndex {
                      LIMIT ?`
                 )
                 .all(...fallbackParameters);
-            return { status: "ok", items: await this.mapRows(getRows(fallbackRows) as ArticleRow[]) };
+            return { status: "ok", mode: "like", items: await this.mapRows(getRows(fallbackRows) as ArticleRow[]) };
         } catch (error) {
             this.ftsAvailable = false;
             logger.warn("Article FTS5 search is unavailable.", error);
-            return { status: "unavailable", items: [] };
+            return { status: "unavailable", mode: "unavailable", items: [] };
         }
+    }
+
+    private async rebuildIfOutOfDate() {
+        const articleCount = await this.db.prepare("SELECT count(*) AS count FROM articles").get();
+        const searchCount = await this.db.prepare("SELECT count(*) AS count FROM article_search").get();
+        const articles = Number((articleCount as { count: number }).count);
+        const indexed = Number((searchCount as { count: number }).count);
+        if (articles !== indexed) await this.rebuildSearchIndex();
     }
 
     private async findExistingArticle(

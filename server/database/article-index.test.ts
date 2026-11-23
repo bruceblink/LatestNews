@@ -1,6 +1,10 @@
+import type { Database } from "db0";
 import type { NewsItem } from "@shared/types";
 
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createDatabase } from "db0";
+import { rm, mkdtemp } from "node:fs/promises";
 import { it, expect, describe, afterEach } from "vitest";
 import sqliteConnector from "db0/connectors/better-sqlite3";
 
@@ -68,6 +72,75 @@ describe("article index", () => {
         await expect(index.search({ query: "安全" })).resolves.toMatchObject({
             status: "ok",
             items: [expect.objectContaining({ eventId: "event-v1-stable" })],
+        });
+    });
+
+    it("keeps article persistence available when FTS5 initialization fails", async () => {
+        const database = createDatabase(sqliteConnector({ name: ":memory:" }));
+        databases.push(database);
+        const failingDatabase = {
+            ...database,
+            prepare(sql: string) {
+                if (sql.includes("CREATE VIRTUAL TABLE")) throw new Error("FTS5 unavailable");
+                return database.prepare(sql);
+            },
+        } as unknown as Database;
+        const index = new ArticleIndex(failingDatabase);
+
+        await index.init();
+        await index.upsertSourceItems("weibo", [
+            createItem("fallback", "Fallback article", "https://example.com/fallback"),
+        ]);
+
+        await expect(index.search({ query: "Fallback" })).resolves.toEqual({
+            status: "unavailable",
+            mode: "unavailable",
+            items: [],
+        });
+        await expect(database.prepare("SELECT count(*) AS count FROM articles").get()).resolves.toMatchObject({
+            count: 1,
+        });
+    });
+
+    it("rebuilds missing FTS rows after reopening a file database", async () => {
+        const directory = await mkdtemp(join(tmpdir(), "latestnews-article-index-reopen-"));
+        const firstDatabase = createDatabase(sqliteConnector({ cwd: directory, name: "articles" }));
+        const firstIndex = new ArticleIndex(firstDatabase);
+        await firstIndex.init();
+        await firstIndex.upsertSourceItems("weibo", [
+            createItem("reopen", "Persistent article", "https://example.com/reopen"),
+        ]);
+        await firstDatabase.prepare("DELETE FROM article_search").run();
+        await firstDatabase.dispose();
+
+        const reopenedDatabase = createDatabase(sqliteConnector({ cwd: directory, name: "articles" }));
+        const reopenedIndex = new ArticleIndex(reopenedDatabase);
+        await reopenedIndex.init();
+        await expect(reopenedIndex.search({ query: "Persistent" })).resolves.toMatchObject({
+            status: "ok",
+            mode: "fts",
+            items: [expect.objectContaining({ title: "Persistent article" })],
+        });
+        await reopenedDatabase.dispose();
+        await rm(directory, { recursive: true, force: true });
+    });
+
+    it("reports LIKE fallback mode for Chinese short queries", async () => {
+        const index = await createIndex();
+        await index.upsertSourceItems("weibo", [
+            createItem("security", "安全事件公告", "https://example.com/security"),
+            createItem("chip", "芯片供应链更新", "https://example.com/chip"),
+        ]);
+
+        await expect(index.search({ query: "安全" })).resolves.toMatchObject({
+            status: "ok",
+            mode: "like",
+            items: [expect.objectContaining({ title: "安全事件公告" })],
+        });
+        await expect(index.search({ query: "芯" })).resolves.toMatchObject({
+            status: "ok",
+            mode: "like",
+            items: [expect.objectContaining({ title: "芯片供应链更新" })],
         });
     });
 });

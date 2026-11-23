@@ -18,11 +18,11 @@
 
 ## 全文能力
 
-Node SQLite 使用 FTS5 保存标题检索数据，并提供重建入口。FTS5 创建失败时，文章记录仍然可以写入。查询会返回明确的 `unavailable` 状态。
+Node SQLite 使用 FTS5 保存标题检索数据，并提供重建入口。启动时会比较文章记录和 FTS 行数，发现缺失行时自动重建。FTS5 创建失败时，文章记录仍然可以写入。查询会返回明确的 `unavailable` 状态。
 
 当前切片只验证 Node better-sqlite3 的 FTS5。Cloudflare D1 文档列出 FTS5 为支持的 SQLite 扩展，但仓库没有目标 Pages D1 的真实数据库验收证据。Electron 使用 JSON 缓存，不接入这套 SQLite 索引。
 
-Node 服务提供 `GET /api/v1/articles/search`。文章索引不可用时返回 HTTP 503，并保留来源读取路径。
+Node 服务提供 `GET /api/v1/articles/search`。响应中的 `searchMode` 会标记 `fts`、`like` 或 `unavailable`。文章索引不可用时返回 HTTP 503，并保留来源读取路径。
 
 ## 验收
 
