@@ -48,6 +48,7 @@ describe("node manifest", () => {
             homepage: "https://news.example.com",
         });
         expect(response.data.endpoints).toEqual({
+            articleSearch: "/api/v1/articles/search",
             node: "/api/v1/node",
             openApi: "/api/v1/openapi.json",
             source: "/api/v1/sources/{id}",

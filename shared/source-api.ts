@@ -3,6 +3,7 @@ import type { SourceResponseStatus } from "./source-response-status";
 import type { NewsInsights, InsightTrendWindow } from "./news-insights";
 
 export const sourceApi = {
+    articleSearchV1: "/v1/articles/search",
     insightsV1: "/v1/insights",
     loginCapabilityV1: "/v1/auth/capability",
     nodeV1: "/v1/node",
@@ -110,6 +111,33 @@ export interface SourceItemsResponse {
 export interface NewsInsightsResponse {
     data: NewsInsights;
     meta: SourceApiResponseMeta;
+    errors: SourceApiError[];
+}
+
+export interface ArticleSearchItem {
+    articleKey: string;
+    canonicalUrl: string;
+    title: string;
+    publishedAt?: number | string;
+    eventId?: string;
+    sourceIds: SourceID[];
+    item: SourceResponse["items"][number];
+    score?: number;
+}
+
+export interface ArticleSearchResponse {
+    data: {
+        status: "ok" | "unavailable";
+        query: string;
+        items: ArticleSearchItem[];
+    };
+    meta: {
+        generatedAt: number;
+        itemCount: number;
+        sourceId?: SourceID;
+        since?: number;
+        limit: number;
+    };
     errors: SourceApiError[];
 }
 

@@ -31,6 +31,23 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
             },
         },
         paths: {
+            [withApiPrefix(sourceApi.articleSearchV1)]: {
+                get: {
+                    summary: "Search persisted article titles",
+                    tags: ["Articles"],
+                    parameters: [
+                        queryParameter("q", "Search text"),
+                        queryParameter("source", "Optional source ID"),
+                        queryParameter("since", "Only return articles at or after this timestamp"),
+                        queryParameter("limit", "Maximum result count"),
+                    ],
+                    responses: {
+                        ...okJsonResponse("Article search envelope"),
+                        400: { description: "Invalid article search query" },
+                        503: { description: "Article search index unavailable" },
+                    },
+                },
+            },
             [withApiPrefix(sourceApi.nodeV1)]: {
                 get: {
                     summary: "Get node manifest",

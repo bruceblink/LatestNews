@@ -54,6 +54,7 @@ curl https://news.example.com/api/v1/node
 | `POST` | `/api/v1/sources/batch` | Items for multiple sources, columns, or source types. |
 | `POST` | `/api/v1/sources/refresh` | 分批刷新来源。默认只刷新到期缓存，`force=true` 采集全部可用来源。 |
 | `POST` | `/api/v1/insights` | 计算所选来源的阅读洞察。请求体包含 `sources`，可设置 `trendWindow` 等分析选项。 |
+| `GET` | `/api/v1/articles/search` | 查询 Node SQLite 文章索引中的历史文章。使用 `q`，可选 `source`、`since` 和 `limit`。 |
 
 洞察响应的 `data.topicEvents[]` 同时返回旧 `id` 和稳定 `eventId`。旧客户端继续读取 `id`。需要保存或关联事件的客户端使用 `eventId`。新增较晚报道不会改变同一事件的 `eventId`。
 
