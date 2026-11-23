@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "latestnews",
+  "compatibility_date": "2026-11-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "dist",
+  "d1_databases": [
+    {
+      "binding": "LATESTNEWS_DB",
+      "database_name": "latestnews",
+      "database_id": "67688767-d6c3-452d-b8ac-6974f6fbefaa"
+    }
+  ]
+}

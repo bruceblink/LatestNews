@@ -4,36 +4,36 @@ LatestNews can run as a Nitro Node service, a Docker container, or a Cloudflare 
 
 ## Runtime Modes
 
-| Target | Use when | State location | Health probe |
-| --- | --- | --- | --- |
-| Docker image | Self-hosted server or NAS | Docker volume mounted at `/usr/app/.data` | `/api/v1/health/deployment` |
-| Local Docker build | Release rehearsal or local production check | `newsnow_data` volume | `/api/v1/health/deployment` |
-| Cloudflare Pages | Edge-hosted static shell plus Nitro functions | D1 binding `LATESTNEWS_DB` | `/api/v1/health/deployment` |
-| Node output | Custom process manager | `.data` under the runtime working directory | `/api/v1/health/deployment` |
+| Target             | Use when                                      | State location                              | Health probe                |
+| ------------------ | --------------------------------------------- | ------------------------------------------- | --------------------------- |
+| Docker image       | Self-hosted server or NAS                     | Docker volume mounted at `/usr/app/.data`   | `/api/v1/health/deployment` |
+| Local Docker build | Release rehearsal or local production check   | `newsnow_data` volume                       | `/api/v1/health/deployment` |
+| Cloudflare Pages   | Edge-hosted static shell plus Nitro functions | D1 binding `LATESTNEWS_DB`                  | `/api/v1/health/deployment` |
+| Node output        | Custom process manager                        | `.data` under the runtime working directory | `/api/v1/health/deployment` |
 
 ## Environment Variables
 
 Start from [example.env.server](../example.env.server) and configure secrets only in the deployment platform or local `.env.server` file.
 
-| Variable | Required | Scope | Notes |
-| --- | --- | --- | --- |
-| `TZ` | No | Runtime | Defaults to the host timezone when omitted. |
-| `VITE_APP_TITLE` | No | Build | Browser, desktop, and PWA name; defaults to `LatestNews`. |
-| `VITE_API_URL` | No | Build/runtime | Enables login UI only when paired with `JWT_SECRET`. |
-| `VITE_NEWS_API_URL` | No | Web build | Optional HTTPS origin for the remote Node news API. When empty, Web uses the same-origin `/api` path. Electron keeps using its main-process proxy. |
-| `LATESTNEWS_WEB_ORIGINS` | No | Node runtime | Comma-separated exact Web origins allowed by the Node API CORS middleware. Leave empty when clients use same-origin requests. |
-| `JWT_SECRET` | Login only | Runtime | Must match the external login service. Do not commit a real value. |
-| `LATESTNEWS_REFRESH_TOKEN` | 定时刷新需要 | 运行时密钥 | 第三方调度程序使用的独立 Bearer 令牌。 |
-| `ENABLE_CACHE` | No | Runtime | Set to `false` to disable cache reads and writes. |
-| `INIT_TABLE` | No | Runtime | Defaults to table initialization; set to `false` after managed schema setup if needed. |
-| `LATESTNEWS_NODE_ID` | No | Runtime | Stable node identifier exposed by `/api/v1/node`. |
-| `LATESTNEWS_UPSTREAM_ENDPOINT` | No | Runtime | Optional upstream collector hint exposed by `/api/v1/node`. |
-| `LATESTNEWS_DOWNSTREAM_ENDPOINT` | No | Runtime | Optional downstream consumer hint exposed by `/api/v1/node`. |
-| `PRODUCTHUNT_API_TOKEN` | Source only | Runtime | Required only when enabling the Product Hunt source. |
-| `LATESTNEWS_CRAWLER_PLUGIN_IDS` | 否 | Node 运行时 | 非空时覆盖本地 `enabled.json` 的启用插件列表。 |
-| `LATESTNEWS_CRAWLER_PLUGIN_DIR` | 否 | Node 运行时 | 插件存储目录，默认 `.data/crawler-plugins`。 |
-| `LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS` | 配置型来源需要 | Node 运行时 | 允许请求的精确 HTTPS 主机名，以逗号分隔。 |
-| `LATESTNEWS_CONFIGURED_SOURCES` | 否 | Node 运行时 | 运维维护的版本化 JSON 来源清单；未设置时不启用配置型来源。 |
+| Variable                                     | Required       | Scope         | Notes                                                                                                                                              |
+| -------------------------------------------- | -------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TZ`                                         | No             | Runtime       | Defaults to the host timezone when omitted.                                                                                                        |
+| `VITE_APP_TITLE`                             | No             | Build         | Browser, desktop, and PWA name; defaults to `LatestNews`.                                                                                          |
+| `VITE_API_URL`                               | No             | Build/runtime | Enables login UI only when paired with `JWT_SECRET`.                                                                                               |
+| `VITE_NEWS_API_URL`                          | No             | Web build     | Optional HTTPS origin for the remote Node news API. When empty, Web uses the same-origin `/api` path. Electron keeps using its main-process proxy. |
+| `LATESTNEWS_WEB_ORIGINS`                     | No             | Node runtime  | Comma-separated exact Web origins allowed by the Node API CORS middleware. Leave empty when clients use same-origin requests.                      |
+| `JWT_SECRET`                                 | Login only     | Runtime       | Must match the external login service. Do not commit a real value.                                                                                 |
+| `LATESTNEWS_REFRESH_TOKEN`                   | 定时刷新需要   | 运行时密钥    | 第三方调度程序使用的独立 Bearer 令牌。                                                                                                             |
+| `ENABLE_CACHE`                               | No             | Runtime       | Set to `false` to disable cache reads and writes.                                                                                                  |
+| `INIT_TABLE`                                 | No             | Runtime       | Defaults to table initialization; set to `false` after managed schema setup if needed.                                                             |
+| `LATESTNEWS_NODE_ID`                         | No             | Runtime       | Stable node identifier exposed by `/api/v1/node`.                                                                                                  |
+| `LATESTNEWS_UPSTREAM_ENDPOINT`               | No             | Runtime       | Optional upstream collector hint exposed by `/api/v1/node`.                                                                                        |
+| `LATESTNEWS_DOWNSTREAM_ENDPOINT`             | No             | Runtime       | Optional downstream consumer hint exposed by `/api/v1/node`.                                                                                       |
+| `PRODUCTHUNT_API_TOKEN`                      | Source only    | Runtime       | Required only when enabling the Product Hunt source.                                                                                               |
+| `LATESTNEWS_CRAWLER_PLUGIN_IDS`              | 否             | Node 运行时   | 非空时覆盖本地 `enabled.json` 的启用插件列表。                                                                                                     |
+| `LATESTNEWS_CRAWLER_PLUGIN_DIR`              | 否             | Node 运行时   | 插件存储目录，默认 `.data/crawler-plugins`。                                                                                                       |
+| `LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS` | 配置型来源需要 | Node 运行时   | 允许请求的精确 HTTPS 主机名，以逗号分隔。                                                                                                          |
+| `LATESTNEWS_CONFIGURED_SOURCES`              | 否             | Node 运行时   | 运维维护的版本化 JSON 来源清单；未设置时不启用配置型来源。                                                                                         |
 
 ## 配置型 RSS/JSON 来源
 
@@ -49,35 +49,35 @@ LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS=feeds.example.com,api.example.com
 
 ```json
 {
-  "version": 1,
-  "sources": [
-    {
-      "key": "engineering-blog",
-      "name": "工程博客",
-      "type": "rss",
-      "endpoint": "https://feeds.example.com/engineering.xml",
-      "enabled": true,
-      "intervalMs": 900000,
-      "column": "tech"
-    },
-    {
-      "key": "engineering-api",
-      "name": "工程资讯",
-      "type": "json",
-      "endpoint": "https://api.example.com/news",
-      "enabled": true,
-      "intervalMs": 900000,
-      "column": "tech",
-      "mapping": {
-        "itemsPath": "data.items",
-        "titlePath": "title",
-        "urlPath": "url",
-        "idPath": "id",
-        "publishedAtPath": "publishedAt",
-        "mobileUrlPath": "mobileUrl"
-      }
-    }
-  ]
+    "version": 1,
+    "sources": [
+        {
+            "key": "engineering-blog",
+            "name": "工程博客",
+            "type": "rss",
+            "endpoint": "https://feeds.example.com/engineering.xml",
+            "enabled": true,
+            "intervalMs": 900000,
+            "column": "tech"
+        },
+        {
+            "key": "engineering-api",
+            "name": "工程资讯",
+            "type": "json",
+            "endpoint": "https://api.example.com/news",
+            "enabled": true,
+            "intervalMs": 900000,
+            "column": "tech",
+            "mapping": {
+                "itemsPath": "data.items",
+                "titlePath": "title",
+                "urlPath": "url",
+                "idPath": "id",
+                "publishedAtPath": "publishedAt",
+                "mobileUrlPath": "mobileUrl"
+            }
+        }
+    ]
 }
 ```
 
@@ -85,10 +85,10 @@ LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS=feeds.example.com,api.example.com
 
 ```yaml
 services:
-  latestnews:
-    environment:
-      LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS: ${LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS:-}
-      LATESTNEWS_CONFIGURED_SOURCES: ${LATESTNEWS_CONFIGURED_SOURCES:-}
+    latestnews:
+        environment:
+            LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS: ${LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS:-}
+            LATESTNEWS_CONFIGURED_SOURCES: ${LATESTNEWS_CONFIGURED_SOURCES:-}
 ```
 
 清单上限为 128 KiB、32 个来源。来源 ID 为 `ext.config.<key>`；`key` 最多 48 个字符，以小写字母或数字开头，后续允许小写字母、数字、下划线和连字符。`intervalMs` 为 30 秒至 24 小时。可选的 `column`、`title`、`description` 和 `home` 用于来源展示。JSON 路径最多八段，只读取对象自有属性，不执行脚本、模板、数组索引表达式或原型属性。
@@ -142,15 +142,20 @@ For a Cloudflare Pages project, use the Pages-specific repository build script:
 pnpm build:pages
 ```
 
-Use `dist` as the Pages output directory. The `CF_PAGES=1` build emits the Pages worker at `dist/_worker.js`; the regular `pnpm build` command emits the Node deployment package instead. Deployment is managed by the configured Pages integration; this repository does not include a Wrangler CLI workflow.
+Use `dist` as the Pages output directory. The `CF_PAGES=1` build emits the Pages worker at `dist/_worker.js`; the regular `pnpm build` command emits the Node deployment package instead. Deployment is managed by the configured Pages integration. The repository includes `wrangler.json` so the Pages build and generated Worker configuration carry the D1 binding consistently. The file does not add a separate Wrangler deployment workflow.
 
 If cache and health history should persist, create a D1 database in the Pages project and keep the binding name aligned with Nitro:
 
-```toml
-[[d1_databases]]
-binding = "LATESTNEWS_DB"
-database_name = "latestnews-db"
-database_id = "replace-with-your-d1-id"
+```json
+{
+    "d1_databases": [
+        {
+            "binding": "LATESTNEWS_DB",
+            "database_name": "latestnews",
+            "database_id": "67688767-d6c3-452d-b8ac-6974f6fbefaa"
+        }
+    ]
+}
 ```
 
 Recommended Pages settings:
@@ -212,10 +217,10 @@ If the runtime log reports Cannot read properties of undefined (reading 'split')
 
 ## Troubleshooting
 
-| Symptom | Check |
-| --- | --- |
-| Login button is missing | Confirm both `VITE_API_URL` and `JWT_SECRET` are configured for the runtime. |
-| Cache is always unavailable | Confirm `ENABLE_CACHE` is not `false` and the runtime can write to its data store. |
-| D1-backed deploy has no health history | Confirm `LATESTNEWS_DB` is bound and `INIT_TABLE` was not disabled before schema setup. |
-| Product Hunt source fails | Confirm `PRODUCTHUNT_API_TOKEN` is set in the runtime secret store. |
-| External collector cannot identify this node | Set `LATESTNEWS_NODE_ID` and check `/api/v1/node`. |
+| Symptom                                      | Check                                                                                   |
+| -------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Login button is missing                      | Confirm both `VITE_API_URL` and `JWT_SECRET` are configured for the runtime.            |
+| Cache is always unavailable                  | Confirm `ENABLE_CACHE` is not `false` and the runtime can write to its data store.      |
+| D1-backed deploy has no health history       | Confirm `LATESTNEWS_DB` is bound and `INIT_TABLE` was not disabled before schema setup. |
+| Product Hunt source fails                    | Confirm `PRODUCTHUNT_API_TOKEN` is set in the runtime secret store.                     |
+| External collector cannot identify this node | Set `LATESTNEWS_NODE_ID` and check `/api/v1/node`.                                      |

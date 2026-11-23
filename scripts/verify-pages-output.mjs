@@ -8,6 +8,8 @@ const projectRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const workerDirectory = join(projectRoot, "dist", "_worker.js");
 const workerEntry = join(workerDirectory, "index.js");
 const serviceWorker = join(projectRoot, "dist", "swx.js");
+const wranglerSource = join(projectRoot, "wrangler.json");
+const wranglerOutput = join(workerDirectory, "wrangler.json");
 
 const entryStats = await stat(workerEntry).catch(() => undefined);
 if (!entryStats?.isFile()) {
@@ -18,12 +20,16 @@ const files = await readdir(workerDirectory, { recursive: true, withFileTypes: t
 const chunks = files.filter((entry) => entry.isFile() && entry.name.endsWith(".mjs"));
 if (chunks.length > 0) {
     throw new Error(
-        "Cloudflare Pages output still contains split worker modules: " +
-            chunks.map((entry) => entry.name).join(", ")
+        "Cloudflare Pages output still contains split worker modules: " + chunks.map((entry) => entry.name).join(", ")
     );
 }
 
 const entrySource = await readFile(workerEntry, "utf8");
+const sourceConfig = JSON.parse(await readFile(wranglerSource, "utf8"));
+const outputConfig = JSON.parse(await readFile(wranglerOutput, "utf8"));
+if (JSON.stringify(sourceConfig.d1_databases) !== JSON.stringify(outputConfig.d1_databases)) {
+    throw new Error("Cloudflare Pages output does not carry the repository D1 bindings.");
+}
 if (/(?:from\s*|import\s*)["'][^"']*index\.js["']/.test(entrySource)) {
     throw new Error("Cloudflare Pages worker entry imports itself or another index.js module.");
 }
