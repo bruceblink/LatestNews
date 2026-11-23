@@ -9,6 +9,8 @@ import { readFile } from "node:fs/promises";
 export default function pwa(appTitle: string) {
     let shell: Buffer | undefined;
     const pwaOption: Partial<VitePWAOptions> = {
+        // 发布新前端后自动接管页面并刷新，避免旧 Service Worker 继续请求退役 API。
+        registerType: "autoUpdate",
         includeAssets: ["icon.svg", "apple-touch-icon.png", "theme-init.js"],
         filename: "swx.js",
         manifest: {
