@@ -37,7 +37,7 @@ Node 22.23.4、better-sqlite3 13.0.3、1,000 篇测试文章和 200 次查询的
 | SQLite 文件大小 | 806,912 bytes |
 | SQLite 页数 | 197 |
 | 查询 P50 | 0.150 ms |
-| 查询 P95 | 0.183 ms |
+| 查询 P95 | 0.184 ms |
 | 查询 P99 | 0.253 ms |
 
 复现命令为 `pnpm performance:article-index`。该结果只代表本地 Node SQLite 数据集。中文分词质量和目标 Pages D1 的实际查询 P95 仍需要独立测量。

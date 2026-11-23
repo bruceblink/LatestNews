@@ -182,7 +182,7 @@ Node/Docker 支持完整服务端采集和受信插件，Pages 使用兼容 Work
 - 先用 Node SQLite FTS5 建立 BM25/全文基线，再核对 Pages D1 和 Electron 平台能力；中文分词及短查询限制应独立测试。仅在离线标注数据证明增量价值后，引入可选 Embedding、ANN 与 RRF 排名融合。
 - 验收：历史记录查询正确、重复采集幂等、迁移/重建及回退可执行、索引大小与查询 P95 有数据，并验证 Node/Pages/Electron 的明确能力边界。
 
-2026-11-23 已完成 N4-E 首个 Node SQLite 切片。新增文章记录、来源映射、规范化 URL、原始 ID、内容指纹和可选 `eventId`。缓存写入会尝试幂等 Upsert，文章索引失败只记录警告。Node better-sqlite3 已验证 FTS5 建表、启动缺行重建、文件重启持久化、失败回退、英文查询、中文短查询模式、事件关联和 `/api/v1/articles/search`。1,000 篇测试文章、200 次查询的本地基准为 SQLite 文件 806,912 bytes、P95 0.183 ms，复现命令为 `pnpm performance:article-index`。Pages D1 的 FTS5 兼容性已有官方文档依据，但目标 D1 尚未实测。Electron 仍使用 JSON 缓存，不接入该索引。真实 D1 验收和中文分词质量继续作为后续切片。
+2026-11-23 已完成 N4-E 首个 Node SQLite 切片。新增文章记录、来源映射、规范化 URL、原始 ID、内容指纹和可选 `eventId`。缓存写入会尝试幂等 Upsert，文章索引失败只记录警告。Node better-sqlite3 已验证 FTS5 建表、启动缺行重建、文件重启持久化、失败回退、英文查询、中文短查询模式、事件关联和 `/api/v1/articles/search`。1,000 篇测试文章、200 次查询的本地基准为 SQLite 文件 806,912 bytes、P95 0.184 ms，复现命令为 `pnpm performance:article-index`。Pages D1 的 FTS5 兼容性已有官方文档依据，但目标 D1 尚未实测。Electron 仍使用 JSON 缓存，不接入该索引。真实 D1 验收和中文分词质量继续作为后续切片。
 
 ### 切片通用交付、顺序与安全限制
 
