@@ -11,7 +11,7 @@ on:
         required: true
         type: string
       artifact_run_id:
-        description: Completed release run to reuse after a publishing-only failure
+        description: Completed matching-tag run to reuse after a publishing-only failure
         required: false
         type: string
 
@@ -22,11 +22,44 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.release_tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
+  release-context:
+    name: Verify remote release context
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      commit: ${{ steps.context.outputs.commit }}
+      docker: ${{ steps.context.outputs.docker }}
+    steps:
+      - name: Check out workflow revision and remote tags
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Test immutable release guard
+        run: python3 -m unittest discover -s tests -p test_immutable_release.py
+
+      - name: Check remote tag, source run and immutable settings
+        id: context
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ADMIN_TOKEN: ${{ secrets.RELEASE_ADMIN_TOKEN }}
+          SOURCE_RUN_ID: ${{ inputs.artifact_run_id }}
+        run: python3 scripts/immutable_release.py preflight
+
   verify:
+    needs: release-context
     if: ${{ !inputs.artifact_run_id }}
     name: Verify release source
     runs-on: ubuntu-latest
@@ -35,7 +68,7 @@ jobs:
       - name: Check out source and tags
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ needs.release-context.outputs.commit }}
           fetch-depth: 0
 
       - name: Set up pnpm
@@ -67,7 +100,7 @@ jobs:
   desktop:
     if: ${{ !inputs.artifact_run_id }}
     name: Build ${{ matrix.label }}
-    needs: verify
+    needs: [release-context, verify]
     strategy:
       fail-fast: false
       matrix:
@@ -114,7 +147,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ needs.release-context.outputs.commit }}
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -160,14 +193,14 @@ jobs:
   web:
     if: ${{ !inputs.artifact_run_id }}
     name: Build Web deployment package
-    needs: verify
+    needs: [release-context, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Check out source
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ needs.release-context.outputs.commit }}
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -209,7 +242,7 @@ jobs:
   docker:
     if: ${{ !inputs.artifact_run_id }}
     name: Publish multi-architecture Docker image
-    needs: verify
+    needs: [release-context, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -219,7 +252,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ needs.release-context.outputs.commit }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -254,9 +287,9 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   publish:
-    if: ${{ always() && (inputs.artifact_run_id || (needs.verify.result == 'success' && needs.desktop.result == 'success' && needs.web.result == 'success' && needs.docker.result == 'success')) }}
+    if: ${{ !cancelled() && needs.release-context.result == 'success' && (inputs.artifact_run_id || (needs.verify.result == 'success' && needs.desktop.result == 'success' && needs.web.result == 'success' && needs.docker.result == 'success')) }}
     name: Publish GitHub Release
-    needs: [verify, desktop, web, docker]
+    needs: [release-context, verify, desktop, web, docker]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -265,27 +298,22 @@ jobs:
       - name: Check out source and tags
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.artifact_run_id && github.sha || env.RELEASE_TAG }}
+          ref: ${{ needs.release-context.outputs.commit }}
           fetch-depth: 0
 
-      - name: Prepare local recovery tag
-        if: inputs.artifact_run_id
+      - name: Check release tag and source package version
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SOURCE_RUN_ID: ${{ inputs.artifact_run_id }}
+          RELEASE_COMMIT: ${{ needs.release-context.outputs.commit }}
         run: |
-          source_sha=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}" --jq .head_sha)
-          git tag --force "${RELEASE_TAG}" "${source_sha}"
-
-      - name: Check release tag and package version
-        run: |
-          git show-ref --verify "refs/tags/${RELEASE_TAG}"
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+          test "$(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")" = "$RELEASE_COMMIT"
           node -e 'const { version } = require("./package.json"); if (process.env.RELEASE_TAG !== `v${version}`) throw new Error("Release tag does not match package version");'
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.12'
 
       - name: Generate release notes from the tag range
         run: |
@@ -293,19 +321,38 @@ jobs:
             --tag "${RELEASE_TAG}" \
             --output release-notes.md
 
+      - name: Check out current publishing checks
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: .release-tools
+          sparse-checkout: scripts/immutable_release.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Recover source artifacts and verify ZIP digests
+        if: inputs.artifact_run_id
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_RUN_ID: ${{ inputs.artifact_run_id }}
+          RELEASE_COMMIT: ${{ needs.release-context.outputs.commit }}
+        run: python3 .release-tools/scripts/immutable_release.py recover
+
       - name: Download desktop release packages
+        if: ${{ !inputs.artifact_run_id }}
         uses: actions/download-artifact@v4
         with:
-          run-id: ${{ inputs.artifact_run_id || github.run_id }}
+          run-id: ${{ github.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           pattern: desktop-*
           path: desktop-inputs
           merge-multiple: false
 
       - name: Download Web release package
+        if: ${{ !inputs.artifact_run_id }}
         uses: actions/download-artifact@v4
         with:
-          run-id: ${{ inputs.artifact_run_id || github.run_id }}
+          run-id: ${{ github.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           name: web-${{ env.RELEASE_TAG }}
           path: release-assets
@@ -313,31 +360,15 @@ jobs:
       - name: Remove packaging logs from recovered artifacts
         run: find desktop-inputs -type f -name 'builder-debug.yml' -delete
 
-      - name: Check out current publishing checks
-        if: inputs.artifact_run_id
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-          path: .release-tools
-          sparse-checkout: scripts/verify-release-run.mjs
-          sparse-checkout-cone-mode: false
-
-      - name: Verify recovered run
-        if: inputs.artifact_run_id
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SOURCE_RUN_ID: ${{ inputs.artifact_run_id }}
-        run: node .release-tools/scripts/verify-release-run.mjs "$SOURCE_RUN_ID" "Verify release source" "Build Web deployment package" "Build Windows x64" "Build Windows ARM64" "Build macOS Intel" "Build macOS Apple Silicon" "Build Linux x64" "Build Linux ARM64"
-
       - name: Record recovered Docker limitation
-        if: inputs.artifact_run_id
+        if: inputs.artifact_run_id && needs.release-context.outputs.docker != 'success'
         run: |
           cat >> release-notes.md <<'EOF'
 
           ### 发布验证 / Release Verification
 
-          - Web package and six desktop targets passed the source release workflow and checksum verification.
-          - The Docker job from the source run was cancelled during the arm64 pnpm installation. This recovered release publishes the verified desktop and Web assets without a new Docker image.
+          - Web package and six desktop targets passed the source release workflow.
+          - The source Docker job was not successful. This recovered release does not publish a new Docker image.
           EOF
 
       - name: Set up pnpm for update metadata
@@ -357,11 +388,10 @@ jobs:
       - name: Merge and verify update metadata and checksums
         run: node scripts/prepare-update-assets.mjs desktop-inputs release-assets
 
-      - name: Publish GitHub release and assets
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          body_path: release-notes.md
-          files: release-assets/*
-          fail_on_unmatched_files: true
-          generate_release_notes: false
+      - name: Verify, upload and publish immutable draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ADMIN_TOKEN: ${{ secrets.RELEASE_ADMIN_TOKEN }}
+          SOURCE_RUN_ID: ${{ inputs.artifact_run_id }}
+          RELEASE_COMMIT: ${{ needs.release-context.outputs.commit }}
+        run: python3 .release-tools/scripts/immutable_release.py finalize
