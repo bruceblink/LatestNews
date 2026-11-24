@@ -30,6 +30,7 @@ class FakeGitHub:
         self.bad_job = None
         self.artifact_error = None
         self.wrong_source = False
+        self.manual_source = False
         self.published_immutable = True
         self.attempt = 1
         self.archives = {}
@@ -61,7 +62,8 @@ class FakeGitHub:
     def api(self, endpoint, **kwargs):
         assert endpoint == f'actions/runs/{RUN}'
         return {'status': 'completed', 'run_attempt': self.attempt, 'head_sha': '0' * 40 if self.wrong_source else self.commit,
-                'head_branch': TAG, 'path': '.github/workflows/release.yml', 'event': 'push',
+                'head_branch': 'main' if self.manual_source else TAG, 'path': '.github/workflows/release.yml',
+                'event': 'workflow_dispatch' if self.manual_source else 'push',
                 'repository': {'full_name': self.repo}, 'head_repository': {'full_name': self.repo}}
 
     def list(self, endpoint, key):
@@ -228,6 +230,11 @@ class ReleaseTests(unittest.TestCase):
         self.api.attempt = 2
         with self.assertRaisesRegex(r.ReleaseError, 'one attempt'):
             self.preflight()
+
+    def test_manual_dispatch_source_uses_verified_release_tag(self):
+        self.tag()
+        self.api.manual_source = True
+        self.assertEqual(self.preflight(), (self.commit, 'not-verified'))
 
     def test_immutable_setting_disabled(self):
         self.tag()

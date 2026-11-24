@@ -153,12 +153,13 @@ def verify_recovery(api, tag, commit, run_id):
     run = api.api(f'actions/runs/{run_id}')
     require(run.get('status') == 'completed' and run.get('run_attempt') == 1,
             'Source run must be completed with one attempt; mixed-attempt artifacts require manual review')
-    require(run.get('head_sha') == commit and run.get('head_branch') == tag and
+    same_tag_run = run.get('head_sha') == commit and run.get('head_branch') == tag and run.get('event') == 'push'
+    manual_dispatch_run = run.get('event') == 'workflow_dispatch' and run.get('head_branch') in ('main', 'master')
+    require((same_tag_run or manual_dispatch_run) and
             run.get('path') == '.github/workflows/release.yml' and
-            run.get('event') in ('push', 'workflow_dispatch') and
             run.get('repository', {}).get('full_name', '').lower() == api.repo.lower() and
             run.get('head_repository', {}).get('full_name', '').lower() == api.repo.lower(),
-            'Source run must originate from the matching release tag, commit, repository and workflow')
+            'Source run must originate from the matching release tag or trusted manual dispatch, repository and workflow')
     jobs = api.list(f'actions/runs/{run_id}/jobs?per_page=100', 'jobs')
     for name in REQUIRED_JOBS:
         found = [j for j in jobs if j['name'] == name]

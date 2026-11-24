@@ -33,9 +33,10 @@
 
 Dispatch `.github/workflows/release.yml` from a trusted revision containing the
 fixed workflow, supplying `release_tag` and, only for publishing recovery,
-`artifact_run_id`. The source run
-must be a completed release workflow on the same tag and commit, in this
-repository. Only single-attempt source runs are accepted automatically; the
+`artifact_run_id`. A source run may be a tag-triggered run or a manual dispatch
+from `main`; in both cases the guard rechecks the remote release tag and the
+source package version before accepting its artifacts. The source run
+must be completed in this repository. Only single-attempt source runs are accepted automatically; the
 source checks and all six build groups must have succeeded. All six
 artifacts must still be available. ZIP archives are downloaded by exact artifact
 ID and checked against GitHub's SHA-256 before extraction. Recovery does not
