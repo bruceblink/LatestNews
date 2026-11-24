@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "latestnews",
   "compatibility_date": "2026-11-23",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "handle_cross_request_promise_resolution"],
   "pages_build_output_dir": "dist",
   "d1_databases": [
     {

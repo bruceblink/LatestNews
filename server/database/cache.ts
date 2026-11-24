@@ -136,28 +136,23 @@ export class Cache {
     }
 }
 
-let cacheTable: Cache | undefined;
+let cacheTablePromise: Promise<Cache | undefined> | undefined;
 
 export async function getCacheTable() {
-    if (process.env.ENABLE_CACHE === "false") return undefined;
-    const requestBound = hasRequestBoundDatabase();
-    if (!requestBound && cacheTable) return cacheTable;
+    cacheTablePromise ??= (async () => {
+        try {
+            if (process.env.ENABLE_CACHE === "false") return undefined;
 
-    try {
-        const initialized = new Cache(getDatabase());
-        if (process.env.INIT_TABLE !== "false") await initialized.init();
-        else await initialized.check();
-        // D1 绑定属于当前请求。只在本地持久数据库中复用实例，避免把
-        // 请求绑定的数据库对象传给后续请求并触发跨请求结算异常。
-        if (!requestBound) cacheTable = initialized;
-        return initialized;
-    } catch (error) {
-        logger.error("failed to init database ", error);
-        return undefined;
-    }
-}
+            const initialized = new Cache(getDatabase());
+            if (process.env.INIT_TABLE !== "false") await initialized.init();
+            else await initialized.check();
+            return initialized;
+        } catch (error) {
+            cacheTablePromise = undefined;
+            logger.error("failed to init database ", error);
+            return undefined;
+        }
+    })();
 
-function hasRequestBoundDatabase() {
-    const runtime = globalThis as typeof globalThis & { __env__?: Record<string, unknown> };
-    return Boolean(runtime.__env__?.LATESTNEWS_DB);
+    return cacheTablePromise;
 }
