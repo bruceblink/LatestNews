@@ -144,7 +144,7 @@ export async function getCacheTable() {
             if (process.env.ENABLE_CACHE === "false") return undefined;
 
             const initialized = new Cache(getDatabase());
-            if (process.env.INIT_TABLE !== "false") await initialized.init();
+            if (process.env.INIT_TABLE === "true") await initialized.init();
             else await initialized.check();
             return initialized;
         } catch (error) {
