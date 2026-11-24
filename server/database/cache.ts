@@ -74,6 +74,7 @@ export class Cache {
     }
 
     async searchArticles(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {
+        if (!this.articleIndex) await this.initializeArticleIndex();
         if (!this.articleIndex) return { status: "unavailable", mode: "unavailable", items: [] };
         return this.articleIndex.search(query);
     }
@@ -133,6 +134,16 @@ export class Cache {
 
     async delete(key: string) {
         return await this.db.prepare("DELETE FROM cache WHERE id = ?").run(key);
+    }
+
+    private async initializeArticleIndex() {
+        try {
+            const index = new ArticleIndex(this.db);
+            await index.init();
+            this.articleIndex = index;
+        } catch (error) {
+            logger.warn("Could not initialize article index on demand.", error);
+        }
     }
 }
 
