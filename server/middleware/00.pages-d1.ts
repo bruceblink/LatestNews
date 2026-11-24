@@ -5,7 +5,14 @@ export default defineEventHandler((event) => {
     if (!cloudflare) return;
 
     // Nitro's Pages entry carries bindings on the request. The db0 D1 connector
-    // reads this global, which holds the same deployment binding across requests.
-    const runtime = globalThis as typeof globalThis & { __env__?: Record<string, unknown> };
-    (runtime.__env__ ??= {}).LATESTNEWS_DB = cloudflare.env.LATESTNEWS_DB;
+    // reads these globals. Refresh the request binding every time so a later
+    // request never reuses a binding object from an ended request context.
+    const runtime = globalThis as typeof globalThis & {
+        __env__?: Record<string, unknown>;
+        __cf_env__?: Record<string, unknown>;
+    };
+    const binding = cloudflare.env.LATESTNEWS_DB;
+    if (!binding) return;
+    runtime.__env__ = { ...runtime.__env__, LATESTNEWS_DB: binding };
+    runtime.__cf_env__ = { ...runtime.__cf_env__, LATESTNEWS_DB: binding };
 });
