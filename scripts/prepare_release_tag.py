@@ -97,12 +97,12 @@ def create_tag(repo, tag, commit):
 def prepare(repo, tag):
     """校验版本并创建或复用指向当前提交的远端标签。"""
     validate_tag(tag)
-    commit = current_commit()
-    require(tag == f"v{package_version(commit)}", "标签版本与目标提交的 package.json version 不一致")
     existing = remote_commit(tag)
     if existing is not None:
-        require(existing == commit, "远端标签已存在但指向其他提交；拒绝移动或覆盖")
-        return commit, False
+        require(tag == f"v{package_version(existing)}", "标签版本与目标提交的 package.json version 不一致")
+        return existing, False
+    commit = current_commit()
+    require(tag == f"v{package_version(commit)}", "标签版本与目标提交的 package.json version 不一致")
     create_tag(repo, tag, commit)
     require(remote_commit(tag) == commit, "标签创建后无法确认其提交指向")
     return commit, True

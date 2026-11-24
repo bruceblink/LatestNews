@@ -33,11 +33,11 @@ class PrepareReleaseTagTests(unittest.TestCase):
             self.assertEqual(module.prepare("bruceblink/LatestNews", "v0.8.3"), (self.commit, True))
         create.assert_called_once_with("bruceblink/LatestNews", "v0.8.3", self.commit)
 
-    def test_rejects_tag_pointing_to_another_commit(self):
+    def test_rejects_existing_tag_with_version_mismatch(self):
         with patch.object(module, "current_commit", return_value=self.commit), \
-             patch.object(module, "package_version", return_value="0.8.3"), \
+             patch.object(module, "package_version", return_value="0.8.2"), \
              patch.object(module, "remote_commit", return_value="b" * 40):
-            with self.assertRaisesRegex(module.TagPreparationError, "其他提交"):
+            with self.assertRaisesRegex(module.TagPreparationError, "version"):
                 module.prepare("bruceblink/LatestNews", "v0.8.3")
 
     def test_rejects_version_mismatch(self):

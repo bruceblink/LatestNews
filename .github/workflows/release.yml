@@ -51,10 +51,6 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           set -euo pipefail
-          test -n "${RELEASE_TAG_TOKEN:-}" || {
-            echo 'RELEASE_TAG_TOKEN is not configured as a repository secret.' >&2
-            exit 1
-          }
           python3 scripts/prepare_release_tag.py "$RELEASE_TAG"
 
   release-context:
@@ -95,7 +91,7 @@ jobs:
 
   verify:
     needs: release-context
-    if: ${{ !inputs.artifact_run_id }}
+    if: ${{ github.event_name == 'push' || inputs.artifact_run_id == '' }}
     name: Verify release source
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -133,7 +129,7 @@ jobs:
           pnpm test:electron
 
   desktop:
-    if: ${{ !inputs.artifact_run_id }}
+    if: ${{ github.event_name == 'push' || inputs.artifact_run_id == '' }}
     name: Build ${{ matrix.label }}
     needs: [release-context, verify]
     strategy:
@@ -220,7 +216,7 @@ jobs:
           retention-days: 14
 
   web:
-    if: ${{ !inputs.artifact_run_id }}
+    if: ${{ github.event_name == 'push' || inputs.artifact_run_id == '' }}
     name: Build Web deployment package
     needs: [release-context, verify]
     runs-on: ubuntu-latest
@@ -269,7 +265,7 @@ jobs:
           retention-days: 14
 
   docker:
-    if: ${{ !inputs.artifact_run_id }}
+    if: ${{ github.event_name == 'push' || inputs.artifact_run_id == '' }}
     name: Publish multi-architecture Docker image
     needs: [release-context, verify]
     runs-on: ubuntu-latest
@@ -316,7 +312,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   publish:
-    if: ${{ !cancelled() && needs.release-context.result == 'success' && (inputs.artifact_run_id || (needs.verify.result == 'success' && needs.desktop.result == 'success' && needs.web.result == 'success' && needs.docker.result == 'success')) }}
+    if: ${{ !cancelled() && needs.release-context.result == 'success' && (inputs.artifact_run_id != '' || (needs.verify.result == 'success' && needs.desktop.result == 'success' && needs.web.result == 'success' && needs.docker.result == 'success')) }}
     name: Publish GitHub Release
     needs: [release-context, verify, desktop, web, docker]
     runs-on: ubuntu-latest
