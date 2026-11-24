@@ -187,10 +187,10 @@ class ReleaseTests(unittest.TestCase):
                     self.preflight()
         self.assert_no_writes()
 
-    def test_recovery_downloads_exact_seven_archives_and_verifies_bytes(self):
+    def test_recovery_downloads_exact_six_archives_and_verifies_bytes(self):
         self.tag()
         r.recover(self.api, TAG, self.commit, RUN, Path('recovered-desktop'), Path('recovered-web'))
-        self.assertEqual(len(list(Path('recovered-desktop').iterdir())), 6)
+        self.assertEqual(len(list(Path('recovered-desktop').iterdir())), 5)
         self.assertEqual(Path('recovered-web/fixture.txt').read_text(), f'web-{TAG}')
         self.assert_no_writes()
 
@@ -239,7 +239,7 @@ class ReleaseTests(unittest.TestCase):
     def test_new_draft_uploads_all_22_then_publishes(self):
         self.tag()
         self.finalize()
-        self.assertEqual(len(self.api.remote_assets), 22)
+        self.assertEqual(len(self.api.remote_assets), 18)
         self.assertTrue(self.api.draft['immutable'])
         self.assertEqual(self.api.calls[-1], 'publish')
         self.assertEqual(self.api.calls.count('create'), 1)
@@ -250,7 +250,7 @@ class ReleaseTests(unittest.TestCase):
         self.api.upload(TAG, self.assets / 'latest.yml')
         self.api.calls.clear()
         self.finalize()
-        self.assertEqual(len(self.api.remote_assets), 22)
+        self.assertEqual(len(self.api.remote_assets), 18)
         self.assertNotIn(('upload', 'latest.yml'), self.api.calls)
         self.assertNotIn('create', self.api.calls)
 

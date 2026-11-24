@@ -31,7 +31,7 @@
 
 Windows NSIS 更新完成后会启动新程序。使用 `--user-data-dir` 做隔离测试时，安装器启动新程序不会继承原进程的该参数；需关闭自动重启的窗口，再用原参数启动以核对测试数据。正常安装使用默认用户目录。数据保留结果和差分传输量记录在主线开发计划。
 
-Release 必须包含安装包、`latest.yml`、`latest-mac.yml`、`latest-linux.yml`、`latest-linux-arm64.yml` 及 EXE/ZIP 对应的 `.blockmap`。Windows 与 macOS 的 x64/ARM64 清单由 `scripts/prepare-update-assets.mjs` 合并，保留全部架构文件；Linux 清单按架构分开。上一版本清单和文件保留在原标签下。发布前核对文件、版本、大小、SHA-512 和分块文件，并生成 `SHA256SUMS.txt`。普通构建命令继续使用 `--publish never`。
+Release 必须包含安装包、`latest.yml`、`latest-mac.yml`、`latest-linux.yml`、`latest-linux-arm64.yml` 及 EXE/ZIP 对应的 `.blockmap`。Windows 的 x64/ARM64 清单、macOS 的 ARM64 清单由 `scripts/prepare-update-assets.mjs` 合并，保留全部发布架构文件；Linux 清单按架构分开。上一版本清单和文件保留在原标签下。发布前核对文件、版本、大小、SHA-512 和分块文件，并生成 `SHA256SUMS.txt`。普通构建命令继续使用 `--publish never`。
 
 Electron staging 目录和 Web 部署包必须包含 `LICENSE`、`LICENSE.md`、`LICENSES/GPL-3.0-only.txt` 和 `LICENSES/AGPL-3.0-only.txt`。`scripts/verify-license-bundle.mjs` 会把发布目录中的四份文件与仓库版本逐一按 SHA-256 比较；Electron 目录还必须声明 `GPL-3.0-only`。桌面和 Web 包的 `README` 指向同一版本标签的源码和构建文档，避免把下载者引向会变化的 `main` 分支。Docker 最终镜像在构建阶段检查相同文件存在且非空。
 

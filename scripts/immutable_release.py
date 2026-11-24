@@ -62,12 +62,14 @@ def validate_tag(tag):
 
 
 def expected_artifacts(tag):
-    return {f'desktop-{os_name}-{arch}' for os_name in ('windows', 'macos', 'linux') for arch in ('x64', 'arm64')} | {f'web-{tag}'}
+    return {
+        'desktop-windows-x64', 'desktop-windows-arm64', 'desktop-macos-arm64',
+        'desktop-linux-x64', 'desktop-linux-arm64', f'web-{tag}'
+    }
 
 
 REQUIRED_JOBS = {'Verify release source', 'Build Web deployment package', 'Build Windows x64',
-                 'Build Windows ARM64', 'Build macOS Intel', 'Build macOS Apple Silicon',
-                 'Build Linux x64', 'Build Linux ARM64'}
+                 'Build Windows ARM64', 'Build macOS Apple Silicon', 'Build Linux x64', 'Build Linux ARM64'}
 DOCKER_JOB = 'Publish multi-architecture Docker image'
 
 
@@ -214,8 +216,10 @@ def expected_files(tag):
     prefix = 'LatestNews-' + tag[1:] + '-'
     names = {'latest.yml', 'latest-mac.yml', 'latest-linux.yml', 'latest-linux-arm64.yml', 'SHA256SUMS.txt', prefix + 'Web.zip'}
     for arch in ('x64', 'arm64'):
-        for suffix in (f'Windows-{arch}.exe', f'macOS-{arch}.zip', f'macOS-{arch}.dmg'):
-            names.update((prefix + suffix, prefix + suffix + '.blockmap'))
+        suffix = f'Windows-{arch}.exe'
+        names.update((prefix + suffix, prefix + suffix + '.blockmap'))
+    for suffix in ('macOS-arm64.zip', 'macOS-arm64.dmg'):
+        names.update((prefix + suffix, prefix + suffix + '.blockmap'))
     names.update(prefix + suffix for suffix in ('Linux-x86_64.AppImage', 'Linux-arm64.AppImage', 'Linux-amd64.deb', 'Linux-arm64.deb'))
     return names
 

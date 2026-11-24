@@ -152,12 +152,6 @@ jobs:
             platform: win
             arch: arm64
             arch_flag: arm64
-          - id: macos-x64
-            label: macOS Intel
-            runner: macos-15-intel
-            platform: mac
-            arch: x64
-            arch_flag: x64
           - id: macos-arm64
             label: macOS Apple Silicon
             runner: macos-15

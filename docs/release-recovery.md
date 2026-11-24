@@ -24,8 +24,9 @@
   **Contents: Read and write**. The token owner must also be allowed to create
   tags by the repository or organization ruleset. Never reuse the
   `RELEASE_ADMIN_TOKEN`; it is read-only and must not perform mutations.
-- The expected installer/metadata contract is the 22 assets produced by the
-  six Electron desktop targets and the Web package. Update the explicit
+- The expected installer/metadata contract is the 18 assets produced by the
+  five Electron desktop targets and the Web package. macOS release builds use
+  Apple Silicon only. Update the explicit
   contract and tests together if packaging changes.
 
 ## Recovery after a publication-only failure
@@ -35,7 +36,7 @@ fixed workflow, supplying `release_tag` and, only for publishing recovery,
 `artifact_run_id`. The source run
 must be a completed release workflow on the same tag and commit, in this
 repository. Only single-attempt source runs are accepted automatically; the
-source checks and all seven build groups must have succeeded. All seven
+source checks and all six build groups must have succeeded. All six
 artifacts must still be available. ZIP archives are downloaded by exact artifact
 ID and checked against GitHub's SHA-256 before extraction. Recovery does not
 rebuild or publish a Docker image. The release notes record this limitation if

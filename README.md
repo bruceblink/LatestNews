@@ -49,7 +49,6 @@ Web 无需等待桌面 Release 即可部署更新。已打开的网页可能仍�
 | Windows x64 | `LatestNews-<版本>-Windows-x64.exe` | 运行安装程序，选择安装目录，从桌面或开始菜单启动 |
 | Windows ARM64 | `LatestNews-<版本>-Windows-arm64.exe` | 在系统设置的“系统信息”中确认 ARM64 后，运行安装程序 |
 | macOS Apple Silicon | `LatestNews-<版本>-macOS-arm64.dmg` | 打开 DMG，将应用拖入“应用程序”后启动 |
-| macOS Intel | `LatestNews-<版本>-macOS-x64.dmg` | 在“关于本机”确认 Intel 处理器后，按 DMG 步骤安装 |
 | Linux x64 | `LatestNews-<版本>-Linux-x86_64.AppImage` 或 `LatestNews-<版本>-Linux-amd64.deb` | AppImage 需先在文件属性中允许作为程序执行；Debian / Ubuntu 可用软件安装器安装 DEB |
 | Linux ARM64 | `LatestNews-<版本>-Linux-arm64.AppImage` 或 `LatestNews-<版本>-Linux-arm64.deb` | 按对应的 AppImage 或 DEB 步骤安装 |
 
@@ -224,7 +223,7 @@ docker compose -f docker-compose.yml up -d
 
 ## 发布产物
 
-[GitHub Releases](https://github.com/bruceblink/LatestNews/releases) 提供 Windows、macOS 和 Linux 的 x64/ARM64 桌面包，以及 `LatestNews-<版本>-Web.zip` Node 部署包。普通用户使用上方的 [Web 入口或桌面安装步骤](#安装与使用)；自托管使用 [部署运维文档](./docs/deployment.md)。
+[GitHub Releases](https://github.com/bruceblink/LatestNews/releases) 提供 Windows 和 Linux 的 x64/ARM64 桌面包、macOS Apple Silicon 桌面包，以及 `LatestNews-<版本>-Web.zip` Node 部署包。普通用户使用上方的 [Web 入口或桌面安装步骤](#安装与使用)；自托管使用 [部署运维文档](./docs/deployment.md)。
 
 Docker 镜像发布到 `ghcr.io/bruceblink/latestnews`，支持 `linux/amd64` 和 `linux/arm64`。使用 Compose 时将镜像固定为已发布的版本，例如 `ghcr.io/bruceblink/latestnews:<版本>`。Web 站点部署与桌面安装包独立交付，不必等待所有平台完成打包后才更新网站。
 
