@@ -209,13 +209,8 @@ export class ArticleIndex {
 
     async search(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {
         const text = query.query.trim();
-        if (!this.ftsAvailable || !text) {
-            return {
-                status: this.ftsAvailable ? "ok" : "unavailable",
-                mode: this.ftsAvailable ? "fts" : "unavailable",
-                items: [],
-            };
-        }
+        if (!text) return { status: "ok", mode: this.ftsAvailable ? "fts" : "like", items: [] };
+        if (!this.ftsAvailable) return this.searchLike(query);
 
         const limit = Math.min(Math.max(query.limit ?? DEFAULT_SEARCH_LIMIT, 1), MAX_SEARCH_LIMIT);
         const conditions = ["article_search MATCH ?"];
@@ -247,33 +242,45 @@ export class ArticleIndex {
             const ftsRows = getRows(rows) as ArticleRow[];
             if (ftsRows.length) return { status: "ok", mode: "fts", items: await this.mapRows(ftsRows) };
 
-            const fallbackConditions = ["(articles.title LIKE ? OR articles.canonical_url LIKE ?)"];
-            const fallbackParameters: Array<string | number> = [`%${text}%`, `%${text}%`];
-            if (query.sourceId) {
-                fallbackConditions.push(
-                    "EXISTS (SELECT 1 FROM article_sources source WHERE source.article_key = articles.article_key AND source.source_id = ?)"
-                );
-                fallbackParameters.push(query.sourceId);
-            }
-            if (query.since !== undefined) {
-                fallbackConditions.push("(articles.published_at IS NULL OR articles.published_at >= ?)");
-                fallbackParameters.push(query.since);
-            }
-            fallbackParameters.push(limit);
-            const fallbackRows = await this.db
+            return this.searchLike(query);
+        } catch (error) {
+            this.ftsAvailable = false;
+            logger.warn("Article FTS5 search is unavailable.", error);
+            return this.searchLike(query);
+        }
+    }
+
+    async searchLike(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {
+        const text = query.query.trim();
+        if (!text) return { status: "ok", mode: "like", items: [] };
+        const limit = Math.min(Math.max(query.limit ?? DEFAULT_SEARCH_LIMIT, 1), MAX_SEARCH_LIMIT);
+        const conditions = ["(articles.title LIKE ? OR articles.canonical_url LIKE ?)"];
+        const parameters: Array<string | number> = [`%${text}%`, `%${text}%`];
+        if (query.sourceId) {
+            conditions.push(
+                "EXISTS (SELECT 1 FROM article_sources source WHERE source.article_key = articles.article_key AND source.source_id = ?)"
+            );
+            parameters.push(query.sourceId);
+        }
+        if (query.since !== undefined) {
+            conditions.push("(articles.published_at IS NULL OR articles.published_at >= ?)");
+            parameters.push(query.since);
+        }
+        parameters.push(limit);
+        try {
+            const rows = await this.db
                 .prepare(
                     `SELECT articles.article_key, articles.canonical_url, articles.title, articles.published_at,
                             articles.event_id, articles.payload
                      FROM articles
-                     WHERE ${fallbackConditions.join(" AND ")}
+                     WHERE ${conditions.join(" AND ")}
                      ORDER BY articles.published_at DESC
                      LIMIT ?`
                 )
-                .all(...fallbackParameters);
-            return { status: "ok", mode: "like", items: await this.mapRows(getRows(fallbackRows) as ArticleRow[]) };
+                .all(...parameters);
+            return { status: "ok", mode: "like", items: await this.mapRows(getRows(rows) as ArticleRow[]) };
         } catch (error) {
-            this.ftsAvailable = false;
-            logger.warn("Article FTS5 search is unavailable.", error);
+            logger.warn("Article LIKE search is unavailable.", error);
             return { status: "unavailable", mode: "unavailable", items: [] };
         }
     }

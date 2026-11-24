@@ -92,10 +92,10 @@ describe("article index", () => {
             createItem("fallback", "Fallback article", "https://example.com/fallback"),
         ]);
 
-        await expect(index.search({ query: "Fallback" })).resolves.toEqual({
-            status: "unavailable",
-            mode: "unavailable",
-            items: [],
+        await expect(index.search({ query: "Fallback" })).resolves.toMatchObject({
+            status: "ok",
+            mode: "like",
+            items: [expect.objectContaining({ title: "Fallback article" })],
         });
         await expect(database.prepare("SELECT count(*) AS count FROM articles").get()).resolves.toMatchObject({
             count: 1,
