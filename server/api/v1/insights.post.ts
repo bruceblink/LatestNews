@@ -51,13 +51,14 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
         },
         now: Date.now(),
         insightOptions: parsedBody.data,
-        background: (pending) => event.waitUntil(pending),
+        // D1 写入必须在当前请求内完成。Cloudflare Pages 不允许把绑定请求产生的
+        // Promise 延迟到响应结束后继续结算，否则会触发跨请求 Promise 异常。
         onFetchError: (error, id) => logger.error(`fetch ${id} insights failed`, error),
         onCacheError: (error, id) => logger.warn(`Could not save ${id} insights cache.`, error),
     });
 
     if (cacheTable && response.data.topicEvents.length) {
-        event.waitUntil(cacheTable.updateArticleEventIds(response.data.topicEvents));
+        await cacheTable.updateArticleEventIds(response.data.topicEvents);
     }
 
     return response;
