@@ -68,7 +68,9 @@ jobs:
       - name: Check out workflow revision and remote tags
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          # Use the trusted workflow revision for manual recovery; release jobs
+          # check out the immutable release commit from release-context output.
+          ref: ${{ github.sha }}
           fetch-depth: 0
 
       - name: Set up Python
