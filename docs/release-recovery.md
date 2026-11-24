@@ -8,10 +8,22 @@
   Administration: read, not Administration: write. The regular workflow
   `GITHUB_TOKEN` performs release operations; the admin-read token only reads
   the setting. Do not use the token to bypass rulesets.
-- Use an existing remote release tag that resolves to the intended commit and
-  matches the version in that commit's `package.json`. For normal manual runs,
-  dispatch from the matching tag. Pushes and recovery runs for the same release
-  version share one concurrency group.
+- A manual `workflow_dispatch` run uses `RELEASE_TAG_TOKEN` to create the
+  requested remote tag when it does not exist. The token must be a repository
+  secret with fine-grained `Contents: write` permission for this repository and
+  must be allowed by the repository's tag-creation rules. The workflow checks
+  the tag against the checked-out `package.json` version and refuses to move an
+  existing tag. Creating the tag starts the normal tag-triggered release run;
+  the manual run stops after tag preparation to avoid duplicate builds.
+- An existing remote release tag must resolve to the intended commit and match
+  the version in that commit's `package.json`. Pushes and recovery runs for the
+  same release version share one concurrency group.
+- Configure the repository secret before dispatching a new release: in
+  **Settings → Secrets and variables → Actions**, create `RELEASE_TAG_TOKEN`
+  with a fine-grained token restricted to `bruceblink/LatestNews` and
+  **Contents: Read and write**. The token owner must also be allowed to create
+  tags by the repository or organization ruleset. Never reuse the
+  `RELEASE_ADMIN_TOKEN`; it is read-only and must not perform mutations.
 - The expected installer/metadata contract is the 22 assets produced by the
   six Electron desktop targets and the Web package. Update the explicit
   contract and tests together if packaging changes.
@@ -19,7 +31,8 @@
 ## Recovery after a publication-only failure
 
 Dispatch `.github/workflows/release.yml` from a trusted revision containing the
-fixed workflow, supplying `release_tag` and `artifact_run_id`. The source run
+fixed workflow, supplying `release_tag` and, only for publishing recovery,
+`artifact_run_id`. The source run
 must be a completed release workflow on the same tag and commit, in this
 repository. Only single-attempt source runs are accepted automatically; the
 source checks and all seven build groups must have succeeded. All seven

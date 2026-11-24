@@ -321,7 +321,10 @@ def main():
     source_run = os.environ.get('SOURCE_RUN_ID', '')
     current_run = os.environ['GITHUB_RUN_ID']
     if args.phase == 'preflight':
-        commit, docker = preflight(api, tag, source_run, current_run, os.environ['GITHUB_REF'], os.environ['GITHUB_SHA'])
+        # 手动触发时由 prepare-tag job 传入已确认的标签引用和提交。
+        ref = os.environ.get('RELEASE_REF', os.environ['GITHUB_REF'])
+        workflow_sha = os.environ.get('RELEASE_WORKFLOW_SHA', os.environ['GITHUB_SHA'])
+        commit, docker = preflight(api, tag, source_run, current_run, ref, workflow_sha)
         with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
             out.write(f'commit={commit}\ndocker={docker}\n')
         print(f'Verified remote release tag {tag}: {commit}')

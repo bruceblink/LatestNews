@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing release tag to build and publish
+        description: Release tag to create or use for this run
         required: true
         type: string
       artifact_run_id:
@@ -26,7 +26,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  prepare-tag:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    name: Prepare release tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      commit: ${{ steps.tag.outputs.commit }}
+      created: ${{ steps.tag.outputs.created }}
+    steps:
+      - name: Check out workflow source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Create or reuse remote tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TAG_TOKEN }}
+          RELEASE_TAG_TOKEN: ${{ secrets.RELEASE_TAG_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          test -n "${RELEASE_TAG_TOKEN:-}" || {
+            echo 'RELEASE_TAG_TOKEN is not configured as a repository secret.' >&2
+            exit 1
+          }
+          python3 scripts/prepare_release_tag.py "$RELEASE_TAG"
+
   release-context:
+    needs: prepare-tag
+    if: ${{ always() && (needs.prepare-tag.result == 'success' || needs.prepare-tag.result == 'skipped') && needs.prepare-tag.outputs.created != 'true' }}
     name: Verify remote release context
     runs-on: ubuntu-latest
     permissions:
@@ -39,7 +72,7 @@ jobs:
       - name: Check out workflow revision and remote tags
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
 
       - name: Set up Python
@@ -56,6 +89,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_ADMIN_TOKEN: ${{ secrets.RELEASE_ADMIN_TOKEN }}
           SOURCE_RUN_ID: ${{ inputs.artifact_run_id }}
+          RELEASE_REF: refs/tags/${{ env.RELEASE_TAG }}
+          RELEASE_WORKFLOW_SHA: ${{ needs.prepare-tag.outputs.commit || github.sha }}
         run: python3 scripts/immutable_release.py preflight
 
   verify:
