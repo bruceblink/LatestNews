@@ -3,7 +3,7 @@ import type { NewsItem, SourceID } from "@shared/types";
 import type { TopicEvent } from "@shared/news-insights";
 
 import process from "node:process";
-import { useDatabase } from "nitro/database";
+import { useDatabase as getDatabase } from "nitro/database";
 
 import { logger } from "../utils/logger";
 import { ArticleIndex } from "./article-index";
@@ -136,23 +136,22 @@ export class Cache {
     }
 }
 
-let cacheTablePromise: Promise<Cache | undefined> | undefined;
+let cacheTable: Cache | undefined;
 
 export async function getCacheTable() {
-    cacheTablePromise ??= (async () => {
-        try {
-            if (process.env.ENABLE_CACHE === "false") return undefined;
+    if (cacheTable) return cacheTable;
+    if (process.env.ENABLE_CACHE === "false") return undefined;
 
-            const cacheTable = new Cache(useDatabase());
-            if (process.env.INIT_TABLE !== "false") await cacheTable.init();
-            else await cacheTable.check();
-            return cacheTable;
-        } catch (e) {
-            cacheTablePromise = undefined;
-            logger.error("failed to init database ", e);
-            return undefined;
-        }
-    })();
-
-    return cacheTablePromise;
+    try {
+        const initialized = new Cache(getDatabase());
+        if (process.env.INIT_TABLE !== "false") await initialized.init();
+        else await initialized.check();
+        // 只缓存已经完成初始化的实例，避免把绑定请求产生的 Promise
+        // 传给后续请求并触发 Cloudflare Pages 跨请求结算异常。
+        cacheTable = initialized;
+        return initialized;
+    } catch (error) {
+        logger.error("failed to init database ", error);
+        return undefined;
+    }
 }
