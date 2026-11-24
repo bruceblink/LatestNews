@@ -165,6 +165,7 @@ def verify_recovery(api, tag, commit, run_id):
         found = [j for j in jobs if j['name'] == name]
         require(len(found) == 1 and found[0]['status'] == 'completed' and found[0]['conclusion'] == 'success',
                 f'Required source job has not succeeded: {name}')
+    artifact_commit = run.get('head_sha') if manual_dispatch_run else commit
     artifacts = api.list(f'actions/runs/{run_id}/artifacts?per_page=100', 'artifacts')
     names = [a['name'] for a in artifacts]
     require(set(names) == expected_artifacts(tag) and len(names) == len(set(names)),
@@ -172,7 +173,7 @@ def verify_recovery(api, tag, commit, run_id):
     for a in artifacts:
         require(a.get('expired') is False and a.get('size_in_bytes', 0) > 0 and
                 re.fullmatch(r'sha256:[0-9a-f]{64}', a.get('digest') or '') and
-                a.get('workflow_run', {}).get('head_sha') == commit and
+                a.get('workflow_run', {}).get('head_sha') == artifact_commit and
                 str(a.get('workflow_run', {}).get('id')) == run_id,
                 f'Expired, incomplete or unrelated source artifact: {a["name"]}')
     docker = [j.get('conclusion') for j in jobs if j['name'] == DOCKER_JOB]
