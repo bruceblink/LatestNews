@@ -143,7 +143,7 @@ Node/Docker 支持完整服务端采集和受信插件，Pages 使用兼容 Work
 
 相关说明见[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)和[贡献指南](CONTRIBUTING.md)。
 
-## 10. N4-B 至 N4-J：检索与采集运行时演进（2026-11-23）
+## 10. N4-B 至 N4-K：检索与采集运行时演进（2026-11-23）
 
 本节是 2026-11-22 性能基线后的增量计划。参考 Exa 的查询执行、增量索引和混合检索原则，但不引入 Exa 付费依赖或重建其搜索引擎。现有 N1/N2/N3/N4 的验收优先级和部署边界保持不变。各切片必须使用独立 PR，以利验证和回退。
 
@@ -233,8 +233,16 @@ Cloudflare API 检查确认 `latestnews` D1 数据库已绑定到 Pages 生产�
 - 基于 N4-H 73 条真实报道和 15 个初标查询，与 N4-I 主线 df813df 对照：TP/FP/FN 从 13/0/8 变为 21/1/0；Precision 100% → 95.45%，Recall 61.90% → 100%；300 次内存 SQLite 查询 P95 为 0.369 → 0.375 ms。不能外推生产规模或证明性能改进。中文子串扫描、大库延迟、独立相关性标注、词典分词和语义扩展仍待评估。
 - 验收：96 个 Vitest 文件 515 项通过（新增 5 项）；lint、Node/Web/Electron 类型检查、Node/Pages 构建及隔离 D1 中文查询回归通过。详情见[中文标题检索](docs/performance/news-article-chinese-search.md)，复现 pnpm performance:chinese-search。
 
+### N4-K（P2）：混合检索与 RRF 离线评估（2026-11-25）
+
+新增离线字符标题检索器、RRF 排名融合与质量评测命令 pnpm performance:hybrid-search。不依赖外部服务或模型。以 N4-J 主线 a519d3f 实际 ArticleIndex.search 为基线，复用 73 篇报道，固定 21 个新初标查询（45 个相关标签，4 个无答案），候选深度 20、返回深度 5。字符通道为加权 N-gram 字面近似检索，不是语义向量或 ANN。
+
+- 主线/字符/RRF 微召回率@5 分别 48.89%/66.67%/66.67%，微精确率 100%/76.92%/76.92%，nDCG@5 0.6746/0.8584/0.8584。21 个 RRF 与字符通道排名完全相同。每方法 420 次本地热查询 P95 0.495/0.075/0.563 ms；不含建库、HTTP 与增量更新。非独立标签，不证明生产质量或大规模性能。
+- 验收：97 个 Vitest 文件 519 项通过（新增 4 项）；ESLint、Node/Web/Electron 类型检查通过。本次仅离线评测，无运行时代码变更，不重建或部署生产产物。
+- 结论：没有证据证明 RRF 相对最佳单通道的增益，暂不引入生产混合检索、Embedding/ANN 或外部依赖。继续保留 N4-J 生产路径。详见[混合检索评估](docs/performance/news-hybrid-retrieval.md)。N4-I/J/K 开发切片结束；完整 N4-C API 对照、N4-H 独立复核/保留集、生产 D1 和规模化检索性能等仍需按原计划单独验收，不将离线评测视为生产验收。
+
 ### 切片通用交付、顺序与安全限制
 
-顺序为 N4-B 计划 PR → 审阅与合并 → N4-B 代码 PR → N4-C 基准 PR → N4-D → N4-E → N4-F → N4-G → N4-H → N4-I → N4-J。阶段一仅包括 N4-B；N4-C 需要单独的对照测试与评审。每个 PR 包含影响文件、用例、实测与未测项、向后兼容声明及回退策略。运行 `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run`，影响构建时运行 `pnpm build`；基准脚本需在隔离缓存和回环网络下运行。
+顺序为 N4-B 计划 PR → 审阅与合并 → N4-B 代码 PR → N4-C 基准 PR → N4-D → N4-E → N4-F → N4-G → N4-H → N4-I → N4-J → N4-K。阶段一仅包括 N4-B；N4-C 需要单独的对照测试与评审。每个 PR 包含影响文件、用例、实测与未测项、向后兼容声明及回退策略。运行 `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run`，影响构建时运行 `pnpm build`；基准脚本需在隔离缓存和回环网络下运行。
 
 不得擅自配置 Exa Key、启用付费服务、改动现有定时技术简报、变更部署密钥或生产容器。未经完整评估不引入独立 Rust 检索服务、外部向量数据库或新 Agent Runtime。

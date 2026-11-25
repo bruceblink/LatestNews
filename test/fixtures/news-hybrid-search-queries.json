@@ -1,0 +1,27 @@
+{
+    "labelStatus": "proposed-not-independently-reviewed",
+    "selection": "Event-intent and literal/typo queries authored before evaluation on the frozen N4-H reports; not an independent holdout or production sample.",
+    "cases": [
+        {"query":"Kagi Mail","kind":"event","relevant":["report-001","report-002","report-003"]},
+        {"query":"Firefx 161","kind":"typo","relevant":["report-004","report-005"]},
+        {"query":"Ladybird alpha","kind":"event","relevant":["report-006","report-007","report-008"]},
+        {"query":"个性化 AI 频道","kind":"mixed","relevant":["report-009","report-010","report-011"]},
+        {"query":"视频模型 MAGI-2","kind":"mixed","relevant":["report-034"]},
+        {"query":"腾讯 混元 GGUF","kind":"mixed","relevant":["report-035"]},
+        {"query":"Tidal ban AI music","kind":"event","relevant":["report-014","report-015","report-016","report-017"]},
+        {"query":"Amazon drone crash","kind":"event","relevant":["report-018","report-019","report-020","report-021"]},
+        {"query":"Rust 1.97.0","kind":"version","relevant":["report-044","report-045"]},
+        {"query":"PostgreSQL 18 RC 1","kind":"version","relevant":["report-054"]},
+        {"query":"Python 3.14 beta 1","kind":"version","relevant":["report-061"]},
+        {"query":"CVE-2025-55182","kind":"event","relevant":["report-062","report-063","report-064","report-065","report-066","report-067","report-068"]},
+        {"query":"AI agents exploit","kind":"literal","relevant":["report-023"]},
+        {"query":"Meta Muse Instagram","kind":"literal","relevant":["report-029"]},
+        {"query":"电视频道","kind":"event","relevant":["report-009","report-010","report-011"]},
+        {"query":"React2Shel","kind":"typo","relevant":["report-062","report-063","report-064","report-065","report-066","report-067","report-068"]},
+        {"query":"量化权重","kind":"literal","relevant":["report-035"]},
+        {"query":"Rust 1.99.9","kind":"no-answer","relevant":[]},
+        {"query":"Kubernetes 1.31","kind":"no-answer","relevant":[]},
+        {"query":"海底地震预警","kind":"no-answer","relevant":[]},
+        {"query":"Elixir OTP","kind":"no-answer","relevant":[]}
+    ]
+}
