@@ -2,12 +2,16 @@ import type { Database } from "db0";
 import type { NewsItem, SourceID } from "@shared/types";
 import type { TopicEvent } from "@shared/news-insights";
 
+import { createHash, randomUUID } from "node:crypto";
+import { articleTimestamp } from "@shared/article-time";
 import { normalizeNewsItemUrlKey } from "@shared/news-item-schema";
 import { safeNewsUrl, safeNewsItemLinks, filterSafeNewsItemLinks } from "@shared/news-url-policy";
 
 import { logger } from "../utils/logger";
+import { executeArticleBatch } from "./article-atomic-batch";
 import { reconcileArticleEventId } from "./article-event-identity";
 import { initArticleEventRegistry } from "./article-event-registry";
+import { ARTICLE_SOURCES_SCHEMA, migrateArticleIdentity } from "./article-identity-migration";
 import { hasArticleEventAliases, initArticleEventAliases, resolveArticleEventAlias } from "./article-event-aliases";
 
 const DEFAULT_SEARCH_LIMIT = 30;
@@ -84,19 +88,7 @@ export class ArticleIndex {
                 )`
             )
             .run();
-        await this.db
-            .prepare(
-                `CREATE TABLE IF NOT EXISTS article_sources (
-                    article_key TEXT NOT NULL,
-                    source_id TEXT NOT NULL,
-                    raw_item_id TEXT NOT NULL,
-                    first_seen_at INTEGER NOT NULL,
-                    last_seen_at INTEGER NOT NULL,
-                    PRIMARY KEY (article_key, source_id),
-                    UNIQUE (source_id, raw_item_id)
-                )`
-            )
-            .run();
+        await this.db.prepare(`CREATE TABLE IF NOT EXISTS article_sources ${ARTICLE_SOURCES_SCHEMA}`).run();
         await this.db
             .prepare("CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at DESC)")
             .run();
@@ -105,6 +97,8 @@ export class ArticleIndex {
                 "CREATE INDEX IF NOT EXISTS idx_article_sources_source ON article_sources (source_id, last_seen_at DESC)"
             )
             .run();
+
+        await migrateArticleIdentity(this.db);
 
         try {
             await initArticleEventRegistry(this.db);
@@ -137,57 +131,51 @@ export class ArticleIndex {
             if (!canonicalUrl) continue;
             const rawItemId = String(item.id);
             const contentFingerprint = createContentFingerprint(item, canonicalUrl);
-            const existing = await this.findExistingArticle(sourceId, rawItemId, canonicalUrl, contentFingerprint);
-            const articleKey = existing?.article_key ?? createArticleKey(canonicalUrl, sourceId, rawItemId);
-
-            if (existing) {
-                await this.db
-                    .prepare(
-                        `UPDATE articles
-                         SET canonical_url = ?, title = ?, published_at = ?, content_fingerprint = ?, payload = ?, last_seen_at = ?
-                         WHERE article_key = ?`
-                    )
-                    .run(
+            const candidate = "article-v2-" + createHash("sha256").update(canonicalUrl).digest("hex");
+            const fallback = "article-v2-" + randomUUID();
+            const publishedAt = articleTimestamp(item.pubDate) ?? articleTimestamp(item.extra?.date);
+            // Resolve the actual row by canonical URL inside the same transaction.
+            // Raw IDs and fingerprints are metadata, never equivalence proofs.
+            const [prior, rows] = await executeArticleBatch(this.db, [
+                { sql: "SELECT article_key FROM articles WHERE canonical_url = ?", params: [canonicalUrl], rows: true },
+                {
+                    sql: `INSERT INTO articles
+                          (article_key, canonical_url, title, published_at, content_fingerprint, event_id, payload, first_seen_at, last_seen_at)
+                          VALUES (CASE WHEN EXISTS (SELECT 1 FROM articles WHERE article_key = ? AND canonical_url <> ?)
+                                  THEN ? ELSE ? END, ?, ?, ?, ?, NULL, ?, ?, ?)
+                          ON CONFLICT(canonical_url) DO UPDATE SET
+                            title = excluded.title, published_at = excluded.published_at,
+                            content_fingerprint = excluded.content_fingerprint, payload = excluded.payload,
+                            last_seen_at = max(articles.last_seen_at, excluded.last_seen_at)
+                          RETURNING article_key`,
+                    params: [
+                        candidate,
+                        canonicalUrl,
+                        fallback,
+                        candidate,
                         canonicalUrl,
                         item.title,
-                        item.pubDate ?? item.extra?.date ?? null,
+                        publishedAt,
                         contentFingerprint,
                         JSON.stringify(item),
                         now,
-                        articleKey
-                    );
-                updated += 1;
-            } else {
-                await this.db
-                    .prepare(
-                        `INSERT INTO articles
-                         (article_key, canonical_url, title, published_at, content_fingerprint, event_id, payload, first_seen_at, last_seen_at)
-                         VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)`
-                    )
-                    .run(
-                        articleKey,
-                        canonicalUrl,
-                        item.title,
-                        item.pubDate ?? item.extra?.date ?? null,
-                        contentFingerprint,
-                        JSON.stringify(item),
                         now,
-                        now
-                    );
-                inserted += 1;
-            }
-
-            await this.db
-                .prepare(
-                    `INSERT INTO article_sources
-                     (article_key, source_id, raw_item_id, first_seen_at, last_seen_at)
-                     VALUES (?, ?, ?, ?, ?)
-                     ON CONFLICT (article_key, source_id) DO UPDATE SET
-                       raw_item_id = EXCLUDED.raw_item_id,
-                       last_seen_at = EXCLUDED.last_seen_at`
-                )
-                .run(articleKey, sourceId, rawItemId, now, now);
-            await this.updateFts(articleKey, item.title, canonicalUrl);
+                    ],
+                    rows: true,
+                },
+                {
+                    sql: `INSERT INTO article_sources (article_key, source_id, raw_item_id, first_seen_at, last_seen_at)
+                          SELECT article_key, ?, ?, ?, ? FROM articles WHERE canonical_url = ?
+                          ON CONFLICT(article_key, source_id) DO UPDATE SET
+                            raw_item_id = excluded.raw_item_id, last_seen_at = max(article_sources.last_seen_at, excluded.last_seen_at)`,
+                    params: [sourceId, rawItemId, now, now, canonicalUrl],
+                },
+            ]);
+            const articleKey = (rows[0] as { article_key: string } | undefined)?.article_key;
+            if (!articleKey) throw new Error("Article upsert returned no identity.");
+            if (prior.length) updated += 1;
+            else inserted += 1;
+            await this.updateFts(articleKey);
         }
 
         return { inserted, updated };
@@ -295,7 +283,7 @@ export class ArticleIndex {
             parameters.push(query.sourceId);
         }
         if (query.since !== undefined) {
-            conditions.push("(articles.published_at IS NULL OR articles.published_at >= ?)");
+            conditions.push("(typeof(articles.published_at) IN ('integer', 'real') AND articles.published_at >= ?)");
             parameters.push(query.since);
         }
         parameters.push(limit);
@@ -342,7 +330,7 @@ export class ArticleIndex {
             parameters.push(query.sourceId);
         }
         if (query.since !== undefined) {
-            conditions.push("(articles.published_at IS NULL OR articles.published_at >= ?)");
+            conditions.push("(typeof(articles.published_at) IN ('integer', 'real') AND articles.published_at >= ?)");
             parameters.push(query.since);
         }
         parameters.push(text, text, limit);
@@ -378,38 +366,16 @@ export class ArticleIndex {
         if (articles !== indexed) await this.rebuildSearchIndex();
     }
 
-    private async findExistingArticle(
-        sourceId: SourceID,
-        rawItemId: string,
-        canonicalUrl: string,
-        contentFingerprint: string
-    ) {
-        const byUrl = await this.db
-            .prepare("SELECT article_key FROM articles WHERE canonical_url = ? LIMIT 1")
-            .get(canonicalUrl);
-        if (byUrl) return byUrl as { article_key: string };
-
-        const bySourceId = await this.db
-            .prepare(
-                `SELECT article_key FROM article_sources
-                 WHERE source_id = ? AND raw_item_id = ? LIMIT 1`
-            )
-            .get(sourceId, rawItemId);
-        if (bySourceId) return bySourceId as { article_key: string };
-
-        const byFingerprint = await this.db
-            .prepare("SELECT article_key FROM articles WHERE content_fingerprint = ? LIMIT 1")
-            .get(contentFingerprint);
-        return (byFingerprint as { article_key: string } | undefined) ?? undefined;
-    }
-
-    private async updateFts(articleKey: string, title: string, canonicalUrl: string) {
+    private async updateFts(articleKey: string) {
         if (!this.ftsAvailable) return;
         try {
-            await this.db.prepare("DELETE FROM article_search WHERE article_key = ?").run(articleKey);
-            await this.db
-                .prepare("INSERT INTO article_search (article_key, title, canonical_url) VALUES (?, ?, ?)")
-                .run(articleKey, title, canonicalUrl);
+            await executeArticleBatch(this.db, [
+                { sql: "DELETE FROM article_search WHERE article_key = ?", params: [articleKey] },
+                {
+                    sql: "INSERT INTO article_search (article_key, title, canonical_url) SELECT article_key, title, canonical_url FROM articles WHERE article_key = ?",
+                    params: [articleKey],
+                },
+            ]);
         } catch (error) {
             this.ftsAvailable = false;
             logger.warn("Could not update article FTS5 index.", error);
@@ -448,24 +414,16 @@ export class ArticleIndex {
 }
 
 function createContentFingerprint(item: NewsItem, canonicalUrl: string) {
-    return hashString(
-        JSON.stringify({
-            title: item.title,
-            canonicalUrl,
-            publishedAt: item.pubDate ?? item.extra?.date ?? null,
-            info: item.extra?.info ?? null,
-        })
-    );
-}
-
-function createArticleKey(canonicalUrl: string, sourceId: SourceID, rawItemId: string) {
-    return `article-${hashString(canonicalUrl || `${sourceId}:${rawItemId}`)}`;
-}
-
-function hashString(value: string) {
-    let hash = 0;
-    for (let index = 0; index < value.length; index += 1) hash = (hash * 31 + value.charCodeAt(index)) % 4294967296;
-    return hash.toString(36);
+    return createHash("sha256")
+        .update(
+            JSON.stringify({
+                title: item.title,
+                canonicalUrl,
+                publishedAt: item.pubDate ?? item.extra?.date ?? null,
+                info: item.extra?.info ?? null,
+            })
+        )
+        .digest("hex");
 }
 
 function getRows(value: unknown) {

@@ -61,6 +61,39 @@ describe("article search API", () => {
         });
     });
 
+    it("requires a valid time and excludes undated articles when since is specified", async () => {
+        const cache = await getCacheTable();
+        const now = 1795550000000;
+        await cache!.set("v2ex", [
+            {
+                id: "time-seconds",
+                title: "Timestamp fixture",
+                url: "https://example.test/time-seconds",
+                pubDate: now / 1000,
+            },
+            {
+                id: "time-unknown",
+                title: "Timestamp fixture",
+                url: "https://example.test/time-unknown",
+                pubDate: "unknown",
+            },
+        ]);
+        const response = await app.request("/v1/articles/search?q=Timestamp&since=" + now / 1000);
+        expect(response.status).toBe(200);
+        expect(await response.json()).toMatchObject({
+            data: {
+                items: [
+                    expect.objectContaining({
+                        publishedAt: now,
+                        item: expect.objectContaining({ id: "time-seconds" }),
+                    }),
+                ],
+            },
+            meta: { since: now, itemCount: 1 },
+        });
+        expect((await app.request("/v1/articles/search?q=Timestamp&since=2026-11-25T12:00:00")).status).toBe(400);
+    });
+
     it("rejects a query exceeding 256 UTF-16 code units", async () => {
         expect((await app.request("/v1/articles/search?q=" + "x".repeat(257))).status).toBe(400);
     });

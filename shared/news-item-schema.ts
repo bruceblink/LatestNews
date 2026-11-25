@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { safeNewsUrl } from "./news-url-policy";
+import { articleTimestamp } from "./article-time";
 
 import type { NewsItem, SourceID } from "./types";
 
@@ -176,18 +177,12 @@ function normalizeDateValue(value: number | string | null | undefined): number |
     const numericValue = Number(trimmed);
     if (Number.isFinite(numericValue) && numericValue > 0) return numericValue;
 
-    const parsed = Date.parse(trimmed);
-    return Number.isFinite(parsed) ? parsed : trimmed;
+    const parsed = articleTimestamp(trimmed);
+    return parsed ?? trimmed;
 }
 
 function toTimestamp(value: number | string | undefined) {
-    if (typeof value === "number" && Number.isFinite(value)) {
-        return value < 100_000_000_000 ? value * 1000 : value;
-    }
-    if (typeof value !== "string") return undefined;
-
-    const parsed = Date.parse(value);
-    return Number.isFinite(parsed) ? parsed : undefined;
+    return articleTimestamp(value) ?? undefined;
 }
 
 function hashString(value: string) {
