@@ -51,6 +51,7 @@
         "performance:chinese-search": "tsx --tsconfig tsconfig.node.json scripts/performance/chinese-search-quality.ts",
         "performance:article-index": "tsx --tsconfig tsconfig.node.json scripts/performance/article-index-baseline.ts",
         "performance:news-events": "tsx --tsconfig tsconfig.node.json scripts/performance/news-event-quality.ts",
+        "articles:maintain": "tsx --tsconfig tsconfig.node.json scripts/events/maintain-articles.ts",
         "events:review": "tsx --tsconfig tsconfig.node.json scripts/events/review.ts",
         "performance:web-baseline": "cross-env LATESTNEWS_SKIP_FAVICON_FETCH=true pnpm build:web:test && cross-env LATESTNEWS_WEB_BASELINE_ROOT=dist pnpm exec tsx scripts/performance/web-baseline.ts",
         "performance:web-waterfall": "cross-env LATESTNEWS_SKIP_FAVICON_FETCH=true VITE_API_URL=/ pnpm build:web:test && pnpm exec tsx scripts/performance/web-waterfall.ts",

@@ -225,3 +225,7 @@ If the runtime log reports Cannot read properties of undefined (reading 'split')
 | D1-backed deploy has no health history       | Confirm `LATESTNEWS_DB` is bound and `INIT_TABLE` was not disabled before schema setup. |
 | Product Hunt source fails                    | Confirm `PRODUCTHUNT_API_TOKEN` is set in the runtime secret store.                     |
 | External collector cannot identify this node | Set `LATESTNEWS_NODE_ID` and check `/api/v1/node`.                                      |
+
+### 文章索引维护
+
+旧数据库升级前先备份并停用旧写入器；INIT_TABLE=false 不隐式迁移。使用 [文章索引维护与恢复](performance/news-article-recovery.md) 的本地 SQLite 命令和验收方法。目标 D1 的迁移、备份、恢复及容量需独立验证；不自动删除未完成的 journal 或历史文章。

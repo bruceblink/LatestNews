@@ -22,6 +22,15 @@ export default defineEventHandler(async (): Promise<DeploymentHealthResponse> =>
             }),
             generatedAt: Date.now(),
             sourceSummary: getSourceHealthSummary(),
+            articleIndex: cacheTable
+                ? await cacheTable.getArticleIndexHealth()
+                : {
+                      status: cacheDisabled ? "disabled" : "unavailable",
+                      fts: cacheDisabled ? "disabled" : "unavailable",
+                      pendingIngest: null,
+                      pendingFts: null,
+                      eventRegistry: cacheDisabled ? "disabled" : "unknown",
+                  },
         });
     } catch (error) {
         logger.error(error);

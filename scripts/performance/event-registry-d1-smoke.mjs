@@ -8,9 +8,11 @@ import { createRequire } from "node:module";
 import d1Connector from "db0/connectors/cloudflare-d1";
 import { rm, mkdtemp, readFile } from "node:fs/promises";
 
+import { Cache } from "../../server/database/cache-store.ts";
 import { ArticleIndex } from "../../server/database/article-index.ts";
 import { reconcileArticleEventId } from "../../server/database/article-event-identity.ts";
 import { approveArticleEventAlias } from "../../server/database/article-event-aliases.ts";
+import { repairFtsPage, beginFtsRepair, ftsIsInconsistent } from "../../server/database/article-recovery.ts";
 
 // Run via tsx after build:pages. Miniflare is installed separately so production
 // dependencies and the repository lockfile remain unchanged.
@@ -272,6 +274,39 @@ try {
     console.log("PASS D1 URL input, cached read, indexed read and legacy preservation");
 
 
+
+    const recovery = new Cache(ctx.db);
+    await recovery.check();
+    const replay = makeItem("replay-durable", now, "Durable snapshot fixture");
+    await ctx.db.prepare("CREATE TRIGGER n4l2_fail BEFORE INSERT ON article_sources WHEN NEW.source_id='v2ex' BEGIN SELECT RAISE(ABORT,'fixture failure'); END").run();
+    await recovery.set("v2ex", [replay]);
+    assert.equal((await recovery.get("v2ex")).items[0].id, replay.id);
+    assert.ok((await recovery.getArticleIndexHealth()).pendingIngest >= 1);
+    const degraded = (await get("/api/v1/health/deployment")).data.checks;
+    assert.equal(degraded.cache.status, "ok");
+    assert.equal(degraded.articleIndex.status, "degraded");
+    await mf.dispose(); mf=undefined; ctx=await start();
+    await ctx.db.prepare("DROP TRIGGER n4l2_fail").run();
+    const resumed = new Cache(ctx.db);
+    await resumed.check();
+    for(let i=0;i<4;i++)await resumed.maintainArticleIndex(10);
+    assert.equal((await resumed.getArticleIndexHealth()).pendingIngest,0);
+    assert.equal((await get("/api/v1/articles/search?q="+encodeURIComponent("Durable snapshot fixture"))).data.items[0].item.id,replay.id);
+    console.log("PASS D1 durable cache journal, degraded health, workerd restart and replay");
+
+    const repairRows=await ctx.db.prepare("SELECT article_key,title,canonical_url FROM articles ORDER BY article_key LIMIT 2").all();
+    await ctx.db.prepare("DELETE FROM article_search WHERE article_key=?").run(repairRows[1].article_key);
+    await ctx.db.prepare("INSERT INTO article_search VALUES(?,?,?)").run(repairRows[0].article_key,repairRows[0].title,repairRows[0].canonical_url);
+    assert.equal(await ftsIsInconsistent(ctx.db),true);
+    await beginFtsRepair(ctx.db);
+    const page=await repairFtsPage(ctx.db);
+    assert.equal(page.indexed,50);
+    assert.equal((await search()).searchMode,"like");
+    await Promise.all([ctx.index.continueRepair(1),ctx.index.upsertSourceItems("weibo",[makeItem("repair-overlap",now,"Repair overlap fixture")])]);
+    for(let i=0;i<10;i++){if((await ctx.index.continueRepair(2)).status==="ok")break;}
+    assert.equal(await ftsIsInconsistent(ctx.db),false);
+    assert.equal((await search()).searchMode,"fts");
+    console.log("PASS D1 same-count corruption detection, bounded repair and concurrent upsert");
 
     await ctx.db.prepare("DROP TRIGGER trg_articles_event_insert").run();
     await ctx.db.prepare("DROP TRIGGER trg_articles_event_update").run();

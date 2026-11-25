@@ -86,6 +86,28 @@ describe("deployment health", () => {
         ).toBe("degraded");
     });
 
+    it("reports a degraded article index independently of a healthy source cache", () => {
+        const articleIndex = {
+            status: "degraded",
+            fts: "degraded",
+            pendingIngest: 2,
+            pendingFts: 1,
+            eventRegistry: "ok",
+            untrackedCache: 0,
+        } as const;
+        const response = createDeploymentHealthResponse({
+            appName: "latestnews",
+            appVersion: "0.8.4",
+            cacheStatus: "ok",
+            generatedAt: NOW,
+            sourceSummary: createSummary({}),
+            articleIndex,
+        });
+        expect(response.data.status).toBe("degraded");
+        expect(response.data.checks.cache.status).toBe("ok");
+        expect(response.data.checks.articleIndex).toEqual(articleIndex);
+    });
+
     it("distinguishes disabled cache from unavailable cache", () => {
         expect(getDeploymentCacheStatus({ cacheAvailable: true })).toBe("ok");
         expect(getDeploymentCacheStatus({ cacheAvailable: false, cacheDisabled: true })).toBe("disabled");
