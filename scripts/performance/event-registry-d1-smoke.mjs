@@ -10,6 +10,7 @@ import { rm, mkdtemp, readFile } from "node:fs/promises";
 
 import { Cache } from "../../server/database/cache-store.ts";
 import { ArticleIndex } from "../../server/database/article-index.ts";
+import { assignReviewedEvent } from "../../server/database/article-event-governance.ts";
 import { reconcileArticleEventId } from "../../server/database/article-event-identity.ts";
 import { approveArticleEventAlias } from "../../server/database/article-event-aliases.ts";
 import { repairFtsPage, beginFtsRepair, ftsIsInconsistent } from "../../server/database/article-recovery.ts";
@@ -103,13 +104,22 @@ try {
     const original = makeItem("original", now - 60_000);
     const earlier = makeItem("earlier", now - 3_600_000);
     await seed(ctx, "hackernews", [original]);
-    const first = (await request(["hackernews"]))[0];
-    assert.ok(first.eventId);
+    const unapproved=(await request(["hackernews"]))[0];
+    assert.equal(unapproved.identityStatus,"candidate");
+    assert.equal((await ctx.db.prepare("SELECT event_id FROM articles WHERE canonical_url=?").get(original.url)).event_id,null);
+    const reviewed=await assignReviewedEvent(ctx.db,{urls:[original.url],actor:"isolated-test",evidence:"fixture"});
+    const first=(await request(["hackernews"]))[0];
+    assert.equal(first.eventId,reviewed.eventId);
+    assert.equal(first.identityStatus,"registered");
     const migrated = await event("event-legacy");
     assert.equal(migrated.data.items[0].eventId, "event-legacy");
     console.log("PASS legacy event registry migration via built Pages worker");
 
     await seed(ctx, "weibo", [earlier]);
+    const partialGroup=(await request(["hackernews","weibo"]))[0];
+    assert.equal(partialGroup.identityStatus,"partial");
+    assert.equal((await ctx.db.prepare("SELECT event_id FROM articles WHERE canonical_url=?").get(earlier.url)).event_id,null);
+    await assignReviewedEvent(ctx.db,{urls:[earlier.url],eventId:reviewed.eventId,actor:"isolated-test",evidence:"fixture"});
     const both = (await request(["hackernews", "weibo"]))[0];
     assert.equal(both.eventId, first.eventId);
     assert.equal(both.itemCount, 2);
@@ -122,7 +132,7 @@ try {
     const history = await event(first.eventId);
     assert.equal(history.data.items.length, 2);
     assert.ok(history.data.items.every((item) => item.eventId === first.eventId));
-    console.log("PASS built Pages insights/search/history: backfill, partial, hidden, consistency");
+    console.log("PASS built Pages read-only insights, explicit reviewed assignment, backfill and partial/hidden consistency");
 
     // Recreate the shipped pre-L1 schema with an original article key and source mapping.
     await ctx.db.prepare("DELETE FROM article_schema_migrations").run();
@@ -307,6 +317,18 @@ try {
     assert.equal(await ftsIsInconsistent(ctx.db),false);
     assert.equal((await search()).searchMode,"fts");
     console.log("PASS D1 same-count corruption detection, bounded repair and concurrent upsert");
+    const reviewedItems=["reviewed-one","reviewed-two","reviewed-three"].map(id=>makeItem(id,now,"Reviewed governance fixture"));
+    await ctx.index.upsertSourceItems("weibo",reviewedItems);
+    const approvals=await Promise.allSettled([
+        assignReviewedEvent(ctx.db,{urls:reviewedItems.slice(0,2).map(item=>item.url),actor:"fixture",evidence:"fixture"}),
+        assignReviewedEvent(ctx.db,{urls:reviewedItems.slice(1).map(item=>item.url),actor:"fixture",evidence:"fixture"})
+    ]);
+    assert.equal(approvals.filter(x=>x.status==="fulfilled").length,1);
+    const winner=approvals.find(x=>x.status==="fulfilled").value;
+    assert.equal((await event(winner.eventId)).data.items.length,2);
+    assert.equal(Number((await ctx.db.prepare("SELECT count(*) AS n FROM news_event_approvals WHERE actor='fixture'").get()).n),1);
+    console.log("PASS D1 audited approval, competing new assignments and history");
+
 
     await ctx.db.prepare("DROP TRIGGER trg_articles_event_insert").run();
     await ctx.db.prepare("DROP TRIGGER trg_articles_event_update").run();

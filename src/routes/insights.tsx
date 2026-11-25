@@ -797,9 +797,9 @@ function TopicPanel({
     );
 }
 
-/** 使用新稳定事件 ID，兼容仍只返回旧 id 的缓存响应。 */
+/** 展示分组与持久化身份不同：同一历史事件可能在当前视图分成多个组。 */
 function getTopicKey(topic: TopicEvent | undefined) {
-    return topic?.eventId ?? topic?.id;
+    return topic?.id;
 }
 
 /** Health is a separate global snapshot and is not affected by insight filters. */

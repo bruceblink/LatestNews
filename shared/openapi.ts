@@ -165,6 +165,8 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
             [withApiPrefix(sourceApi.insightsV1)]: {
                 post: {
                     summary: "Aggregate reading insights for selected sources",
+                    description:
+                        "Event identity resolution is read-only. Only identityStatus=registered identifies a registered historical event.",
                     tags: ["Sources"],
                     requestBody: {
                         required: true,

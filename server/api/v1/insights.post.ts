@@ -8,6 +8,7 @@ import dataSources from "@shared/data-sources.ts";
 import { readBody, createError, defineEventHandler } from "h3";
 import { resolveNewsInsights } from "#/utils/resolve-news-insights";
 import { hasSourceGetter, fetchSourceItems } from "#/utils/source-fetch";
+import { provisionalTopicEvent } from "#/database/article-event-governance";
 
 const insightLimitSchema = z.number().int().min(1).max(100).optional();
 const newsInsightsSchema = z.object({
@@ -57,9 +58,9 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
         onCacheError: (error, id) => logger.warn(`Could not save ${id} insights cache.`, error),
     });
 
-    if (cacheTable && response.data.topicEvents.length) {
-        response.data.topicEvents = await cacheTable.reconcileArticleEventIds(response.data.topicEvents);
-    }
+    response.data.topicEvents = cacheTable
+        ? await cacheTable.resolveArticleEventIds(response.data.topicEvents)
+        : response.data.topicEvents.map((topic) => provisionalTopicEvent(topic, "unavailable"));
 
     return response;
 });
