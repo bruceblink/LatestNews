@@ -18,7 +18,7 @@ export default defineEventHandler(async (event): Promise<ArticleEventResponse> =
         throw createError({ statusCode: 400, message: "Invalid event ID or pagination." });
     }
 
-    const cache = await getCacheTable();
+    const cache = await getCacheTable(event);
     const result = await cache?.getArticleEvent(eventId.data, query.data);
     if (!result || result.status === "unavailable") {
         throw createError({ statusCode: 503, message: "Article event registry is unavailable on this deployment." });

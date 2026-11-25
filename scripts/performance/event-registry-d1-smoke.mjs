@@ -352,6 +352,10 @@ try {
     await ctx.db.prepare("DROP TRIGGER trg_articles_event_insert").run();
     await ctx.db.prepare("DROP TRIGGER trg_articles_event_update").run();
     await ctx.db.prepare("DROP TABLE news_events").run();
+    // With automatic initialization disabled, missing registry must surface
+    // as unavailable rather than being recreated by a new request.
+    await mf.dispose(); mf=undefined;
+    mf=new Miniflare({...options,bindings:{...options.bindings,INIT_TABLE:"false"}});
     await get("/api/v1/events/" + first.eventId, 503);
     assert.equal((await search()).items.length, 2);
     console.log("PASS unavailable registry returns 503; article search remains available");
