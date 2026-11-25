@@ -50,6 +50,7 @@ export interface DesktopLifecycleSnapshot {
 interface DesktopLifecycleTrackerOptions {
     now?: () => number;
     maxEvents?: number;
+    maxClosedWindows?: number;
 }
 
 /** Keep a bounded, non-sensitive record of desktop lifecycle transitions. */
@@ -58,9 +59,16 @@ export function createDesktopLifecycleTracker(options: DesktopLifecycleTrackerOp
     const maxEvents = options.maxEvents ?? 128;
     if (!Number.isInteger(maxEvents) || maxEvents < 1) throw new RangeError("maxEvents must be a positive integer.");
 
+    const maxClosedWindows = options.maxClosedWindows ?? maxEvents;
+    if (!Number.isInteger(maxClosedWindows) || maxClosedWindows < 0) {
+        throw new RangeError("maxClosedWindows must be a nonnegative integer.");
+    }
+
     const startedAt = now();
     const events: DesktopLifecycleEvent[] = [];
     const windows = new Map<number, DesktopWindowSnapshot>();
+    // Only closed snapshots are evictable. Insertion order tracks close order, not creation time.
+    const closedWindowIds = new Set<number>();
     let sequence = 0;
 
     function record(
@@ -85,6 +93,7 @@ export function createDesktopLifecycleTracker(options: DesktopLifecycleTrackerOp
     }
 
     function registerWindow(id: number, role: "main" | "auth") {
+        closedWindowIds.delete(id);
         windows.set(id, { id, role, state: "created", createdAtMs: Math.max(0, now() - startedAt) });
         record("window-created", { windowId: id, role });
     }
@@ -97,11 +106,25 @@ export function createDesktopLifecycleTracker(options: DesktopLifecycleTrackerOp
     ) {
         const current = windows.get(id);
         if (current) {
+            // A delayed notification must not reopen or extend retention of a closed window.
+            if (current.state === "closed") {
+                record(name, { windowId: id, role: current.role, ...(details ? { details } : {}) });
+                return;
+            }
             windows.set(id, {
                 ...current,
                 state,
                 ...(state === "closed" ? { closedAtMs: Math.max(0, now() - startedAt) } : {}),
             });
+            if (state === "closed") {
+                closedWindowIds.add(id);
+                while (closedWindowIds.size > maxClosedWindows) {
+                    const oldest = closedWindowIds.values().next().value;
+                    if (oldest === undefined) break;
+                    closedWindowIds.delete(oldest);
+                    windows.delete(oldest);
+                }
+            }
             record(name, { windowId: id, role: current.role, ...(details ? { details } : {}) });
             return;
         }
