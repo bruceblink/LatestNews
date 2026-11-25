@@ -26,7 +26,7 @@ Most v1 endpoints return a stable envelope:
 | --- | --- | --- |
 | `GET` | `/api/v1/node` | Node identity, version, endpoint map, source catalog, and health counters. |
 | `GET` | `/api/v1/openapi.json` | Machine-readable OpenAPI 3.1 contract for public v1 endpoints. |
-| `GET` | `/api/v1/health/deployment` | Deployment readiness across app, cache, and source-health state. |
+| `GET` | `/api/v1/health/deployment` | Deployment readiness across app, cache, source-health and article-index state. |
 
 `/api/v1/node` is the preferred first call for external systems. It includes the current endpoint map, source and column lists, health summary, and optional connection hints. Use `/api/v1/openapi.json` when an integration needs a machine-readable contract.
 
@@ -64,6 +64,8 @@ curl https://news.example.com/api/v1/node
 `GET /api/v1/articles/search?q=AI%20模型&limit=30`。q 去除首尾空白后必须为 1–256 个 UTF-16 code unit。中文及中英混合查询使用字面子串，空白分隔词必须全部命中标题或全部命中已存储规范 URL；标题完整相等、连续短语、分散词、仅 URL 依次排序，时间及主键用于同等级排序。正常英文查询继续用 FTS5/BM25。响应 searchMode 保留 fts/like/unavailable（不可用时 HTTP 503）；like 为字面回退模式，不将 % 或 _ 当作通配符。此接口不提供语义相似度。
 
 历史索引的 publishedAt 为 UTC 毫秒；未知时间不输出该字段。since 接受正数秒/毫秒、带时区 ISO 时间或 UTC 日期，指定 since 时只返回已知且不早于该时刻的文章（未知时间不参与筛选结果）。原始 item 字段保持现有表示。相同规范 URL 复用已存在 articleKey；不同 URL 即使共享来源原始 ID 或指纹，也不会覆盖旧文章及事件归属。旧数据库须完成 N4-L1 迁移后再关闭 INIT_TABLE。
+
+部署健康接口 checks.articleIndex 是可选扩展，报告 status、fts、pendingIngest、pendingFts、eventRegistry 和 untrackedCache。来源缓存可用不代表历史索引完整；已知积压或修复期间历史检索可降级为 like，结果可能不完整。健康状态不代替全库完整性审计。
 
 ### 历史事件查询
 

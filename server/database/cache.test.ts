@@ -44,7 +44,7 @@ describe("cache database availability", () => {
         const cacheTable = await getCacheTable();
 
         expect(cacheTable).toBeDefined();
-        expect(get).toHaveBeenCalledOnce();
+        expect(get).toHaveBeenCalledTimes(2);
     });
 
     it("persists and reads news through the imported database provider", async () => {

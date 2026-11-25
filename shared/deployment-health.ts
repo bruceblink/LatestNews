@@ -25,6 +25,15 @@ export interface DeploymentHealthSourcesCheck {
     updatedAt: number;
 }
 
+export interface DeploymentArticleIndexCheck {
+    status: "ok" | "degraded" | "unavailable" | "disabled";
+    fts: "ok" | "degraded" | "unavailable" | "disabled";
+    pendingIngest: number | null;
+    pendingFts: number | null;
+    eventRegistry: "ok" | "unavailable" | "unknown" | "disabled";
+    untrackedCache?: number | null;
+}
+
 export interface DeploymentHealthData {
     status: DeploymentHealthOverallStatus;
     generatedAt: number;
@@ -32,6 +41,7 @@ export interface DeploymentHealthData {
         app: DeploymentHealthAppCheck;
         cache: DeploymentHealthCacheCheck;
         sources: DeploymentHealthSourcesCheck;
+        articleIndex?: DeploymentArticleIndexCheck;
     };
 }
 
@@ -49,12 +59,13 @@ export interface DeploymentHealthInput {
     cacheStatus: DeploymentCacheStatus;
     generatedAt: number;
     sourceSummary: SourceHealthSummary;
+    articleIndex?: DeploymentArticleIndexCheck;
 }
 
 export function createDeploymentHealthResponse(input: DeploymentHealthInput): DeploymentHealthResponse {
     const sources = createSourcesCheck(input.sourceSummary);
     const data: DeploymentHealthData = {
-        status: getOverallStatus(input.cacheStatus, sources.status),
+        status: getOverallStatus(input.cacheStatus, sources.status, input.articleIndex?.status),
         generatedAt: input.generatedAt,
         checks: {
             app: {
@@ -66,6 +77,7 @@ export function createDeploymentHealthResponse(input: DeploymentHealthInput): De
                 status: input.cacheStatus,
             },
             sources,
+            ...(input.articleIndex ? { articleIndex: input.articleIndex } : {}),
         },
     };
 
@@ -104,9 +116,17 @@ function createSourcesCheck(summary: SourceHealthSummary): DeploymentHealthSourc
 
 function getOverallStatus(
     cacheStatus: DeploymentCacheStatus,
-    sourceStatus: DeploymentHealthCheckStatus
+    sourceStatus: DeploymentHealthCheckStatus,
+    articleStatus?: DeploymentArticleIndexCheck["status"]
 ): DeploymentHealthOverallStatus {
     if (sourceStatus === "unavailable") return "unavailable";
-    if (cacheStatus === "unavailable" || sourceStatus === "degraded" || sourceStatus === "unknown") return "degraded";
+    if (
+        cacheStatus === "unavailable" ||
+        sourceStatus === "degraded" ||
+        sourceStatus === "unknown" ||
+        articleStatus === "degraded" ||
+        articleStatus === "unavailable"
+    )
+        return "degraded";
     return "ok";
 }

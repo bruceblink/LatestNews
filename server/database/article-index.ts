@@ -13,6 +13,15 @@ import { reconcileArticleEventId } from "./article-event-identity";
 import { initArticleEventRegistry } from "./article-event-registry";
 import { ARTICLE_SOURCES_SCHEMA, migrateArticleIdentity } from "./article-identity-migration";
 import { hasArticleEventAliases, initArticleEventAliases, resolveArticleEventAlias } from "./article-event-aliases";
+import {
+    repairFtsPage,
+    beginFtsRepair,
+    repairPendingFts,
+    ftsIsInconsistent,
+    ftsRecoveryStatus,
+    initArticleRecovery,
+    probeArticleRecovery,
+} from "./article-recovery";
 
 const DEFAULT_SEARCH_LIMIT = 30;
 const MAX_SEARCH_LIMIT = 100;
@@ -69,6 +78,8 @@ interface ArticleSourceRow {
 /** 文章级 SQLite 索引。索引故障由上层捕获，不能阻塞来源缓存。 */
 export class ArticleIndex {
     private ftsAvailable = false;
+    private ftsVerified = false;
+    private recoveryAvailable = false;
 
     constructor(private readonly db: Database) {}
 
@@ -99,6 +110,8 @@ export class ArticleIndex {
             .run();
 
         await migrateArticleIdentity(this.db);
+        await initArticleRecovery(this.db);
+        this.recoveryAvailable = true;
 
         try {
             await initArticleEventRegistry(this.db);
@@ -114,15 +127,93 @@ export class ArticleIndex {
                 )
                 .run();
             this.ftsAvailable = true;
-            await this.rebuildIfOutOfDate();
+            this.ftsVerified = !(await ftsIsInconsistent(this.db));
+            if (!this.ftsVerified) await beginFtsRepair(this.db);
+            await this.continueRepair();
         } catch (error) {
             this.ftsAvailable = false;
+            this.ftsVerified = false;
             logger.warn("Article FTS5 index is unavailable. Article persistence remains enabled.", error);
         }
     }
 
-    async upsertSourceItems(sourceId: SourceID, items: NewsItem[]) {
-        const now = Date.now();
+    /** Read-only capability detection when INIT_TABLE=false. */
+    async probe() {
+        try {
+            this.recoveryAvailable = await probeArticleRecovery(this.db);
+            this.ftsAvailable =
+                this.recoveryAvailable &&
+                Boolean(
+                    await this.db
+                        .prepare("SELECT name FROM sqlite_master WHERE name='article_search' AND type='table'")
+                        .get()
+                );
+            if (this.ftsAvailable) {
+                const state = await ftsRecoveryStatus(this.db);
+                this.ftsVerified =
+                    state.phase === "ready" && state.pending === 0 && !(await ftsIsInconsistent(this.db));
+            } else this.ftsVerified = false;
+        } catch {
+            this.ftsVerified = false;
+            this.recoveryAvailable = false;
+            this.ftsAvailable = false;
+        }
+        return this.recoveryAvailable;
+    }
+
+    async getRecoveryStatus() {
+        try {
+            const available = await probeArticleRecovery(this.db);
+            if (!available)
+                return {
+                    status: "unavailable" as const,
+                    fts: "unavailable" as const,
+                    pendingIngest: null,
+                    pendingFts: null,
+                    eventRegistry: "unknown" as const,
+                };
+            const journal = (await this.db.prepare("SELECT COUNT(*) AS count FROM article_ingest_pending").get()) as {
+                count: number;
+            };
+            const registry = (await this.db
+                .prepare(
+                    "SELECT COUNT(*) AS count FROM sqlite_master WHERE name IN ('news_events','news_event_aliases') AND type='table'"
+                )
+                .get()) as { count: number };
+            const fts = await ftsRecoveryStatus(this.db);
+            const ftsExists = Boolean(
+                await this.db
+                    .prepare("SELECT name FROM sqlite_master WHERE name='article_search' AND type='table'")
+                    .get()
+            );
+            const status = !ftsExists
+                ? "unavailable"
+                : fts.phase === "repairing" || fts.pending || !this.ftsVerified
+                  ? "degraded"
+                  : "ok";
+            const eventRegistry = Number(registry.count) === 2 ? "ok" : "unavailable";
+            return {
+                status:
+                    status === "ok" && Number(journal.count) === 0 && eventRegistry === "ok"
+                        ? ("ok" as const)
+                        : ("degraded" as const),
+                fts: status,
+                pendingIngest: Number(journal.count),
+                pendingFts: fts.pending,
+                eventRegistry,
+            } as const;
+        } catch {
+            return {
+                status: "unavailable" as const,
+                fts: "unavailable" as const,
+                pendingIngest: null,
+                pendingFts: null,
+                eventRegistry: "unknown" as const,
+            };
+        }
+    }
+
+    async upsertSourceItems(sourceId: SourceID, items: NewsItem[], now = Date.now()) {
         let inserted = 0;
         let updated = 0;
 
@@ -144,8 +235,11 @@ export class ArticleIndex {
                           VALUES (CASE WHEN EXISTS (SELECT 1 FROM articles WHERE article_key = ? AND canonical_url <> ?)
                                   THEN ? ELSE ? END, ?, ?, ?, ?, NULL, ?, ?, ?)
                           ON CONFLICT(canonical_url) DO UPDATE SET
-                            title = excluded.title, published_at = excluded.published_at,
-                            content_fingerprint = excluded.content_fingerprint, payload = excluded.payload,
+                            title = CASE WHEN excluded.last_seen_at >= articles.last_seen_at THEN excluded.title ELSE articles.title END,
+                            published_at = CASE WHEN excluded.last_seen_at >= articles.last_seen_at THEN excluded.published_at ELSE articles.published_at END,
+                            content_fingerprint = CASE WHEN excluded.last_seen_at >= articles.last_seen_at THEN excluded.content_fingerprint ELSE articles.content_fingerprint END,
+                            payload = CASE WHEN excluded.last_seen_at >= articles.last_seen_at THEN excluded.payload ELSE articles.payload END,
+                            first_seen_at = min(articles.first_seen_at, excluded.first_seen_at),
                             last_seen_at = max(articles.last_seen_at, excluded.last_seen_at)
                           RETURNING article_key`,
                     params: [
@@ -167,9 +261,19 @@ export class ArticleIndex {
                     sql: `INSERT INTO article_sources (article_key, source_id, raw_item_id, first_seen_at, last_seen_at)
                           SELECT article_key, ?, ?, ?, ? FROM articles WHERE canonical_url = ?
                           ON CONFLICT(article_key, source_id) DO UPDATE SET
-                            raw_item_id = excluded.raw_item_id, last_seen_at = max(article_sources.last_seen_at, excluded.last_seen_at)`,
+                            raw_item_id = CASE WHEN excluded.last_seen_at >= article_sources.last_seen_at THEN excluded.raw_item_id ELSE article_sources.raw_item_id END,
+                            first_seen_at = min(article_sources.first_seen_at, excluded.first_seen_at),
+                            last_seen_at = max(article_sources.last_seen_at, excluded.last_seen_at)`,
                     params: [sourceId, rawItemId, now, now, canonicalUrl],
                 },
+                ...(this.recoveryAvailable
+                    ? [
+                          {
+                              sql: "INSERT OR IGNORE INTO article_fts_pending(article_key) SELECT article_key FROM articles WHERE canonical_url=?",
+                              params: [canonicalUrl],
+                          },
+                      ]
+                    : []),
             ]);
             const articleKey = (rows[0] as { article_key: string } | undefined)?.article_key;
             if (!articleKey) throw new Error("Article upsert returned no identity.");
@@ -243,24 +347,44 @@ export class ArticleIndex {
     }
 
     async rebuildSearchIndex() {
-        if (!this.ftsAvailable) return { status: "unavailable" as const, indexed: 0 };
-
+        if (!this.ftsAvailable || !this.recoveryAvailable) return { status: "unavailable" as const, indexed: 0 };
         try {
-            await this.db.prepare("DELETE FROM article_search").run();
-            const rows = await this.db
-                .prepare("SELECT article_key, title, canonical_url FROM articles ORDER BY last_seen_at ASC")
-                .all();
-            const articles = getRows(rows) as Array<{ article_key: string; title: string; canonical_url: string }>;
-            for (const article of articles) {
-                await this.db
-                    .prepare("INSERT INTO article_search (article_key, title, canonical_url) VALUES (?, ?, ?)")
-                    .run(article.article_key, article.title, article.canonical_url);
-            }
-            return { status: "ok" as const, indexed: articles.length };
+            await beginFtsRepair(this.db);
+            return await this.continueRepair();
         } catch (error) {
-            this.ftsAvailable = false;
-            logger.warn("Could not rebuild article FTS5 index.", error);
+            logger.warn("Could not begin article FTS repair.", error);
             return { status: "unavailable" as const, indexed: 0 };
+        }
+    }
+
+    async continueRepair(maxPages = 20) {
+        if (!this.ftsAvailable || !this.recoveryAvailable) return { status: "unavailable" as const, indexed: 0 };
+        let indexed = 0;
+        try {
+            if (!this.ftsVerified) {
+                const state = await ftsRecoveryStatus(this.db);
+                if (state.phase === "ready" && (await ftsIsInconsistent(this.db))) await beginFtsRepair(this.db);
+            }
+            for (let i = 0; i < maxPages; i++) {
+                const result = await repairFtsPage(this.db);
+                indexed += result.indexed;
+                if (result.done) break;
+            }
+            if ((await ftsRecoveryStatus(this.db)).pending) await repairPendingFts(this.db);
+            const state = await ftsRecoveryStatus(this.db);
+            this.ftsVerified = state.phase === "ready" && state.pending === 0;
+            if (this.ftsVerified && indexed > 0 && (await ftsIsInconsistent(this.db))) {
+                this.ftsVerified = false;
+                await beginFtsRepair(this.db);
+            }
+            return {
+                status: this.ftsVerified ? ("ok" as const) : ("pending" as const),
+                indexed,
+            };
+        } catch (error) {
+            this.ftsVerified = false;
+            logger.warn("Could not repair article FTS index; durable work remains pending.", error);
+            return { status: "unavailable" as const, indexed };
         }
     }
 
@@ -269,12 +393,22 @@ export class ArticleIndex {
         if (!text) return { status: "ok", mode: this.ftsAvailable ? "fts" : "like", items: [] };
         // unicode61 can return a nonempty but incomplete set for Han substrings.
         // Keep the literal path independent of the FTS result count.
-        if (!this.ftsAvailable || /[\p{Script=Han}%_]/u.test(text) || !/[\p{L}\p{N}]/u.test(text)) {
+        if (
+            !this.ftsAvailable ||
+            !this.ftsVerified ||
+            /[\p{Script=Han}%_]/u.test(text) ||
+            !/[\p{L}\p{N}]/u.test(text)
+        ) {
             return this.searchLike(query);
         }
 
         const limit = Math.min(Math.max(query.limit ?? DEFAULT_SEARCH_LIMIT, 1), MAX_SEARCH_LIMIT);
-        const conditions = ["article_search MATCH ?"];
+        const conditions = [
+            "article_search MATCH ?",
+            "EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='ready')",
+            "NOT EXISTS(SELECT 1 FROM article_fts_pending)",
+            "NOT EXISTS(SELECT 1 FROM article_ingest_pending)",
+        ];
         const parameters: Array<string | number> = [toFtsQuery(text)];
         if (query.sourceId) {
             conditions.push(
@@ -294,18 +428,21 @@ export class ArticleIndex {
                     `SELECT articles.article_key, articles.canonical_url, articles.title, articles.published_at,
                             articles.event_id, articles.payload, bm25(article_search) AS score
                      FROM article_search
-                     JOIN articles ON articles.article_key = article_search.article_key
+                     JOIN articles ON articles.article_key = article_search.article_key AND articles.title=article_search.title AND articles.canonical_url=article_search.canonical_url
                      WHERE ${conditions.join(" AND ")}
                      ORDER BY score ASC, articles.published_at DESC, articles.article_key ASC
                      LIMIT ?`
                 )
                 .all(...parameters);
             const ftsRows = getRows(rows) as ArticleRow[];
+            if (new Set(ftsRows.map((row) => row.article_key)).size !== ftsRows.length) {
+                this.ftsVerified = false;
+                return this.searchLike(query);
+            }
             if (ftsRows.length) return { status: "ok", mode: "fts", items: await this.mapRows(ftsRows) };
 
             return this.searchLike(query);
         } catch (error) {
-            this.ftsAvailable = false;
             logger.warn("Article FTS5 search is unavailable.", error);
             return this.searchLike(query);
         }
@@ -358,14 +495,6 @@ export class ArticleIndex {
         }
     }
 
-    private async rebuildIfOutOfDate() {
-        const articleCount = await this.db.prepare("SELECT count(*) AS count FROM articles").get();
-        const searchCount = await this.db.prepare("SELECT count(*) AS count FROM article_search").get();
-        const articles = Number((articleCount as { count: number }).count);
-        const indexed = Number((searchCount as { count: number }).count);
-        if (articles !== indexed) await this.rebuildSearchIndex();
-    }
-
     private async updateFts(articleKey: string) {
         if (!this.ftsAvailable) return;
         try {
@@ -375,9 +504,9 @@ export class ArticleIndex {
                     sql: "INSERT INTO article_search (article_key, title, canonical_url) SELECT article_key, title, canonical_url FROM articles WHERE article_key = ?",
                     params: [articleKey],
                 },
+                { sql: "DELETE FROM article_fts_pending WHERE article_key = ?", params: [articleKey] },
             ]);
         } catch (error) {
-            this.ftsAvailable = false;
             logger.warn("Could not update article FTS5 index.", error);
         }
     }
