@@ -66,13 +66,9 @@ export class Cache {
         logger.success(`set ${key} cache`);
     }
 
-    async updateArticleEventIds(topicEvents: TopicEvent[]) {
-        try {
-            return (await this.articleIndex?.updateEventIds(topicEvents)) ?? 0;
-        } catch (error) {
-            logger.warn("Could not update article event IDs.", error);
-            return 0;
-        }
+    async reconcileArticleEventIds(topicEvents: TopicEvent[]) {
+        // Existing tables remain usable when INIT_TABLE is disabled.
+        return (this.articleIndex ?? new ArticleIndex(this.db)).reconcileEventIds(topicEvents);
     }
 
     async searchArticles(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {

@@ -227,7 +227,7 @@ export interface TopicEventItem {
 
 export interface TopicEvent {
     id: string;
-    /** 稳定事件标识。旧客户端继续使用 id，新的持久化记录应使用 eventId。 */
+    /** 事件标识。服务端索引可复用已持久化 ID；无索引时为本次聚类候选。旧客户端继续使用 id。 */
     eventId: string;
     title: string;
     canonicalUrl?: string;

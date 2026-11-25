@@ -5,6 +5,7 @@ import type { TopicEvent } from "@shared/news-insights";
 import { normalizeNewsItemUrlKey } from "@shared/news-item-schema";
 
 import { logger } from "../utils/logger";
+import { reconcileArticleEventId } from "./article-event-identity";
 
 const DEFAULT_SEARCH_LIMIT = 30;
 const MAX_SEARCH_LIMIT = 100;
@@ -172,17 +173,23 @@ export class ArticleIndex {
         return { inserted, updated };
     }
 
-    async updateEventIds(topicEvents: TopicEvent[]) {
-        let updated = 0;
+    async reconcileEventIds(topicEvents: TopicEvent[]): Promise<TopicEvent[]> {
+        const reconciled: TopicEvent[] = [];
         for (const topicEvent of topicEvents) {
-            for (const item of topicEvent.items) {
-                const result = await this.db
-                    .prepare("UPDATE articles SET event_id = ? WHERE canonical_url = ?")
-                    .run(topicEvent.eventId, normalizeNewsItemUrlKey(item.url));
-                updated += (result as { changes?: number }).changes ?? 0;
+            try {
+                const eventId = await reconcileArticleEventId(
+                    this.db,
+                    topicEvent.items.map((item) => normalizeNewsItemUrlKey(item.url)),
+                    topicEvent.eventId
+                );
+                reconciled.push({ ...topicEvent, eventId });
+            } catch (error) {
+                // A failed index must not fail insights or discard other resolved identities.
+                logger.warn("Could not reconcile article event ID.", error);
+                reconciled.push(topicEvent);
             }
         }
-        return updated;
+        return reconciled;
     }
 
     async rebuildSearchIndex() {
