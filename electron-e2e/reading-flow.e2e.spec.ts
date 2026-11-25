@@ -212,6 +212,36 @@ test("keeps reading history and saved states across Electron source and history 
     await expect(page.getByText(fixtureItem.title, { exact: true })).toBeVisible();
 });
 
+test("keeps invalid legacy history readable without invoking the desktop external opener", async () => {
+    const fixture = {
+        newsId: "unsafe-legacy",
+        title: "Unsafe legacy history",
+        url: "file:///legacy-article",
+        sourceId: "hackernews",
+        sourceName: "Hacker News",
+        readAt: Date.now(),
+    };
+    await page.evaluate((item) => {
+        const previous = JSON.parse(localStorage.getItem("reading-history") ?? "[]");
+        localStorage.setItem("reading-history", JSON.stringify([item, ...previous]));
+    }, fixture);
+    await page.goto("app://bundle/history");
+    const blocked = page.locator("a[aria-disabled=true]").filter({ hasText: fixture.title });
+    await expect(blocked).toBeVisible();
+    await expect(blocked).not.toHaveAttribute("href", /.+/);
+    const before = await getExternalOpenAttempts();
+    await blocked.click({ force: true });
+    expect(await getExternalOpenAttempts()).toEqual(before);
+    expect(
+        await page.evaluate(() =>
+            JSON.parse(localStorage.getItem("reading-history") ?? "[]").some(
+                (item: { newsId: string }) => item.newsId === "unsafe-legacy"
+            )
+        )
+    ).toBe(true);
+    await expect(page.getByRole("button", { name: "移除阅读记录：" + fixture.title })).toBeVisible();
+});
+
 test.afterAll(async () => {
     try {
         await closeElectronApp();

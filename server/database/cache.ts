@@ -4,6 +4,7 @@ import type { TopicEvent } from "@shared/news-insights";
 
 import process from "node:process";
 import { useDatabase as getDatabase } from "nitro/database";
+import { filterSafeNewsItemLinks } from "@shared/news-url-policy";
 
 import { logger } from "../utils/logger";
 import { ArticleIndex } from "./article-index";
@@ -45,6 +46,8 @@ export class Cache {
     }
 
     async set(key: string, value: NewsItem[]) {
+        const safeItems = filterSafeNewsItemLinks(value);
+        if (value.length && !safeItems.length) throw new Error("News cache contains no valid article URLs.");
         const now = Date.now();
         const result = await this.db
             .prepare(
@@ -54,11 +57,11 @@ export class Cache {
                             data = EXCLUDED.data,
                             updated = EXCLUDED.updated;`
             )
-            .run(key, JSON.stringify(value), now);
+            .run(key, JSON.stringify(safeItems), now);
         if (!result.success) throw new Error("News cache write failed.");
         try {
             const articleIndex = this.articleIndex ?? new ArticleIndex(this.db);
-            await articleIndex.upsertSourceItems(key as SourceID, value);
+            await articleIndex.upsertSourceItems(key as SourceID, safeItems);
             this.articleIndex = articleIndex;
         } catch (error) {
             logger.warn(`Could not update article index for ${key}.`, error);
@@ -93,7 +96,7 @@ export class Cache {
             return {
                 id: row.id,
                 updated: row.updated,
-                items: JSON.parse(row.data),
+                items: filterSafeNewsItemLinks(JSON.parse(row.data) as NewsItem[]),
             };
         }
         return undefined;
@@ -126,7 +129,7 @@ export class Cache {
             return rows.map((row) => ({
                 id: row.id,
                 updated: row.updated,
-                items: JSON.parse(row.data) as NewsItem[],
+                items: filterSafeNewsItemLinks(JSON.parse(row.data) as NewsItem[]),
             }));
         } else {
             return [];

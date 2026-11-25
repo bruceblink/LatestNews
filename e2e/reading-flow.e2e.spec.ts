@@ -41,7 +41,50 @@ test("keeps reading history and saved states across source and history routes", 
     await expect(page.getByText(fixtureItem.title, { exact: true })).toBeVisible();
 });
 
-async function installReadingFlowMocks(page: Page) {
+test("blocks unsafe remote and legacy reading links and falls back from invalid mobile URLs", async ({ page }) => {
+    const valid = { ...fixtureItem, mobileUrl: "file:///legacy-mobile" };
+    const invalid = {
+        ...fixtureItem,
+        id: "legacy-unsafe",
+        title: "Legacy unsafe article",
+        url: "file:///legacy-article",
+    };
+    await installReadingFlowMocks(page, [valid, invalid]);
+    await page.addInitScript((item) => {
+        if (localStorage.getItem("reading-history")) return;
+        localStorage.setItem(
+            "reading-history",
+            JSON.stringify([
+                {
+                    newsId: item.id,
+                    title: item.title,
+                    url: item.url,
+                    sourceId: "hackernews",
+                    sourceName: "Hacker News",
+                    readAt: Date.now(),
+                },
+            ])
+        );
+    }, invalid);
+    await page.goto("/source/hackernews");
+    const safe = page.getByRole("link", { name: new RegExp(valid.title) });
+    await expect(safe).toHaveAttribute("href", valid.url);
+    const blocked = page.locator("a[aria-disabled=true]").filter({ hasText: invalid.title });
+    await expect(blocked).toBeVisible();
+    await expect(blocked).not.toHaveAttribute("href", /.+/);
+    await blocked.click({ force: true });
+    await page.goto("/history");
+    const legacy = page.locator("a[aria-disabled=true]").filter({ hasText: invalid.title });
+    await expect(legacy).toBeVisible();
+    await expect(legacy).not.toHaveAttribute("href", /.+/);
+    await expect(page.getByRole("button", { name: "移除阅读记录：" + invalid.title })).toBeVisible();
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem("reading-history") ?? "[]").length)).toBe(1);
+});
+
+async function installReadingFlowMocks(
+    page: Page,
+    items: Array<typeof fixtureItem & { mobileUrl?: string }> = [fixtureItem]
+) {
     await page.route("**/api/**", async (route) => {
         const { pathname } = new URL(route.request().url());
         if (pathname.endsWith("/v1/health/sources")) {
@@ -136,14 +179,14 @@ async function installReadingFlowMocks(page: Page) {
                         id: "hackernews",
                         name: "Hacker News",
                         updatedTime: Date.now(),
-                        items: [fixtureItem],
+                        items,
                     },
                     meta: {
                         generatedAt: Date.now(),
                         sourceId: "hackernews",
                         status: "success",
-                        itemCount: 1,
-                        unfilteredItemCount: 1,
+                        itemCount: items.length,
+                        unfilteredItemCount: items.length,
                     },
                     errors: [],
                 },

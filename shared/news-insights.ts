@@ -1,5 +1,6 @@
 import { metadata } from "./metadata";
 import dataSources from "./data-sources";
+import { filterSafeNewsItemLinks } from "./news-url-policy";
 import {
     getInsightSourceWeight,
     type InsightCategoryID,
@@ -360,7 +361,7 @@ export function collectInsightItems(
         const responseUpdatedTime = parseNewsTime(response.updatedTime);
         const sourceWeight = Math.max(0, sourceWeights[response.id] ?? getInsightSourceWeight(response.id));
 
-        for (const item of response.items) {
+        for (const item of filterSafeNewsItemLinks(response.items)) {
             const title = item.title?.trim();
             const url = item.url?.trim();
             if (!title || !url) continue;

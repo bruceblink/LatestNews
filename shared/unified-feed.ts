@@ -1,6 +1,7 @@
 import { metadata } from "./metadata";
 import dataSources from "./data-sources";
 import { normalizeReadingStateUrl } from "./reading-state";
+import { filterSafeNewsItemLinks } from "./news-url-policy";
 import { parseSourceItemsSince, normalizeSourceItemsLimit } from "./source-items";
 
 import type { ColumnID, NewsItem, SourceID, SourceResponse } from "./types";
@@ -159,7 +160,7 @@ export function collectUnifiedFeedItems(responses: SourceResponse[]): UnifiedFee
             const categoryName = getCategoryName(categoryId);
             const responseUpdatedTime = parseSourceItemsSince(response.updatedTime);
 
-            return response.items
+            return filterSafeNewsItemLinks(response.items)
                 .map((item): UnifiedFeedItem | undefined => {
                     const title = item.title?.trim();
                     const url = item.url?.trim();

@@ -1,3 +1,5 @@
+import { safeNewsUrl } from "./news-url-policy";
+
 export interface ReadingHistoryExportItem {
     title: string;
     url: string;
@@ -27,7 +29,7 @@ export function formatReadingHistoryExport(
                 `${index + 1}. ${item.title}`,
                 `来源：${item.sourceName}`,
                 `阅读时间：${formatReadAt(item.readAt)}`,
-                `链接：${item.url}`,
+                `链接：${safeNewsUrl(item.url) ?? "（无效链接）"}`,
             ].join("\n")
         )
         .join("\n\n");

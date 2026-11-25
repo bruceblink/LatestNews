@@ -7,6 +7,7 @@ import { parseRssXml } from "./utils/rss2json";
 import { createFetchScheduler } from "./utils/fetch-scheduler";
 import { createDynamicSourceId } from "../shared/dynamic-source-id";
 import { isPublicInternetAddress } from "../shared/upstream-node-federation";
+import { safeNewsUrl, hasInvalidNewsUrlCharacters } from "../shared/news-url-policy";
 
 import type { NewsItem, SourceID } from "../shared/types";
 import type { RuntimeSourceDefinition } from "../shared/runtime-source-catalog";
@@ -510,13 +511,15 @@ function isPublicIpv4(address: string) {
 
 function resolveArticleUrl(value: string, base: URL) {
     const trimmed = value.trim();
-    if (!trimmed || trimmed.length > MAX_URL_LENGTH) return undefined;
+    if (!trimmed || value.length > MAX_URL_LENGTH || hasInvalidNewsUrlCharacters(value) || /\s/u.test(trimmed))
+        return undefined;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed) && !safeNewsUrl(trimmed)) return undefined;
 
     try {
         const url = new URL(trimmed, base);
         if ((url.protocol !== "http:" && url.protocol !== "https:") || url.username || url.password) return undefined;
         const resolved = url.toString();
-        return resolved.length <= MAX_URL_LENGTH ? resolved : undefined;
+        return resolved.length <= MAX_URL_LENGTH ? safeNewsUrl(resolved) : undefined;
     } catch {
         return undefined;
     }

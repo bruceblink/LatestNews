@@ -1,4 +1,5 @@
 import { parseSourceItemsSince } from "./source-items";
+import { filterSafeNewsItemLinks } from "./news-url-policy";
 
 import type { NewsItem } from "./types";
 import type { SourceBatchResponse } from "./source-api";
@@ -115,7 +116,7 @@ export function createRssFeedXml(response: SourceBatchResponse, options: FeedExp
 export function collectFeedItems(response: SourceBatchResponse, options: Pick<FeedExportOptions, "maxItems"> = {}) {
     const maxItems = options.maxItems ?? DEFAULT_MAX_FEED_ITEMS;
     const items = response.data.flatMap((source) =>
-        source.items.map((item) => createFeedItem(source.id, source.name, item))
+        filterSafeNewsItemLinks(source.items).map((item) => createFeedItem(source.id, source.name, item))
     );
 
     return items

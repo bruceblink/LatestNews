@@ -204,6 +204,26 @@ try {
     assert.deepEqual(symbols.items.map((item) => item.item.id), ["han-percent"]);
     await get("/api/v1/articles/search?q=" + "x".repeat(257), 400);
     console.log("PASS D1 Han substring, mixed terms, literal symbols, filters and query limit");
+    const validLink = { ...makeItem("url-valid", now, "Boundary URL fixture"), mobileUrl: "file:///legacy-mobile" };
+    const invalidLink = { ...makeItem("url-invalid", now, "Boundary URL fixture"), url: "file:///legacy-article" };
+    const legacyCache = JSON.stringify([validLink, invalidLink]);
+    await ctx.db.prepare("INSERT INTO cache (id, updated, data) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,data=excluded.data").run("v2ex", now, legacyCache);
+    assert.equal((await ctx.index.upsertSourceItems("v2ex", [validLink, invalidLink])).inserted, 1);
+    await ctx.db.prepare("INSERT INTO articles(article_key, canonical_url, title, published_at, content_fingerprint, event_id, payload, first_seen_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+        "legacy-url-invalid", invalidLink.url, invalidLink.title, now, "legacy-url-invalid", "event-legacy-url-invalid", JSON.stringify(invalidLink), now, now
+    );
+    await ctx.index.rebuildSearchIndex();
+    const safeSource = (await get("/api/v1/sources/v2ex/items")).data;
+    assert.deepEqual(safeSource.items.map((item) => item.id), ["url-valid"]);
+    assert.equal(safeSource.items[0].mobileUrl, undefined);
+    const safeSearch = (await get("/api/v1/articles/search?q=" + encodeURIComponent("Boundary URL fixture"))).data;
+    assert.deepEqual(safeSearch.items.map((item) => item.item.id), ["url-valid"]);
+    assert.equal(safeSearch.items[0].item.mobileUrl, undefined);
+    assert.deepEqual((await event("event-legacy-url-invalid")).data.items, []);
+    assert.equal((await ctx.db.prepare("SELECT data FROM cache WHERE id = ?").get("v2ex")).data, legacyCache);
+    assert.equal((await ctx.db.prepare("SELECT payload FROM articles WHERE article_key = ?").get("legacy-url-invalid")).payload, JSON.stringify(invalidLink));
+    console.log("PASS D1 URL input, cached read, indexed read and legacy preservation");
+
 
 
     await ctx.db.prepare("DROP TRIGGER trg_articles_event_insert").run();

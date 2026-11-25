@@ -2,6 +2,8 @@ import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 import { rm, stat, mkdir, rename, readFile, writeFile } from "node:fs/promises";
 
+import { filterSafeNewsItemLinks } from "../shared/news-url-policy";
+
 import type { NewsItem } from "../shared/types";
 
 const CACHE_VERSION = 1;
@@ -49,7 +51,7 @@ export class CrawlerCacheStore {
     async write(sourceId: string, items: NewsItem[], updatedTime = Date.now()): Promise<void> {
         if (!isSafeSourceId(sourceId) || items.length === 0) return;
         await this.ensureLoaded();
-        const safeItems = items.filter(isNewsItem).slice(0, this.maxItemsPerSource);
+        const safeItems = filterSafeNewsItemLinks(items.filter(isNewsItem)).slice(0, this.maxItemsPerSource);
         if (safeItems.length === 0) return;
         this.entries.set(sourceId, { updatedTime, items: safeItems });
         this.pruneEntries();
@@ -74,7 +76,10 @@ export class CrawlerCacheStore {
             const entries: Array<[string, CrawlerCacheEntry]> = [];
             for (const [sourceId, candidate] of Object.entries(parsed.entries)) {
                 if (!isSafeSourceId(sourceId) || !isCacheEntry(candidate)) continue;
-                const items = candidate.items.filter(isNewsItem).slice(0, this.maxItemsPerSource);
+                const items = filterSafeNewsItemLinks(candidate.items.filter(isNewsItem)).slice(
+                    0,
+                    this.maxItemsPerSource
+                );
                 if (items.length > 0) entries.push([sourceId, { updatedTime: candidate.updatedTime, items }]);
             }
             this.entries = new Map(entries);

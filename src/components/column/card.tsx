@@ -6,6 +6,7 @@ import { useWindowSize } from "react-use";
 import { useHistory } from "~/hooks/useHistory";
 import dataSources from "@shared/data-sources.ts";
 import { useNewsSource } from "~/hooks/useNewsSource";
+import { NewsLink } from "~/components/reading/NewsLink";
 import { useReadingState } from "~/hooks/useReadingState";
 import { useRelativeTime } from "~/hooks/useRelativeTime.ts";
 import { CardHeader } from "~/components/column/cardHeader.tsx";
@@ -320,8 +321,9 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
                     <li key={item.id} title={item.extra?.hover} className={clsx("news-row", isRead && "is-read")}>
                         <span className={clsx("news-rank", i < 3 && "is-leading")}>{i + 1}</span>
                         {!!item.extra?.diff && <DiffNumber diff={item.extra.diff} />}
-                        <a
-                            href={width < 768 ? item.mobileUrl || item.url : item.url}
+                        <NewsLink
+                            href={item.url}
+                            preferredHref={width < 768 ? item.mobileUrl : undefined}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="news-link"
@@ -332,7 +334,7 @@ function NewsListHot({ id, items }: { id: SourceID; items: NewsItem[] }) {
                                 <ExtraInfo item={item} />
                                 {isRead && <ReadBadge />}
                             </span>
-                        </a>
+                        </NewsLink>
                         <ReadingStateActions
                             entry={{
                                 newsId: item.id,
@@ -382,13 +384,14 @@ function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
                                 {isRead && <ReadBadge />}
                             </span>
                         </span>
-                        <a
+                        <NewsLink
                             className={clsx(
                                 "timeline-link",
                                 "cursor-pointer [&_*]:cursor-pointer transition-all",
                                 isRead && "bg-zinc-100/70 dark:bg-zinc-800/32"
                             )}
-                            href={width < 768 ? item.mobileUrl || item.url : item.url}
+                            href={item.url}
+                            preferredHref={width < 768 ? item.mobileUrl : undefined}
                             title={item.extra?.hover}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -397,7 +400,7 @@ function NewsListTimeLine({ id, items }: { id: SourceID; items: NewsItem[] }) {
                             <span className={clsx("text-zinc-800 dark:text-zinc-300/90", isRead && "text-zinc-500")}>
                                 {item.title}
                             </span>
-                        </a>
+                        </NewsLink>
                         <div className="ml-2 mt-1">
                             <ReadingStateActions
                                 entry={{

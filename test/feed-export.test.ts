@@ -53,6 +53,13 @@ describe("feed export", () => {
         expect(collectFeedItems(createBatchResponse()).map((item) => item.sourceId)).toEqual(["weibo", "jin10"]);
     });
 
+    it("does not export unsafe legacy article links", () => {
+        const response = createBatchResponse();
+        response.data[0].items.push({ id: "bad", title: "Unsafe", url: "file:///legacy" });
+        expect(collectFeedItems(response)).toHaveLength(2);
+        expect(createRssFeedXml(response, { title: "Test", siteUrl: "https://example.test" })).not.toContain("file://");
+    });
+
     it("creates JSON Feed 1.1 output", () => {
         const feed = createJsonFeed(createBatchResponse(), {
             title: "LatestNews Test",
