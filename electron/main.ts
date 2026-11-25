@@ -313,6 +313,15 @@ async function runLifecycleProbe() {
         window.webContents.on("console-message", handleRendererConsoleMessage);
         await window.loadURL(new URL("feed", APP_BASE_URL).href);
         if (!window.isVisible()) window.show();
+        // did-finish-load is earlier than asynchronous runtime-catalog bootstrap and React mount.
+        const mountDeadline = Date.now() + 8_000;
+        while (
+            !(await window.webContents.executeJavaScript('Boolean(document.querySelector("#app")?.childElementCount)'))
+        ) {
+            if (Date.now() >= mountDeadline)
+                throw new Error("Electron renderer did not mount within the probe deadline.");
+            await wait(100);
+        }
         await wait(100);
         window.minimize();
         await wait(100);
