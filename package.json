@@ -49,6 +49,7 @@
         "performance:http-collection": "tsx --tsconfig tsconfig.node.json scripts/performance/http-collection-baseline.ts",
         "performance:hybrid-search": "tsx --tsconfig tsconfig.node.json scripts/performance/hybrid-search-quality.ts",
         "performance:chinese-search": "tsx --tsconfig tsconfig.node.json scripts/performance/chinese-search-quality.ts",
+        "performance:article-capacity": "tsx --tsconfig tsconfig.node.json scripts/performance/article-capacity.ts",
         "performance:article-index": "tsx --tsconfig tsconfig.node.json scripts/performance/article-index-baseline.ts",
         "performance:news-events": "tsx --tsconfig tsconfig.node.json scripts/performance/news-event-quality.ts",
         "articles:maintain": "tsx --tsconfig tsconfig.node.json scripts/events/maintain-articles.ts",

@@ -57,8 +57,10 @@ function createNodeWorker(workerPath: string): CrawlerProcessConnection {
         },
         onExit(handler) {
             const listener = (code: number | null, signal: NodeJS.Signals | null) => handler(code, signal);
-            child.once("exit", listener);
-            return () => child.off("exit", listener);
+            // A worker can exit while its final IPC result is still buffered.
+            // Wait for IPC/stdio closure rather than treating exit as a lost result.
+            child.once("close", listener);
+            return () => child.off("close", listener);
         },
         kill() {
             terminateChild(child);
