@@ -62,7 +62,8 @@
         "source-quality:report": "pnpm exec tsx scripts/performance/source-quality-report.ts",
         "typecheck:electron": "tsc --noEmit -p tsconfig.electron.json --composite false",
         "test:electron": "vitest -c vitest.config.ts run test/electron-api-proxy.test.ts test/electron-security.test.ts test/electron-synchub-policy.test.ts test/electron-synchub-storage.test.ts",
-        "asar:list": "asar list release/win-unpacked/resources/app.asar"
+        "asar:list": "asar list release/win-unpacked/resources/app.asar",
+        "test:crawler:node-api": "pnpm exec tsx scripts/crawler/node-host-api-smoke.ts"
     },
     "dependencies": {
         "@atlaskit/pragmatic-drag-and-drop": "^1.8.1",
