@@ -50,3 +50,25 @@ done
 ## 回归
 
 106 文件、577/577 Vitest（新增 3 个 trace 测试）；lint、Node/Web/Electron typecheck、Node/Pages build；实际 Pages 构建的本地 Miniflare D1 17 检查点通过。无 schema、生产配置、版本或 Release 修改。远端 CI 未完成的检查不计为通过。
+
+## 独立回环 HTTP 千样本对照（第一轮）
+
+在完整 API 测试全部结束后，使用相同隔离主机运行既有 SourceEngine + FetchScheduler 实际回环 HTTP harness。固定 seed 20261123、四个回环 Origin、30 并发客户端；五类场景、三档来源并发度各 1,000 请求，共 15,000 请求。此测试不经过 Nitro API、不写 SQLite，也不是公网源站采集。
+
+| 场景 P95 ms | 并发 4 | 并发 6 | 并发 8 |
+| --- | ---: | ---: | ---: |
+| fixed-spread | 153.58 | 98.22 | 80.99 |
+| jitter-spread | 299.01 | 207.44 | 175.30 |
+| single-origin | 263.02 | 261.29 | 262.79 |
+| http-errors | 162.24 | 109.46 | 85.84 |
+| client-cancel | 528.06 | 335.24 | 271.20 |
+
+15 个场景全部符合预期状态：14,277 成功、297 个预期注入 HTTP 错误、426 个预期取消；状态错配为 0，每场景结束后调度器待处理数为 0。分散来源受益于来源并发上升，单 Origin 受每 Origin 最大并发 2 限制，三档相近。这个组件级观察不能推断完整 API P95 必然下降，且不是生产可用率或重试测试。
+
+复现：
+
+```sh
+pnpm performance:http-collection --samples 1000 --clients 30 --source-concurrency 4,6,8 --seed 20261123 --output .data/performance/n4n-http-formal-r1.json
+```
+
+原始聚合报告：[n4n-http-formal-round1-2026-11-25.json](n4n-http-formal-round1-2026-11-25.json)。测量报告 commit 指向 bb8c189（第一轮 API 候选代码提交之前的主线）；运行时测试脚本未改动。当前仅完成一轮千样本组件对照；不得将 15,000 个组件请求计入正式 API 的 72,000 请求门槛。完整 API 和真实回环 HTTP 专项仍各需重复验证，公网及生产 D1、原生长测和独立标注保持未验收。
