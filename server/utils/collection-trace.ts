@@ -1,7 +1,16 @@
 import { performance } from "node:perf_hooks";
 
 export type CollectionTracePhase =
-    "source.queue" | "source.collect" | "source.normalize" | "http.queue" | "http.request";
+    | "source.queue"
+    | "source.collect"
+    | "source.normalize"
+    | "http.queue"
+    | "http.request"
+    | "cache.read"
+    | "cache.commit"
+    | "index.queue"
+    | "index.replay"
+    | "index.repair";
 
 export type CollectionTraceOutcome = "success" | "error" | "timeout" | "cancelled";
 
@@ -47,4 +56,28 @@ export function recordTrace(trace: CollectionTrace | undefined, span: Collection
     } catch {
         // Observability must never change the collection result.
     }
+}
+
+/** The isolated Node benchmark preloader may install an in-process sink.
+ * No public HTTP control or filesystem output is enabled by application code.
+ */
+export function getBenchmarkTrace(): CollectionTrace | undefined {
+    const sink = (globalThis as Record<symbol, unknown>)[Symbol.for("latestnews.performance.trace")];
+    return sink && typeof (sink as CollectionTrace).record === "function" ? (sink as CollectionTrace) : undefined;
+}
+
+export function measureBenchmarkPhase<T>(phase: CollectionTracePhase, operation: () => Promise<T>): Promise<T> {
+    const trace = getBenchmarkTrace();
+    if (!trace) return operation();
+    const start = monotonicNow();
+    return (async () => {
+        try {
+            const result = await operation();
+            recordTrace(trace, { phase, durationMs: monotonicNow() - start, outcome: "success" });
+            return result;
+        } catch (error) {
+            recordTrace(trace, { phase, durationMs: monotonicNow() - start, outcome: getTraceOutcome(error) });
+            throw error;
+        }
+    })();
 }
