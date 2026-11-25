@@ -3,6 +3,7 @@ import type { NewsItem, SourceID } from "@shared/types";
 import type { TopicEvent } from "@shared/news-insights";
 
 import { normalizeNewsItemUrlKey } from "@shared/news-item-schema";
+import { safeNewsUrl, safeNewsItemLinks, filterSafeNewsItemLinks } from "@shared/news-url-policy";
 
 import { logger } from "../utils/logger";
 import { reconcileArticleEventId } from "./article-event-identity";
@@ -131,7 +132,7 @@ export class ArticleIndex {
         let inserted = 0;
         let updated = 0;
 
-        for (const item of items) {
+        for (const item of filterSafeNewsItemLinks(items)) {
             const canonicalUrl = normalizeNewsItemUrlKey(item.url);
             if (!canonicalUrl) continue;
             const rawItemId = String(item.id);
@@ -198,7 +199,7 @@ export class ArticleIndex {
             try {
                 const eventId = await reconcileArticleEventId(
                     this.db,
-                    topicEvent.items.map((item) => normalizeNewsItemUrlKey(item.url)),
+                    filterSafeNewsItemLinks(topicEvent.items).map((item) => normalizeNewsItemUrlKey(item.url)),
                     topicEvent.eventId
                 );
                 reconciled.push({ ...topicEvent, eventId });
@@ -426,16 +427,23 @@ export class ArticleIndex {
         for (const row of getRows(sourceRows) as ArticleSourceRow[]) {
             sourcesByArticle.set(row.article_key, [...(sourcesByArticle.get(row.article_key) ?? []), row.source_id]);
         }
-        return rows.map((row) => ({
-            articleKey: row.article_key,
-            canonicalUrl: row.canonical_url,
-            title: row.title,
-            publishedAt: row.published_at ?? undefined,
-            eventId: row.event_id ?? undefined,
-            sourceIds: [...(sourcesByArticle.get(row.article_key) ?? [])].sort(),
-            item: JSON.parse(row.payload) as NewsItem,
-            ...(row.score === undefined ? {} : { score: Number(row.score) }),
-        }));
+        return rows.flatMap((row) => {
+            const canonicalUrl = safeNewsUrl(row.canonical_url);
+            const item = safeNewsItemLinks(JSON.parse(row.payload) as NewsItem);
+            if (!canonicalUrl || !item) return [];
+            return [
+                {
+                    articleKey: row.article_key,
+                    canonicalUrl,
+                    title: row.title,
+                    publishedAt: row.published_at ?? undefined,
+                    eventId: row.event_id ?? undefined,
+                    sourceIds: [...(sourcesByArticle.get(row.article_key) ?? [])].sort(),
+                    item,
+                    ...(row.score === undefined ? {} : { score: Number(row.score) }),
+                },
+            ];
+        });
     }
 }
 

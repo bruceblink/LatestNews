@@ -75,6 +75,40 @@ describe("article index", () => {
         });
     });
 
+    it("does not index unsafe new URLs or return unsafe legacy rows", async () => {
+        const db = createDatabase(sqliteConnector({ name: ":memory:" }));
+        databases.push(db);
+        const index = new ArticleIndex(db);
+        await index.init();
+        const safe = createItem("safe", "Legacy URL boundary", "https://example.test/safe");
+        const bad = createItem("bad", "Legacy URL boundary", "file:///legacy");
+        expect(await index.upsertSourceItems("weibo", [safe, bad])).toEqual({ inserted: 1, updated: 0 });
+        // Simulate a historical record written before the policy existed.
+        await db
+            .prepare(
+                "INSERT INTO articles (article_key, canonical_url, title, published_at, content_fingerprint, event_id, payload, first_seen_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            )
+            .run(
+                "legacy-unsafe",
+                bad.url,
+                bad.title,
+                bad.pubDate,
+                "legacy-unsafe",
+                "event-legacy-url",
+                JSON.stringify(bad),
+                1,
+                1
+            );
+        await index.rebuildSearchIndex();
+        const query = { query: "Legacy URL boundary" };
+        expect((await index.search(query)).items.map((item) => item.item.id)).toEqual(["safe"]);
+        expect((await index.searchLike(query)).items.map((item) => item.item.id)).toEqual(["safe"]);
+        expect(await index.getEvent("event-legacy-url", { limit: 30 })).toMatchObject({ status: "ok", items: [] });
+        expect(await db.prepare("SELECT payload FROM articles WHERE article_key = ?").get("legacy-unsafe")).toEqual({
+            payload: JSON.stringify(bad),
+        });
+    });
+
     it("keeps article persistence available when FTS5 initialization fails", async () => {
         const database = createDatabase(sqliteConnector({ name: ":memory:" }));
         databases.push(database);

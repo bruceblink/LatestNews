@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { APP_TITLE } from "~/utils/app-title";
 import { useFocusWith } from "~/hooks/useFocus";
 import { useHistory } from "~/hooks/useHistory";
+import { NewsLink } from "~/components/reading/NewsLink";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useReadingState } from "~/hooks/useReadingState";
 import { createUnifiedFeedView } from "@shared/unified-feed";
@@ -384,8 +385,9 @@ function SourceDetailPage() {
                                         )}
                                     >
                                         <div className="flex items-start justify-between gap-3">
-                                            <a
-                                                href={item.mobileUrl ?? item.url}
+                                            <NewsLink
+                                                href={item.url}
+                                                preferredHref={item.mobileUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="min-w-0 flex-1"
@@ -395,7 +397,7 @@ function SourceDetailPage() {
                                                     {item.title}
                                                     {isRead && <ReadBadge />}
                                                 </div>
-                                            </a>
+                                            </NewsLink>
                                             <ReadingStateActions
                                                 entry={{
                                                     newsId: item.id,

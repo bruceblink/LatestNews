@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { safeNewsUrl } from "./news-url-policy";
+
 import type { NewsItem, SourceID } from "./types";
 
 const DEFAULT_LIMIT = 30;
@@ -107,10 +109,10 @@ export function normalizeNewsItem(item: unknown, sourceId?: SourceID): NewsItem 
     if (!parsed.success) return undefined;
 
     const title = parsed.data.title.trim();
-    const url = parsed.data.url.trim();
+    const url = safeNewsUrl(parsed.data.url);
     if (!title || !url) return undefined;
 
-    const mobileUrl = parsed.data.mobileUrl?.trim();
+    const mobileUrl = safeNewsUrl(parsed.data.mobileUrl);
     const extraDate = normalizeDateValue(parsed.data.extra?.date);
     const pubDate = normalizeDateValue(parsed.data.pubDate) ?? extraDate;
     const extra = parsed.data.extra

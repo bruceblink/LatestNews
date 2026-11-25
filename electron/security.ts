@@ -1,6 +1,8 @@
 import { stat, realpath } from "node:fs/promises";
 import { sep, extname, resolve, relative, isAbsolute } from "node:path";
 
+import { safeNewsUrl } from "../shared/news-url-policy";
+
 function isContainedPath(root: string, candidate: string) {
     const relativePath = relative(root, candidate);
     return (
@@ -30,7 +32,7 @@ export function getSafeExternalUrl(candidate: string) {
     try {
         const url = new URL(candidate);
         if (url.username || url.password) return null;
-        if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "") return url.href;
+        if (url.protocol === "http:" || url.protocol === "https:") return safeNewsUrl(candidate) ? url.href : null;
         if (url.protocol === "mailto:" && /^[^\s@]+@[^\s@]+$/.test(url.pathname)) return url.href;
         return null;
     } catch {

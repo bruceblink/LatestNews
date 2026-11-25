@@ -43,6 +43,22 @@ describe("desktop crawler cache", () => {
         await expect(store.read("../escape")).resolves.toBeUndefined();
     });
 
+    it("filters legacy unsafe links on load without rewriting the file", async () => {
+        const path = await createCachePath();
+        const safe = createItem("safe");
+        const bad = { ...createItem("bad"), url: "file:///legacy" };
+        const legacy = JSON.stringify({
+            version: 1,
+            entries: { juejin: { updatedTime: 1000, items: [bad, { ...safe, mobileUrl: bad.url }] } },
+        });
+        await writeFile(path, legacy, "utf8");
+        const store = new CrawlerCacheStore({ path });
+        expect(await store.read("juejin")).toEqual({ updatedTime: 1000, items: [safe] });
+        expect(await readFile(path, "utf8")).toBe(legacy);
+        await store.write("juejin", [bad], 2000);
+        expect(await readFile(path, "utf8")).toBe(legacy);
+    });
+
     it("limits the number of sources and items per source", async () => {
         const path = await createCachePath();
         vi.useFakeTimers();

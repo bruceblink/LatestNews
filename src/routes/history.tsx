@@ -10,6 +10,7 @@ import { APP_TITLE } from "~/utils/app-title";
 import { usePWAStatus } from "~/hooks/usePWA";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
+import { NewsLink } from "~/components/reading/NewsLink";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useReadingState } from "~/hooks/useReadingState";
 import { getReadingStateList } from "@shared/reading-state";
@@ -50,14 +51,14 @@ function HistoryItem({
     return (
         <div className="history-item group">
             <div className="min-w-0 flex-1">
-                <a
+                <NewsLink
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-cyan-300 transition-colors visited:text-zinc-600 dark:visited:text-zinc-500"
                 >
                     {title}
-                </a>
+                </NewsLink>
                 <div className="mt-1.5 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                     <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-0.5 text-zinc-700 dark:text-zinc-400">
                         {sourceName}
@@ -536,14 +537,14 @@ function SavedReadingItem({
     return (
         <div className="history-item group">
             <div className="min-w-0 flex-1">
-                <a
+                <NewsLink
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-cyan-300 transition-colors visited:text-zinc-600 dark:visited:text-zinc-500"
                 >
                     {title}
-                </a>
+                </NewsLink>
                 <div className="mt-1.5 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                     <span className="rounded-full bg-zinc-100 dark:bg-zinc-700/40 border border-zinc-200/90 dark:border-zinc-700/40 px-2 py-0.5 text-zinc-700 dark:text-zinc-400">
                         {sourceName}

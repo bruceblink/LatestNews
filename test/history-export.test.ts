@@ -39,6 +39,15 @@ describe("formatReadingHistoryExport", () => {
         );
     });
 
+    it("keeps legacy history text but does not export invalid links", () => {
+        const text = formatReadingHistoryExport([
+            { title: "Legacy", sourceName: "Example", url: "file:///legacy", readAt: 1 },
+        ]);
+        expect(text).toContain("Legacy");
+        expect(text).toContain("（无效链接）");
+        expect(text).not.toContain("file://");
+    });
+
     it("returns empty text for empty history", () => {
         expect(formatReadingHistoryExport([])).toBe("");
     });

@@ -23,6 +23,7 @@ import { feedScopeSourcesAtom } from "~/atoms";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
 import { useQuery } from "@tanstack/react-query";
+import { NewsLink } from "~/components/reading/NewsLink";
 import { useReadingState } from "~/hooks/useReadingState";
 import { useRef, useMemo, useState, useEffect } from "react";
 import { getNewsInsightsCacheKey } from "@shared/source-api";
@@ -630,14 +631,14 @@ function HotRankingPanel({
                         <article key={item.id} className="insights-hot-row">
                             <span className="insights-rank-badge">{item.rank}</span>
                             <div className="insights-hot-main">
-                                <a
+                                <NewsLink
                                     href={item.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={() => onRead(item)}
                                 >
                                     {item.title}
-                                </a>
+                                </NewsLink>
                                 <div className="insights-hot-meta">
                                     <span>{getSourceName(item.sourceId, item.sourceName)}</span>
                                     {item.publishedAt && (
@@ -773,7 +774,7 @@ function TopicPanel({
                                             ))}
                                         </div>
                                         {topic.items.slice(0, 3).map((item) => (
-                                            <a
+                                            <NewsLink
                                                 key={item.id}
                                                 href={item.url}
                                                 target="_blank"
@@ -781,7 +782,7 @@ function TopicPanel({
                                                 onClick={() => onRead(item)}
                                             >
                                                 {getSourceName(item.sourceId, item.sourceName)} · {item.title}
-                                            </a>
+                                            </NewsLink>
                                         ))}
                                     </div>
                                 )}

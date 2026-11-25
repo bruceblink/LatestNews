@@ -16,6 +16,7 @@ import { metadata } from "@shared/metadata";
 import { APP_TITLE } from "~/utils/app-title";
 import { feedScopeSourcesAtom } from "~/atoms";
 import { useHistory } from "~/hooks/useHistory";
+import { NewsLink } from "~/components/reading/NewsLink";
 import { createFileRoute } from "@tanstack/react-router";
 import { filterSourceItems } from "@shared/source-items";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
@@ -453,8 +454,9 @@ const FeedList = memo(function FeedListContent({
                         return (
                             <article key={item.id} className={clsx("feed-article group", isRead && "is-read")}>
                                 <div className="flex items-start justify-between gap-3">
-                                    <a
-                                        href={item.mobileUrl ?? item.url}
+                                    <NewsLink
+                                        href={item.url}
+                                        preferredHref={item.mobileUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="min-w-0 flex-1"
@@ -464,7 +466,7 @@ const FeedList = memo(function FeedListContent({
                                             {item.title}
                                             {isRead && <ReadBadge />}
                                         </div>
-                                    </a>
+                                    </NewsLink>
                                     <ReadingStateActions
                                         entry={{
                                             newsId: item.item.id,

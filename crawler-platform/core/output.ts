@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { CrawlerPlatformError } from "./errors";
+import { safeNewsUrl } from "../../shared/news-url-policy";
 
 import type { CrawlerItem, CrawlerSourceKey } from "../sdk/types";
 
@@ -12,8 +13,11 @@ const itemSchema = z
     .object({
         id: z.union([z.string().trim().min(1).max(160), z.number().finite()]).optional(),
         title: z.string().trim().min(1).max(500),
-        url: z.string().trim().min(1).max(4096).url().refine(isHttpUrl),
-        mobileUrl: z.string().trim().min(1).max(4096).url().refine(isHttpUrl).optional(),
+        url: z
+            .string()
+            .refine(isHttpUrl)
+            .transform((value) => value.trim()),
+        mobileUrl: z.string().optional().transform(safeNewsUrl),
         publishedAt: z.union([z.number().finite(), z.string().trim().min(1).max(128)]).optional(),
         extra: z
             .object({
@@ -101,12 +105,7 @@ export function normalizeCrawlerUrl(value: string): string {
 }
 
 function isHttpUrl(value: string) {
-    try {
-        const url = new URL(value);
-        return (url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password;
-    } catch {
-        return false;
-    }
+    return safeNewsUrl(value) !== undefined;
 }
 
 function createStableId(sourceKey: CrawlerSourceKey, url: string) {
