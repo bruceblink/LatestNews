@@ -1,0 +1,1403 @@
+[
+  {
+    "result": "passed",
+    "formatVersion": 2,
+    "capturedAt": "2026-11-25T09:53:33.718Z",
+    "git": {
+      "commit": "104f94eeee75d416d6fa16cf60e8ccdd3a0a20ca",
+      "workingTreeDirty": true
+    },
+    "packageVersion": "0.8.4",
+    "runtime": {
+      "node": "v22.23.4",
+      "pnpm": "12.21.0",
+      "platform": "linux",
+      "architecture": "x64",
+      "operatingSystem": "#1 SMP PREEMPT_DYNAMIC Tue Nov 17 20:27:34 UTC 2026",
+      "operatingSystemRelease": "6.12.118-fly",
+      "cpuModel": "AMD EPYC",
+      "logicalCores": 8,
+      "totalMemoryBytes": 16772878336
+    },
+    "target": {
+      "network": "loopback only; fixture plugin has no network permissions"
+    },
+    "workload": {
+      "cacheMode": "SQLite hit, cold miss, partial miss and stale cache; target rows reset between request waves",
+      "cachePreparationExcludedFromRequestTiming": true,
+      "fixtureSourceCount": 30,
+      "fixtureItemsPerSource": 30,
+      "warmupRequestsPerScenario": 5,
+      "samples": 12,
+      "concurrency": 4,
+      "sourceConcurrency": 4,
+      "responseWindowThroughputExcludesDrain": true,
+      "wallThroughputIncludesPreparationAndDrain": true
+    },
+    "startupMs": 503.07,
+    "serverProcess": {
+      "sampleIntervalMs": 250,
+      "sampleCount": 135,
+      "elapsedMs": 48343,
+      "initialRssBytes": 51138560,
+      "peakRssBytes": 236453888,
+      "cpuUserMicros": 15654066,
+      "cpuSystemMicros": 13548170,
+      "averageCpuPercent": 60.40633804273629
+    },
+    "scenarios": [
+      {
+        "name": "single-source-cache-hit",
+        "expectedStatusesPerRequest": {
+          "cache": 1
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 15.45,
+        "requestsPerSecond": 776.59,
+        "wallRequestsPerSecond": 713.56,
+        "backgroundDrainMs": {
+          "p50": 0.436,
+          "p95": 0.499,
+          "p99": 0.499
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 4404,
+        "responseStatuses": {
+          "cache": 12
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 3.587,
+          "p95": 5.222,
+          "p99": 5.222
+        },
+        "jsonParseMs": {
+          "p50": 0.022,
+          "p95": 0.037,
+          "p99": 0.037
+        },
+        "latencySamplesMs": [
+          2.717,
+          3.321,
+          3.898,
+          4.333,
+          4.575,
+          4.743,
+          5.035,
+          5.222,
+          2.908,
+          3.31,
+          3.51,
+          3.587
+        ]
+      },
+      {
+        "name": "batch-10-sources-cache-hit",
+        "expectedStatusesPerRequest": {
+          "cache": 10
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 18.56,
+        "requestsPerSecond": 646.52,
+        "wallRequestsPerSecond": 604.53,
+        "backgroundDrainMs": {
+          "p50": 0.424,
+          "p95": 0.434,
+          "p99": 0.434
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 43030,
+        "responseStatuses": {
+          "cache": 120
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 3.649,
+          "p95": 5.511,
+          "p99": 5.511
+        },
+        "jsonParseMs": {
+          "p50": 0.141,
+          "p95": 0.159,
+          "p99": 0.159
+        },
+        "latencySamplesMs": [
+          2.593,
+          3.649,
+          4.585,
+          5.511,
+          2.478,
+          3.483,
+          4.458,
+          5.483,
+          2.584,
+          3.508,
+          4.436,
+          5.45
+        ]
+      },
+      {
+        "name": "batch-30-sources-cache-hit",
+        "expectedStatusesPerRequest": {
+          "cache": 30
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 38.32,
+        "requestsPerSecond": 313.15,
+        "wallRequestsPerSecond": 302.63,
+        "backgroundDrainMs": {
+          "p50": 0.424,
+          "p95": 0.47,
+          "p99": 0.47
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 128610,
+        "responseStatuses": {
+          "cache": 360
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 6.61,
+          "p95": 13.218,
+          "p99": 13.218
+        },
+        "jsonParseMs": {
+          "p50": 0.426,
+          "p95": 0.556,
+          "p99": 0.556
+        },
+        "latencySamplesMs": [
+          4.035,
+          6.298,
+          8.566,
+          10.822,
+          3.842,
+          6.61,
+          8.898,
+          13.218,
+          3.92,
+          6.001,
+          8.742,
+          11.091
+        ]
+      },
+      {
+        "name": "single-source-cold-cache-miss",
+        "expectedStatusesPerRequest": {
+          "success": 1
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 229.46,
+        "requestsPerSecond": 52.3,
+        "wallRequestsPerSecond": 24.26,
+        "backgroundDrainMs": {
+          "p50": 86.516,
+          "p95": 89.774,
+          "p99": 89.774
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 4408,
+        "responseStatuses": {
+          "success": 12
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 75.964,
+          "p95": 77.842,
+          "p99": 77.842
+        },
+        "jsonParseMs": {
+          "p50": 0.03,
+          "p95": 0.049,
+          "p99": 0.049
+        },
+        "latencySamplesMs": [
+          75.664,
+          75.964,
+          76.289,
+          76.616,
+          77.175,
+          77.353,
+          77.609,
+          77.842,
+          72.293,
+          72.612,
+          72.848,
+          73.099
+        ]
+      },
+      {
+        "name": "batch-10-sources-cold-cache-miss",
+        "expectedStatusesPerRequest": {
+          "success": 10
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 2687.34,
+        "requestsPerSecond": 4.47,
+        "wallRequestsPerSecond": 4.08,
+        "backgroundDrainMs": {
+          "p50": 81.083,
+          "p95": 85.926,
+          "p99": 85.926
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 43050,
+        "responseStatuses": {
+          "success": 120
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 901.147,
+          "p95": 917.099,
+          "p99": 917.099
+        },
+        "jsonParseMs": {
+          "p50": 0.184,
+          "p95": 0.306,
+          "p99": 0.306
+        },
+        "latencySamplesMs": [
+          865.468,
+          865.605,
+          863.626,
+          864.174,
+          900.658,
+          901.147,
+          901.669,
+          902.043,
+          915.359,
+          915.905,
+          916.484,
+          917.099
+        ]
+      },
+      {
+        "name": "batch-30-sources-cold-cache-miss",
+        "expectedStatusesPerRequest": {
+          "success": 30
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 8769.59,
+        "requestsPerSecond": 1.37,
+        "wallRequestsPerSecond": 1.32,
+        "backgroundDrainMs": {
+          "p50": 85.619,
+          "p95": 142.453,
+          "p99": 142.453
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 128670,
+        "responseStatuses": {
+          "success": 360
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 2925.383,
+          "p95": 2932.535,
+          "p99": 2932.535
+        },
+        "jsonParseMs": {
+          "p50": 0.538,
+          "p95": 0.957,
+          "p99": 0.957
+        },
+        "latencySamplesMs": [
+          2900.879,
+          2902.547,
+          2903.438,
+          2905.051,
+          2924.756,
+          2925.383,
+          2926.799,
+          2927.527,
+          2929.259,
+          2930.335,
+          2931.66,
+          2932.535
+        ]
+      },
+      {
+        "name": "batch-30-sources-partial-cache-miss",
+        "expectedStatusesPerRequest": {
+          "cache": 15,
+          "success": 15
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 1681.88,
+        "requestsPerSecond": 7.13,
+        "wallRequestsPerSecond": 2.65,
+        "backgroundDrainMs": {
+          "p50": 951.802,
+          "p95": 961.418,
+          "p99": 961.418
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0.75,
+        "pendingSourceCount": 120,
+        "meanDecodedResponseBytes": 86688,
+        "responseStatuses": {
+          "cache": 180,
+          "success": 60
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 553.618,
+          "p95": 567.164,
+          "p99": 567.164
+        },
+        "jsonParseMs": {
+          "p50": 0.363,
+          "p95": 0.93,
+          "p99": 0.93
+        },
+        "latencySamplesMs": [
+          551.124,
+          547.702,
+          548.48,
+          549.104,
+          564.463,
+          565.139,
+          565.8,
+          567.164,
+          553.16,
+          553.618,
+          560.175,
+          560.973
+        ]
+      },
+      {
+        "name": "batch-30-sources-stale-cache",
+        "expectedStatusesPerRequest": {
+          "stale-cache": 30
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 37.54,
+        "requestsPerSecond": 319.69,
+        "wallRequestsPerSecond": 258.85,
+        "backgroundDrainMs": {
+          "p50": 0.475,
+          "p95": 0.496,
+          "p99": 0.496
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 128790,
+        "responseStatuses": {
+          "stale-cache": 360
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 7.306,
+          "p95": 11.661,
+          "p99": 11.661
+        },
+        "jsonParseMs": {
+          "p50": 0.529,
+          "p95": 0.722,
+          "p99": 0.722
+        },
+        "latencySamplesMs": [
+          5.095,
+          7.306,
+          9.468,
+          11.661,
+          4.194,
+          6.43,
+          8.72,
+          10.97,
+          4.837,
+          6.862,
+          8.985,
+          10.662
+        ]
+      }
+    ]
+  },
+  {
+    "result": "passed",
+    "formatVersion": 2,
+    "capturedAt": "2026-11-25T09:54:34.980Z",
+    "git": {
+      "commit": "104f94eeee75d416d6fa16cf60e8ccdd3a0a20ca",
+      "workingTreeDirty": true
+    },
+    "packageVersion": "0.8.4",
+    "runtime": {
+      "node": "v22.23.4",
+      "pnpm": "12.21.0",
+      "platform": "linux",
+      "architecture": "x64",
+      "operatingSystem": "#1 SMP PREEMPT_DYNAMIC Tue Nov 17 20:27:34 UTC 2026",
+      "operatingSystemRelease": "6.12.118-fly",
+      "cpuModel": "AMD EPYC",
+      "logicalCores": 8,
+      "totalMemoryBytes": 16772878336
+    },
+    "target": {
+      "network": "loopback only; fixture plugin has no network permissions"
+    },
+    "workload": {
+      "cacheMode": "SQLite hit, cold miss, partial miss and stale cache; target rows reset between request waves",
+      "cachePreparationExcludedFromRequestTiming": true,
+      "fixtureSourceCount": 30,
+      "fixtureItemsPerSource": 30,
+      "warmupRequestsPerScenario": 5,
+      "samples": 12,
+      "concurrency": 4,
+      "sourceConcurrency": 6,
+      "responseWindowThroughputExcludesDrain": true,
+      "wallThroughputIncludesPreparationAndDrain": true
+    },
+    "startupMs": 496.34,
+    "serverProcess": {
+      "sampleIntervalMs": 250,
+      "sampleCount": 134,
+      "elapsedMs": 48548,
+      "initialRssBytes": 51015680,
+      "peakRssBytes": 236806144,
+      "cpuUserMicros": 15337958,
+      "cpuSystemMicros": 13854539,
+      "averageCpuPercent": 60.13120416906978
+    },
+    "scenarios": [
+      {
+        "name": "single-source-cache-hit",
+        "expectedStatusesPerRequest": {
+          "cache": 1
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 12.42,
+        "requestsPerSecond": 966,
+        "wallRequestsPerSecond": 875.8,
+        "backgroundDrainMs": {
+          "p50": 0.404,
+          "p95": 0.457,
+          "p99": 0.457
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 4404,
+        "responseStatuses": {
+          "cache": 12
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 2.756,
+          "p95": 4.593,
+          "p99": 4.593
+        },
+        "jsonParseMs": {
+          "p50": 0.022,
+          "p95": 0.039,
+          "p99": 0.039
+        },
+        "latencySamplesMs": [
+          2.782,
+          3.532,
+          4.25,
+          4.593,
+          1.401,
+          1.805,
+          2.319,
+          2.756,
+          1.503,
+          2.196,
+          2.925,
+          3.402
+        ]
+      },
+      {
+        "name": "batch-10-sources-cache-hit",
+        "expectedStatusesPerRequest": {
+          "cache": 10
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 19.56,
+        "requestsPerSecond": 613.62,
+        "wallRequestsPerSecond": 562.71,
+        "backgroundDrainMs": {
+          "p50": 0.547,
+          "p95": 0.718,
+          "p99": 0.718
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 43030,
+        "responseStatuses": {
+          "cache": 120
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 3.926,
+          "p95": 5.909,
+          "p99": 5.909
+        },
+        "jsonParseMs": {
+          "p50": 0.141,
+          "p95": 0.226,
+          "p99": 0.226
+        },
+        "latencySamplesMs": [
+          2.478,
+          3.687,
+          4.839,
+          5.909,
+          3.231,
+          3.926,
+          4.826,
+          5.769,
+          2.522,
+          3.407,
+          4.394,
+          5.324
+        ]
+      },
+      {
+        "name": "batch-30-sources-cache-hit",
+        "expectedStatusesPerRequest": {
+          "cache": 30
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 35.95,
+        "requestsPerSecond": 333.82,
+        "wallRequestsPerSecond": 320.94,
+        "backgroundDrainMs": {
+          "p50": 0.471,
+          "p95": 0.494,
+          "p99": 0.494
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 128610,
+        "responseStatuses": {
+          "cache": 360
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 6.433,
+          "p95": 11.601,
+          "p99": 11.601
+        },
+        "jsonParseMs": {
+          "p50": 0.402,
+          "p95": 0.558,
+          "p99": 0.558
+        },
+        "latencySamplesMs": [
+          4.14,
+          6.278,
+          8.273,
+          10.398,
+          3.73,
+          6.433,
+          8.598,
+          10.733,
+          3.787,
+          5.852,
+          7.981,
+          11.601
+        ]
+      },
+      {
+        "name": "single-source-cold-cache-miss",
+        "expectedStatusesPerRequest": {
+          "success": 1
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 232.5,
+        "requestsPerSecond": 51.61,
+        "wallRequestsPerSecond": 25.11,
+        "backgroundDrainMs": {
+          "p50": 79.251,
+          "p95": 84.558,
+          "p99": 84.558
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 4408,
+        "responseStatuses": {
+          "success": 12
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 75.974,
+          "p95": 79.483,
+          "p99": 79.483
+        },
+        "jsonParseMs": {
+          "p50": 0.025,
+          "p95": 0.042,
+          "p99": 0.042
+        },
+        "latencySamplesMs": [
+          74.419,
+          74.538,
+          74.718,
+          74.883,
+          75.857,
+          75.974,
+          76.138,
+          76.332,
+          78.187,
+          78.573,
+          79.182,
+          79.483
+        ]
+      },
+      {
+        "name": "batch-10-sources-cold-cache-miss",
+        "expectedStatusesPerRequest": {
+          "success": 10
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 2723.22,
+        "requestsPerSecond": 4.41,
+        "wallRequestsPerSecond": 4,
+        "backgroundDrainMs": {
+          "p50": 89.327,
+          "p95": 97.888,
+          "p99": 97.888
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 43050,
+        "responseStatuses": {
+          "success": 120
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 902.861,
+          "p95": 915.7,
+          "p99": 915.7
+        },
+        "jsonParseMs": {
+          "p50": 0.184,
+          "p95": 0.392,
+          "p99": 0.392
+        },
+        "latencySamplesMs": [
+          915.404,
+          913.15,
+          914.13,
+          915.7,
+          902.561,
+          902.861,
+          903.303,
+          903.626,
+          899.656,
+          900.12,
+          900.616,
+          901.018
+        ]
+      },
+      {
+        "name": "batch-30-sources-cold-cache-miss",
+        "expectedStatusesPerRequest": {
+          "success": 30
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 8537.1,
+        "requestsPerSecond": 1.41,
+        "wallRequestsPerSecond": 1.37,
+        "backgroundDrainMs": {
+          "p50": 82.764,
+          "p95": 84.618,
+          "p99": 84.618
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 128670,
+        "responseStatuses": {
+          "success": 360
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 2841.318,
+          "p95": 2860.473,
+          "p99": 2860.473
+        },
+        "jsonParseMs": {
+          "p50": 0.514,
+          "p95": 1.77,
+          "p99": 1.77
+        },
+        "latencySamplesMs": [
+          2860.473,
+          2855.392,
+          2857.848,
+          2860.43,
+          2840.301,
+          2841.318,
+          2842.883,
+          2843.766,
+          2825.153,
+          2826.414,
+          2827.057,
+          2827.698
+        ]
+      },
+      {
+        "name": "batch-30-sources-partial-cache-miss",
+        "expectedStatusesPerRequest": {
+          "cache": 15,
+          "success": 15
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 1739.68,
+        "requestsPerSecond": 6.9,
+        "wallRequestsPerSecond": 2.62,
+        "backgroundDrainMs": {
+          "p50": 936.473,
+          "p95": 968.532,
+          "p99": 968.532
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0.75,
+        "pendingSourceCount": 120,
+        "meanDecodedResponseBytes": 86688,
+        "responseStatuses": {
+          "cache": 180,
+          "success": 60
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 571.743,
+          "p95": 607.527,
+          "p99": 607.527
+        },
+        "jsonParseMs": {
+          "p50": 0.311,
+          "p95": 1.102,
+          "p99": 1.102
+        },
+        "latencySamplesMs": [
+          555.984,
+          550.973,
+          551.882,
+          553.728,
+          570.748,
+          571.743,
+          572.815,
+          573.698,
+          605.06,
+          605.692,
+          606.401,
+          607.527
+        ]
+      },
+      {
+        "name": "batch-30-sources-stale-cache",
+        "expectedStatusesPerRequest": {
+          "stale-cache": 30
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 37.35,
+        "requestsPerSecond": 321.3,
+        "wallRequestsPerSecond": 262.03,
+        "backgroundDrainMs": {
+          "p50": 0.44,
+          "p95": 0.468,
+          "p99": 0.468
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 128790,
+        "responseStatuses": {
+          "stale-cache": 360
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 7.816,
+          "p95": 12.673,
+          "p99": 12.673
+        },
+        "jsonParseMs": {
+          "p50": 0.514,
+          "p95": 0.897,
+          "p99": 0.897
+        },
+        "latencySamplesMs": [
+          5.502,
+          7.816,
+          10.129,
+          12.673,
+          3.791,
+          5.886,
+          8.229,
+          10.352,
+          3.844,
+          6.07,
+          8.285,
+          10.839
+        ]
+      }
+    ]
+  },
+  {
+    "result": "passed",
+    "formatVersion": 2,
+    "capturedAt": "2026-11-25T09:55:39.613Z",
+    "git": {
+      "commit": "104f94eeee75d416d6fa16cf60e8ccdd3a0a20ca",
+      "workingTreeDirty": true
+    },
+    "packageVersion": "0.8.4",
+    "runtime": {
+      "node": "v22.23.4",
+      "pnpm": "12.21.0",
+      "platform": "linux",
+      "architecture": "x64",
+      "operatingSystem": "#1 SMP PREEMPT_DYNAMIC Tue Nov 17 20:27:34 UTC 2026",
+      "operatingSystemRelease": "6.12.118-fly",
+      "cpuModel": "AMD EPYC",
+      "logicalCores": 8,
+      "totalMemoryBytes": 16772878336
+    },
+    "target": {
+      "network": "loopback only; fixture plugin has no network permissions"
+    },
+    "workload": {
+      "cacheMode": "SQLite hit, cold miss, partial miss and stale cache; target rows reset between request waves",
+      "cachePreparationExcludedFromRequestTiming": true,
+      "fixtureSourceCount": 30,
+      "fixtureItemsPerSource": 30,
+      "warmupRequestsPerScenario": 5,
+      "samples": 12,
+      "concurrency": 4,
+      "sourceConcurrency": 8,
+      "responseWindowThroughputExcludesDrain": true,
+      "wallThroughputIncludesPreparationAndDrain": true
+    },
+    "startupMs": 494.93,
+    "serverProcess": {
+      "sampleIntervalMs": 250,
+      "sampleCount": 134,
+      "elapsedMs": 50526,
+      "initialRssBytes": 51040256,
+      "peakRssBytes": 236695552,
+      "cpuUserMicros": 15691099,
+      "cpuSystemMicros": 13455453,
+      "averageCpuPercent": 57.686244705696076
+    },
+    "scenarios": [
+      {
+        "name": "single-source-cache-hit",
+        "expectedStatusesPerRequest": {
+          "cache": 1
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 11.63,
+        "requestsPerSecond": 1032.2,
+        "wallRequestsPerSecond": 933.24,
+        "backgroundDrainMs": {
+          "p50": 0.403,
+          "p95": 0.425,
+          "p99": 0.425
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 4404,
+        "responseStatuses": {
+          "cache": 12
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 2.42,
+          "p95": 4.425,
+          "p99": 4.425
+        },
+        "jsonParseMs": {
+          "p50": 0.022,
+          "p95": 0.033,
+          "p99": 0.033
+        },
+        "latencySamplesMs": [
+          2.693,
+          3.467,
+          4.039,
+          4.425,
+          1.489,
+          1.985,
+          2.42,
+          2.74,
+          1.513,
+          1.897,
+          2.343,
+          2.836
+        ]
+      },
+      {
+        "name": "batch-10-sources-cache-hit",
+        "expectedStatusesPerRequest": {
+          "cache": 10
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 19.73,
+        "requestsPerSecond": 608.16,
+        "wallRequestsPerSecond": 569.42,
+        "backgroundDrainMs": {
+          "p50": 0.438,
+          "p95": 0.457,
+          "p99": 0.457
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 43030,
+        "responseStatuses": {
+          "cache": 120
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 4.308,
+          "p95": 6.569,
+          "p99": 6.569
+        },
+        "jsonParseMs": {
+          "p50": 0.134,
+          "p95": 0.178,
+          "p99": 0.178
+        },
+        "latencySamplesMs": [
+          3.152,
+          4.308,
+          5.312,
+          6.569,
+          2.483,
+          3.419,
+          4.419,
+          5.479,
+          2.6,
+          3.527,
+          4.585,
+          5.587
+        ]
+      },
+      {
+        "name": "batch-30-sources-cache-hit",
+        "expectedStatusesPerRequest": {
+          "cache": 30
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 37.65,
+        "requestsPerSecond": 318.76,
+        "wallRequestsPerSecond": 306.09,
+        "backgroundDrainMs": {
+          "p50": 0.516,
+          "p95": 0.55,
+          "p99": 0.55
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 128610,
+        "responseStatuses": {
+          "cache": 360
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 6.871,
+          "p95": 12.06,
+          "p99": 12.06
+        },
+        "jsonParseMs": {
+          "p50": 0.391,
+          "p95": 0.514,
+          "p99": 0.514
+        },
+        "latencySamplesMs": [
+          4.287,
+          6.593,
+          8.628,
+          11.346,
+          4.091,
+          6.871,
+          9.036,
+          11.16,
+          3.939,
+          6.089,
+          8.662,
+          12.06
+        ]
+      },
+      {
+        "name": "single-source-cold-cache-miss",
+        "expectedStatusesPerRequest": {
+          "success": 1
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 226.79,
+        "requestsPerSecond": 52.91,
+        "wallRequestsPerSecond": 24.85,
+        "backgroundDrainMs": {
+          "p50": 82.398,
+          "p95": 91.305,
+          "p99": 91.305
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 4408,
+        "responseStatuses": {
+          "success": 12
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 73.76,
+          "p95": 77.817,
+          "p99": 77.817
+        },
+        "jsonParseMs": {
+          "p50": 0.025,
+          "p95": 0.08,
+          "p99": 0.08
+        },
+        "latencySamplesMs": [
+          71.592,
+          72.072,
+          72.341,
+          72.626,
+          73.649,
+          73.76,
+          74.317,
+          74.533,
+          76.65,
+          76.838,
+          77.57,
+          77.817
+        ]
+      },
+      {
+        "name": "batch-10-sources-cold-cache-miss",
+        "expectedStatusesPerRequest": {
+          "success": 10
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 2782.4,
+        "requestsPerSecond": 4.31,
+        "wallRequestsPerSecond": 3.93,
+        "backgroundDrainMs": {
+          "p50": 87.903,
+          "p95": 97.013,
+          "p99": 97.013
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 43050,
+        "responseStatuses": {
+          "success": 120
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 935.253,
+          "p95": 938.115,
+          "p99": 938.115
+        },
+        "jsonParseMs": {
+          "p50": 0.18,
+          "p95": 0.228,
+          "p99": 0.228
+        },
+        "latencySamplesMs": [
+          938.115,
+          936.382,
+          936.891,
+          937.823,
+          904.236,
+          904.619,
+          905.044,
+          905.344,
+          935.083,
+          935.253,
+          935.51,
+          935.839
+        ]
+      },
+      {
+        "name": "batch-30-sources-cold-cache-miss",
+        "expectedStatusesPerRequest": {
+          "success": 30
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 8555.04,
+        "requestsPerSecond": 1.4,
+        "wallRequestsPerSecond": 1.36,
+        "backgroundDrainMs": {
+          "p50": 94.743,
+          "p95": 98.225,
+          "p99": 98.225
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 128670,
+        "responseStatuses": {
+          "success": 360
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 2848.424,
+          "p95": 2852.864,
+          "p99": 2852.864
+        },
+        "jsonParseMs": {
+          "p50": 0.632,
+          "p95": 1.258,
+          "p99": 1.258
+        },
+        "latencySamplesMs": [
+          2850.538,
+          2848.295,
+          2851.81,
+          2852.864,
+          2848.424,
+          2849.775,
+          2850.837,
+          2851.706,
+          2842.595,
+          2844.036,
+          2844.775,
+          2845.51
+        ]
+      },
+      {
+        "name": "batch-30-sources-partial-cache-miss",
+        "expectedStatusesPerRequest": {
+          "cache": 15,
+          "success": 15
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 1659.21,
+        "requestsPerSecond": 7.23,
+        "wallRequestsPerSecond": 2.62,
+        "backgroundDrainMs": {
+          "p50": 986.506,
+          "p95": 1000.339,
+          "p99": 1000.339
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 0.75,
+        "pendingSourceCount": 120,
+        "meanDecodedResponseBytes": 86688,
+        "responseStatuses": {
+          "cache": 180,
+          "success": 60
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 550.106,
+          "p95": 553.963,
+          "p99": 553.963
+        },
+        "jsonParseMs": {
+          "p50": 0.337,
+          "p95": 1.045,
+          "p99": 1.045
+        },
+        "latencySamplesMs": [
+          553.963,
+          549.991,
+          550.892,
+          551.59,
+          550.106,
+          550.989,
+          551.921,
+          553.133,
+          547.264,
+          547.762,
+          548.532,
+          549.6
+        ]
+      },
+      {
+        "name": "batch-30-sources-stale-cache",
+        "expectedStatusesPerRequest": {
+          "stale-cache": 30
+        },
+        "statusMismatchCount": 0,
+        "requestCount": 12,
+        "concurrency": 4,
+        "elapsedMs": 36.47,
+        "requestsPerSecond": 329.06,
+        "wallRequestsPerSecond": 267.11,
+        "backgroundDrainMs": {
+          "p50": 0.439,
+          "p95": 0.517,
+          "p99": 0.517
+        },
+        "waves": 3,
+        "errorRate": 0,
+        "cacheHitRate": 1,
+        "pendingSourceCount": 0,
+        "meanDecodedResponseBytes": 128790,
+        "responseStatuses": {
+          "stale-cache": 360
+        },
+        "httpStatuses": {
+          "200": 12
+        },
+        "latencyMs": {
+          "p50": 7.622,
+          "p95": 11.785,
+          "p99": 11.785
+        },
+        "jsonParseMs": {
+          "p50": 0.47,
+          "p95": 0.759,
+          "p99": 0.759
+        },
+        "latencySamplesMs": [
+          5.509,
+          7.622,
+          9.936,
+          11.785,
+          3.675,
+          5.758,
+          7.94,
+          10.079,
+          3.903,
+          6.05,
+          8.411,
+          10.843
+        ]
+      }
+    ]
+  }
+]

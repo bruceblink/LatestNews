@@ -229,3 +229,7 @@ If the runtime log reports Cannot read properties of undefined (reading 'split')
 ### 文章索引维护
 
 旧数据库升级前先备份并停用旧写入器；INIT_TABLE=false 不隐式迁移。使用 [文章索引维护与恢复](performance/news-article-recovery.md) 的本地 SQLite 命令和验收方法。目标 D1 的迁移、备份、恢复及容量需独立验证；不自动删除未完成的 journal 或历史文章。
+
+#### 来源并发配置
+
+可选 LATESTNEWS_SOURCE_MAX_CONCURRENT，允许 1–16 的十进制整数，未设置时默认 8。无效非空值在初始化时拒绝。用于受控对照或明确容量策略；生产默认值、队列和每 Origin 并发限制未变。

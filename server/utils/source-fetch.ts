@@ -1,6 +1,7 @@
 import type { NewsItem, SourceID } from "@shared/types";
 import type { NewsItemsNormalizationQuality } from "@shared/news-item-schema";
 
+import process from "node:process";
 import { getters } from "#/getters";
 import {
     getCrawlerSourceKind,
@@ -10,7 +11,7 @@ import {
 } from "#/utils/crawler-plugin-runtime";
 
 import { legacySourceSignal } from "./fetch";
-import { createSourceEngine } from "./source-engine";
+import { createSourceEngine, parseSourceConcurrency } from "./source-engine";
 import { recordSourceAdapter, recordSourceFailure, recordSourceQuality, recordSourceSuccess } from "./source-health";
 
 import type { SourceAdapter } from "./source-engine";
@@ -64,6 +65,7 @@ export function createSourceFetcher({
 }
 
 const sourceEngine = createSourceEngine({
+    maxConcurrent: parseSourceConcurrency(process.env.LATESTNEWS_SOURCE_MAX_CONCURRENT),
     resolveAdapter: (id) => {
         const crawlerSourceKind = getCrawlerSourceKind(id);
         if (crawlerSourceKind) {

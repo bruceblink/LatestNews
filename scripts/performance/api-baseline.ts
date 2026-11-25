@@ -72,6 +72,7 @@ process.on("message", (message) => {
 interface Options {
     samples: number;
     concurrency: number;
+    sourceConcurrency: number;
 }
 
 interface RequestSpec {
@@ -100,6 +101,9 @@ interface ScenarioReport {
     concurrency: number;
     elapsedMs: number;
     requestsPerSecond: number;
+    wallRequestsPerSecond: number;
+    backgroundDrainMs: { p50: number; p95: number; p99: number };
+    waves: number;
     errorRate: number;
     cacheHitRate: number;
     pendingSourceCount: number;
@@ -144,12 +148,13 @@ async function main() {
             pluginStore,
             port,
             workingDirectory,
+            sourceConcurrency: options.sourceConcurrency,
         });
         await waitForServer(server, baseUrl, requestTimeoutMs, logPath);
         const startupMs = round(performance.now() - startupStartedAt);
 
         cacheController = createPerformanceCacheController(join(workingDirectory, ".data/db.sqlite3"));
-        await warmSourceCache(baseUrl);
+        await warmSourceCache(baseUrl, cacheController);
         const scenarios: ScenarioReport[] = [];
         for (const scenario of createScenarios(baseUrl, cacheController)) {
             scenarios.push(await runScenario(scenario, options));
@@ -168,7 +173,7 @@ async function main() {
         };
         const report = {
             result: passed ? "passed" : "failed",
-            formatVersion: 1,
+            formatVersion: 2,
             capturedAt: new Date().toISOString(),
             git: readGitState(),
             packageVersion: packageJson.version,
@@ -196,6 +201,9 @@ async function main() {
                 warmupRequestsPerScenario,
                 samples: options.samples,
                 concurrency: options.concurrency,
+                sourceConcurrency: options.sourceConcurrency,
+                responseWindowThroughputExcludesDrain: true,
+                wallThroughputIncludesPreparationAndDrain: true,
             },
             startupMs,
             serverProcess: await readServerMetrics(metricsPath),
@@ -216,6 +224,8 @@ async function main() {
                             name,
                             latencyMs,
                             requestsPerSecond,
+                            wallRequestsPerSecond,
+                            backgroundDrainMs,
                             errorRate,
                             cacheHitRate,
                             statusMismatchCount,
@@ -224,6 +234,8 @@ async function main() {
                             name,
                             latencyMs,
                             requestsPerSecond: round(requestsPerSecond),
+                            wallRequestsPerSecond,
+                            backgroundDrainMs,
                             errorRate,
                             cacheHitRate,
                             statusMismatchCount,
@@ -280,14 +292,22 @@ function startServer({
     pluginStore,
     port,
     workingDirectory,
+    sourceConcurrency,
 }: {
     logHandle: Awaited<ReturnType<typeof open>>;
     metricsPath: string;
     pluginStore: string;
     port: number;
     workingDirectory: string;
+    sourceConcurrency: number;
 }) {
-    const environment = createServerEnvironment({ metricsPath, pluginStore, port, workingDirectory });
+    const environment = createServerEnvironment({
+        metricsPath,
+        pluginStore,
+        port,
+        workingDirectory,
+        sourceConcurrency,
+    });
     const serverEntry = join(projectRoot, "dist/output/server/index.mjs");
     const metricsModule = join(dirname(metricsPath), "server-metrics.mjs");
     const child = fork(serverEntry, [], {
@@ -304,11 +324,13 @@ function createServerEnvironment({
     pluginStore,
     port,
     workingDirectory,
+    sourceConcurrency,
 }: {
     metricsPath: string;
     pluginStore: string;
     port: number;
     workingDirectory: string;
+    sourceConcurrency: number;
 }) {
     const temporaryHome = join(dirname(workingDirectory), "home");
     const environment: NodeJS.ProcessEnv = {
@@ -320,6 +342,7 @@ function createServerEnvironment({
         NITRO_PORT: String(port),
         ENABLE_CACHE: "true",
         INIT_TABLE: "true",
+        LATESTNEWS_SOURCE_MAX_CONCURRENT: String(sourceConcurrency),
         LATESTNEWS_CRAWLER_PLUGIN_DIR: pluginStore,
         LATESTNEWS_CRAWLER_PLUGIN_IDS: pluginId,
         LATESTNEWS_PERFORMANCE_METRICS_PATH: metricsPath,
@@ -358,12 +381,24 @@ async function waitForServer(server: ChildProcess, baseUrl: string, timeoutMs: n
     throw new Error(`Local Node server did not become ready within ${timeoutMs} ms.\n${await readLogTail(logPath)}`);
 }
 
-async function warmSourceCache(baseUrl: string) {
-    const request = createBatchRequest(sourceIds);
-    const result = await executeRequest(baseUrl, request);
-    if (result.httpStatus < 200 || result.httpStatus >= 300 || result.errorCount > 0) {
-        throw new Error(`Could not warm every fixture source before the benchmark: ${JSON.stringify(result)}`);
+async function waitForSettledCache(cache: PerformanceCacheController, ids: string[]) {
+    const deadline = Date.now() + requestTimeoutMs;
+    while (!cache.isSettled(ids)) {
+        if (Date.now() >= deadline) throw new Error("Background cache/index writes did not settle for the wave.");
+        await delay(25);
     }
+}
+
+async function warmSourceCache(baseUrl: string, cache: PerformanceCacheController) {
+    // Seed in bounded groups. Cold 30-source behavior is measured separately.
+    for (let offset = 0; offset < sourceIds.length; offset += 5) {
+        const ids = sourceIds.slice(offset, offset + 5);
+        const request = createBatchRequest(ids);
+        const result = await executeRequest(baseUrl, request);
+        assertExpectedSample(result, createScenario(baseUrl, "cache warmup", request, { success: ids.length }));
+        await waitForSettledCache(cache, ids);
+    }
+    await waitForSettledCache(cache, sourceIds);
 
     const verify = await executeRequest(baseUrl, createSingleRequest(sourceIds[0]!));
     assertExpectedSample(
@@ -378,7 +413,8 @@ function createScenarios(baseUrl: string, cacheController: PerformanceCacheContr
     const cachedHalf = sourceIds.slice(0, 15);
     const missingHalf = sourceIds.slice(15);
 
-    return [
+    const settle = () => waitForSettledCache(cacheController, sourceIds);
+    const scenarios = [
         createScenario(baseUrl, "single-source-cache-hit", createSingleRequest(singleSourceIds[0]!), { cache: 1 }),
         createScenario(baseUrl, "batch-10-sources-cache-hit", createBatchRequest(batch10SourceIds), { cache: 10 }),
         createScenario(baseUrl, "batch-30-sources-cache-hit", createBatchRequest(sourceIds), { cache: 30 }),
@@ -409,14 +445,7 @@ function createScenarios(baseUrl: string, cacheController: PerformanceCacheContr
             { ...createBatchRequest(sourceIds), mayBePending: missingHalf },
             { cache: cachedHalf.length, success: missingHalf.length },
             () => cacheController.clear(missingHalf),
-            async () => {
-                // Separate request latency from the time needed to finish writing the background cache.
-                const deadline = Date.now() + requestTimeoutMs;
-                while (!cacheController.hasAll(missingHalf)) {
-                    if (Date.now() >= deadline) throw new Error("Partial batch did not fill the background cache.");
-                    await delay(25);
-                }
-            }
+            settle
         ),
         createScenario(
             baseUrl,
@@ -426,6 +455,7 @@ function createScenarios(baseUrl: string, cacheController: PerformanceCacheContr
             () => cacheController.setUpdatedAt(sourceIds, Date.now() - TTL - 1)
         ),
     ];
+    return scenarios.map((scenario) => ({ ...scenario, waitForCache: settle }));
 }
 
 function createScenario(
@@ -466,6 +496,8 @@ async function runScenario(scenario: ScenarioDefinition, options: Options): Prom
 
     const samples: RequestSample[] = [];
     let elapsedMs = 0;
+    const drainTimes: number[] = [];
+    const wallStartedAt = performance.now();
     while (samples.length < options.samples) {
         scenario.prepareCache();
         const waveSize = Math.min(options.concurrency, options.samples - samples.length);
@@ -475,9 +507,12 @@ async function runScenario(scenario: ScenarioDefinition, options: Options): Prom
         );
         elapsedMs += Math.max(0.001, performance.now() - startedAt);
         samples.push(...wave);
+        const drainStartedAt = performance.now();
         await scenario.waitForCache();
+        drainTimes.push(performance.now() - drainStartedAt);
     }
 
+    const wallElapsedMs = Math.max(0.001, performance.now() - wallStartedAt);
     const statuses = countValues(samples.flatMap((sample) => sample.responseStatuses));
     const httpStatuses = countValues(samples.map((sample) => String(sample.httpStatus)));
     const statusMismatchCount = samples.filter((sample) => !hasExpectedResponseStatuses(sample, scenario)).length;
@@ -499,6 +534,9 @@ async function runScenario(scenario: ScenarioDefinition, options: Options): Prom
         concurrency: Math.min(options.concurrency, options.samples),
         elapsedMs: round(elapsedMs),
         requestsPerSecond: round((samples.length / elapsedMs) * 1000, 2),
+        wallRequestsPerSecond: round((samples.length / wallElapsedMs) * 1000, 2),
+        backgroundDrainMs: summarize(drainTimes),
+        waves: drainTimes.length,
         errorRate: round(errorCount / samples.length, 6),
         cacheHitRate: round(totalResponses === 0 ? 0 : cacheResponses / totalResponses, 6),
         pendingSourceCount: samples.reduce((count, sample) => count + sample.pendingSourceCount, 0),
@@ -727,8 +765,10 @@ function parseOptions(args: string[]): Options {
     const values = new Map<string, string>();
     for (let index = 0; index < args.length; index += 1) {
         const key = args[index];
-        if (!key?.startsWith("--") || !["--samples", "--concurrency"].includes(key)) {
-            throw new Error("Usage: pnpm performance:baseline [--samples 1000] [--concurrency 30]");
+        if (!key?.startsWith("--") || !["--samples", "--concurrency", "--source-concurrency"].includes(key)) {
+            throw new Error(
+                "Usage: pnpm performance:baseline [--samples 1000] [--concurrency 30] [--source-concurrency 8]"
+            );
         }
         const value = args[index + 1];
         if (!value || value.startsWith("--")) throw new Error(`Missing value for ${key}.`);
@@ -738,7 +778,8 @@ function parseOptions(args: string[]): Options {
 
     const samples = parseInteger(values.get("--samples") ?? "1000", "--samples", 1, 10_000);
     const concurrency = parseInteger(values.get("--concurrency") ?? "30", "--concurrency", 1, 100);
-    return { samples, concurrency };
+    const sourceConcurrency = parseInteger(values.get("--source-concurrency") ?? "8", "--source-concurrency", 1, 16);
+    return { samples, concurrency, sourceConcurrency };
 }
 
 function parseInteger(value: string, option: string, minimum: number, maximum: number) {

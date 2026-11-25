@@ -66,6 +66,15 @@ interface SourceCollection {
     callers: number;
 }
 
+/** Explicit operator/benchmark override; absent configuration retains the default 8. */
+export function parseSourceConcurrency(value: string | undefined): number {
+    if (value === undefined || value === "") return 8;
+    if (!/^[0-9]+$/.test(value) || Number(value) < 1 || Number(value) > 16) {
+        throw new RangeError("LATESTNEWS_SOURCE_MAX_CONCURRENT must be an integer from 1 to 16.");
+    }
+    return Number(value);
+}
+
 /** Shared source execution boundary for legacy getters, trusted plugins and configured sources. */
 export function createSourceEngine({
     adapters: initialAdapters = [],
