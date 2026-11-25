@@ -1159,13 +1159,25 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     });
 }
 
+function desktopInstallationTrigger(page: Page) {
+    return page
+        .getByRole("complementary", { name: "主要导航" })
+        .locator(".app-shell-account-desktop-tools")
+        .getByRole("button", { name: "安装与下载", exact: true });
+}
+
 async function openInstallationGuide(page: Page) {
-    const menu = page.getByRole("button", { name: "使用 GitHub 登录", exact: true });
-    await menu.focus();
+    // Desktop has a persistent sidebar action, not an account-menu action.
+    // Opening the account dropdown first may cover the sidebar button.
+    await expect(page.locator("#account-dropdown")).toHaveCount(0);
+    const trigger = desktopInstallationTrigger(page);
+    await expect(trigger).toBeVisible();
+    await trigger.focus();
+    await expect(trigger).toBeFocused();
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("button", { name: "数据源健康", exact: true })).toHaveCount(0);
-    await page.getByRole("button", { name: "安装与下载", exact: true }).click();
-    return page.getByRole("dialog", { name: "安装与下载" });
+    const guide = page.getByRole("dialog", { name: "安装与下载" });
+    await expect(guide).toBeVisible();
+    return guide;
 }
 
 test("opens installation instructions by keyboard and restores focus when closed", async ({ page }) => {
@@ -1187,7 +1199,8 @@ test("opens installation instructions by keyboard and restores focus when closed
     await expect(guide.getByRole("tabpanel", { name: "浏览器应用" })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(guide).not.toBeVisible();
-    await expect(page.getByRole("button", { name: "使用 GitHub 登录", exact: true })).toBeFocused();
+    await expect(desktopInstallationTrigger(page)).toBeFocused();
+    await expect(page.locator("#account-dropdown")).toHaveCount(0);
 });
 
 test.describe("mobile installation", () => {
@@ -1197,15 +1210,23 @@ test.describe("mobile installation", () => {
         await page.setViewportSize({ width: 375, height: 812 });
         await installApiMocks(page);
         await page.goto("/feed");
-        await page.getByRole("button", { name: "使用 GitHub 登录", exact: true }).tap();
-        await page.getByRole("button", { name: "安装与下载", exact: true }).tap();
+        const account = page.getByRole("button", { name: "使用 GitHub 登录", exact: true });
+        await expect(desktopInstallationTrigger(page)).toBeHidden();
+        await account.tap();
+        const menu = page.locator("#account-dropdown");
+        await expect(menu).toBeVisible();
+        await menu.getByRole("button", { name: "安装与下载", exact: true }).tap();
         const guide = page.getByRole("dialog", { name: "安装与下载" });
+        await expect(guide).toBeVisible();
+        await expect(menu).toHaveCount(0);
         await guide.getByRole("tab", { name: "浏览器应用", exact: true }).tap();
         await guide.getByLabel("浏览器环境").selectOption("ios");
         await expect(guide).toContainText("添加到主屏幕");
         expect(await guide.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
         await guide.getByRole("button", { name: "关闭安装与下载" }).tap();
         await expect(guide).not.toBeVisible();
+        await expect(account).toBeFocused();
+        await expect(menu).toHaveCount(0);
     });
 });
 
