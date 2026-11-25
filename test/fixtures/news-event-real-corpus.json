@@ -1,0 +1,1146 @@
+{
+    "schemaVersion": 1,
+    "selection": "Assistant-curated real public reports. Labels are proposed, not independently human-reviewed. Nonrandom challenge corpus; do not extrapolate to production prevalence.",
+    "snapshotDate": "2026-11-25",
+    "events": [
+        {
+            "id": "kagi-mail",
+            "cohort": "daily",
+            "family": "search-browser",
+            "note": "Kagi Mail public beta announcement, not a general Google search story."
+        },
+        {
+            "id": "firefox-161",
+            "cohort": "daily",
+            "family": "search-browser",
+            "note": "Firefox 161 release."
+        },
+        {
+            "id": "ladybird-alpha",
+            "cohort": "daily",
+            "family": "search-browser",
+            "note": "Ladybird first alpha release; official post and coverage."
+        },
+        {
+            "id": "google-ai-tv-patent",
+            "cohort": "daily",
+            "family": "google-ai",
+            "note": "Same Google personalized AI television patent application US20260370899A1, published 2026-11-19; RSS descriptions and Patentlyze match the filing. IT Home headline says granted, but the label concerns the underlying filing, not the accuracy of that legal-status claim."
+        },
+        {
+            "id": "bonsai-25",
+            "cohort": "daily",
+            "family": "ai-model",
+            "note": "PrismML Ternary Bonsai 2.5 27B launch."
+        },
+        {
+            "id": "tidal-ban",
+            "cohort": "daily",
+            "family": "ai-policy",
+            "note": "Tidal announcement that wholly AI-generated music will be banned; not other AI policy announcements."
+        },
+        {
+            "id": "amazon-drone-crash",
+            "cohort": "daily",
+            "family": "amazon",
+            "note": "Same Michigan delivery drone crash and ensuing investigation."
+        },
+        {
+            "id": "amazon-decart",
+            "cohort": "daily",
+            "family": "amazon",
+            "note": "Amazon acquisition of Decart, a separate event from drone crash."
+        },
+        {
+            "id": "amazon-ai-security",
+            "cohort": "daily",
+            "family": "amazon",
+            "note": "Amazon report about attacker AI agents, separate from crash and acquisition."
+        },
+        {
+            "id": "amazon-car-sales",
+            "cohort": "daily",
+            "family": "amazon",
+            "note": "Amazon car sales expansion to UK, separate from other Amazon news."
+        },
+        {
+            "id": "gta-project-takedown",
+            "cohort": "daily",
+            "family": "gta",
+            "note": "Take-Two shutdown of GTA VI PC recompilation project."
+        },
+        {
+            "id": "gta-director-comment",
+            "cohort": "daily",
+            "family": "gta",
+            "note": "Naughty Dog director comment about GTA 6; distinct from project takedown."
+        },
+        {
+            "id": "gta-player-count",
+            "cohort": "daily",
+            "family": "gta",
+            "note": "Sony disclosure of GTA 6 player count."
+        },
+        {
+            "id": "meta-walmart-muse",
+            "cohort": "daily",
+            "family": "meta",
+            "note": "Walmart partnership for shopping agent; not Instagram DM integration."
+        },
+        {
+            "id": "meta-instagram-muse",
+            "cohort": "daily",
+            "family": "meta",
+            "note": "Meta Muse integration into Instagram DMs."
+        },
+        {
+            "id": "meta-threads-ipad",
+            "cohort": "daily",
+            "family": "meta",
+            "note": "Threads iPad launch and cashtags."
+        },
+        {
+            "id": "meta-glasses-lawsuit",
+            "cohort": "daily",
+            "family": "meta",
+            "note": "German consumer lawsuit over camera glasses."
+        },
+        {
+            "id": "google-gbench",
+            "cohort": "daily",
+            "family": "google-ai",
+            "note": "Google gBench evaluation framework launch, not TV patent."
+        },
+        {
+            "id": "google-ai-cost",
+            "cohort": "daily",
+            "family": "google-ai",
+            "note": "DeepMind projection of future AI task costs, separate from patent and benchmark launch."
+        },
+        {
+            "id": "sand-magi2",
+            "cohort": "daily",
+            "family": "ai-model",
+            "note": "Sand.ai MAGI-2 video model release, not Bonsai."
+        },
+        {
+            "id": "tencent-hy4",
+            "cohort": "daily",
+            "family": "ai-model",
+            "note": "Tencent Hy4 flash GGUF weights and inference code, distinct from Bonsai."
+        },
+        {
+            "id": "pinterest-parental-ai",
+            "cohort": "daily",
+            "family": "ai-policy",
+            "note": "Pinterest parental control of AI-generated content, distinct from Tidal policy."
+        },
+        {
+            "id": "ms-cloud-outage",
+            "cohort": "daily",
+            "family": "outage",
+            "note": "Microsoft cloud outage engineering analysis."
+        },
+        {
+            "id": "nable-breach",
+            "cohort": "daily",
+            "family": "outage",
+            "note": "N-Able security breach and service outage, different organization and incident."
+        },
+        {
+            "id": "tiktok-outage",
+            "cohort": "daily",
+            "family": "outage",
+            "note": "TikTok outage, distinct incident."
+        },
+        {
+            "id": "rust-1850",
+            "cohort": "release",
+            "family": "rust",
+            "note": "Rust 1.85.0 and edition 2024 release."
+        },
+        {
+            "id": "rust-1851",
+            "cohort": "release",
+            "family": "rust",
+            "note": "Rust 1.85.1 point release; not 1.85.0."
+        },
+        {
+            "id": "rust-1860",
+            "cohort": "release",
+            "family": "rust",
+            "note": "Rust 1.86.0 release; two HN discussions linking to same official post."
+        },
+        {
+            "id": "rust-1970",
+            "cohort": "release",
+            "family": "rust",
+            "note": "Rust 1.97.0 release."
+        },
+        {
+            "id": "rust-1970-regression",
+            "cohort": "release",
+            "family": "rust",
+            "note": "Bug report of segmentation fault after 1.97.0; distinct from the release."
+        },
+        {
+            "id": "rust-1971",
+            "cohort": "release",
+            "family": "rust",
+            "note": "Rust 1.97.1 point release; HN submission is later than publication."
+        },
+        {
+            "id": "postgres-18",
+            "cohort": "release",
+            "family": "postgres",
+            "note": "PostgreSQL 18 GA release: official announcement, release notes and independent coverage."
+        },
+        {
+            "id": "postgres-18-beta",
+            "cohort": "release",
+            "family": "postgres",
+            "note": "PostgreSQL 18 beta 1 release, distinct from GA."
+        },
+        {
+            "id": "postgres-18-rc",
+            "cohort": "release",
+            "family": "postgres",
+            "note": "PostgreSQL 18 RC1, distinct from beta and GA."
+        },
+        {
+            "id": "postgres-181",
+            "cohort": "release",
+            "family": "postgres",
+            "note": "PostgreSQL 18.1 point release."
+        },
+        {
+            "id": "python-314",
+            "cohort": "release",
+            "family": "python",
+            "note": "Python 3.14 stable release announcement and coverage."
+        },
+        {
+            "id": "python-314-rc3",
+            "cohort": "release",
+            "family": "python",
+            "note": "Python 3.14 RC3 separate pre-release."
+        },
+        {
+            "id": "python-314-alpha5",
+            "cohort": "release",
+            "family": "python",
+            "note": "Python 3.14 alpha 5 separate pre-release."
+        },
+        {
+            "id": "python-314-beta1",
+            "cohort": "release",
+            "family": "python",
+            "note": "Python 3.14 beta 1 separate pre-release."
+        },
+        {
+            "id": "react-dec3",
+            "cohort": "security",
+            "family": "react-rsc",
+            "note": "Dec 3 React Server Components vulnerability disclosure (CVE-2025-55182) and advisories; no exploit content."
+        },
+        {
+            "id": "react-dec11",
+            "cohort": "security",
+            "family": "react-rsc",
+            "note": "Dec 11 distinct follow-up disclosure (CVE-2025-55183/55184) and bulletin, not Dec 3 RCE."
+        },
+        {
+            "id": "react-jan26",
+            "cohort": "security",
+            "family": "react-rsc",
+            "note": "Jan 2026 CVE-2026-23864 disclosure, distinct from December advisories."
+        },
+        {
+            "id": "react-may8",
+            "cohort": "security",
+            "family": "react-rsc",
+            "note": "May 2026 separate denial-of-service advisory."
+        }
+    ],
+    "reports": [
+        {
+            "id": "report-001",
+            "event": "kagi-mail",
+            "source": "solidot",
+            "language": "zh",
+            "title": "Kagi 推出邮件服务",
+            "url": "https://www.solidot.org/story?sid=85984",
+            "articleUrl": "https://www.solidot.org/story?sid=85984",
+            "reportedAt": "2026-11-25T06:37:41Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.solidot.org/index.rss"
+        },
+        {
+            "id": "report-002",
+            "event": "kagi-mail",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Kagi Mail (public beta)",
+            "url": "https://news.ycombinator.com/item?id=50615481",
+            "articleUrl": "https://blog.kagi.com/kagi-mail-public-beta",
+            "reportedAt": "2026-11-23T17:17:01Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50615481"
+        },
+        {
+            "id": "report-003",
+            "event": "kagi-mail",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Google alternative Kagi launches an email service",
+            "url": "https://news.ycombinator.com/item?id=50633122",
+            "articleUrl": "https://www.theverge.com/tech/1041000/kagi-mail-email-google-gmail-alternative",
+            "reportedAt": "2026-11-24T19:20:52Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50633122"
+        },
+        {
+            "id": "report-004",
+            "event": "firefox-161",
+            "source": "solidot",
+            "language": "zh",
+            "title": "Firefox 161 释出",
+            "url": "https://www.solidot.org/story?sid=85979",
+            "articleUrl": "https://www.solidot.org/story?sid=85979",
+            "reportedAt": "2026-11-24T14:22:21Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.solidot.org/index.rss"
+        },
+        {
+            "id": "report-005",
+            "event": "firefox-161",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Firefox 161 Brings Per-Site VPN Toggling, Classic Themes Section",
+            "url": "https://news.ycombinator.com/item?id=50615256",
+            "articleUrl": "https://www.phoronix.com/news/Firefox-161",
+            "reportedAt": "2026-11-23T17:04:47Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50615256"
+        },
+        {
+            "id": "report-006",
+            "event": "ladybird-alpha",
+            "source": "solidot",
+            "language": "zh",
+            "title": "新浏览器 Ladybird 释出首个 alpha 版本",
+            "url": "https://www.solidot.org/story?sid=85972",
+            "articleUrl": "https://www.solidot.org/story?sid=85972",
+            "reportedAt": "2026-11-24T06:39:16Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.solidot.org/index.rss"
+        },
+        {
+            "id": "report-007",
+            "event": "ladybird-alpha",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Ladybird's First Alpha Release",
+            "url": "https://news.ycombinator.com/item?id=50622196",
+            "articleUrl": "https://simonwillison.net/2026/Nov/23/ladybird/",
+            "reportedAt": "2026-11-24T01:19:09Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50622196"
+        },
+        {
+            "id": "report-008",
+            "event": "ladybird-alpha",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Ladybird is now in alpha",
+            "url": "https://news.ycombinator.com/item?id=50614249",
+            "articleUrl": "https://ladybird.org/posts/alpha/",
+            "reportedAt": "2026-11-23T16:13:12Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50614249"
+        },
+        {
+            "id": "report-009",
+            "event": "google-ai-tv-patent",
+            "source": "ithome",
+            "language": "zh",
+            "title": "谷歌专利获批：打造 24 小时全天候 AI 频道，让你当电视主角",
+            "url": "https://www.ithome.com/1/032/108.htm",
+            "articleUrl": "https://www.ithome.com/1/032/108.htm",
+            "reportedAt": "2026-11-25T06:09:42Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.ithome.com/rss/"
+        },
+        {
+            "id": "report-010",
+            "event": "google-ai-tv-patent",
+            "source": "solidot",
+            "language": "zh",
+            "title": "Google 申请专利为用户量身定制 AI 电视频道",
+            "url": "https://www.solidot.org/story?sid=85973",
+            "articleUrl": "https://www.solidot.org/story?sid=85973",
+            "reportedAt": "2026-11-24T07:22:48Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.solidot.org/index.rss"
+        },
+        {
+            "id": "report-011",
+            "event": "google-ai-tv-patent",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Google files patent for personal AI-made videos",
+            "url": "https://news.ycombinator.com/item?id=50627925",
+            "articleUrl": "https://patentlyze.com/patent/google-ai-made-tv-channel-built-around-you/",
+            "reportedAt": "2026-11-24T13:30:20Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50627925"
+        },
+        {
+            "id": "report-012",
+            "event": "bonsai-25",
+            "source": "ithome",
+            "language": "zh",
+            "title": "约 1/9 体积保留 93.7% 编程能力：Bonsai 2.5 27B AI 模型登场，手机、电脑都能跑",
+            "url": "https://www.ithome.com/1/032/101.htm",
+            "articleUrl": "https://www.ithome.com/1/032/101.htm",
+            "reportedAt": "2026-11-25T05:36:32Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.ithome.com/rss/"
+        },
+        {
+            "id": "report-013",
+            "event": "bonsai-25",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Ternary Bonsai 2.5 27B",
+            "url": "https://news.ycombinator.com/item?id=50633922",
+            "articleUrl": "https://prismml.com/news/bonsai-2-5-27b",
+            "reportedAt": "2026-11-24T20:08:03Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50633922"
+        },
+        {
+            "id": "report-014",
+            "event": "tidal-ban",
+            "source": "techcrunch",
+            "language": "en",
+            "title": "Tidal to ban and remove millions of AI-generated tracks as AI slop inundates music streaming",
+            "url": "https://techcrunch.com/2026/11/24/tidal-to-ban-and-remove-millions-of-ai-generated-tracks-as-ai-slop-inundates-music-streaming/",
+            "articleUrl": "https://techcrunch.com/2026/11/24/tidal-to-ban-and-remove-millions-of-ai-generated-tracks-as-ai-slop-inundates-music-streaming/",
+            "reportedAt": "2026-11-24T16:46:00Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://techcrunch.com/feed/"
+        },
+        {
+            "id": "report-015",
+            "event": "tidal-ban",
+            "source": "ars",
+            "language": "en",
+            "title": "Tidal announces ban on AI-generated music; 27 million tracks will be deleted",
+            "url": "https://arstechnica.com/ai/2026/11/tidal-will-ban-fully-ai-generated-music-on-december-9/",
+            "articleUrl": "https://arstechnica.com/ai/2026/11/tidal-will-ban-fully-ai-generated-music-on-december-9/",
+            "reportedAt": "2026-11-24T17:34:34Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index"
+        },
+        {
+            "id": "report-016",
+            "event": "tidal-ban",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Tidal bans AI-generated music",
+            "url": "https://news.ycombinator.com/item?id=50630309",
+            "articleUrl": "https://variety.com/2026/music/news/tidal-bans-ai-generated-music-1236956924/",
+            "reportedAt": "2026-11-24T16:12:38Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50630309"
+        },
+        {
+            "id": "report-017",
+            "event": "tidal-ban",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Tidal Bans AI-Generated Music",
+            "url": "https://news.ycombinator.com/item?id=50631933",
+            "articleUrl": "https://stereogum.com/2521184/tidal-bans-ai-generated-music/news",
+            "reportedAt": "2026-11-24T18:02:12Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50631933"
+        },
+        {
+            "id": "report-018",
+            "event": "amazon-drone-crash",
+            "source": "ars",
+            "language": "en",
+            "title": "Amazon drone crashes on garage after delivering shampoo, draws FAA probe",
+            "url": "https://arstechnica.com/gadgets/2026/11/faa-opens-probe-after-amazon-delivery-drone-clips-cable-crashes-into-garage/",
+            "articleUrl": "https://arstechnica.com/gadgets/2026/11/faa-opens-probe-after-amazon-delivery-drone-clips-cable-crashes-into-garage/",
+            "reportedAt": "2026-11-24T18:47:57Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index"
+        },
+        {
+            "id": "report-019",
+            "event": "amazon-drone-crash",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Amazon drone crashes into house after delivering shampoo",
+            "url": "https://news.ycombinator.com/item?id=50622030",
+            "articleUrl": "https://www.freep.com/story/news/local/michigan/2026/11/22/ntsb-weighs-probe-of-amazon-drone-crash-in-huntington-woods/92915982007/",
+            "reportedAt": "2026-11-24T00:58:55Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50622030"
+        },
+        {
+            "id": "report-020",
+            "event": "amazon-drone-crash",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Amazon delivery drone crashes into Michigan garage",
+            "url": "https://news.ycombinator.com/item?id=50633169",
+            "articleUrl": "https://www.upi.com/Odd_News/2026/11/24/amazon-drone-crash-huntington-woods-michigan/2021795542107/",
+            "reportedAt": "2026-11-24T19:24:17Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50633169"
+        },
+        {
+            "id": "report-021",
+            "event": "amazon-drone-crash",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Amazon faces FAA probe after delivery drone strikes fiber cable and garage",
+            "url": "https://news.ycombinator.com/item?id=50630362",
+            "articleUrl": "https://www.cnbc.com/2026/11/23/amazon-drone-crash-michigan-faa-investigation.html",
+            "reportedAt": "2026-11-24T16:16:10Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50630362"
+        },
+        {
+            "id": "report-022",
+            "event": "amazon-decart",
+            "source": "techcrunch",
+            "language": "en",
+            "title": "Amazon’s Decart acquisition is a bet on using software to narrow the silicon gap with Nvidia",
+            "url": "https://techcrunch.com/2026/11/24/amazons-decart-acquisition-is-a-bet-on-using-software-to-narrow-the-gap-with-nvidia-in-the-ai-chip-race/",
+            "articleUrl": "https://techcrunch.com/2026/11/24/amazons-decart-acquisition-is-a-bet-on-using-software-to-narrow-the-gap-with-nvidia-in-the-ai-chip-race/",
+            "reportedAt": "2026-11-24T15:51:07Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://techcrunch.com/feed/"
+        },
+        {
+            "id": "report-023",
+            "event": "amazon-ai-security",
+            "source": "ars",
+            "language": "en",
+            "title": "Amazon says hackers' AI agents found and exploited 0-day with little human input",
+            "url": "https://arstechnica.com/security/2026/11/amazon-says-hackers-ai-agents-found-and-exploited-0-day-with-little-human-input/",
+            "articleUrl": "https://arstechnica.com/security/2026/11/amazon-says-hackers-ai-agents-found-and-exploited-0-day-with-little-human-input/",
+            "reportedAt": "2026-11-24T12:30:05Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index"
+        },
+        {
+            "id": "report-024",
+            "event": "amazon-car-sales",
+            "source": "ithome",
+            "language": "zh",
+            "title": "首次进军美国以外市场，亚马逊汽车销售服务 2027 年登陆英国",
+            "url": "https://www.ithome.com/1/032/117.htm",
+            "articleUrl": "https://www.ithome.com/1/032/117.htm",
+            "reportedAt": "2026-11-25T06:36:56Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.ithome.com/rss/"
+        },
+        {
+            "id": "report-025",
+            "event": "gta-project-takedown",
+            "source": "theverge",
+            "language": "en",
+            "title": "GTA VI PC recompilation project shut down by Take-Two",
+            "url": "https://www.theverge.com/news/1041690/grand-theft-auto-6-pc-recompilation-project-leonida-takedown-take-two",
+            "articleUrl": "https://www.theverge.com/news/1041690/grand-theft-auto-6-pc-recompilation-project-leonida-takedown-take-two",
+            "reportedAt": "2026-11-24T21:39:14Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.theverge.com/rss/index.xml"
+        },
+        {
+            "id": "report-026",
+            "event": "gta-director-comment",
+            "source": "ithome",
+            "language": "zh",
+            "title": "顽皮狗总监盛赞《GTA6》：游戏开发界的金字塔，几百年后人们会追问怎么做出来的",
+            "url": "https://www.ithome.com/1/032/126.htm",
+            "articleUrl": "https://www.ithome.com/1/032/126.htm",
+            "reportedAt": "2026-11-25T06:54:14Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.ithome.com/rss/"
+        },
+        {
+            "id": "report-027",
+            "event": "gta-player-count",
+            "source": "solidot",
+            "language": "zh",
+            "title": "索尼称逾 3900 万玩家玩过了 GTA6",
+            "url": "https://www.solidot.org/story?sid=85976",
+            "articleUrl": "https://www.solidot.org/story?sid=85976",
+            "reportedAt": "2026-11-24T09:04:43Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.solidot.org/index.rss"
+        },
+        {
+            "id": "report-028",
+            "event": "meta-walmart-muse",
+            "source": "techcrunch",
+            "language": "en",
+            "title": "Walmart teams up with Meta to bring Black Friday deals to AI agent Muse",
+            "url": "https://techcrunch.com/2026/11/24/walmart-teams-up-with-meta-to-bring-black-friday-deals-to-ai-agent-muse/",
+            "articleUrl": "https://techcrunch.com/2026/11/24/walmart-teams-up-with-meta-to-bring-black-friday-deals-to-ai-agent-muse/",
+            "reportedAt": "2026-11-24T21:32:38Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://techcrunch.com/feed/"
+        },
+        {
+            "id": "report-029",
+            "event": "meta-instagram-muse",
+            "source": "techcrunch",
+            "language": "en",
+            "title": "Meta brings its Muse AI assistant directly into Instagram DMs",
+            "url": "https://techcrunch.com/2026/11/24/meta-brings-its-muse-ai-assistant-directly-into-instagram-dms/",
+            "articleUrl": "https://techcrunch.com/2026/11/24/meta-brings-its-muse-ai-assistant-directly-into-instagram-dms/",
+            "reportedAt": "2026-11-24T17:00:00Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://techcrunch.com/feed/"
+        },
+        {
+            "id": "report-030",
+            "event": "meta-threads-ipad",
+            "source": "techcrunch",
+            "language": "en",
+            "title": "Threads comes to iPad and takes a page from X’s playbook with cashtags",
+            "url": "https://techcrunch.com/2026/11/24/threads-comes-to-ipad-and-takes-a-page-from-xs-playbook-with-cashtags/",
+            "articleUrl": "https://techcrunch.com/2026/11/24/threads-comes-to-ipad-and-takes-a-page-from-xs-playbook-with-cashtags/",
+            "reportedAt": "2026-11-24T17:44:34Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://techcrunch.com/feed/"
+        },
+        {
+            "id": "report-031",
+            "event": "meta-glasses-lawsuit",
+            "source": "ithome",
+            "language": "zh",
+            "title": "德国消费者保护组织起诉 Meta，指控摄像头智能眼镜销售违反法规",
+            "url": "https://www.ithome.com/1/032/099.htm",
+            "articleUrl": "https://www.ithome.com/1/032/099.htm",
+            "reportedAt": "2026-11-25T05:31:03Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.ithome.com/rss/"
+        },
+        {
+            "id": "report-032",
+            "event": "google-gbench",
+            "source": "ithome",
+            "language": "zh",
+            "title": "谷歌开源 AI 评测框架 gBench，开箱即用 86 套评估套件",
+            "url": "https://www.ithome.com/1/032/104.htm",
+            "articleUrl": "https://www.ithome.com/1/032/104.htm",
+            "reportedAt": "2026-11-25T05:57:50Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.ithome.com/rss/"
+        },
+        {
+            "id": "report-033",
+            "event": "google-ai-cost",
+            "source": "ithome",
+            "language": "zh",
+            "title": "成本狂降至 100 万分之一：谷歌 DeepMind 预估如今 10 亿美元的 AI 任务 10 年后只需 1000 美元",
+            "url": "https://www.ithome.com/1/032/114.htm",
+            "articleUrl": "https://www.ithome.com/1/032/114.htm",
+            "reportedAt": "2026-11-25T06:27:02Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.ithome.com/rss/"
+        },
+        {
+            "id": "report-034",
+            "event": "sand-magi2",
+            "source": "ithome",
+            "language": "zh",
+            "title": "Sand.ai 发布视频生成模型 MAGI-2，1080P 每秒 0.5 元",
+            "url": "https://www.ithome.com/1/032/124.htm",
+            "articleUrl": "https://www.ithome.com/1/032/124.htm",
+            "reportedAt": "2026-11-25T06:50:22Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.ithome.com/rss/"
+        },
+        {
+            "id": "report-035",
+            "event": "tencent-hy4",
+            "source": "ithome",
+            "language": "zh",
+            "title": "让大模型跑在个人设备上，腾讯混元开源 Hy4 flash GGUF 量化权重及配套推理代码",
+            "url": "https://www.ithome.com/1/032/131.htm",
+            "articleUrl": "https://www.ithome.com/1/032/131.htm",
+            "reportedAt": "2026-11-25T06:58:37Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.ithome.com/rss/"
+        },
+        {
+            "id": "report-036",
+            "event": "pinterest-parental-ai",
+            "source": "techcrunch",
+            "language": "en",
+            "title": "Pinterest will now let parents limit the AI-generated content their teens see",
+            "url": "https://techcrunch.com/2026/11/24/pinterest-will-now-let-parents-limit-the-ai-generated-content-their-teens-see/",
+            "articleUrl": "https://techcrunch.com/2026/11/24/pinterest-will-now-let-parents-limit-the-ai-generated-content-their-teens-see/",
+            "reportedAt": "2026-11-24T16:02:37Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://techcrunch.com/feed/"
+        },
+        {
+            "id": "report-037",
+            "event": "ms-cloud-outage",
+            "source": "ars",
+            "language": "en",
+            "title": "Microsoft's historic cloud outage exposed an engineering “fog of war”",
+            "url": "https://arstechnica.com/gadgets/2026/11/microsofts-historic-cloud-outage-exposed-an-engineering-fog-of-war/",
+            "articleUrl": "https://arstechnica.com/gadgets/2026/11/microsofts-historic-cloud-outage-exposed-an-engineering-fog-of-war/",
+            "reportedAt": "2026-11-24T22:36:28Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index"
+        },
+        {
+            "id": "report-038",
+            "event": "nable-breach",
+            "source": "hackernews",
+            "language": "en",
+            "title": "N-Able Breach (Cloud Cybersecurity Management System)",
+            "url": "https://news.ycombinator.com/item?id=50583215",
+            "articleUrl": "https://www.bleepingcomputer.com/news/microsoft/n-able-says-recent-security-breach-led-to-major-service-outage/",
+            "reportedAt": "2026-11-20T22:25:42Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/50583215"
+        },
+        {
+            "id": "report-039",
+            "event": "tiktok-outage",
+            "source": "theverge",
+            "language": "en",
+            "title": "TikTok was down",
+            "url": "https://www.theverge.com/tech/1041618/tiktok-down-outage",
+            "articleUrl": "https://www.theverge.com/tech/1041618/tiktok-down-outage",
+            "reportedAt": "2026-11-24T20:27:27Z",
+            "timeKind": "published",
+            "evidenceUrl": "https://www.theverge.com/rss/index.xml"
+        },
+        {
+            "id": "report-040",
+            "event": "rust-1850",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Announcing Rust 1.85.0 and Rust 2024",
+            "url": "https://news.ycombinator.com/item?id=43117438",
+            "articleUrl": "https://blog.rust-lang.org/2025/02/20/Rust-1.85.0.html",
+            "reportedAt": "2025-02-20T17:17:27Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/43117438"
+        },
+        {
+            "id": "report-041",
+            "event": "rust-1851",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Rust 1.85.1",
+            "url": "https://news.ycombinator.com/item?id=43429326",
+            "articleUrl": "https://blog.rust-lang.org/2025/03/18/Rust-1.85.1.html",
+            "reportedAt": "2025-03-20T21:43:34Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/43429326"
+        },
+        {
+            "id": "report-042",
+            "event": "rust-1860",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Rust 1.86.0",
+            "url": "https://news.ycombinator.com/item?id=43567351",
+            "articleUrl": "https://blog.rust-lang.org/2025/04/03/Rust-1.86.0.html",
+            "reportedAt": "2025-04-03T10:03:59Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/43567351"
+        },
+        {
+            "id": "report-043",
+            "event": "rust-1860",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Rust 1.86.0",
+            "url": "https://news.ycombinator.com/item?id=43575353",
+            "articleUrl": "https://blog.rust-lang.org/2025/04/03/Rust-1.86.0.html",
+            "reportedAt": "2025-04-03T21:01:27Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/43575353"
+        },
+        {
+            "id": "report-044",
+            "event": "rust-1970",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Rust 1.97.0",
+            "url": "https://news.ycombinator.com/item?id=48845458",
+            "articleUrl": "https://blog.rust-lang.org/2026/07/09/Rust-1.97.0/",
+            "reportedAt": "2026-07-09T13:26:15Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/48845458"
+        },
+        {
+            "id": "report-045",
+            "event": "rust-1970-regression",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Segfault on Rust 1.97.0",
+            "url": "https://news.ycombinator.com/item?id=48857563",
+            "articleUrl": "https://github.com/rust-lang/rust/issues/159035",
+            "reportedAt": "2026-07-10T09:08:51Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/48857563"
+        },
+        {
+            "id": "report-046",
+            "event": "rust-1971",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Rust 1.97.1",
+            "url": "https://news.ycombinator.com/item?id=49711409",
+            "articleUrl": "https://blog.rust-lang.org/2026/07/16/Rust-1.97.1/",
+            "reportedAt": "2026-09-15T12:17:15Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/49711409"
+        },
+        {
+            "id": "report-047",
+            "event": "postgres-18",
+            "source": "hackernews",
+            "language": "en",
+            "title": "PostgreSQL 18 Released",
+            "url": "https://news.ycombinator.com/item?id=45372283",
+            "articleUrl": "https://www.postgresql.org/about/news/postgresql-18-released-3142/",
+            "reportedAt": "2025-09-25T13:13:19Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/45372283"
+        },
+        {
+            "id": "report-048",
+            "event": "postgres-18",
+            "source": "hackernews",
+            "language": "en",
+            "title": "PostgreSQL 18 Released",
+            "url": "https://news.ycombinator.com/item?id=45372950",
+            "articleUrl": "https://www.postgresql.org/docs/release/18.0/",
+            "reportedAt": "2025-09-25T14:22:13Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/45372950"
+        },
+        {
+            "id": "report-049",
+            "event": "postgres-18",
+            "source": "hackernews",
+            "language": "en",
+            "title": "PostgreSQL 18 Released",
+            "url": "https://news.ycombinator.com/item?id=45373109",
+            "articleUrl": "https://www.postgresql.org/about/press/presskit18/#original_release",
+            "reportedAt": "2025-09-25T14:36:41Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/45373109"
+        },
+        {
+            "id": "report-050",
+            "event": "postgres-18",
+            "source": "hackernews",
+            "language": "en",
+            "title": "PostgreSQL 18.0 Released With Async I/O, Performance Improvements",
+            "url": "https://news.ycombinator.com/item?id=45373627",
+            "articleUrl": "https://www.phoronix.com/news/PostgreSQL-18-Released",
+            "reportedAt": "2025-09-25T15:10:48Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/45373627"
+        },
+        {
+            "id": "report-051",
+            "event": "postgres-18-beta",
+            "source": "hackernews",
+            "language": "en",
+            "title": "PostgreSQL 18 Beta 1 Released",
+            "url": "https://news.ycombinator.com/item?id=43926387",
+            "articleUrl": "https://www.postgresql.org/about/news/postgresql-18-beta-1-released-3070/",
+            "reportedAt": "2025-05-08T14:28:49Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/43926387"
+        },
+        {
+            "id": "report-052",
+            "event": "postgres-18-beta",
+            "source": "hackernews",
+            "language": "en",
+            "title": "PostgreSQL 18 Beta 1 Released",
+            "url": "https://news.ycombinator.com/item?id=43926456",
+            "articleUrl": "https://www.postgresql.org/docs/18/release-18.html",
+            "reportedAt": "2025-05-08T14:35:23Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/43926456"
+        },
+        {
+            "id": "report-053",
+            "event": "postgres-18-beta",
+            "source": "hackernews",
+            "language": "en",
+            "title": "PostgreSQL 18 Beta 1 Released",
+            "url": "https://news.ycombinator.com/item?id=43945181",
+            "articleUrl": "https://www.postgresql.org/about/news/postgresql-18-beta-1-released-3070/",
+            "reportedAt": "2025-05-10T12:43:13Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/43945181"
+        },
+        {
+            "id": "report-054",
+            "event": "postgres-18-rc",
+            "source": "hackernews",
+            "language": "en",
+            "title": "PostgreSQL 18 RC 1 Released",
+            "url": "https://news.ycombinator.com/item?id=45149707",
+            "articleUrl": "https://www.postgresql.org/about/news/postgresql-18-rc-1-released-3130/",
+            "reportedAt": "2025-09-06T14:43:13Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/45149707"
+        },
+        {
+            "id": "report-055",
+            "event": "postgres-181",
+            "source": "hackernews",
+            "language": "en",
+            "title": "PostgreSQL 18.1 Released",
+            "url": "https://news.ycombinator.com/item?id=45915452",
+            "articleUrl": "https://www.postgresql.org/docs/release/18.1/",
+            "reportedAt": "2025-11-13T14:43:28Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/45915452"
+        },
+        {
+            "id": "report-056",
+            "event": "python-314",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Python 3.14 Released with Template String Literals, Deferred Annotations, and",
+            "url": "https://news.ycombinator.com/item?id=45509629",
+            "articleUrl": "https://socket.dev/blog/python-3-14-released",
+            "reportedAt": "2025-10-07T22:17:12Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/45509629"
+        },
+        {
+            "id": "report-057",
+            "event": "python-314",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Python 3.14 Released",
+            "url": "https://news.ycombinator.com/item?id=45513561",
+            "articleUrl": "https://pythoninsider.blogspot.com/2025/10/python-3140-final-is-here.html",
+            "reportedAt": "2025-10-08T08:28:30Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/45513561"
+        },
+        {
+            "id": "report-058",
+            "event": "python-314",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Python 3.14 Released with Template String Literals, Deferred Annotations, and",
+            "url": "https://news.ycombinator.com/item?id=45530683",
+            "articleUrl": "https://socket.dev/blog/python-3-14-released",
+            "reportedAt": "2025-10-09T17:31:36Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/45530683"
+        },
+        {
+            "id": "report-059",
+            "event": "python-314-rc3",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Python 3.14-Rc3 Released Ahead of Next Month's Official Release",
+            "url": "https://news.ycombinator.com/item?id=45299371",
+            "articleUrl": "https://www.phoronix.com/news/Python-3.14-rc3-Released",
+            "reportedAt": "2025-09-19T08:40:40Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/45299371"
+        },
+        {
+            "id": "report-060",
+            "event": "python-314-alpha5",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Python 3.14 Alpha 5 Released with New Tail-Call Interpreter",
+            "url": "https://news.ycombinator.com/item?id=43025011",
+            "articleUrl": "https://www.phoronix.com/news/Python-3.14-Alpha-5",
+            "reportedAt": "2025-02-12T13:05:29Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/43025011"
+        },
+        {
+            "id": "report-061",
+            "event": "python-314-beta1",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Python 3.14 beta 1 released",
+            "url": "https://news.ycombinator.com/item?id=43918221",
+            "articleUrl": "https://www.python.org/downloads/release/python-3140b1/",
+            "reportedAt": "2025-05-07T17:09:31Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/43918221"
+        },
+        {
+            "id": "report-062",
+            "event": "react-dec3",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Critical Security Vulnerability in React Server Components",
+            "url": "https://news.ycombinator.com/item?id=46135784",
+            "articleUrl": "https://react.dev/blog/2025/12/03/critical-security-vulnerability-in-react-server-components",
+            "reportedAt": "2025-12-03T15:43:45Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46135784"
+        },
+        {
+            "id": "report-063",
+            "event": "react-dec3",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Critical Security Vulnerability in React Server Components",
+            "url": "https://news.ycombinator.com/item?id=46142027",
+            "articleUrl": "https://socket.dev/blog/critical-security-vulnerability-in-react-server-components",
+            "reportedAt": "2025-12-04T00:00:58Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46142027"
+        },
+        {
+            "id": "report-064",
+            "event": "react-dec3",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Critical RCE Vulnerabilities in React and Next.js",
+            "url": "https://news.ycombinator.com/item?id=46136067",
+            "articleUrl": "https://www.wiz.io/blog/critical-vulnerability-in-react-cve-2025-55182",
+            "reportedAt": "2025-12-03T16:03:27Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46136067"
+        },
+        {
+            "id": "report-065",
+            "event": "react-dec3",
+            "source": "hackernews",
+            "language": "en",
+            "title": "CVE-2025-55182: RCE on React Server and Next.js",
+            "url": "https://news.ycombinator.com/item?id=46180179",
+            "articleUrl": "https://cloud.google.com/blog/products/identity-security/responding-to-cve-2025-55182",
+            "reportedAt": "2025-12-07T08:39:48Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46180179"
+        },
+        {
+            "id": "report-066",
+            "event": "react-dec3",
+            "source": "hackernews",
+            "language": "en",
+            "title": "CVE-2025-55182: pre-auth remote code execution in React Server Components",
+            "url": "https://news.ycombinator.com/item?id=46139156",
+            "articleUrl": "https://nvd.nist.gov/vuln/detail/CVE-2025-55182",
+            "reportedAt": "2025-12-03T19:52:29Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46139156"
+        },
+        {
+            "id": "report-067",
+            "event": "react-dec3",
+            "source": "hackernews",
+            "language": "en",
+            "title": "React2Shell (CVE-2025-55182): A Log4Shell Moment for the Front End Ecosystem",
+            "url": "https://news.ycombinator.com/item?id=46173309",
+            "articleUrl": "https://securitylabs.datadoghq.com/articles/cve-2025-55182-react2shell-remote-code-execution-react-server-components/",
+            "reportedAt": "2025-12-06T13:42:33Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46173309"
+        },
+        {
+            "id": "report-068",
+            "event": "react-dec3",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Upgrade now: critical-severity vulnerability in Next/React Server Components",
+            "url": "https://news.ycombinator.com/item?id=46158244",
+            "articleUrl": "https://vercel.com/changelog/cve-2025-55182",
+            "reportedAt": "2025-12-05T08:54:07Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46158244"
+        },
+        {
+            "id": "report-069",
+            "event": "react-dec11",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Denial of service and source code exposure in React Server Components",
+            "url": "https://news.ycombinator.com/item?id=46236924",
+            "articleUrl": "https://react.dev/blog/2025/12/11/denial-of-service-and-source-code-exposure-in-react-server-components",
+            "reportedAt": "2025-12-11T20:46:46Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46236924"
+        },
+        {
+            "id": "report-070",
+            "event": "react-dec11",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Two New React 19 Vulnerabilities",
+            "url": "https://news.ycombinator.com/item?id=46242645",
+            "articleUrl": "https://vercel.com/kb/bulletin/security-bulletin-cve-2025-55184-and-cve-2025-55183",
+            "reportedAt": "2025-12-12T10:13:14Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46242645"
+        },
+        {
+            "id": "report-071",
+            "event": "react-jan26",
+            "source": "hackernews",
+            "language": "en",
+            "title": "New Vulnerability in React Server Components – CVE-2026-23864",
+            "url": "https://news.ycombinator.com/item?id=46771593",
+            "articleUrl": "https://vercel.com/changelog/summary-of-cve-2026-23864",
+            "reportedAt": "2026-01-26T21:11:39Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46771593"
+        },
+        {
+            "id": "report-072",
+            "event": "react-jan26",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Multiple vulnerabilities in React Server Components (CVE-2026-23864)",
+            "url": "https://news.ycombinator.com/item?id=46773691",
+            "articleUrl": "https://www.cve.org/CVERecord?id=CVE-2026-23864",
+            "reportedAt": "2026-01-27T00:11:53Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/46773691"
+        },
+        {
+            "id": "report-073",
+            "event": "react-may8",
+            "source": "hackernews",
+            "language": "en",
+            "title": "Denial of Service Vulnerability in React Server Components",
+            "url": "https://news.ycombinator.com/item?id=48058448",
+            "articleUrl": "https://github.com/facebook/react/security/advisories/GHSA-rv78-f8rc-xrxh",
+            "reportedAt": "2026-05-08T04:09:58Z",
+            "timeKind": "submission",
+            "evidenceUrl": "https://hn.algolia.com/api/v1/items/48058448"
+        }
+    ],
+    "snapshotAt": "2026-11-25T07:24:55.039Z",
+    "labelStatus": "proposed",
+    "sourceNotes": "RSS titles and dates captured from feeds; Hacker News titles and submission timestamps from Algolia search. Each HN URL is the discussion URL used by LatestNews; articleUrl links to the underlying report. No article bodies stored."
+}
