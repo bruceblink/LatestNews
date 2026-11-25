@@ -143,7 +143,7 @@ Node/Docker 支持完整服务端采集和受信插件，Pages 使用兼容 Work
 
 相关说明见[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)和[贡献指南](CONTRIBUTING.md)。
 
-## 10. N4-B 至 N4-I：检索与采集运行时演进（2026-11-23）
+## 10. N4-B 至 N4-J：检索与采集运行时演进（2026-11-23）
 
 本节是 2026-11-22 性能基线后的增量计划。参考 Exa 的查询执行、增量索引和混合检索原则，但不引入 Exa 付费依赖或重建其搜索引擎。现有 N1/N2/N3/N4 的验收优先级和部署边界保持不变。各切片必须使用独立 PR，以利验证和回退。
 
@@ -226,8 +226,15 @@ Cloudflare API 检查确认 `latestnews` D1 数据库已绑定到 Pages 生产�
 - 验收：Node 22.23.4 / pnpm 12.21.0，全量 96 个文件、510 项测试通过（新增 5 项），lint、Node/Web/Electron 类型检查、Node 与 Pages 构建通过。本地 workerd D1 脚本验证显式别名、循环拒绝、规范关联及重启持久化；仍使用兼容日期 2026-08-06，不代表生产 D1。
 - 运维接口及边界见[事件关系审核](docs/performance/news-event-aliases.md)。部署先用 INIT_TABLE=true 初始化附加表；旧 schema 仍支持原有历史查询。没有自动跨窗口识别、自动合并或生产写入，N4-H 的独立人工复核和保留集依然待补。若需要撤销批准，须备份并审核已新增的规范成员；代码回退保留原关联和别名表。
 
+### N4-J（P1）：中文标题检索与相关性排序（2026-11-25）
+
+保留英文 FTS5/BM25；中文、混合词和字面符号使用有界参数化子串查询。避免 FTS 命中部分中文标题后提前返回，支持空白分词 AND、标题优先排序、原有 source/since/limit 过滤及确定性主键排序。q 最大 256 UTF-16 code unit；兼容既有 searchMode。没有新增索引表或依赖。
+
+- 基于 N4-H 73 条真实报道和 15 个初标查询，与 N4-I 主线 df813df 对照：TP/FP/FN 从 13/0/8 变为 21/1/0；Precision 100% → 95.45%，Recall 61.90% → 100%；300 次内存 SQLite 查询 P95 为 0.369 → 0.375 ms。不能外推生产规模或证明性能改进。中文子串扫描、大库延迟、独立相关性标注、词典分词和语义扩展仍待评估。
+- 验收：96 个 Vitest 文件 515 项通过（新增 5 项）；lint、Node/Web/Electron 类型检查、Node/Pages 构建及隔离 D1 中文查询回归通过。详情见[中文标题检索](docs/performance/news-article-chinese-search.md)，复现 pnpm performance:chinese-search。
+
 ### 切片通用交付、顺序与安全限制
 
-顺序为 N4-B 计划 PR → 审阅与合并 → N4-B 代码 PR → N4-C 基准 PR → N4-D → N4-E → N4-F → N4-G → N4-H → N4-I。阶段一仅包括 N4-B；N4-C 需要单独的对照测试与评审。每个 PR 包含影响文件、用例、实测与未测项、向后兼容声明及回退策略。运行 `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run`，影响构建时运行 `pnpm build`；基准脚本需在隔离缓存和回环网络下运行。
+顺序为 N4-B 计划 PR → 审阅与合并 → N4-B 代码 PR → N4-C 基准 PR → N4-D → N4-E → N4-F → N4-G → N4-H → N4-I → N4-J。阶段一仅包括 N4-B；N4-C 需要单独的对照测试与评审。每个 PR 包含影响文件、用例、实测与未测项、向后兼容声明及回退策略。运行 `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run`，影响构建时运行 `pnpm build`；基准脚本需在隔离缓存和回环网络下运行。
 
 不得擅自配置 Exa Key、启用付费服务、改动现有定时技术简报、变更部署密钥或生产容器。未经完整评估不引入独立 Rust 检索服务、外部向量数据库或新 Agent Runtime。

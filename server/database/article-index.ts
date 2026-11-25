@@ -278,7 +278,11 @@ export class ArticleIndex {
     async search(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {
         const text = query.query.trim();
         if (!text) return { status: "ok", mode: this.ftsAvailable ? "fts" : "like", items: [] };
-        if (!this.ftsAvailable) return this.searchLike(query);
+        // unicode61 can return a nonempty but incomplete set for Han substrings.
+        // Keep the literal path independent of the FTS result count.
+        if (!this.ftsAvailable || /[\p{Script=Han}%_]/u.test(text) || !/[\p{L}\p{N}]/u.test(text)) {
+            return this.searchLike(query);
+        }
 
         const limit = Math.min(Math.max(query.limit ?? DEFAULT_SEARCH_LIMIT, 1), MAX_SEARCH_LIMIT);
         const conditions = ["article_search MATCH ?"];
@@ -303,7 +307,7 @@ export class ArticleIndex {
                      FROM article_search
                      JOIN articles ON articles.article_key = article_search.article_key
                      WHERE ${conditions.join(" AND ")}
-                     ORDER BY score ASC, articles.published_at DESC
+                     ORDER BY score ASC, articles.published_at DESC, articles.article_key ASC
                      LIMIT ?`
                 )
                 .all(...parameters);
@@ -322,8 +326,14 @@ export class ArticleIndex {
         const text = query.query.trim();
         if (!text) return { status: "ok", mode: "like", items: [] };
         const limit = Math.min(Math.max(query.limit ?? DEFAULT_SEARCH_LIMIT, 1), MAX_SEARCH_LIMIT);
-        const conditions = ["(articles.title LIKE ? OR articles.canonical_url LIKE ?)"];
-        const parameters: Array<string | number> = [`%${text}%`, `%${text}%`];
+        const terms = [...new Set(text.split(/\s+/u).filter(Boolean))];
+        // One JSON binding avoids parameter limits for multi-term D1 searches.
+        // instr treats percent, underscore and quotes as literal characters.
+        const titleMatches = "NOT EXISTS (SELECT 1 FROM terms WHERE instr(lower(articles.title), lower(term)) = 0)";
+        const urlMatches =
+            "NOT EXISTS (SELECT 1 FROM terms WHERE instr(lower(articles.canonical_url), lower(term)) = 0)";
+        const conditions = [`((${titleMatches}) OR (${urlMatches}))`];
+        const parameters: Array<string | number> = [JSON.stringify(terms)];
         if (query.sourceId) {
             conditions.push(
                 "EXISTS (SELECT 1 FROM article_sources source WHERE source.article_key = articles.article_key AND source.source_id = ?)"
@@ -334,15 +344,21 @@ export class ArticleIndex {
             conditions.push("(articles.published_at IS NULL OR articles.published_at >= ?)");
             parameters.push(query.since);
         }
-        parameters.push(limit);
+        parameters.push(text, text, limit);
         try {
             const rows = await this.db
                 .prepare(
-                    `SELECT articles.article_key, articles.canonical_url, articles.title, articles.published_at,
+                    `WITH terms AS (SELECT value AS term FROM json_each(?))
+                     SELECT articles.article_key, articles.canonical_url, articles.title, articles.published_at,
                             articles.event_id, articles.payload
                      FROM articles
                      WHERE ${conditions.join(" AND ")}
-                     ORDER BY articles.published_at DESC
+                     ORDER BY CASE
+                         WHEN lower(articles.title) = lower(?) THEN 0
+                         WHEN instr(lower(articles.title), lower(?)) > 0 THEN 1
+                         WHEN ${titleMatches} THEN 2
+                         ELSE 3
+                     END, articles.published_at DESC, articles.article_key ASC
                      LIMIT ?`
                 )
                 .all(...parameters);

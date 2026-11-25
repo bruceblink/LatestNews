@@ -125,6 +125,62 @@ describe("article index", () => {
         await rm(directory, { recursive: true, force: true });
     });
 
+    it("returns all Han substring matches even when FTS finds an exact token", async () => {
+        const index = await createIndex();
+        await index.upsertSourceItems("weibo", [
+            createItem("exact", "频道", "https://example.com/exact"),
+            createItem("substring", "个性化电视频道", "https://example.com/substring"),
+            createItem("phrase", "AI 频道", "https://example.com/phrase"),
+            createItem("split", "AI 个性化电视频道", "https://example.com/split"),
+        ]);
+        const all = await index.search({ query: "频道" });
+        expect(all.mode).toBe("like");
+        expect(all.items.map((item) => item.item.id)).toEqual(
+            expect.arrayContaining(["exact", "substring", "phrase", "split"])
+        );
+        expect(all.items[0].item.id).toBe("exact");
+        expect((await index.search({ query: "AI 频道" })).items.map((item) => item.item.id)).toEqual([
+            "phrase",
+            "split",
+        ]);
+    });
+
+    it("ranks title matches above URL matches and treats LIKE symbols literally", async () => {
+        const index = await createIndex();
+        await index.upsertSourceItems("weibo", [
+            createItem("url", "Unrelated", "https://example.com/ai/channel"),
+            createItem("title", "AI personalized channel", "https://example.com/title"),
+            createItem("literal", "完成度 100%_测试", "https://example.com/literal"),
+            createItem("noise", "完成度 1000测试", "https://example.com/noise"),
+        ]);
+        expect((await index.searchLike({ query: "AI channel" })).items.map((item) => item.item.id)).toEqual([
+            "title",
+            "url",
+        ]);
+        expect((await index.search({ query: "%_" })).items.map((item) => item.item.id)).toEqual(["literal"]);
+        expect((await index.search({ query: "100%_测试" })).items.map((item) => item.item.id)).toEqual(["literal"]);
+    });
+
+    it("applies source, time and result limit before ordering and breaks ties consistently", async () => {
+        const index = await createIndex();
+        const date = Date.parse("2026-11-23T00:00:00Z");
+        await index.upsertSourceItems("weibo", [
+            { ...createItem("old", "量化 权重", "https://example.com/old"), pubDate: date - 1000 },
+            createItem("a", "量化模型与权重", "https://example.com/a"),
+            createItem("b", "量化模型与权重", "https://example.com/b"),
+        ]);
+        await index.upsertSourceItems("v2ex", [createItem("other", "量化 权重", "https://example.com/other")]);
+        const query = { query: "量化 权重", sourceId: "weibo" as const, since: date, limit: 1 };
+        const first = await index.search(query);
+        expect(first.items).toHaveLength(1);
+        expect(["a", "b"]).toContain(first.items[0].item.id);
+        expect(await index.search(query)).toEqual(first);
+        expect((await index.search({ ...query, limit: 10 })).items.map((item) => item.item.id).sort()).toEqual([
+            "a",
+            "b",
+        ]);
+    });
+
     it("reports LIKE fallback mode for Chinese short queries", async () => {
         const index = await createIndex();
         await index.upsertSourceItems("weibo", [

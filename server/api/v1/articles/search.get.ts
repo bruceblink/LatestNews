@@ -24,8 +24,8 @@ const articleSearchQuerySchema = z.object({
 
 export default defineEventHandler(async (event): Promise<ArticleSearchResponse> => {
     const parsed = articleSearchQuerySchema.safeParse(getQuery(event));
-    if (!parsed.success || !parsed.data.q.trim()) {
-        throw createError({ statusCode: 400, message: "Article search requires a non-empty q parameter." });
+    if (!parsed.success || !parsed.data.q.trim() || parsed.data.q.trim().length > 256) {
+        throw createError({ statusCode: 400, message: "Article search requires q between 1 and 256 characters." });
     }
 
     const limit = parseLimit(parsed.data.limit);
