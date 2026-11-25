@@ -112,6 +112,31 @@ describe("crawler plugin SDK and core", () => {
         }
     });
 
+    it("receives all buffered results from concurrent Node fixture workers", async () => {
+        const outputDirectory = await mkdtemp(join(tmpdir(), "latestnews-crawler-batch-"));
+        const host = createNodeCrawlerHost({ timeoutMs: 10000 });
+        try {
+            await bundleCrawlerPlugin(join(fixtureRoot, "performance", "plugin.ts"), outputDirectory);
+            for (let offset = 0; offset < 30; offset += 8) {
+                const sources = performanceExamplePlugin.manifest.sources.slice(offset, offset + 8);
+                const results = await Promise.all(
+                    sources.map((source) =>
+                        host.collect({
+                            manifest: performanceExamplePlugin.manifest,
+                            entryPath: join(outputDirectory, "plugin.mjs"),
+                            sourceId: source.id,
+                            context: createContext({}),
+                        })
+                    )
+                );
+                expect(results.every((items) => items.length === 30)).toBe(true);
+            }
+        } finally {
+            host.dispose();
+            await rm(outputDirectory, { recursive: true, force: true });
+        }
+    }, 20000);
+
     it("validates, replays fixtures, and packages JSON, HTML, and RSS plugins", async () => {
         const packages = [
             { directory: join(fixtureRoot, "json"), manifest: jsonExamplePlugin.manifest },

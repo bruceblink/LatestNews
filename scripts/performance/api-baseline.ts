@@ -239,6 +239,9 @@ async function main() {
             throw new Error(
                 `The cache-state baseline had API errors or response-status mismatches. See ${reportPath}.`
             );
+    } catch (error) {
+        console.error(await readLogTail(logPath));
+        throw error;
     } finally {
         cacheController?.close();
         if (server) await stopServer(server);
@@ -359,7 +362,7 @@ async function warmSourceCache(baseUrl: string) {
     const request = createBatchRequest(sourceIds);
     const result = await executeRequest(baseUrl, request);
     if (result.httpStatus < 200 || result.httpStatus >= 300 || result.errorCount > 0) {
-        throw new Error("Could not warm every fixture source before the benchmark.");
+        throw new Error(`Could not warm every fixture source before the benchmark: ${JSON.stringify(result)}`);
     }
 
     const verify = await executeRequest(baseUrl, createSingleRequest(sourceIds[0]!));
