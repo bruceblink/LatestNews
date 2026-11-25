@@ -309,14 +309,33 @@ try {
     await ctx.db.prepare("INSERT INTO article_search VALUES(?,?,?)").run(repairRows[0].article_key,repairRows[0].title,repairRows[0].canonical_url);
     assert.equal(await ftsIsInconsistent(ctx.db),true);
     await beginFtsRepair(ctx.db);
-    const page=await repairFtsPage(ctx.db);
-    assert.equal(page.indexed,50);
+    const clearPage=await repairFtsPage(ctx.db);
+    assert.equal(clearPage.indexed,0);
+    assert.equal((await ctx.db.prepare("SELECT phase FROM article_fts_repair WHERE id=1").get()).phase,"repairing");
     assert.equal((await search()).searchMode,"like");
     await Promise.all([ctx.index.continueRepair(1),ctx.index.upsertSourceItems("weibo",[makeItem("repair-overlap",now,"Repair overlap fixture")])]);
-    for(let i=0;i<10;i++){if((await ctx.index.continueRepair(2)).status==="ok")break;}
+    for(let i=0;i<20;i++){if((await ctx.index.continueRepair(2)).status==="ok")break;}
     assert.equal(await ftsIsInconsistent(ctx.db),false);
     assert.equal((await search()).searchMode,"fts");
     console.log("PASS D1 same-count corruption detection, bounded repair and concurrent upsert");
+    // A deployment interrupted in the old key-by-key format must not skip
+    // previously indexed or newly ingested articles after upgrading.
+    const beforeRepairCount=Number((await ctx.db.prepare("SELECT count(*) AS n FROM articles").get()).n);
+    await ctx.db.prepare("UPDATE article_fts_repair SET phase='repairing',cursor='legacy-key',generation='legacy-generation'").run();
+    await repairFtsPage(ctx.db);
+    assert.equal((await ctx.db.prepare("SELECT cursor FROM article_fts_repair").get()).cursor,"clear");
+    await repairFtsPage(ctx.db);
+    assert.equal((await search()).searchMode,"like");
+    await ctx.index.upsertSourceItems("weibo",[makeItem("repair-restart",now,"Repair restart fixture")]);
+    assert.equal(Number((await ctx.db.prepare("SELECT count(*) AS n FROM article_fts_pending").get()).n),1);
+    await mf.dispose(); mf=undefined; ctx=await start();
+    for(let i=0;i<20;i++){if((await ctx.index.continueRepair(2)).status==="ok")break;}
+    assert.equal(await ftsIsInconsistent(ctx.db),false);
+    assert.equal(Number((await ctx.db.prepare("SELECT count(*) AS n FROM articles").get()).n),beforeRepairCount+1);
+    assert.equal((await get("/api/v1/articles/search?q="+encodeURIComponent("Repair restart fixture"))).data.items[0].item.id,"repair-restart");
+    assert.equal((await search()).searchMode,"fts");
+    console.log("PASS D1 legacy repair cursor, workerd restart, pending ingestion and verified publication");
+
     const reviewedItems=["reviewed-one","reviewed-two","reviewed-three"].map(id=>makeItem(id,now,"Reviewed governance fixture"));
     await ctx.index.upsertSourceItems("weibo",reviewedItems);
     const approvals=await Promise.allSettled([

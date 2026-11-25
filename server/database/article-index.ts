@@ -16,6 +16,7 @@ import { hasArticleEventAliases, initArticleEventAliases, resolveArticleEventAli
 import {
     repairFtsPage,
     beginFtsRepair,
+    FTS_READY_GUARD,
     repairPendingFts,
     ftsIsInconsistent,
     ftsRecoveryStatus,
@@ -128,8 +129,9 @@ export class ArticleIndex {
                 )
                 .run();
             this.ftsAvailable = true;
-            this.ftsVerified = !(await ftsIsInconsistent(this.db));
-            if (!this.ftsVerified) await beginFtsRepair(this.db);
+            const state = await ftsRecoveryStatus(this.db);
+            this.ftsVerified = state.phase === "ready" && state.pending === 0 && !(await ftsIsInconsistent(this.db));
+            if (state.phase === "ready" && state.pending === 0 && !this.ftsVerified) await beginFtsRepair(this.db);
             await this.continueRepair();
         } catch (error) {
             this.ftsAvailable = false;
@@ -356,22 +358,42 @@ export class ArticleIndex {
         if (!this.ftsAvailable || !this.recoveryAvailable) return { status: "unavailable" as const, indexed: 0 };
         let indexed = 0;
         try {
-            if (!this.ftsVerified) {
-                const state = await ftsRecoveryStatus(this.db);
-                if (state.phase === "ready" && (await ftsIsInconsistent(this.db))) await beginFtsRepair(this.db);
+            const initial = await ftsRecoveryStatus(this.db);
+            if (
+                initial.phase === "ready" &&
+                initial.pending === 0 &&
+                !this.ftsVerified &&
+                (await ftsIsInconsistent(this.db))
+            ) {
+                await beginFtsRepair(this.db);
             }
+            let completedRepair = false;
             for (let i = 0; i < maxPages; i++) {
                 const result = await repairFtsPage(this.db);
                 indexed += result.indexed;
-                if (result.done) break;
+                if (result.done) {
+                    completedRepair = true;
+                    break;
+                }
             }
-            if ((await ftsRecoveryStatus(this.db)).pending) await repairPendingFts(this.db);
-            const state = await ftsRecoveryStatus(this.db);
-            this.ftsVerified = state.phase === "ready" && state.pending === 0;
-            if (this.ftsVerified && indexed > 0 && (await ftsIsInconsistent(this.db))) {
-                this.ftsVerified = false;
+            let state = await ftsRecoveryStatus(this.db);
+            if (state.phase === "ready" && state.pending) {
+                await repairPendingFts(this.db);
+                state = await ftsRecoveryStatus(this.db);
+            }
+            const ready = state.phase === "ready" && state.pending === 0;
+            // The persisted verify transition audits the complete rebuilt index.
+            // If we only drained an incremental backlog after an unverified probe,
+            // audit before promoting this instance to FTS reads.
+            if (
+                ready &&
+                !this.ftsVerified &&
+                !(initial.phase === "repairing" && completedRepair) &&
+                (await ftsIsInconsistent(this.db))
+            ) {
                 await beginFtsRepair(this.db);
-            }
+                this.ftsVerified = false;
+            } else this.ftsVerified = ready;
             return {
                 status: this.ftsVerified ? ("ok" as const) : ("pending" as const),
                 indexed,
@@ -494,12 +516,18 @@ export class ArticleIndex {
         if (!this.ftsAvailable) return;
         try {
             await executeArticleBatch(this.db, [
-                { sql: "DELETE FROM article_search WHERE article_key = ?", params: [articleKey] },
                 {
-                    sql: "INSERT INTO article_search (article_key, title, canonical_url) SELECT article_key, title, canonical_url FROM articles WHERE article_key = ?",
+                    sql: `DELETE FROM article_search WHERE article_key = ? AND ${FTS_READY_GUARD}`,
                     params: [articleKey],
                 },
-                { sql: "DELETE FROM article_fts_pending WHERE article_key = ?", params: [articleKey] },
+                {
+                    sql: `INSERT INTO article_search (article_key, title, canonical_url) SELECT article_key, title, canonical_url FROM articles WHERE article_key = ? AND ${FTS_READY_GUARD}`,
+                    params: [articleKey],
+                },
+                {
+                    sql: `DELETE FROM article_fts_pending WHERE article_key = ? AND ${FTS_READY_GUARD}`,
+                    params: [articleKey],
+                },
             ]);
         } catch (error) {
             logger.warn("Could not update article FTS5 index.", error);
