@@ -7,6 +7,7 @@ import { normalizeNewsItemUrlKey } from "@shared/news-item-schema";
 import { logger } from "../utils/logger";
 import { reconcileArticleEventId } from "./article-event-identity";
 import { initArticleEventRegistry } from "./article-event-registry";
+import { hasArticleEventAliases, initArticleEventAliases, resolveArticleEventAlias } from "./article-event-aliases";
 
 const DEFAULT_SEARCH_LIMIT = 30;
 const MAX_SEARCH_LIMIT = 100;
@@ -41,7 +42,7 @@ export interface ArticleEventQuery {
 }
 
 export type ArticleEventResult =
-    | { status: "ok"; registeredAt: number; items: ArticleIndexItem[]; nextCursor?: string }
+    | { status: "ok"; registeredAt: number; items: ArticleIndexItem[]; nextCursor?: string; canonicalEventId?: string }
     | { status: "not-found" }
     | { status: "unavailable" };
 
@@ -106,6 +107,7 @@ export class ArticleIndex {
 
         try {
             await initArticleEventRegistry(this.db);
+            await initArticleEventAliases(this.db);
         } catch (error) {
             logger.warn("Could not initialize article event registry.", error);
         }
@@ -211,9 +213,11 @@ export class ArticleIndex {
 
     async getEvent(eventId: string, query: ArticleEventQuery): Promise<ArticleEventResult> {
         try {
+            const aliases = await hasArticleEventAliases(this.db);
+            const canonicalEventId = aliases ? await resolveArticleEventAlias(this.db, eventId) : eventId;
             const event = (await this.db
                 .prepare("SELECT registered_at FROM news_events WHERE event_id = ?")
-                .get(eventId)) as { registered_at: number } | null | undefined;
+                .get(canonicalEventId)) as { registered_at: number } | null | undefined;
             if (!event) {
                 // A partially initialized registry must not report a legacy membership as missing.
                 const membership = await this.db
@@ -222,19 +226,24 @@ export class ArticleIndex {
                 return { status: membership ? "unavailable" : "not-found" };
             }
             const limit = Math.max(1, Math.min(MAX_SEARCH_LIMIT, query.limit));
+            const members = aliases
+                ? "event_id IN (SELECT alias_id FROM news_event_aliases WHERE canonical_id = ? UNION ALL SELECT ?)"
+                : "event_id = ?";
+            const eventParameters = aliases ? [canonicalEventId, canonicalEventId] : [canonicalEventId];
             const rows = getRows(
                 await this.db
                     .prepare(
                         `SELECT article_key, canonical_url, title, published_at, event_id, payload
-                         FROM articles WHERE event_id = ? AND article_key > ?
+                         FROM articles WHERE ${members} AND article_key > ?
                          ORDER BY article_key ASC LIMIT ?`
                     )
-                    .all(eventId, query.after ?? "", limit + 1)
+                    .all(...eventParameters, query.after ?? "", limit + 1)
             ) as ArticleRow[];
             const page = rows.slice(0, limit);
             return {
                 status: "ok",
                 registeredAt: Number(event.registered_at),
+                ...(canonicalEventId !== eventId ? { canonicalEventId } : {}),
                 items: await this.mapRows(page),
                 ...(rows.length > limit ? { nextCursor: page[page.length - 1].article_key } : {}),
             };

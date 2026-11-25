@@ -63,7 +63,7 @@ curl https://news.example.com/api/v1/node
 
 `GET /api/v1/events/{eventId}?limit=30` 返回 `data.eventId`、`data.registeredAt`（毫秒时间戳，表示注册表首次写入时间而非新闻发布时间）和 `data.items`（沿用文章搜索的条目格式）。事件历史独立于当前来源缓存。默认 30 条，`limit` 允许 1–100。若返回 `meta.nextCursor`，将该值作为同一事件下一页的 `after` 参数；省略时从第一页开始。分页按文章主键稳定排序，不是发布时间排序；并发新增文章时不保证跨页固定快照。
 
-`400` 表示 ID 或分页参数无效；`404` 表示 ID 尚未注册（包括仅计算出的候选 ID）；`503` 表示索引、注册表或旧成员迁移不可用。此接口仅支持已启用索引及注册表的 Node/Pages 部署；Electron 本地 JSON 缓存不提供历史注册表，连接远端服务时按远端能力使用。该接口不合并事件、不重新聚类，不提供客户端修改注册表的入口。
+`400` 表示 ID 或分页参数无效；`404` 表示 ID 尚未注册（包括仅计算出的候选 ID）；`503` 表示索引、注册表或旧成员迁移不可用。此接口仅支持已启用索引及注册表的 Node/Pages 部署；Electron 本地 JSON 缓存不提供历史注册表，连接远端服务时按远端能力使用。该接口不重新聚类，不提供客户端修改注册表的入口。若请求 ID 是人工批准的别名，响应额外提供 `data.canonicalEventId`，并按规范 ID 及其别名读取成员；`data.eventId` 保留请求 ID，成员 `eventId` 保留原始关联。未批准的事件仍独立。
 
 Single-source metadata keeps item payloads out of discovery responses. If `{id}` is a redirect alias, `meta.canonicalSourceId` points to the source used by item endpoints and `meta.redirected` is `true`.
 

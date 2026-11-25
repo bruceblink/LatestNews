@@ -146,6 +146,7 @@ export interface ArticleSearchResponse {
 export interface ArticleEventResponse {
     data: {
         eventId: string;
+        canonicalEventId?: string;
         registeredAt: number;
         items: ArticleSearchItem[];
     };

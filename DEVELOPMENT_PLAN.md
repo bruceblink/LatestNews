@@ -143,7 +143,7 @@ Node/Docker 支持完整服务端采集和受信插件，Pages 使用兼容 Work
 
 相关说明见[安装与使用](README.md#安装与使用)、[部署运维](docs/deployment.md)、[API v1](docs/api-v1.md)、[节点联邦接口](docs/node-federation-contract.md)、[插件开发工具](crawler-platform/README.md)和[贡献指南](CONTRIBUTING.md)。
 
-## 10. N4-B 至 N4-H：检索与采集运行时演进（2026-11-23）
+## 10. N4-B 至 N4-I：检索与采集运行时演进（2026-11-23）
 
 本节是 2026-11-22 性能基线后的增量计划。参考 Exa 的查询执行、增量索引和混合检索原则，但不引入 Exa 付费依赖或重建其搜索引擎。现有 N1/N2/N3/N4 的验收优先级和部署边界保持不变。各切片必须使用独立 PR，以利验证和回退。
 
@@ -219,8 +219,15 @@ Cloudflare API 检查确认 `latestnews` D1 数据库已绑定到 Pages 生产�
 - 复现命令 `pnpm performance:news-events`，详情见[真实新闻事件质量基线](docs/performance/news-event-real-quality.md)。不新增运行时依赖或 API，不写入生产数据库。
 - 后续先独立人工复核标签、补充跨语言和同产品不同动作的样本并建立保留集，再评估实体别名、事件类型和版本规范化。显式事件合并、别名与跨窗口关联在独立 PR 中实现；不自动改写已持久化事件。中文检索与相关性排序另行评估。
 
+### N4-I（P1）：显式事件关系与别名（2026-11-25）
+
+新增 `news_event_aliases`（原 ID、规范 ID、审核人、证据、批准时间）。仅允许本地运维显式批准；不开放公共写接口。只读对比两条已注册事件的有限成员标题、原文 URL、时间和共享词，结果为待审核证据，不自动打分或合并；支持人工选择不重叠时间窗口的事件。数据库约束拒绝未知 ID、循环、链式别名及改写已有批准记录。保留原文章关联；已批准别名的历史查询聚合成员，洞察协调按规范 ID 处理，未知/未批准冲突仍保留候选。历史 API 保留请求 ID，可选返回 canonicalEventId；文章搜索中的 eventId 仍为原始关联。
+
+- 验收：Node 22.23.4 / pnpm 12.21.0，全量 96 个文件、510 项测试通过（新增 5 项），lint、Node/Web/Electron 类型检查、Node 与 Pages 构建通过。本地 workerd D1 脚本验证显式别名、循环拒绝、规范关联及重启持久化；仍使用兼容日期 2026-08-06，不代表生产 D1。
+- 运维接口及边界见[事件关系审核](docs/performance/news-event-aliases.md)。部署先用 INIT_TABLE=true 初始化附加表；旧 schema 仍支持原有历史查询。没有自动跨窗口识别、自动合并或生产写入，N4-H 的独立人工复核和保留集依然待补。若需要撤销批准，须备份并审核已新增的规范成员；代码回退保留原关联和别名表。
+
 ### 切片通用交付、顺序与安全限制
 
-顺序为 N4-B 计划 PR → 审阅与合并 → N4-B 代码 PR → N4-C 基准 PR → N4-D → N4-E → N4-F → N4-G → N4-H。阶段一仅包括 N4-B；N4-C 需要单独的对照测试与评审。每个 PR 包含影响文件、用例、实测与未测项、向后兼容声明及回退策略。运行 `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run`，影响构建时运行 `pnpm build`；基准脚本需在隔离缓存和回环网络下运行。
+顺序为 N4-B 计划 PR → 审阅与合并 → N4-B 代码 PR → N4-C 基准 PR → N4-D → N4-E → N4-F → N4-G → N4-H → N4-I。阶段一仅包括 N4-B；N4-C 需要单独的对照测试与评审。每个 PR 包含影响文件、用例、实测与未测项、向后兼容声明及回退策略。运行 `pnpm lint:check`、`pnpm typecheck`、`pnpm test --run`，影响构建时运行 `pnpm build`；基准脚本需在隔离缓存和回环网络下运行。
 
 不得擅自配置 Exa Key、启用付费服务、改动现有定时技术简报、变更部署密钥或生产容器。未经完整评估不引入独立 Rust 检索服务、外部向量数据库或新 Agent Runtime。

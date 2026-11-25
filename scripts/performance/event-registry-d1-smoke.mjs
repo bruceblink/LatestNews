@@ -10,6 +10,7 @@ import { rm, mkdtemp, readFile } from "node:fs/promises";
 
 import { ArticleIndex } from "../../server/database/article-index.ts";
 import { reconcileArticleEventId } from "../../server/database/article-event-identity.ts";
+import { approveArticleEventAlias } from "../../server/database/article-event-aliases.ts";
 
 // Run via tsx after build:pages. Miniflare is installed separately so production
 // dependencies and the repository lockfile remain unchanged.
@@ -164,10 +165,23 @@ try {
     await get("/api/v1/events/event-a?limit=101", 400);
     console.log("PASS D1 conflict preservation and API 400/404");
 
+    const alias = await approveArticleEventAlias(ctx.db, {
+        aliasId: "event-a", canonicalId: "event-b", actor: "isolated-test", evidence: "fixture approval only"
+    });
+    assert.equal(alias.canonicalId, "event-b");
+    await assert.rejects(approveArticleEventAlias(ctx.db, {
+        aliasId: "event-b", canonicalId: "event-a", actor: "isolated-test", evidence: "cycle"
+    }));
+    const mergedHistory = await event("event-a");
+    assert.equal(mergedHistory.data.canonicalEventId, "event-b");
+    assert.deepEqual(mergedHistory.data.items.map((item) => item.eventId).sort(), ["event-a", "event-b"]);
+    assert.equal(await reconcileArticleEventId(ctx.db, [a.url, b.url, c.url], "candidate"), "event-b");
+    console.log("PASS D1 explicit alias, cycle guard and canonical assignment");
     await ctx.db.prepare("DELETE FROM cache WHERE id IN (?,?)").run("hackernews", "weibo");
     await mf.dispose();
     mf = undefined;
     ctx = await start();
+    assert.equal((await event("event-a")).data.items.length, 3);
     const persisted = await event(first.eventId);
     assert.equal(persisted.data.registeredAt, history.data.registeredAt);
     assert.equal(persisted.data.items.length, 2);
