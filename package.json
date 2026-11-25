@@ -51,6 +51,7 @@
         "performance:chinese-search": "tsx --tsconfig tsconfig.node.json scripts/performance/chinese-search-quality.ts",
         "performance:article-capacity": "tsx --tsconfig tsconfig.node.json scripts/performance/article-capacity.ts",
         "performance:article-index": "tsx --tsconfig tsconfig.node.json scripts/performance/article-index-baseline.ts",
+        "performance:quality-review": "tsx --tsconfig tsconfig.node.json scripts/performance/quality-review-cli.ts",
         "performance:news-events": "tsx --tsconfig tsconfig.node.json scripts/performance/news-event-quality.ts",
         "articles:maintain": "tsx --tsconfig tsconfig.node.json scripts/events/maintain-articles.ts",
         "events:assign": "tsx --tsconfig tsconfig.node.json scripts/events/assign.ts",

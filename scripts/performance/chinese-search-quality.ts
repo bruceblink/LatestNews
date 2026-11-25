@@ -3,28 +3,11 @@ import { readFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import sqliteConnector from "db0/connectors/better-sqlite3";
 
+import { CHINESE_SEARCH_CASES } from "./chinese-search-cases";
 import { ArticleIndex } from "../../server/database/article-index";
 
 import type { SourceID } from "../../shared/types";
 import type { NewsEventCorpus } from "./news-event-evaluation";
-
-export const CHINESE_SEARCH_CASES = [
-    { query: "邮件", relevant: ["report-001"] },
-    { query: "浏览器", relevant: ["report-006"] },
-    { query: "专利", relevant: ["report-009", "report-010"] },
-    { query: "频道", relevant: ["report-009", "report-010"] },
-    { query: "AI 频道", relevant: ["report-009", "report-010"] },
-    { query: "Google 专利", relevant: ["report-010"] },
-    { query: "AI 模型", relevant: ["report-012"] },
-    { query: "模型", relevant: ["report-012", "report-034", "report-035"] },
-    { query: "量化 权重", relevant: ["report-035"] },
-    { query: "谷歌 AI", relevant: ["report-009", "report-032", "report-033"] },
-    { query: "GTA6 游戏", relevant: ["report-026"] },
-    { query: "摄像头", relevant: ["report-031"] },
-    { query: "亚马逊 英国", relevant: ["report-024"] },
-    { query: "编程能力", relevant: ["report-012"] },
-    { query: "芯片厂商不存在", relevant: [] },
-] as const;
 
 const corpus = JSON.parse(
     await readFile(new URL("../../test/fixtures/news-event-real-corpus.json", import.meta.url), "utf8")

@@ -1,0 +1,962 @@
+{
+  "snapshotAt": "2026-11-25T12:00:15.000793Z",
+  "selection": "Unscored candidate for independent holdout review. First eligible rows in RSS/HN API order; eight per daily capture, six per targeted release/security search; exclude known corpus exact normalized URLs/titles and duplicate discussion URLs. Targeted strata and later reviewer independence must be checked; not a random production sample. No labels, relevance answers, or predictions.",
+  "captures": [
+    {
+      "capture": "ithome",
+      "url": "https://www.ithome.com/rss/",
+      "capturedAt": "2026-11-25T11:58:49.772430Z",
+      "rawSha256": "e379afabca0615e966a8d456e28b6f611481c34f395d7da567b5a433f04df91a",
+      "rawBytes": 224941,
+      "returnedRows": 60,
+      "selectedRows": 8,
+      "limit": 8
+    },
+    {
+      "capture": "solidot",
+      "url": "https://www.solidot.org/index.rss",
+      "capturedAt": "2026-11-25T11:58:51.456577Z",
+      "rawSha256": "a9e638789f52c19ba4f3544112cba2584c9faf0a1977c5d0d4f59313effca8a8",
+      "rawBytes": 21401,
+      "returnedRows": 20,
+      "selectedRows": 8,
+      "limit": 8
+    },
+    {
+      "capture": "theverge",
+      "url": "https://www.theverge.com/rss/index.xml",
+      "capturedAt": "2026-11-25T11:58:48.612266Z",
+      "rawSha256": "57fb7563b67edd09959b59e04a41cf6878c3541f7a9902893ddbb96b2255b5fc",
+      "rawBytes": 28817,
+      "returnedRows": 10,
+      "selectedRows": 8,
+      "limit": 8
+    },
+    {
+      "capture": "techcrunch",
+      "url": "https://techcrunch.com/feed/",
+      "capturedAt": "2026-11-25T11:58:48.656265Z",
+      "rawSha256": "07e37878bcde5e5c03c9e1f37624b7536606267824c0589b6b9f14bff4ed2d6a",
+      "rawBytes": 18176,
+      "returnedRows": 20,
+      "selectedRows": 8,
+      "limit": 8
+    },
+    {
+      "capture": "arstechnica",
+      "url": "https://feeds.arstechnica.com/arstechnica/index",
+      "capturedAt": "2026-11-25T11:58:48.960265Z",
+      "rawSha256": "19afb151a9c0ca01fd7176c4a7d8e0342758efe6865edcbf3eff9a54ebf05f02",
+      "rawBytes": 77353,
+      "returnedRows": 20,
+      "selectedRows": 8,
+      "limit": 8
+    },
+    {
+      "capture": "hn",
+      "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story&hitsPerPage=50",
+      "capturedAt": "2026-11-25T11:58:48.916265Z",
+      "rawSha256": "cdb1ef71ab45f61c6ace192b60aea7f15b6f2dfe73148f1d27717c48bc979fc1",
+      "rawBytes": 37146,
+      "returnedRows": 50,
+      "selectedRows": 8,
+      "limit": 8
+    },
+    {
+      "capture": "go125",
+      "url": "https://hn.algolia.com/api/v1/search?query=Go+1.25+released&tags=story&hitsPerPage=30",
+      "capturedAt": "2026-11-25T11:59:49.872507Z",
+      "rawSha256": "e4b0d594fb102521bdbcd32019cd808b94907356f2b7930476c4920335517267",
+      "rawBytes": 2058,
+      "returnedRows": 2,
+      "selectedRows": 2,
+      "limit": 6
+    },
+    {
+      "capture": "go126",
+      "url": "https://hn.algolia.com/api/v1/search?query=Go+1.26+released&tags=story&hitsPerPage=30",
+      "capturedAt": "2026-11-25T11:59:49.880507Z",
+      "rawSha256": "95981f2abdc0f94654ad6a9261d902498d7b497367a3fd752d6d30a8ab47f5d4",
+      "rawBytes": 10556,
+      "returnedRows": 9,
+      "selectedRows": 6,
+      "limit": 6
+    },
+    {
+      "capture": "ssh6387",
+      "url": "https://hn.algolia.com/api/v1/search?query=OpenSSH+CVE-2024-6387&tags=story&hitsPerPage=30",
+      "capturedAt": "2026-11-25T11:59:49.896507Z",
+      "rawSha256": "cc5873e6c8f63646efdfe6d86b67dd607602588e3ef73c672eb002e63c5cd9a6",
+      "rawBytes": 9315,
+      "returnedRows": 9,
+      "selectedRows": 6,
+      "limit": 6
+    },
+    {
+      "capture": "ssh26465",
+      "url": "https://hn.algolia.com/api/v1/search?query=OpenSSH+CVE-2025-26465&tags=story&hitsPerPage=30",
+      "capturedAt": "2026-11-25T11:59:49.912507Z",
+      "rawSha256": "6a491547e9ea93bd1ef4f2063a80580a8f4dd168823de5bdb86ea2d2bcbae9d4",
+      "rawBytes": 1370,
+      "returnedRows": 1,
+      "selectedRows": 1,
+      "limit": 6
+    }
+  ],
+  "reports": [
+    {
+      "cohort": "daily",
+      "source": "ithome",
+      "language": "zh",
+      "title": "华为种菜游戏：鸿蒙星空元服务官宣上线，完成每日任务可抽会员等",
+      "url": "https://www.ithome.com/1/032/472.htm",
+      "articleUrl": "https://www.ithome.com/1/032/472.htm",
+      "reportedAt": "2026-11-25T11:34:46Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.ithome.com/rss/",
+      "id": "candidate-001"
+    },
+    {
+      "cohort": "daily",
+      "source": "ithome",
+      "language": "zh",
+      "title": "爆料人称《GTA 6》有望在 PS6、Xbox Project Helix 上实现 120 帧运行",
+      "url": "https://www.ithome.com/1/032/470.htm",
+      "articleUrl": "https://www.ithome.com/1/032/470.htm",
+      "reportedAt": "2026-11-25T11:24:27Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.ithome.com/rss/",
+      "id": "candidate-002"
+    },
+    {
+      "cohort": "daily",
+      "source": "ithome",
+      "language": "zh",
+      "title": "小米米家智能水暖毯 Pro 开启众筹：左右双区独立调温，首发价 799 元",
+      "url": "https://www.ithome.com/1/032/469.htm",
+      "articleUrl": "https://www.ithome.com/1/032/469.htm",
+      "reportedAt": "2026-11-25T11:21:50Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.ithome.com/rss/",
+      "id": "candidate-003"
+    },
+    {
+      "cohort": "daily",
+      "source": "ithome",
+      "language": "zh",
+      "title": "C919 首次在济南执飞商业客运航班，南航 C919 首飞广州 — 济南航线",
+      "url": "https://www.ithome.com/1/032/468.htm",
+      "articleUrl": "https://www.ithome.com/1/032/468.htm",
+      "reportedAt": "2026-11-25T11:21:41Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.ithome.com/rss/",
+      "id": "candidate-004"
+    },
+    {
+      "cohort": "daily",
+      "source": "ithome",
+      "language": "zh",
+      "title": "联想预热 thinkplus USB4 全功能伸缩数据线，支持 PD3.2 240W 快充",
+      "url": "https://www.ithome.com/1/032/467.htm",
+      "articleUrl": "https://www.ithome.com/1/032/467.htm",
+      "reportedAt": "2026-11-25T11:13:55Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.ithome.com/rss/",
+      "id": "candidate-005"
+    },
+    {
+      "cohort": "daily",
+      "source": "ithome",
+      "language": "zh",
+      "title": "特斯拉 FSD 欧盟审批会议推迟至 12 月 15 日举行",
+      "url": "https://www.ithome.com/1/032/466.htm",
+      "articleUrl": "https://www.ithome.com/1/032/466.htm",
+      "reportedAt": "2026-11-25T11:13:50Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.ithome.com/rss/",
+      "id": "candidate-006"
+    },
+    {
+      "cohort": "daily",
+      "source": "ithome",
+      "language": "zh",
+      "title": "网易云音乐宣布与索尼音乐娱乐达成多年期版权合作，今年已与三大唱片公司完成续签",
+      "url": "https://www.ithome.com/1/032/465.htm",
+      "articleUrl": "https://www.ithome.com/1/032/465.htm",
+      "reportedAt": "2026-11-25T11:08:41Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.ithome.com/rss/",
+      "id": "candidate-007"
+    },
+    {
+      "cohort": "daily",
+      "source": "ithome",
+      "language": "zh",
+      "title": "懂车帝最新回应“尊界 V800 刹车踏板支架断裂”事件：公司内部仍在等待相关结果",
+      "url": "https://www.ithome.com/1/032/464.htm",
+      "articleUrl": "https://www.ithome.com/1/032/464.htm",
+      "reportedAt": "2026-11-25T11:08:22Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.ithome.com/rss/",
+      "id": "candidate-008"
+    },
+    {
+      "cohort": "daily",
+      "source": "solidot",
+      "language": "zh",
+      "title": "日本政府开发智能体打击盗版动漫",
+      "url": "https://www.solidot.org/story?sid=85988",
+      "articleUrl": "https://www.solidot.org/story?sid=85988",
+      "reportedAt": "2026-11-25T09:49:29Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.solidot.org/index.rss",
+      "id": "candidate-009"
+    },
+    {
+      "cohort": "daily",
+      "source": "solidot",
+      "language": "zh",
+      "title": "男性肥胖者服用 GLP-1 药物后改善了精子质量",
+      "url": "https://www.solidot.org/story?sid=85987",
+      "articleUrl": "https://www.solidot.org/story?sid=85987",
+      "reportedAt": "2026-11-25T08:05:18Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.solidot.org/index.rss",
+      "id": "candidate-010"
+    },
+    {
+      "cohort": "daily",
+      "source": "solidot",
+      "language": "zh",
+      "title": "CIA 部分非机密信息泄漏",
+      "url": "https://www.solidot.org/story?sid=85986",
+      "articleUrl": "https://www.solidot.org/story?sid=85986",
+      "reportedAt": "2026-11-25T07:33:54Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.solidot.org/index.rss",
+      "id": "candidate-011"
+    },
+    {
+      "cohort": "daily",
+      "source": "solidot",
+      "language": "zh",
+      "title": "梅奥诊所向每天用自己的时间启动电脑的员工补发工资",
+      "url": "https://www.solidot.org/story?sid=85985",
+      "articleUrl": "https://www.solidot.org/story?sid=85985",
+      "reportedAt": "2026-11-25T06:54:30Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.solidot.org/index.rss",
+      "id": "candidate-012"
+    },
+    {
+      "cohort": "daily",
+      "source": "solidot",
+      "language": "zh",
+      "title": "多样性影响鸟类对天敌的反应",
+      "url": "https://www.solidot.org/story?sid=85983",
+      "articleUrl": "https://www.solidot.org/story?sid=85983",
+      "reportedAt": "2026-11-25T06:01:54Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.solidot.org/index.rss",
+      "id": "candidate-013"
+    },
+    {
+      "cohort": "daily",
+      "source": "solidot",
+      "language": "zh",
+      "title": "东北积雪天数预计将会显著减少",
+      "url": "https://www.solidot.org/story?sid=85982",
+      "articleUrl": "https://www.solidot.org/story?sid=85982",
+      "reportedAt": "2026-11-24T15:57:38Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.solidot.org/index.rss",
+      "id": "candidate-014"
+    },
+    {
+      "cohort": "daily",
+      "source": "solidot",
+      "language": "zh",
+      "title": "基因工程烟草能用于高效合成抗癌药",
+      "url": "https://www.solidot.org/story?sid=85981",
+      "articleUrl": "https://www.solidot.org/story?sid=85981",
+      "reportedAt": "2026-11-24T14:53:56Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.solidot.org/index.rss",
+      "id": "candidate-015"
+    },
+    {
+      "cohort": "daily",
+      "source": "solidot",
+      "language": "zh",
+      "title": "空气污染是痴呆症的一个诱因",
+      "url": "https://www.solidot.org/story?sid=85980",
+      "articleUrl": "https://www.solidot.org/story?sid=85980",
+      "reportedAt": "2026-11-24T14:40:37Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.solidot.org/index.rss",
+      "id": "candidate-016"
+    },
+    {
+      "cohort": "daily",
+      "source": "theverge",
+      "language": "en",
+      "title": "Microsoft declares ‘Code Red’ after huge Outlook outage",
+      "url": "https://www.theverge.com/news/1042025/microsoft-code-red-outlook-outage",
+      "articleUrl": "https://www.theverge.com/news/1042025/microsoft-code-red-outlook-outage",
+      "reportedAt": "2026-11-25T11:12:42Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.theverge.com/rss/index.xml",
+      "id": "candidate-017"
+    },
+    {
+      "cohort": "daily",
+      "source": "theverge",
+      "language": "en",
+      "title": "US financial crimes bureau discloses ‘cybersecurity incident’",
+      "url": "https://www.theverge.com/policy/1041957/fincen-treasury-cybersecurity-incident",
+      "articleUrl": "https://www.theverge.com/policy/1041957/fincen-treasury-cybersecurity-incident",
+      "reportedAt": "2026-11-25T01:00:00Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.theverge.com/rss/index.xml",
+      "id": "candidate-018"
+    },
+    {
+      "cohort": "daily",
+      "source": "theverge",
+      "language": "en",
+      "title": "The Verge’s 2026 gift guide for dads",
+      "url": "https://www.theverge.com/gadgets/1024777/best-gifts-for-dad-2026",
+      "articleUrl": "https://www.theverge.com/gadgets/1024777/best-gifts-for-dad-2026",
+      "reportedAt": "2026-11-24T23:59:29Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.theverge.com/rss/index.xml",
+      "id": "candidate-019"
+    },
+    {
+      "cohort": "daily",
+      "source": "theverge",
+      "language": "en",
+      "title": "Why the US Army is about to blow up nearly 10,000 pounds of unstable explosives in Iowa",
+      "url": "https://www.theverge.com/science/1041819/us-army-detonation-lead-explosives-iowa",
+      "articleUrl": "https://www.theverge.com/science/1041819/us-army-detonation-lead-explosives-iowa",
+      "reportedAt": "2026-11-24T23:25:46Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.theverge.com/rss/index.xml",
+      "id": "candidate-020"
+    },
+    {
+      "cohort": "daily",
+      "source": "theverge",
+      "language": "en",
+      "title": "Huawei found guilty of stealing trade secrets",
+      "url": "https://www.theverge.com/tech/1041820/huawei-guilty-trade-secrets-trial",
+      "articleUrl": "https://www.theverge.com/tech/1041820/huawei-guilty-trade-secrets-trial",
+      "reportedAt": "2026-11-24T22:23:27Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.theverge.com/rss/index.xml",
+      "id": "candidate-021"
+    },
+    {
+      "cohort": "daily",
+      "source": "theverge",
+      "language": "en",
+      "title": "The Verge’s 2026 holiday gift guide for moms",
+      "url": "https://www.theverge.com/gadgets/1021621/best-gifts-for-mom-2026",
+      "articleUrl": "https://www.theverge.com/gadgets/1021621/best-gifts-for-mom-2026",
+      "reportedAt": "2026-11-24T21:09:59Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.theverge.com/rss/index.xml",
+      "id": "candidate-022"
+    },
+    {
+      "cohort": "daily",
+      "source": "theverge",
+      "language": "en",
+      "title": "Jensen Huang reportedly tells Nvidia staff it’s ‘not true’ Trump got him rehired",
+      "url": "https://www.theverge.com/tech/1041571/jensen-huang-all-hands-nvidia-apology",
+      "articleUrl": "https://www.theverge.com/tech/1041571/jensen-huang-all-hands-nvidia-apology",
+      "reportedAt": "2026-11-24T20:02:03Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.theverge.com/rss/index.xml",
+      "id": "candidate-023"
+    },
+    {
+      "cohort": "daily",
+      "source": "theverge",
+      "language": "en",
+      "title": "The clock is running out for America’s most contentious spying law",
+      "url": "https://www.theverge.com/policy/1041568/fisa-ndaa-blue-wave",
+      "articleUrl": "https://www.theverge.com/policy/1041568/fisa-ndaa-blue-wave",
+      "reportedAt": "2026-11-24T20:00:00Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://www.theverge.com/rss/index.xml",
+      "id": "candidate-024"
+    },
+    {
+      "cohort": "daily",
+      "source": "techcrunch",
+      "language": "en",
+      "title": "Yale’s Sonnenfeld: Nvidia is a ‘detriment’ to US industrial might — not a champion",
+      "url": "https://techcrunch.com/2026/11/24/yales-sonnenfeld-nvidia-is-a-detriment-to-u-s-industrial-might-not-a-champion/",
+      "articleUrl": "https://techcrunch.com/2026/11/24/yales-sonnenfeld-nvidia-is-a-detriment-to-u-s-industrial-might-not-a-champion/",
+      "reportedAt": "2026-11-25T00:12:02Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://techcrunch.com/feed/",
+      "id": "candidate-025"
+    },
+    {
+      "cohort": "daily",
+      "source": "techcrunch",
+      "language": "en",
+      "title": "Trump reportedly says pardoning Jensen Huang is ‘an option’",
+      "url": "https://techcrunch.com/2026/11/24/trump-reportedly-says-pardoning-jensen-huang-is-an-option-but-that-he-doesnt-think-it-will-be-necessary/",
+      "articleUrl": "https://techcrunch.com/2026/11/24/trump-reportedly-says-pardoning-jensen-huang-is-an-option-but-that-he-doesnt-think-it-will-be-necessary/",
+      "reportedAt": "2026-11-25T00:10:27Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://techcrunch.com/feed/",
+      "id": "candidate-026"
+    },
+    {
+      "cohort": "daily",
+      "source": "techcrunch",
+      "language": "en",
+      "title": "Jensen Huang still thinks a succession plan creates unnecessary hierarchy",
+      "url": "https://techcrunch.com/2026/11/24/jensen-huang-still-thinks-a-succession-plan-creates-unnecessary-hierarchy/",
+      "articleUrl": "https://techcrunch.com/2026/11/24/jensen-huang-still-thinks-a-succession-plan-creates-unnecessary-hierarchy/",
+      "reportedAt": "2026-11-24T22:27:52Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://techcrunch.com/feed/",
+      "id": "candidate-027"
+    },
+    {
+      "cohort": "daily",
+      "source": "techcrunch",
+      "language": "en",
+      "title": "In all-hands meeting, Jensen Huang thanks White House and says he’s in therapy",
+      "url": "https://techcrunch.com/2026/11/24/in-all-hands-meeting-jensen-huang-thanks-white-house-and-says-hes-in-therapy/",
+      "articleUrl": "https://techcrunch.com/2026/11/24/in-all-hands-meeting-jensen-huang-thanks-white-house-and-says-hes-in-therapy/",
+      "reportedAt": "2026-11-24T21:48:27Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://techcrunch.com/feed/",
+      "id": "candidate-028"
+    },
+    {
+      "cohort": "daily",
+      "source": "techcrunch",
+      "language": "en",
+      "title": "Even the best AI agents struggle with everyday life",
+      "url": "https://techcrunch.com/2026/11/24/even-the-best-ai-agents-struggle-with-everyday-life/",
+      "articleUrl": "https://techcrunch.com/2026/11/24/even-the-best-ai-agents-struggle-with-everyday-life/",
+      "reportedAt": "2026-11-24T21:33:29Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://techcrunch.com/feed/",
+      "id": "candidate-029"
+    },
+    {
+      "cohort": "daily",
+      "source": "techcrunch",
+      "language": "en",
+      "title": "Maple raises $5.3M to build AI products that protect your data, even from itself",
+      "url": "https://techcrunch.com/2026/11/24/maple-raises-5-3m-to-build-ai-products-that-protect-your-data-even-from-itself/",
+      "articleUrl": "https://techcrunch.com/2026/11/24/maple-raises-5-3m-to-build-ai-products-that-protect-your-data-even-from-itself/",
+      "reportedAt": "2026-11-24T21:19:52Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://techcrunch.com/feed/",
+      "id": "candidate-030"
+    },
+    {
+      "cohort": "daily",
+      "source": "techcrunch",
+      "language": "en",
+      "title": "Dozens of oil and shipping tankers hacked in recent weeks, per report",
+      "url": "https://techcrunch.com/2026/11/24/dozens-of-oil-and-shipping-tankers-hacked-in-recent-weeks-per-report/",
+      "articleUrl": "https://techcrunch.com/2026/11/24/dozens-of-oil-and-shipping-tankers-hacked-in-recent-weeks-per-report/",
+      "reportedAt": "2026-11-24T21:09:04Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://techcrunch.com/feed/",
+      "id": "candidate-031"
+    },
+    {
+      "cohort": "daily",
+      "source": "techcrunch",
+      "language": "en",
+      "title": "Anthropic shares fall below IPO price, a worrying sign for AI startups",
+      "url": "https://techcrunch.com/2026/11/24/anthropic-shares-fall-below-ipo-price-a-worrying-sign-for-ai-startups/",
+      "articleUrl": "https://techcrunch.com/2026/11/24/anthropic-shares-fall-below-ipo-price-a-worrying-sign-for-ai-startups/",
+      "reportedAt": "2026-11-24T18:30:42Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://techcrunch.com/feed/",
+      "id": "candidate-032"
+    },
+    {
+      "cohort": "daily",
+      "source": "arstechnica",
+      "language": "en",
+      "title": "Half of NASA's aging Mars fleet knocked offline by technical issues",
+      "url": "https://arstechnica.com/space/2026/11/half-of-nasas-aging-mars-fleet-knocked-offline-by-technical-issues/",
+      "articleUrl": "https://arstechnica.com/space/2026/11/half-of-nasas-aging-mars-fleet-knocked-offline-by-technical-issues/",
+      "reportedAt": "2026-11-24T22:50:11Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index",
+      "id": "candidate-033"
+    },
+    {
+      "cohort": "daily",
+      "source": "arstechnica",
+      "language": "en",
+      "title": "What's going on with the Riemann hypothesis?",
+      "url": "https://arstechnica.com/ai/2026/11/whats-going-on-with-the-riemann-hypothesis/",
+      "articleUrl": "https://arstechnica.com/ai/2026/11/whats-going-on-with-the-riemann-hypothesis/",
+      "reportedAt": "2026-11-24T20:34:53Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index",
+      "id": "candidate-034"
+    },
+    {
+      "cohort": "daily",
+      "source": "arstechnica",
+      "language": "en",
+      "title": "Back-to-back measles deaths is our new reality; US tally now at 14",
+      "url": "https://arstechnica.com/health/2026/11/measles-death-toll-rises-to-14-as-national-case-tally-nears-6000/",
+      "articleUrl": "https://arstechnica.com/health/2026/11/measles-death-toll-rises-to-14-as-national-case-tally-nears-6000/",
+      "reportedAt": "2026-11-24T20:00:18Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index",
+      "id": "candidate-035"
+    },
+    {
+      "cohort": "daily",
+      "source": "arstechnica",
+      "language": "en",
+      "title": "Amazon discovers Falcon 9 and Ariane 6 can deliver when nobody else can",
+      "url": "https://arstechnica.com/space/2026/11/amazon-surges-launches-with-rival-spacex-after-ula-fails-to-deliver/",
+      "articleUrl": "https://arstechnica.com/space/2026/11/amazon-surges-launches-with-rival-spacex-after-ula-fails-to-deliver/",
+      "reportedAt": "2026-11-24T18:30:36Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index",
+      "id": "candidate-036"
+    },
+    {
+      "cohort": "daily",
+      "source": "arstechnica",
+      "language": "en",
+      "title": "How brewers can protect beers from smoke-tainted hops",
+      "url": "https://arstechnica.com/science/2026/11/how-brewers-can-protect-beers-from-smoke-tainted-hops/",
+      "articleUrl": "https://arstechnica.com/science/2026/11/how-brewers-can-protect-beers-from-smoke-tainted-hops/",
+      "reportedAt": "2026-11-24T18:18:37Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index",
+      "id": "candidate-037"
+    },
+    {
+      "cohort": "daily",
+      "source": "arstechnica",
+      "language": "en",
+      "title": "Kalshi makes “difficult decision” to halt Utah trading after losing court fights",
+      "url": "https://arstechnica.com/tech-policy/2026/11/kalshi-makes-difficult-decision-to-halt-utah-trading-after-losing-court-fights/",
+      "articleUrl": "https://arstechnica.com/tech-policy/2026/11/kalshi-makes-difficult-decision-to-halt-utah-trading-after-losing-court-fights/",
+      "reportedAt": "2026-11-24T18:03:58Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index",
+      "id": "candidate-038"
+    },
+    {
+      "cohort": "daily",
+      "source": "arstechnica",
+      "language": "en",
+      "title": "Porsche 718 Boxster prototype drive: This electric roadster is real",
+      "url": "https://arstechnica.com/cars/2026/11/fake-gears-and-real-911-dna-driving-porsches-electric-718-boxster/",
+      "articleUrl": "https://arstechnica.com/cars/2026/11/fake-gears-and-real-911-dna-driving-porsches-electric-718-boxster/",
+      "reportedAt": "2026-11-24T16:58:20Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index",
+      "id": "candidate-039"
+    },
+    {
+      "cohort": "daily",
+      "source": "arstechnica",
+      "language": "en",
+      "title": "No more heated seat subscriptions for cars in New York from 2027",
+      "url": "https://arstechnica.com/cars/2026/11/new-york-says-no-more-subscriptions-for-in-car-features-or-does-it/",
+      "articleUrl": "https://arstechnica.com/cars/2026/11/new-york-says-no-more-subscriptions-for-in-car-features-or-does-it/",
+      "reportedAt": "2026-11-24T16:20:37Z",
+      "timeKind": "published",
+      "evidenceUrl": "https://feeds.arstechnica.com/arstechnica/index",
+      "id": "candidate-040"
+    },
+    {
+      "cohort": "daily",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Claude Code vs. Gato AI Translations: Translating a WordPress Site to 100%",
+      "url": "https://news.ycombinator.com/item?id=50641258",
+      "articleUrl": "https://gatoaitranslations.com/blog/claude-code-vs-gato-ai-translations",
+      "reportedAt": "2026-11-25T11:48:53Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/50641258",
+      "id": "candidate-041"
+    },
+    {
+      "cohort": "daily",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Educational OS fundamentals interactive tool",
+      "url": "https://news.ycombinator.com/item?id=50641257",
+      "articleUrl": "https://claude.ai/artifact/92CFxQiGu7rarFhhtkf1e1",
+      "reportedAt": "2026-11-25T11:48:44Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/50641257",
+      "id": "candidate-042"
+    },
+    {
+      "cohort": "daily",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Bosses loved AI at work – until they drowned in slop",
+      "url": "https://news.ycombinator.com/item?id=50641251",
+      "articleUrl": "https://www.businessinsider.com/ai-generated-workslop-leads-to-policies-firings-boss-fed-up-2026-11",
+      "reportedAt": "2026-11-25T11:48:03Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/50641251",
+      "id": "candidate-043"
+    },
+    {
+      "cohort": "daily",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Stop paying an LLM to re-plan the same agent task every day",
+      "url": "https://news.ycombinator.com/item?id=50641240",
+      "articleUrl": "https://github.com/hotpath-run/hotpath/blob/main/docs/HOTPATH-EXPLAINED.md",
+      "reportedAt": "2026-11-25T11:46:09Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/50641240",
+      "id": "candidate-044"
+    },
+    {
+      "cohort": "daily",
+      "source": "hackernews",
+      "language": "en",
+      "title": "700% Price Hike on DRAM in Gaming Consoles? Blame a 25-Year Cartel",
+      "url": "https://news.ycombinator.com/item?id=50641203",
+      "articleUrl": "https://www.thebignewsletter.com/p/a-700-price-hike-on-a-key-component",
+      "reportedAt": "2026-11-25T11:39:40Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/50641203",
+      "id": "candidate-045"
+    },
+    {
+      "cohort": "daily",
+      "source": "hackernews",
+      "language": "en",
+      "title": "A Deep Dive into JVM Startup",
+      "url": "https://news.ycombinator.com/item?id=50641193",
+      "articleUrl": "https://inside.java/2025/01/28/jvm-start-up/",
+      "reportedAt": "2026-11-25T11:37:27Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/50641193",
+      "id": "candidate-046"
+    },
+    {
+      "cohort": "daily",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Agents are just string concatenation",
+      "url": "https://news.ycombinator.com/item?id=50641192",
+      "articleUrl": "https://simmsreeve.com/blog/agents-are-just-string-concatenation/",
+      "reportedAt": "2026-11-25T11:37:25Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/50641192",
+      "id": "candidate-047"
+    },
+    {
+      "cohort": "daily",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Spn is the build system that C deserves",
+      "url": "https://news.ycombinator.com/item?id=50641191",
+      "articleUrl": "https://spader.zone/spn/",
+      "reportedAt": "2026-11-25T11:37:20Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/50641191",
+      "id": "candidate-048"
+    },
+    {
+      "cohort": "release",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Go 1.25 Is Released",
+      "url": "https://news.ycombinator.com/item?id=44882463",
+      "articleUrl": "https://go.dev/blog/go1.25",
+      "reportedAt": "2025-08-12T22:21:49Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/44882463",
+      "id": "candidate-049"
+    },
+    {
+      "cohort": "release",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Go 1.25 Release Notes",
+      "url": "https://news.ycombinator.com/item?id=44881977",
+      "articleUrl": "https://go.dev/doc/go1.25",
+      "reportedAt": "2025-08-12T21:25:01Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/44881977",
+      "id": "candidate-050"
+    },
+    {
+      "cohort": "release",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Go 1.26 Is Released",
+      "url": "https://news.ycombinator.com/item?id=46966346",
+      "articleUrl": "https://go.dev/blog/go1.26",
+      "reportedAt": "2026-02-10T20:25:39Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/46966346",
+      "id": "candidate-051"
+    },
+    {
+      "cohort": "release",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Go 1.26 Is Released",
+      "url": "https://news.ycombinator.com/item?id=46971653",
+      "articleUrl": "https://go.dev/blog/go1.26",
+      "reportedAt": "2026-02-11T06:38:29Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/46971653",
+      "id": "candidate-052"
+    },
+    {
+      "cohort": "release",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Go 1.26 Introduces Two Language Changes, New Performance Improvements",
+      "url": "https://news.ycombinator.com/item?id=46967440",
+      "articleUrl": "https://www.phoronix.com/news/Go-1.26-Released",
+      "reportedAt": "2026-02-10T21:52:28Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/46967440",
+      "id": "candidate-053"
+    },
+    {
+      "cohort": "release",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Go 1.27.3 and Go 1.26.10 are released",
+      "url": "https://news.ycombinator.com/item?id=50178540",
+      "articleUrl": "https://groups.google.com/g/golang-announce/c/66pojueaQek",
+      "reportedAt": "2026-10-21T10:22:38Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/50178540",
+      "id": "candidate-054"
+    },
+    {
+      "cohort": "release",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Go 1.26 Release Candidate 1 is released",
+      "url": "https://news.ycombinator.com/item?id=46303164",
+      "articleUrl": "https://go.dev/doc/go1.26",
+      "reportedAt": "2025-12-17T18:07:18Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/46303164",
+      "id": "candidate-055"
+    },
+    {
+      "cohort": "release",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Go 1.26 Release Candidate 1 is released",
+      "url": "https://news.ycombinator.com/item?id=46294257",
+      "articleUrl": "https://groups.google.com/g/golang-nuts/c/LcB-3xh5o68",
+      "reportedAt": "2025-12-16T20:50:25Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/46294257",
+      "id": "candidate-056"
+    },
+    {
+      "cohort": "security",
+      "source": "hackernews",
+      "language": "en",
+      "title": "NetBSD Security Advisory 2024-002 – OpenSSH CVE-2024-6387 `regreSSHion'",
+      "url": "https://news.ycombinator.com/item?id=40959843",
+      "articleUrl": "https://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2024-002.txt.asc",
+      "reportedAt": "2024-07-14T09:20:50Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/40959843",
+      "id": "candidate-057"
+    },
+    {
+      "cohort": "security",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Critical RCE Vulnerability in OpenSSH (CVE-2024-6387) – The Full Playbook",
+      "url": "https://news.ycombinator.com/item?id=40854716",
+      "articleUrl": "https://www.oligo.security/blog/critical-openssh-vulnerability-cve-2024-6387-regresshion",
+      "reportedAt": "2024-07-02T08:44:38Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/40854716",
+      "id": "candidate-058"
+    },
+    {
+      "cohort": "security",
+      "source": "hackernews",
+      "language": "en",
+      "title": "OpenSSH Vulnerability: CVE-2024-6387 FAQs and Resources",
+      "url": "https://news.ycombinator.com/item?id=40863537",
+      "articleUrl": "https://www.qualys.com/regresshion-cve-2024-6387/",
+      "reportedAt": "2024-07-03T07:15:39Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/40863537",
+      "id": "candidate-059"
+    },
+    {
+      "cohort": "security",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Show HN: regreSSHion.io – Quick OpenSSH vulnerability checker (CVE-2024-6387)",
+      "url": "https://news.ycombinator.com/item?id=40851253",
+      "articleUrl": "https://regresshion.io/",
+      "reportedAt": "2024-07-01T22:00:24Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/40851253",
+      "id": "candidate-060"
+    },
+    {
+      "cohort": "security",
+      "source": "hackernews",
+      "language": "en",
+      "title": "Free scanner for RegreSSHion (CVE-2024-6387), the OpenSSH vulnerability",
+      "url": "https://news.ycombinator.com/item?id=40866014",
+      "articleUrl": "https://pentest-tools.com/network-vulnerability-scanning/cve-2024-6387-scanner-regresshion-vulnerability",
+      "reportedAt": "2024-07-03T13:58:42Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/40866014",
+      "id": "candidate-061"
+    },
+    {
+      "cohort": "security",
+      "source": "hackernews",
+      "language": "en",
+      "title": "CVE-2024-6387: RCE in OpenSSH's server, on glibc-based Linux systems",
+      "url": "https://news.ycombinator.com/item?id=40844458",
+      "articleUrl": "https://www.openwall.com/lists/oss-security/2024/07/01/3",
+      "reportedAt": "2024-07-01T10:44:50Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/40844458",
+      "id": "candidate-062"
+    },
+    {
+      "cohort": "security",
+      "source": "hackernews",
+      "language": "en",
+      "title": "OpenSSH 9.9p2 Released to Fix Vulnerabilities CVE-2025-26466 and CVE-2025-26465",
+      "url": "https://news.ycombinator.com/item?id=43093943",
+      "articleUrl": "https://lists.mindrot.org/pipermail/openssh-unix-announce/2025-February/000161.html",
+      "reportedAt": "2025-02-18T19:26:45Z",
+      "timeKind": "submission",
+      "evidenceUrl": "https://hn.algolia.com/api/v1/items/43093943",
+      "id": "candidate-063"
+    }
+  ],
+  "queries": [
+    {
+      "id": "candidate-query-001",
+      "query": "鸿蒙 星空元服务"
+    },
+    {
+      "id": "candidate-query-002",
+      "query": "USB4 240W 数据线"
+    },
+    {
+      "id": "candidate-query-003",
+      "query": "网易云 索尼 版权"
+    },
+    {
+      "id": "candidate-query-004",
+      "query": "盗版动漫 智能体"
+    },
+    {
+      "id": "candidate-query-005",
+      "query": "CIA information leak"
+    },
+    {
+      "id": "candidate-query-006",
+      "query": "Outlook Code Red"
+    },
+    {
+      "id": "candidate-query-007",
+      "query": "US financial crimes bureau cybersecurity incident"
+    },
+    {
+      "id": "candidate-query-008",
+      "query": "Jensen Huang succession plan"
+    },
+    {
+      "id": "candidate-query-009",
+      "query": "shipping tanker hacks"
+    },
+    {
+      "id": "candidate-query-010",
+      "query": "NASA Mars fleet"
+    },
+    {
+      "id": "candidate-query-011",
+      "query": "JVM startup"
+    },
+    {
+      "id": "candidate-query-012",
+      "query": "Go 1.25 release"
+    },
+    {
+      "id": "candidate-query-013",
+      "query": "Go 1.26 RC"
+    },
+    {
+      "id": "candidate-query-014",
+      "query": "Go 1.26 release"
+    },
+    {
+      "id": "candidate-query-015",
+      "query": "Go 1.27.3"
+    },
+    {
+      "id": "candidate-query-016",
+      "query": "OpenSSH CVE-2024-6387"
+    },
+    {
+      "id": "candidate-query-017",
+      "query": "OpenSSH CVE-2025-26465"
+    },
+    {
+      "id": "candidate-query-018",
+      "query": "OpenSSH 漏洞"
+    },
+    {
+      "id": "candidate-query-019",
+      "query": "Golang 1.26 release candidate"
+    },
+    {
+      "id": "candidate-query-020",
+      "query": "Zig 0.17 compiler release"
+    },
+    {
+      "id": "candidate-query-021",
+      "query": "FreeBSD 17.0 release"
+    },
+    {
+      "id": "candidate-query-022",
+      "query": "Linux kernel 7.9 scheduler update"
+    }
+  ],
+  "querySelection": "Queries authored from captured headlines before evaluation, including alternative language/version phrasing and possible no-answer intents. No relevance labels or guaranteed no-answer flags; both reviewers must inspect every report.",
+  "labelStatus": "unreviewed-candidate",
+  "knownLimitations": [
+    "Exact normalized URL/title/query exclusion is not semantic event disjointness; possible underlying event overlap requires manual screening.",
+    "Version and security cohorts are from targeted Hacker News searches and are English only; no representative cross-language positive coverage is established.",
+    "The selected query intents are authored from captured titles; independent reviewers must judge all report relevance and verify possible no-answer intents.",
+    "Captured raw feed hashes are provenance, not independently retained raw response bodies. Source feeds may change; the extracted snapshot is frozen."
+  ]
+}

@@ -66,3 +66,7 @@ pnpm exec vitest -c vitest.config.ts run test/news-event-evaluation.test.ts test
 全量验收：95 个 Vitest 文件、505 项测试通过，新增 4 项评测回归；ESLint、Node/Web 与 Electron 类型检查通过。没有运行时代码改动，本轮未重新构建或部署生产产物。
 
 本切片是离线质量基础设施。没有新增运行时功能或 API。回退只撤销评测脚本、语料及文档，不涉及生产数据。
+
+## 后续独立复核工具
+
+N4-N 已交付[双人复核及候选保留集流程](n4n-quality-review.md)。旧 corpus 仍为 proposed，候选数据未评分、未确认独立性；工具通过不等于人工审核或生产准入。

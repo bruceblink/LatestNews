@@ -117,7 +117,7 @@ export function validateCorpus(corpus: NewsEventCorpus) {
 
 type TimeMode = "recorded" | "adapter-daily";
 
-function cluster(reports: LabeledReport[], mode: TimeMode, observedAt: number) {
+export function clusterNewsEventReports(reports: Omit<LabeledReport, "event">[], mode: TimeMode, observedAt: number) {
     const generatedAt = Math.max(...reports.map((report) => Date.parse(report.reportedAt)));
     const responses: SourceResponse[] = reports.map((report) => ({
         id: report.source as SourceID,
@@ -167,8 +167,8 @@ function update(c: Confusion, expected: boolean, actual: boolean) {
 }
 
 function evaluateCohort(reports: LabeledReport[], events: Map<string, EventLabel>, mode: TimeMode, observedAt: number) {
-    const forward = cluster(reports, mode, observedAt);
-    const reverse = cluster([...reports].reverse(), mode, observedAt);
+    const forward = clusterNewsEventReports(reports, mode, observedAt);
+    const reverse = clusterNewsEventReports([...reports].reverse(), mode, observedAt);
     const totals = {
         pair: emptyConfusion(),
         batch: emptyConfusion(),
@@ -185,7 +185,7 @@ function evaluateCohort(reports: LabeledReport[], events: Map<string, EventLabel
         for (const right of reports.slice(i + 1)) {
             const expected = left.event === right.event;
             const actual = same(forward, left, right);
-            const isolated = same(cluster([left, right], mode, observedAt), left, right);
+            const isolated = same(clusterNewsEventReports([left, right], mode, observedAt), left, right);
             const hard = events.get(left.event)!.family === events.get(right.event)!.family;
             const language = (
                 left.language === right.language ? left.language + "-" + right.language : "en-zh"
