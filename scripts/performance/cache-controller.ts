@@ -7,6 +7,7 @@ interface SqliteStatement {
 
 interface SqliteDatabase {
     prepare(query: string): SqliteStatement;
+    transaction<T>(run: () => T): { immediate(): T };
     close(): void;
 }
 
@@ -41,6 +42,27 @@ export function createPerformanceCacheController(databasePath: string) {
                 .get(...sourceIds) as { count: number };
             return row.count === sourceIds.length;
         },
+        isSettled(sourceIds: string[]) {
+            validateSourceIds(sourceIds);
+            const placeholders = sourceIds.map(() => "?").join(", ");
+            const row = database
+                .prepare(
+                    `SELECT
+                (SELECT COUNT(*) FROM cache c JOIN article_ingest_checkpoint p
+                    ON p.source_id=c.id AND p.observed_at=c.updated AND p.payload=c.data
+                    WHERE c.id IN (${placeholders})) AS tracked,
+                (SELECT COUNT(*) FROM article_ingest_pending) AS pending,
+                (SELECT COUNT(*) FROM article_fts_pending) AS fts,
+                (SELECT phase FROM article_fts_repair WHERE id=1) AS phase`
+                )
+                .get(...sourceIds) as {
+                tracked: number;
+                pending: number;
+                fts: number;
+                phase: string;
+            };
+            return row.tracked === sourceIds.length && row.pending === 0 && row.fts === 0 && row.phase === "ready";
+        },
         clear(sourceIds: string[]) {
             validateSourceIds(sourceIds);
             const placeholders = sourceIds.map(() => "?").join(", ");
@@ -53,12 +75,26 @@ export function createPerformanceCacheController(databasePath: string) {
             }
 
             const placeholders = sourceIds.map(() => "?").join(", ");
-            const result = database
-                .prepare(`UPDATE cache SET updated = ? WHERE id IN (${placeholders})`)
-                .run(updatedAt, ...sourceIds);
-            if (result.changes !== sourceIds.length) {
-                throw new Error(`Expected ${sourceIds.length} cached sources to age, found ${result.changes}.`);
-            }
+            database
+                .transaction(() => {
+                    // This is synthetic cache aging, not a new observation. Keep matching
+                    // checkpoints aligned so the benchmark does not invent ingest work.
+                    database
+                        .prepare(
+                            `UPDATE article_ingest_checkpoint SET observed_at=?
+                WHERE source_id IN (${placeholders}) AND EXISTS(
+                    SELECT 1 FROM cache c WHERE c.id=source_id AND c.updated=observed_at AND c.data=payload
+                )`
+                        )
+                        .run(updatedAt, ...sourceIds);
+                    const result = database
+                        .prepare(`UPDATE cache SET updated = ? WHERE id IN (${placeholders})`)
+                        .run(updatedAt, ...sourceIds);
+                    if (result.changes !== sourceIds.length) {
+                        throw new Error(`Expected ${sourceIds.length} cached sources to age, found ${result.changes}.`);
+                    }
+                })
+                .immediate();
         },
         close() {
             if (closed) return;

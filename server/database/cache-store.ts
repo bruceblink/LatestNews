@@ -16,6 +16,8 @@ export class Cache {
     private db: Database;
     private articleIndex?: ArticleIndex;
     private recoveryAvailable = false;
+    private replayTail: Promise<void> = Promise.resolve();
+    private readonly activeWrites = new Map<string, { payload: string; promise: Promise<void> }>();
     constructor(db: Database) {
         this.db = db;
     }
@@ -53,8 +55,25 @@ export class Cache {
     async set(key: string, value: NewsItem[]) {
         const safeItems = filterSafeNewsItemLinks(value);
         if (value.length && !safeItems.length) throw new Error("News cache contains no valid article URLs.");
-        const now = Date.now();
         const payload = JSON.stringify(safeItems);
+        const active = this.activeWrites.get(key);
+        if (active?.payload === payload) {
+            await active.promise;
+            return;
+        }
+        // Many callers can share one source collection result. Coalesce only identical
+        // in-flight writes, not a later observation or an intervening different payload.
+        const promise = this.writeSnapshot(key, payload);
+        this.activeWrites.set(key, { payload, promise });
+        try {
+            await promise;
+        } finally {
+            if (this.activeWrites.get(key)?.promise === promise) this.activeWrites.delete(key);
+        }
+    }
+
+    private async writeSnapshot(key: string, payload: string) {
+        const now = Date.now();
         const cacheSql = `INSERT INTO cache (id,data,updated) VALUES (?,?,?)
             ON CONFLICT(id) DO UPDATE SET data=excluded.data,updated=max(cache.updated+1,excluded.updated)`;
         if (this.recoveryAvailable && this.articleIndex) {
@@ -90,6 +109,15 @@ export class Cache {
         if (!this.articleIndex || !this.recoveryAvailable) return;
         if (!Number.isInteger(limit) || limit < 1 || limit > 20)
             throw new Error("Article replay limit must be between 1 and 20.");
+        const replay = this.replayTail.then(() => this.replayArticleIndex(limit, preferredId));
+        // Keep the queue usable after an unexpected failure. A durable journal is the
+        // recovery boundary across processes; this lock only serializes this Cache.
+        this.replayTail = replay.catch(() => undefined);
+        await replay;
+    }
+
+    private async replayArticleIndex(limit: number, preferredId: string) {
+        if (!this.articleIndex) return;
         try {
             // Recover pre-journal snapshots or a cache-only fallback without duplicating work.
             await this.db

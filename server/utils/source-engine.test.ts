@@ -2,7 +2,7 @@ import type { SourceID, NewsItem } from "@shared/types";
 
 import { it, vi, expect, describe } from "vitest";
 
-import { createSourceEngine } from "./source-engine";
+import { createSourceEngine, parseSourceConcurrency } from "./source-engine";
 
 import type { CollectionTraceSpan } from "./collection-trace";
 
@@ -16,6 +16,12 @@ function createItems(): NewsItem[] {
 }
 
 describe("createSourceEngine", () => {
+    it("retains the default source concurrency and validates explicit overrides", () => {
+        expect(parseSourceConcurrency(undefined)).toBe(8);
+        for (const value of ["4", "6", "8", "16"]) expect(parseSourceConcurrency(value)).toBe(Number(value));
+        for (const value of ["0", "17", "NaN", "2.5", " 4", "1e1"])
+            expect(() => parseSourceConcurrency(value)).toThrow(RangeError);
+    });
     it("registers adapters, lists descriptors, and normalizes output", async () => {
         const onSuccess = vi.fn();
         const onQuality = vi.fn();

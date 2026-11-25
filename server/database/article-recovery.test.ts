@@ -88,6 +88,57 @@ describe("N4-L2 durable article recovery", () => {
             expect((await reopened.search({ query: "Recovery" })).mode).toBe("fts");
         });
     });
+    it("coalesces identical in-flight writes and serializes replay without duplicating observations", async () => {
+        await fixture(async (db) => {
+            const cache = new Cache(db);
+            await cache.init();
+            await db.prepare("CREATE TABLE writes (kind TEXT NOT NULL)").run();
+            await db
+                .prepare(
+                    "CREATE TRIGGER count_insert AFTER INSERT ON articles BEGIN INSERT INTO writes VALUES('insert'); END"
+                )
+                .run();
+            await db
+                .prepare(
+                    "CREATE TRIGGER count_update AFTER UPDATE ON articles BEGIN INSERT INTO writes VALUES('update'); END"
+                )
+                .run();
+            const items = [article("singleflight")];
+            await Promise.all(Array.from({ length: 20 }, () => cache.set("weibo", items)));
+            expect(await db.prepare("SELECT kind FROM writes").all()).toEqual([{ kind: "insert" }]);
+            await cache.set("weibo", items);
+            expect(await db.prepare("SELECT kind FROM writes").all()).toEqual([{ kind: "insert" }, { kind: "update" }]);
+            await Promise.all(
+                Array.from({ length: 12 }, (_, i) => cache.set("source-" + i, [article("parallel-" + i)]))
+            );
+            expect(await db.prepare("SELECT COUNT(*) AS count FROM writes").get()).toEqual({ count: 14 });
+            expect(await cache.getArticleIndexHealth()).toMatchObject({
+                status: "ok",
+                pendingIngest: 0,
+                pendingFts: 0,
+                untrackedCache: 0,
+            });
+        });
+    });
+
+    it("does not coalesce distinct payloads or a later return to an older payload", async () => {
+        await fixture(async (db) => {
+            const cache = new Cache(db);
+            await cache.init();
+            const first = article("same", "First title");
+            const changed = { ...first, title: "Changed title" };
+            await Promise.all([
+                cache.set("weibo", [first]),
+                cache.set("weibo", [changed]),
+                cache.set("weibo", [first]),
+            ]);
+            expect((await cache.get("weibo"))?.items).toEqual([first]);
+            expect((await cache.searchArticles({ query: "First title" })).items).toHaveLength(1);
+            expect((await cache.searchArticles({ query: "Changed title" })).items).toHaveLength(0);
+            expect(await cache.getArticleIndexHealth()).toMatchObject({ status: "ok", pendingIngest: 0 });
+        });
+    });
+
     it("retains a failed cache snapshot across restart and replays it after recovery", async () => {
         const dir = await mkdtemp(join(tmpdir(), "ln-recovery-"));
         const path = join(dir, "db.sqlite3");
