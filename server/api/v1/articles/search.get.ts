@@ -2,6 +2,7 @@ import type { SourceID } from "@shared/types";
 import type { ArticleSearchResponse } from "@shared/source-api";
 
 import { z } from "zod";
+import { articleTimestamp } from "@shared/article-time";
 import { getQuery, createError, defineEventHandler } from "h3";
 
 import { getCacheTable } from "../../../database/cache";
@@ -75,10 +76,7 @@ function parseLimit(value: string | number | undefined) {
 
 function parseSince(value: string | number | undefined) {
     if (value === undefined) return undefined;
-    const numeric = typeof value === "number" ? value : Number(value);
-    if (Number.isFinite(numeric) && numeric > 0) return numeric < 100_000_000_000 ? numeric * 1000 : numeric;
-    const parsed = Date.parse(String(value));
-    if (!Number.isFinite(parsed))
-        throw createError({ statusCode: 400, message: "Invalid article search since value." });
-    return parsed;
+    const timestamp = articleTimestamp(value);
+    if (timestamp === null) throw createError({ statusCode: 400, message: "Invalid article search since value." });
+    return timestamp;
 }

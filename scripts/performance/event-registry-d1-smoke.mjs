@@ -122,6 +122,53 @@ try {
     assert.ok(history.data.items.every((item) => item.eventId === first.eventId));
     console.log("PASS built Pages insights/search/history: backfill, partial, hidden, consistency");
 
+    // Recreate the shipped pre-L1 schema with an original article key and source mapping.
+    await ctx.db.prepare("DELETE FROM article_schema_migrations").run();
+    await ctx.db.prepare("DROP TABLE article_sources").run();
+    await ctx.db.prepare("CREATE TABLE article_sources (article_key TEXT NOT NULL, source_id TEXT NOT NULL, raw_item_id TEXT NOT NULL, first_seen_at INTEGER NOT NULL, last_seen_at INTEGER NOT NULL, PRIMARY KEY(article_key,source_id), UNIQUE(source_id,raw_item_id))").run();
+    const legacyIdentity = { ...makeItem("reused", Math.floor(now / 1000), "Identity boundary fixture"), url: "https://example.test/Aa" };
+    await ctx.db.prepare("INSERT INTO articles VALUES (?,?,?,?,?,?,?,?,?)").run("article-l2jxre", legacyIdentity.url, legacyIdentity.title, legacyIdentity.pubDate, "old", "event-old-identity", JSON.stringify(legacyIdentity), now, now);
+    await ctx.db.prepare("INSERT INTO article_sources VALUES (?,?,?,?,?)").run("article-l2jxre","weibo","reused",now,now);
+    await ctx.index.init();
+    assert.deepEqual(await ctx.db.prepare("SELECT article_key,published_at,event_id,payload FROM articles WHERE canonical_url=?").get(legacyIdentity.url), {
+        article_key:"article-l2jxre", published_at:legacyIdentity.pubDate*1000,event_id:"event-old-identity",payload:JSON.stringify(legacyIdentity)
+    });
+    const other = { ...legacyIdentity, url: "https://example.test/BB", pubDate: now };
+    await ctx.index.upsertSourceItems("weibo",[other]);
+    assert.equal(Number((await ctx.db.prepare("SELECT count(*) AS n FROM article_sources WHERE source_id='weibo' AND raw_item_id='reused'").get()).n),2);
+    assert.equal((await event("event-old-identity")).data.items[0].articleKey,"article-l2jxre");
+    console.log("PASS D1 legacy identity migration, old key/event preservation and raw-ID reuse");
+
+    const concurrent = makeItem("atomic-same",now,"Atomic write fixture");
+    const writes=await Promise.all([ctx.index.upsertSourceItems("weibo",[concurrent]),ctx.index.upsertSourceItems("v2ex",[{...concurrent,id:"atomic-other"}])]);
+    assert.equal(writes.reduce((sum,row)=>sum+row.inserted,0),1);
+    assert.equal(writes.reduce((sum,row)=>sum+row.updated,0),1);
+    const actual=(await get("/api/v1/articles/search?q=" + encodeURIComponent("Atomic write fixture"))).data.items;
+    assert.equal(actual.length,1);
+    assert.deepEqual(actual[0].sourceIds,["v2ex","weibo"]);
+    await ctx.db.prepare("CREATE TRIGGER n4l1_fail BEFORE INSERT ON article_sources WHEN NEW.source_id='ithome' BEGIN SELECT RAISE(ABORT,'fixture failure'); END").run();
+    await assert.rejects(ctx.index.upsertSourceItems("ithome",[{...concurrent,title:"Failed atomic edit"}]));
+    await assert.rejects(ctx.index.upsertSourceItems("ithome",[makeItem("atomic-fail",now,"Failed atomic insert")]));
+    assert.equal((await ctx.db.prepare("SELECT title FROM articles WHERE canonical_url=?").get(concurrent.url)).title,concurrent.title);
+    assert.equal(await ctx.db.prepare("SELECT article_key FROM articles WHERE canonical_url=?").get("https://example.test/atomic-fail"),null);
+    await ctx.db.prepare("DROP TRIGGER n4l1_fail").run();
+    console.log("PASS D1 atomic concurrent upsert, FTS uniqueness and rollback on mapping failure");
+
+    const dateItems = [
+        makeItem("timestamp-sec",Math.floor(now/1000),"Timestamp filter fixture"),
+        makeItem("timestamp-ms",now,"Timestamp filter fixture"),
+        makeItem("timestamp-iso",new Date(now).toISOString(),"Timestamp filter fixture"),
+        makeItem("timestamp-unknown","unknown","Timestamp filter fixture"),
+        makeItem("timestamp-old",now-86400000,"Timestamp filter fixture"),
+    ];
+    await ctx.index.upsertSourceItems("v2ex",dateItems);
+    const filtered=(await get("/api/v1/articles/search?q="+encodeURIComponent("Timestamp filter fixture")+"&since="+(now-3600000))).data.items;
+    assert.deepEqual(filtered.map(row=>row.item.id).sort(),["timestamp-iso","timestamp-ms","timestamp-sec"]);
+    assert.ok(filtered.every(row=>typeof row.publishedAt==="number"));
+    console.log("PASS D1 timestamp normalization and explicit since filter");
+
+
+
     const items = Array.from({ length: 150 }, (_, i) => makeItem("bulk-" + i, now, "Fixture bulk " + i));
     await ctx.index.upsertSourceItems("v2ex", items);
     assert.equal(await reconcileArticleEventId(ctx.db, items.map((item) => item.url), "event-large"), "event-large");

@@ -63,6 +63,8 @@ curl https://news.example.com/api/v1/node
 
 `GET /api/v1/articles/search?q=AI%20模型&limit=30`。q 去除首尾空白后必须为 1–256 个 UTF-16 code unit。中文及中英混合查询使用字面子串，空白分隔词必须全部命中标题或全部命中已存储规范 URL；标题完整相等、连续短语、分散词、仅 URL 依次排序，时间及主键用于同等级排序。正常英文查询继续用 FTS5/BM25。响应 searchMode 保留 fts/like/unavailable（不可用时 HTTP 503）；like 为字面回退模式，不将 % 或 _ 当作通配符。此接口不提供语义相似度。
 
+历史索引的 publishedAt 为 UTC 毫秒；未知时间不输出该字段。since 接受正数秒/毫秒、带时区 ISO 时间或 UTC 日期，指定 since 时只返回已知且不早于该时刻的文章（未知时间不参与筛选结果）。原始 item 字段保持现有表示。相同规范 URL 复用已存在 articleKey；不同 URL 即使共享来源原始 ID 或指纹，也不会覆盖旧文章及事件归属。旧数据库须完成 N4-L1 迁移后再关闭 INIT_TABLE。
+
 ### 历史事件查询
 
 `GET /api/v1/events/{eventId}?limit=30` 返回 `data.eventId`、`data.registeredAt`（毫秒时间戳，表示注册表首次写入时间而非新闻发布时间）和 `data.items`（沿用文章搜索的条目格式）。事件历史独立于当前来源缓存。默认 30 条，`limit` 允许 1–100。若返回 `meta.nextCursor`，将该值作为同一事件下一页的 `after` 参数；省略时从第一页开始。分页按文章主键稳定排序，不是发布时间排序；并发新增文章时不保证跨页固定快照。
