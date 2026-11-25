@@ -22,6 +22,7 @@ describe("source API contract", () => {
     it("keeps source endpoints centralized", () => {
         expect(sourceApi).toEqual({
             articleSearchV1: "/v1/articles/search",
+            articleEventV1: "/v1/events",
             insightsV1: "/v1/insights",
             loginCapabilityV1: "/v1/auth/capability",
             nodeV1: "/v1/node",

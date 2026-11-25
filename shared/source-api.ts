@@ -4,6 +4,7 @@ import type { NewsInsights, InsightTrendWindow } from "./news-insights";
 
 export const sourceApi = {
     articleSearchV1: "/v1/articles/search",
+    articleEventV1: "/v1/events",
     insightsV1: "/v1/insights",
     loginCapabilityV1: "/v1/auth/capability",
     nodeV1: "/v1/node",
@@ -138,6 +139,21 @@ export interface ArticleSearchResponse {
         sourceId?: SourceID;
         since?: number;
         limit: number;
+    };
+    errors: SourceApiError[];
+}
+
+export interface ArticleEventResponse {
+    data: {
+        eventId: string;
+        registeredAt: number;
+        items: ArticleSearchItem[];
+    };
+    meta: {
+        generatedAt: number;
+        itemCount: number;
+        limit: number;
+        nextCursor?: string;
     };
     errors: SourceApiError[];
 }

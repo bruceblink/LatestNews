@@ -6,6 +6,7 @@ import { normalizeNewsItemUrlKey } from "@shared/news-item-schema";
 
 import { logger } from "../utils/logger";
 import { reconcileArticleEventId } from "./article-event-identity";
+import { initArticleEventRegistry } from "./article-event-registry";
 
 const DEFAULT_SEARCH_LIMIT = 30;
 const MAX_SEARCH_LIMIT = 100;
@@ -33,6 +34,16 @@ export interface ArticleIndexSearchResult {
     mode: "fts" | "like" | "unavailable";
     items: ArticleIndexItem[];
 }
+
+export interface ArticleEventQuery {
+    limit: number;
+    after?: string;
+}
+
+export type ArticleEventResult =
+    | { status: "ok"; registeredAt: number; items: ArticleIndexItem[]; nextCursor?: string }
+    | { status: "not-found" }
+    | { status: "unavailable" };
 
 interface ArticleRow {
     article_key: string;
@@ -92,6 +103,12 @@ export class ArticleIndex {
                 "CREATE INDEX IF NOT EXISTS idx_article_sources_source ON article_sources (source_id, last_seen_at DESC)"
             )
             .run();
+
+        try {
+            await initArticleEventRegistry(this.db);
+        } catch (error) {
+            logger.warn("Could not initialize article event registry.", error);
+        }
 
         try {
             await this.db
@@ -190,6 +207,41 @@ export class ArticleIndex {
             }
         }
         return reconciled;
+    }
+
+    async getEvent(eventId: string, query: ArticleEventQuery): Promise<ArticleEventResult> {
+        try {
+            const event = (await this.db
+                .prepare("SELECT registered_at FROM news_events WHERE event_id = ?")
+                .get(eventId)) as { registered_at: number } | null | undefined;
+            if (!event) {
+                // A partially initialized registry must not report a legacy membership as missing.
+                const membership = await this.db
+                    .prepare("SELECT article_key FROM articles WHERE event_id = ? LIMIT 1")
+                    .get(eventId);
+                return { status: membership ? "unavailable" : "not-found" };
+            }
+            const limit = Math.max(1, Math.min(MAX_SEARCH_LIMIT, query.limit));
+            const rows = getRows(
+                await this.db
+                    .prepare(
+                        `SELECT article_key, canonical_url, title, published_at, event_id, payload
+                         FROM articles WHERE event_id = ? AND article_key > ?
+                         ORDER BY article_key ASC LIMIT ?`
+                    )
+                    .all(eventId, query.after ?? "", limit + 1)
+            ) as ArticleRow[];
+            const page = rows.slice(0, limit);
+            return {
+                status: "ok",
+                registeredAt: Number(event.registered_at),
+                items: await this.mapRows(page),
+                ...(rows.length > limit ? { nextCursor: page[page.length - 1].article_key } : {}),
+            };
+        } catch (error) {
+            logger.warn("Could not read article event registry.", error);
+            return { status: "unavailable" };
+        }
     }
 
     async rebuildSearchIndex() {

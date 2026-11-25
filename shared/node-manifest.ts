@@ -6,6 +6,7 @@ import type { SourceHealthSummary } from "./source-health-types";
 
 export interface NodeManifestEndpointMap {
     articleSearch: string;
+    articleEvent?: string;
     node: string;
     openApi: string;
     source: string;
@@ -122,6 +123,7 @@ export function createNodeManifestResponse(options: CreateNodeManifestOptions): 
 function createEndpointMap(): NodeManifestEndpointMap {
     return {
         articleSearch: withApiPrefix(sourceApi.articleSearchV1),
+        articleEvent: `${withApiPrefix(sourceApi.articleEventV1)}/{eventId}`,
         node: withApiPrefix(sourceApi.nodeV1),
         openApi: withApiPrefix(sourceApi.openApiV1),
         source: `${withApiPrefix(sourceApi.sourcesV1)}/{id}`,

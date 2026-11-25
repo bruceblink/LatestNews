@@ -18,6 +18,7 @@ describe("OpenAPI document", () => {
             expect.arrayContaining([
                 "/api/v1/node",
                 "/api/v1/articles/search",
+                "/api/v1/events/{eventId}",
                 "/api/v1/openapi.json",
                 "/api/v1/federation/upstream",
                 "/api/v1/federation/downstream/node",

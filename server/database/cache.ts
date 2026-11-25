@@ -9,7 +9,7 @@ import { logger } from "../utils/logger";
 import { ArticleIndex } from "./article-index";
 
 import type { CacheRow, CacheInfo } from "../types";
-import type { ArticleIndexSearchQuery, ArticleIndexSearchResult } from "./article-index";
+import type { ArticleEventQuery, ArticleIndexSearchQuery, ArticleIndexSearchResult } from "./article-index";
 
 export class Cache {
     private db: Database;
@@ -69,6 +69,10 @@ export class Cache {
     async reconcileArticleEventIds(topicEvents: TopicEvent[]) {
         // Existing tables remain usable when INIT_TABLE is disabled.
         return (this.articleIndex ?? new ArticleIndex(this.db)).reconcileEventIds(topicEvents);
+    }
+
+    async getArticleEvent(eventId: string, query: ArticleEventQuery) {
+        return (this.articleIndex ?? new ArticleIndex(this.db)).getEvent(eventId, query);
     }
 
     async searchArticles(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {
