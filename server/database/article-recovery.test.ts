@@ -58,6 +58,7 @@ describe("N4-L2 durable article recovery", () => {
             );
             await db.prepare("DELETE FROM article_search").run();
             await beginFtsRepair(db);
+            expect(await repairFtsPage(db)).toEqual({ done: false, indexed: 0 }); // empty clear stage
             const first = await repairFtsPage(db);
             expect(first.indexed).toBe(50);
             expect(first.done).toBe(false);
@@ -76,6 +77,74 @@ describe("N4-L2 durable article recovery", () => {
             expect(await db.prepare("SELECT count(*) AS count FROM article_search").get()).toEqual({ count: 113 });
         });
     });
+    it("bounds derived-row clearing, preserves articles and replays writes behind the build cursor", async () => {
+        await fixture(async (db, index) => {
+            await index.upsertSourceItems(
+                "weibo",
+                Array.from({ length: 450 }, (_, i) => article("bulk-" + i))
+            );
+            await beginFtsRepair(db);
+            expect(await repairFtsPage(db)).toEqual({ done: false, indexed: 0 });
+            expect(await db.prepare("SELECT count(*) AS count FROM article_search").get()).toEqual({ count: 250 });
+            expect(await db.prepare("SELECT count(*) AS count FROM articles").get()).toEqual({ count: 450 });
+            expect((await index.search({ query: "Recovery" })).mode).toBe("like");
+            const active = await db.prepare("SELECT cursor,generation FROM article_fts_repair").get();
+            expect(active).toMatchObject({ cursor: "clear" });
+            await index.upsertSourceItems("weibo", [article("during-clear")]);
+            expect(await db.prepare("SELECT count(*) AS count FROM article_fts_pending").get()).toEqual({ count: 1 });
+            expect(await db.prepare("SELECT count(*) AS count FROM article_search").get()).toEqual({ count: 250 });
+            await Promise.all([repairFtsPage(db), repairFtsPage(db)]);
+            expect(await db.prepare("SELECT count(*) AS count FROM article_search").get()).toEqual({ count: 0 });
+            const pages = await Promise.all([repairFtsPage(db), repairFtsPage(db)]);
+            expect(pages.reduce((sum, page) => sum + page.indexed, 0)).toBe(50);
+            const first = (await db.prepare("SELECT payload FROM articles ORDER BY article_key LIMIT 1").get()) as {
+                payload: string;
+            };
+            const updated = { ...JSON.parse(first.payload), title: "Updated behind cursor" };
+            await index.upsertSourceItems("v2ex", [updated], Date.now() + 100);
+            expect((await index.search({ query: "Updated behind cursor" })).mode).toBe("like");
+            const reopened = new ArticleIndex(db);
+            await reopened.probe();
+            let result = await reopened.continueRepair(1);
+            for (let i = 0; i < 25 && result.status === "pending"; i++) result = await reopened.continueRepair(1);
+            expect(result.status).toBe("ok");
+            expect(await ftsIsInconsistent(db)).toBe(false);
+            expect(await db.prepare("SELECT count(*) AS count FROM article_search").get()).toEqual({ count: 451 });
+            const resultItems = await reopened.search({ query: "Updated behind cursor" });
+            expect(resultItems).toMatchObject({
+                mode: "fts",
+                items: [expect.objectContaining({ title: updated.title, sourceIds: ["v2ex", "weibo"] })],
+            });
+        });
+    });
+
+    it("restarts legacy partial generations and never publishes a failed verification", async () => {
+        await fixture(async (db, index) => {
+            await index.upsertSourceItems("weibo", [article("legacy-a"), article("legacy-b")]);
+            await db
+                .prepare("UPDATE article_fts_repair SET phase='repairing',cursor='old-key',generation='legacy-uuid'")
+                .run();
+            expect(await repairFtsPage(db)).toEqual({ done: false, indexed: 0 });
+            expect(await db.prepare("SELECT cursor,generation FROM article_fts_repair").get()).toEqual({
+                cursor: "clear",
+                generation: expect.stringMatching(/^fts-v2:/),
+            });
+            await repairFtsPage(db); // clear
+            await repairFtsPage(db); // build
+            await repairFtsPage(db); // transition to verify
+            expect(await db.prepare("SELECT cursor FROM article_fts_repair").get()).toEqual({ cursor: "verify" });
+            await db.prepare("DELETE FROM article_search WHERE rowid=(SELECT min(rowid) FROM article_search)").run();
+            expect(await repairFtsPage(db)).toEqual({ done: false, indexed: 0 });
+            expect(await db.prepare("SELECT phase,cursor FROM article_fts_repair").get()).toEqual({
+                phase: "repairing",
+                cursor: "clear",
+            });
+            expect((await index.search({ query: "Recovery" })).mode).toBe("like");
+            expect((await index.continueRepair()).status).toBe("ok");
+            expect(await ftsIsInconsistent(db)).toBe(false);
+        });
+    });
+
     it("keeps failed FTS updates queued and recovers without losing articles", async () => {
         await fixture(async (db, index) => {
             await db.prepare("DROP TABLE article_search").run();

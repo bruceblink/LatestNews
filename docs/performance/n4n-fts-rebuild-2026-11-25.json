@@ -1,0 +1,521 @@
+[
+  {
+    "variant": "parent",
+    "baselineCommit": "036673bd9485857d5eae16ea3cdc4696a773dc9c",
+    "metadata": {
+      "runtime": {
+        "node": "v22.23.4",
+        "platform": "linux",
+        "arch": "x64",
+        "cpu": "AMD EPYC",
+        "cores": 8,
+        "memoryBytes": 16772878336
+      },
+      "samples": 30,
+      "seed": "deterministic-index-number",
+      "fixtureLoad": "bulk SQLite fixture, not real collection",
+      "repairBudgetMs": 12000
+    },
+    "runs": [
+      {
+        "size": 1000,
+        "fixtureLoadMs": 114.58109499999995,
+        "scenarios": {
+          "english": {
+            "count": 30,
+            "p50Ms": 0.713,
+            "p95Ms": 1.273,
+            "p99Ms": 1.322
+          },
+          "chinese": {
+            "count": 30,
+            "p50Ms": 1.302,
+            "p95Ms": 1.441,
+            "p99Ms": 1.456
+          },
+          "mixed": {
+            "count": 30,
+            "p50Ms": 1.408,
+            "p95Ms": 2.03,
+            "p99Ms": 2.317
+          },
+          "noAnswer": {
+            "count": 30,
+            "p50Ms": 1.206,
+            "p95Ms": 1.735,
+            "p99Ms": 3.388
+          },
+          "eventPagination": {
+            "count": 1,
+            "p50Ms": 1.14,
+            "p95Ms": 1.14,
+            "p99Ms": 1.14
+          },
+          "concurrentWrites": {
+            "count": 10,
+            "p50Ms": 6.25,
+            "p95Ms": 7.152,
+            "p99Ms": 7.152
+          }
+        },
+        "repair": {
+          "status": "ok",
+          "indexed": 1010,
+          "elapsedMs": 84.56166999999994,
+          "budgetMs": 12000
+        },
+        "databaseBytes": 1470464,
+        "fileBytes": 1470464,
+        "rssBytes": 139190272
+      },
+      {
+        "size": 10000,
+        "fixtureLoadMs": 1325.0062509999998,
+        "scenarios": {
+          "english": {
+            "count": 30,
+            "p50Ms": 2.602,
+            "p95Ms": 4.898,
+            "p99Ms": 9.03
+          },
+          "chinese": {
+            "count": 30,
+            "p50Ms": 8.154,
+            "p95Ms": 8.824,
+            "p99Ms": 10.069
+          },
+          "mixed": {
+            "count": 30,
+            "p50Ms": 9.276,
+            "p95Ms": 10.116,
+            "p99Ms": 10.198
+          },
+          "noAnswer": {
+            "count": 30,
+            "p50Ms": 8.316,
+            "p95Ms": 9.015,
+            "p99Ms": 9.068
+          },
+          "eventPagination": {
+            "count": 4,
+            "p50Ms": 0.729,
+            "p95Ms": 1.083,
+            "p99Ms": 1.083
+          },
+          "concurrentWrites": {
+            "count": 10,
+            "p50Ms": 8.328,
+            "p95Ms": 11.062,
+            "p99Ms": 11.062
+          }
+        },
+        "repair": {
+          "status": "ok",
+          "indexed": 10010,
+          "elapsedMs": 2117.8751580000003,
+          "budgetMs": 12000
+        },
+        "databaseBytes": 13209600,
+        "fileBytes": 13209600,
+        "rssBytes": 317812736
+      },
+      {
+        "size": 100000,
+        "fixtureLoadMs": 23970.072631000003,
+        "scenarios": {
+          "english": {
+            "count": 30,
+            "p50Ms": 74.247,
+            "p95Ms": 76.624,
+            "p99Ms": 84.233
+          },
+          "chinese": {
+            "count": 30,
+            "p50Ms": 110.408,
+            "p95Ms": 112.441,
+            "p99Ms": 112.948
+          },
+          "mixed": {
+            "count": 30,
+            "p50Ms": 120.259,
+            "p95Ms": 125.656,
+            "p99Ms": 133.006
+          },
+          "noAnswer": {
+            "count": 30,
+            "p50Ms": 117.128,
+            "p95Ms": 120.133,
+            "p99Ms": 120.848
+          },
+          "eventPagination": {
+            "count": 34,
+            "p50Ms": 0.841,
+            "p95Ms": 1.081,
+            "p99Ms": 2.257
+          },
+          "concurrentWrites": {
+            "count": 10,
+            "p50Ms": 68.795,
+            "p95Ms": 72.187,
+            "p99Ms": 72.187
+          }
+        },
+        "repair": {
+          "status": "pending",
+          "indexed": 5300,
+          "elapsedMs": 12065.647417,
+          "budgetMs": 12000
+        },
+        "databaseBytes": 121737216,
+        "fileBytes": 121737216,
+        "rssBytes": 1589653504
+      }
+    ]
+  },
+  {
+    "variant": "candidate-1",
+    "baselineCommit": "036673bd9485857d5eae16ea3cdc4696a773dc9c",
+    "metadata": {
+      "runtime": {
+        "node": "v22.23.4",
+        "platform": "linux",
+        "arch": "x64",
+        "cpu": "AMD EPYC",
+        "cores": 8,
+        "memoryBytes": 16772878336
+      },
+      "samples": 30,
+      "seed": "deterministic-index-number",
+      "fixtureLoad": "bulk SQLite fixture, not real collection",
+      "repairBudgetMs": 12000
+    },
+    "runs": [
+      {
+        "size": 1000,
+        "fixtureLoadMs": 110.06041199999999,
+        "scenarios": {
+          "english": {
+            "count": 30,
+            "p50Ms": 0.702,
+            "p95Ms": 3.1,
+            "p99Ms": 3.772
+          },
+          "chinese": {
+            "count": 30,
+            "p50Ms": 1.205,
+            "p95Ms": 1.394,
+            "p99Ms": 1.444
+          },
+          "mixed": {
+            "count": 30,
+            "p50Ms": 1.327,
+            "p95Ms": 1.46,
+            "p99Ms": 1.558
+          },
+          "noAnswer": {
+            "count": 30,
+            "p50Ms": 1.15,
+            "p95Ms": 1.207,
+            "p99Ms": 1.219
+          },
+          "eventPagination": {
+            "count": 1,
+            "p50Ms": 1.045,
+            "p95Ms": 1.045,
+            "p99Ms": 1.045
+          },
+          "concurrentWrites": {
+            "count": 10,
+            "p50Ms": 5.363,
+            "p95Ms": 7.01,
+            "p99Ms": 7.01
+          }
+        },
+        "repair": {
+          "status": "ok",
+          "indexed": 1010,
+          "elapsedMs": 55.40007600000001,
+          "budgetMs": 12000
+        },
+        "databaseBytes": 1400832,
+        "fileBytes": 1400832,
+        "rssBytes": 135245824
+      },
+      {
+        "size": 10000,
+        "fixtureLoadMs": 1320.498208,
+        "scenarios": {
+          "english": {
+            "count": 30,
+            "p50Ms": 2.572,
+            "p95Ms": 3.536,
+            "p99Ms": 3.604
+          },
+          "chinese": {
+            "count": 30,
+            "p50Ms": 8.174,
+            "p95Ms": 9.188,
+            "p99Ms": 15.219
+          },
+          "mixed": {
+            "count": 30,
+            "p50Ms": 10.585,
+            "p95Ms": 13.543,
+            "p99Ms": 15.275
+          },
+          "noAnswer": {
+            "count": 30,
+            "p50Ms": 10.421,
+            "p95Ms": 17.148,
+            "p99Ms": 17.262
+          },
+          "eventPagination": {
+            "count": 4,
+            "p50Ms": 0.813,
+            "p95Ms": 1.451,
+            "p99Ms": 1.451
+          },
+          "concurrentWrites": {
+            "count": 10,
+            "p50Ms": 10.237,
+            "p95Ms": 12.565,
+            "p99Ms": 12.565
+          }
+        },
+        "repair": {
+          "status": "ok",
+          "indexed": 10010,
+          "elapsedMs": 587.1690800000001,
+          "budgetMs": 12000
+        },
+        "databaseBytes": 12410880,
+        "fileBytes": 12410880,
+        "rssBytes": 313532416
+      },
+      {
+        "size": 100000,
+        "fixtureLoadMs": 20535.646798,
+        "scenarios": {
+          "english": {
+            "count": 30,
+            "p50Ms": 75.87,
+            "p95Ms": 78.43,
+            "p99Ms": 80.205
+          },
+          "chinese": {
+            "count": 30,
+            "p50Ms": 110.486,
+            "p95Ms": 116.588,
+            "p99Ms": 116.873
+          },
+          "mixed": {
+            "count": 30,
+            "p50Ms": 122.586,
+            "p95Ms": 125.741,
+            "p99Ms": 126.593
+          },
+          "noAnswer": {
+            "count": 30,
+            "p50Ms": 116.422,
+            "p95Ms": 119.192,
+            "p99Ms": 121.999
+          },
+          "eventPagination": {
+            "count": 34,
+            "p50Ms": 0.846,
+            "p95Ms": 1.806,
+            "p99Ms": 5.968
+          },
+          "concurrentWrites": {
+            "count": 10,
+            "p50Ms": 67.745,
+            "p95Ms": 69.91,
+            "p99Ms": 69.91
+          }
+        },
+        "repair": {
+          "status": "ok",
+          "indexed": 100010,
+          "elapsedMs": 6566.099291999999,
+          "budgetMs": 12000
+        },
+        "databaseBytes": 120573952,
+        "fileBytes": 120573952,
+        "rssBytes": 1670647808
+      }
+    ]
+  },
+  {
+    "variant": "candidate-2",
+    "baselineCommit": "036673bd9485857d5eae16ea3cdc4696a773dc9c",
+    "metadata": {
+      "runtime": {
+        "node": "v22.23.4",
+        "platform": "linux",
+        "arch": "x64",
+        "cpu": "AMD EPYC",
+        "cores": 8,
+        "memoryBytes": 16772878336
+      },
+      "samples": 30,
+      "seed": "deterministic-index-number",
+      "fixtureLoad": "bulk SQLite fixture, not real collection",
+      "repairBudgetMs": 12000
+    },
+    "runs": [
+      {
+        "size": 1000,
+        "fixtureLoadMs": 111.698173,
+        "scenarios": {
+          "english": {
+            "count": 30,
+            "p50Ms": 0.771,
+            "p95Ms": 1.029,
+            "p99Ms": 1.353
+          },
+          "chinese": {
+            "count": 30,
+            "p50Ms": 1.287,
+            "p95Ms": 1.379,
+            "p99Ms": 1.538
+          },
+          "mixed": {
+            "count": 30,
+            "p50Ms": 1.298,
+            "p95Ms": 1.463,
+            "p99Ms": 3.271
+          },
+          "noAnswer": {
+            "count": 30,
+            "p50Ms": 1.195,
+            "p95Ms": 1.414,
+            "p99Ms": 1.479
+          },
+          "eventPagination": {
+            "count": 1,
+            "p50Ms": 1.067,
+            "p95Ms": 1.067,
+            "p99Ms": 1.067
+          },
+          "concurrentWrites": {
+            "count": 10,
+            "p50Ms": 6.021,
+            "p95Ms": 7.746,
+            "p99Ms": 7.746
+          }
+        },
+        "repair": {
+          "status": "ok",
+          "indexed": 1010,
+          "elapsedMs": 62.85288000000003,
+          "budgetMs": 12000
+        },
+        "databaseBytes": 1400832,
+        "fileBytes": 1400832,
+        "rssBytes": 123310080
+      },
+      {
+        "size": 10000,
+        "fixtureLoadMs": 1344.26372,
+        "scenarios": {
+          "english": {
+            "count": 30,
+            "p50Ms": 2.497,
+            "p95Ms": 2.639,
+            "p99Ms": 2.665
+          },
+          "chinese": {
+            "count": 30,
+            "p50Ms": 8.678,
+            "p95Ms": 9.694,
+            "p99Ms": 9.915
+          },
+          "mixed": {
+            "count": 30,
+            "p50Ms": 9.188,
+            "p95Ms": 10.516,
+            "p99Ms": 10.531
+          },
+          "noAnswer": {
+            "count": 30,
+            "p50Ms": 8.56,
+            "p95Ms": 9.179,
+            "p99Ms": 9.838
+          },
+          "eventPagination": {
+            "count": 4,
+            "p50Ms": 0.718,
+            "p95Ms": 1.139,
+            "p99Ms": 1.139
+          },
+          "concurrentWrites": {
+            "count": 10,
+            "p50Ms": 8.839,
+            "p95Ms": 10.22,
+            "p99Ms": 10.22
+          }
+        },
+        "repair": {
+          "status": "ok",
+          "indexed": 10010,
+          "elapsedMs": 567.7762290000001,
+          "budgetMs": 12000
+        },
+        "databaseBytes": 12410880,
+        "fileBytes": 12410880,
+        "rssBytes": 307806208
+      },
+      {
+        "size": 100000,
+        "fixtureLoadMs": 20769.052537,
+        "scenarios": {
+          "english": {
+            "count": 30,
+            "p50Ms": 77.858,
+            "p95Ms": 81.854,
+            "p99Ms": 81.912
+          },
+          "chinese": {
+            "count": 30,
+            "p50Ms": 111.616,
+            "p95Ms": 115.374,
+            "p99Ms": 124.804
+          },
+          "mixed": {
+            "count": 30,
+            "p50Ms": 121.965,
+            "p95Ms": 124.735,
+            "p99Ms": 125.326
+          },
+          "noAnswer": {
+            "count": 30,
+            "p50Ms": 116.788,
+            "p95Ms": 120.573,
+            "p99Ms": 121.536
+          },
+          "eventPagination": {
+            "count": 34,
+            "p50Ms": 0.796,
+            "p95Ms": 1.261,
+            "p99Ms": 1.371
+          },
+          "concurrentWrites": {
+            "count": 10,
+            "p50Ms": 67.907,
+            "p95Ms": 71.478,
+            "p99Ms": 71.478
+          }
+        },
+        "repair": {
+          "status": "ok",
+          "indexed": 100010,
+          "elapsedMs": 6349.773080999999,
+          "budgetMs": 12000
+        },
+        "databaseBytes": 120573952,
+        "fileBytes": 120573952,
+        "rssBytes": 1659187200
+      }
+    ]
+  }
+]
