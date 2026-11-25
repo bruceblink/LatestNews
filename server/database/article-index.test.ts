@@ -53,7 +53,7 @@ describe("article index", () => {
         const index = await createIndex();
         const item = createItem("event-item", "安全事件公告", "https://example.com/security");
         await index.upsertSourceItems("weibo", [item]);
-        const updated = await index.updateEventIds([
+        const events = await index.reconcileEventIds([
             {
                 id: "legacy-topic",
                 eventId: "event-v1-stable",
@@ -67,7 +67,7 @@ describe("article index", () => {
             },
         ]);
 
-        expect(updated).toBe(1);
+        expect(events).toMatchObject([{ id: "legacy-topic", eventId: "event-v1-stable" }]);
         expect(await index.rebuildSearchIndex()).toMatchObject({ status: "ok", indexed: 1 });
         await expect(index.search({ query: "安全" })).resolves.toMatchObject({
             status: "ok",

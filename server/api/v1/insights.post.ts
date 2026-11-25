@@ -58,7 +58,7 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
     });
 
     if (cacheTable && response.data.topicEvents.length) {
-        await cacheTable.updateArticleEventIds(response.data.topicEvents);
+        response.data.topicEvents = await cacheTable.reconcileArticleEventIds(response.data.topicEvents);
     }
 
     return response;
