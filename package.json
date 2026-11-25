@@ -47,6 +47,7 @@
         "performance:dev-start": "node ./scripts/performance/dev-start.mjs",
         "performance:baseline": "cross-env LATESTNEWS_SKIP_FAVICON_FETCH=true pnpm build && pnpm exec tsx scripts/performance/api-baseline.ts",
         "performance:http-collection": "tsx --tsconfig tsconfig.node.json scripts/performance/http-collection-baseline.ts",
+        "performance:chinese-search": "tsx --tsconfig tsconfig.node.json scripts/performance/chinese-search-quality.ts",
         "performance:article-index": "tsx --tsconfig tsconfig.node.json scripts/performance/article-index-baseline.ts",
         "performance:news-events": "tsx --tsconfig tsconfig.node.json scripts/performance/news-event-quality.ts",
         "events:review": "tsx --tsconfig tsconfig.node.json scripts/events/review.ts",

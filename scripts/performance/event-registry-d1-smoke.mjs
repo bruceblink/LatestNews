@@ -191,6 +191,20 @@ try {
     assert.ok(restarted.items.every((item) => item.eventId === first.eventId));
     assert.equal((await event("event-legacy")).data.registeredAt, migrated.data.registeredAt);
     console.log("PASS D1 source-cache deletion, workerd restart, registry persistence");
+    await ctx.index.upsertSourceItems("v2ex", [
+        makeItem("han-exact", now, "AI 频道"),
+        makeItem("han-substring", now, "AI 个性化电视频道"),
+        makeItem("han-percent", now, "100%_量化模型"),
+        makeItem("han-noise", now, "1000量化模型"),
+    ]);
+    const han = (await get("/api/v1/articles/search?source=v2ex&q=" + encodeURIComponent("AI 频道"))).data;
+    assert.equal(han.searchMode, "like");
+    assert.deepEqual(han.items.map((item) => item.item.id), ["han-exact", "han-substring"]);
+    const symbols = (await get("/api/v1/articles/search?q=" + encodeURIComponent("%_"))).data;
+    assert.deepEqual(symbols.items.map((item) => item.item.id), ["han-percent"]);
+    await get("/api/v1/articles/search?q=" + "x".repeat(257), 400);
+    console.log("PASS D1 Han substring, mixed terms, literal symbols, filters and query limit");
+
 
     await ctx.db.prepare("DROP TRIGGER trg_articles_event_insert").run();
     await ctx.db.prepare("DROP TRIGGER trg_articles_event_update").run();
