@@ -70,6 +70,47 @@ export async function resolveTopicEvent(db: Database, topic: TopicEvent): Promis
     return { ...topic, eventId: row.event_id, identityStatus: "registered" };
 }
 
+/** Resolve display groups with one statement per bounded group of topics on D1. */
+export async function resolveTopicEventsD1(db: Database, topics: TopicEvent[]): Promise<TopicEvent[]> {
+    const resolved: TopicEvent[] = [];
+    for (let offset = 0; offset < topics.length; offset += 10) {
+        const group = topics.slice(offset, offset + 10);
+        const urls = group.map((topic) => canonicalMembers(topic.items.map((item) => item.url)));
+        const rows = (await db
+            .prepare(
+                `WITH members AS (
+            SELECT CAST(g.key AS INTEGER) AS topic,u.value AS url FROM json_each(?) g JOIN json_each(g.value) u
+        ), known AS (
+            SELECT m.topic,COUNT(a.article_key) AS found,COUNT(a.event_id) AS assigned,
+                COUNT(DISTINCT COALESCE(alias.canonical_id,a.event_id)) AS roots,
+                MIN(COALESCE(alias.canonical_id,a.event_id)) AS event_id
+            FROM members m LEFT JOIN articles a ON a.canonical_url=m.url
+            LEFT JOIN news_event_aliases alias ON alias.alias_id=a.event_id GROUP BY m.topic
+        )
+        SELECT k.*,e.event_id AS registered FROM known k LEFT JOIN news_events e ON e.event_id=k.event_id`
+            )
+            .all(JSON.stringify(urls))) as Array<{
+            topic: number;
+            found: number;
+            assigned: number;
+            roots: number;
+            event_id: string | null;
+            registered: string | null;
+        }>;
+        const known = new Map(rows.map((row) => [Number(row.topic), row]));
+        for (const [i, topic] of group.entries()) {
+            const row = known.get(i);
+            if (!row || !row.event_id) resolved.push(provisionalTopicEvent(topic));
+            else if (Number(row.roots) > 1) resolved.push(provisionalTopicEvent(topic, "conflict"));
+            else if (Number(row.found) !== urls[i].length || Number(row.assigned) !== urls[i].length)
+                resolved.push(provisionalTopicEvent(topic, "partial"));
+            else if (!row.registered) resolved.push(provisionalTopicEvent(topic, "unavailable"));
+            else resolved.push({ ...topic, eventId: row.event_id, identityStatus: "registered" });
+        }
+    }
+    return resolved;
+}
+
 export interface ReviewedEventAssignment {
     urls: string[];
     actor: string;

@@ -32,7 +32,7 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
         });
     }
 
-    const cacheTable = await getCacheTable();
+    const cacheTable = await getCacheTable(event);
     const { ids, invalidIds } = normalizeSourceIds(parsedBody.data.sources);
     const caches =
         (await cacheTable?.getEntire(ids).catch((error: unknown) => {
@@ -62,6 +62,11 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
         ? await cacheTable.resolveArticleEventIds(response.data.topicEvents)
         : response.data.topicEvents.map((topic) => provisionalTopicEvent(topic, "unavailable"));
 
+    if (event.req.runtime?.cloudflare && cacheTable) {
+        // Cached-only visits can still advance historical recovery without
+        // keeping the dashboard waiting for index writes.
+        event.waitUntil(cacheTable.schedulePagesBacklogIfNeeded());
+    }
     return response;
 });
 

@@ -13,7 +13,7 @@ import { resolveSourceResponse } from "./resolve-source-response";
 
 /** Read available news and apply the caller's refresh permissions and cache policy. */
 export async function readSource(id: SourceID, latest: boolean, clearCache: boolean, event: H3Event) {
-    const cacheTable = await getCacheTable();
+    const cacheTable = await getCacheTable(event);
     const cache = await cacheTable?.get(id).catch((error: unknown) => {
         logger.warn(`Could not read source cache for ${id}.`, error);
         return undefined;

@@ -1,3 +1,4 @@
+import type { H3Event } from "h3";
 import type { Database } from "db0";
 
 import { createDatabase } from "db0";
@@ -45,6 +46,110 @@ describe("cache database availability", () => {
 
         expect(cacheTable).toBeDefined();
         expect(get).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not share a Pages initialization promise or binding across requests", async () => {
+        const { Cache, getCacheTable } = await import("./cache");
+        const firstBinding = { prepare: vi.fn(), batch: vi.fn(), exec: vi.fn() };
+        const secondBinding = { prepare: vi.fn(), batch: vi.fn(), exec: vi.fn() };
+        let unblock!: () => void;
+        const blocked = new Promise<void>((resolve) => {
+            unblock = resolve;
+        });
+        const spy = vi
+            .spyOn(Cache.prototype, "openPages")
+            .mockImplementationOnce(() => blocked)
+            .mockResolvedValueOnce(undefined);
+        const event = (binding: unknown) =>
+            ({
+                req: { runtime: { cloudflare: { env: { LATESTNEWS_DB: binding } } } },
+                waitUntil: vi.fn(),
+            }) as unknown as H3Event;
+        const first = getCacheTable(event(firstBinding));
+        try {
+            const second = await getCacheTable(event(secondBinding));
+            expect(second).toBeDefined();
+            expect(spy).toHaveBeenCalledTimes(2);
+            expect(getRuntimeDatabase).not.toHaveBeenCalled();
+            unblock();
+            expect(await first).not.toBe(second);
+        } finally {
+            unblock();
+            await first;
+        }
+        const { createRequestD1Database } = await import("./request-d1");
+        const a = createRequestD1Database(firstBinding),
+            b = createRequestD1Database(secondBinding);
+        expect(await a.getInstance()).toBe(firstBinding);
+        expect(await b.getInstance()).toBe(secondBinding);
+    });
+
+    it("opens an initialized Pages cache without replaying legacy snapshots or waiting for deferred writes", async () => {
+        const database = createDatabase(sqliteConnector({ name: ":memory:" }));
+        try {
+            const { Cache } = await import("./cache");
+            const initial = new Cache(database);
+            await initial.init();
+            const old = { id: "old", title: "Old backlog fixture", url: "https://example.test/old" };
+            await database.prepare("INSERT INTO cache VALUES(?,?,?)").run("weibo", 1, JSON.stringify([old]));
+            await database
+                .prepare("INSERT INTO article_ingest_pending(id,source_id,payload,observed_at) VALUES(?,?,?,?)")
+                .run("pending", "weibo", JSON.stringify([old]), 1);
+            const pending: Promise<unknown>[] = [];
+            const cache = new Cache(database, { deferMaintenance: (work) => pending.push(work) });
+            await cache.openPages(true);
+            expect(await cache.get("weibo")).toMatchObject({ items: [old] });
+            expect(await cache.getArticleIndexHealth()).toMatchObject({ status: "degraded", pendingIngest: 1 });
+            expect(await database.prepare("SELECT count(*) AS count FROM articles").get()).toEqual({ count: 0 });
+            let unblock!: () => void;
+            const held = new Promise<void>((resolve) => {
+                unblock = resolve;
+            });
+            const replay = vi.spyOn(cache, "maintainArticleIndex").mockReturnValue(held);
+            try {
+                await cache.set("v2ex", [{ id: "one", title: "New", url: "https://example.test/one" }]);
+                await cache.set("hackernews", [{ id: "two", title: "New", url: "https://example.test/two" }]);
+                expect(pending).toHaveLength(1);
+                expect(replay).toHaveBeenCalledExactlyOnceWith(1);
+                expect(await database.prepare("SELECT count(*) AS count FROM article_ingest_pending").get()).toEqual({
+                    count: 3,
+                });
+                expect(await cache.get("v2ex")).toBeDefined();
+            } finally {
+                unblock();
+                await Promise.all(pending);
+            }
+            replay.mockRestore();
+            await cache.maintainArticleIndex(1);
+            expect(await database.prepare("SELECT count(*) AS count FROM articles").get()).toEqual({ count: 1 });
+            expect(await cache.getArticleIndexHealth()).toMatchObject({ pendingIngest: 2 });
+        } finally {
+            await database.dispose();
+        }
+    });
+
+    it("keeps pre-migration Pages source cache readable without migrating on a read", async () => {
+        const db = createDatabase(sqliteConnector({ name: ":memory:" }));
+        try {
+            await db.prepare("CREATE TABLE cache(id TEXT PRIMARY KEY, updated INTEGER, data TEXT)").run();
+            await db.prepare("CREATE TABLE articles(article_key TEXT PRIMARY KEY)").run();
+            await db.prepare("INSERT INTO articles VALUES('old-key')").run();
+            const item = { id: "legacy", title: "Legacy", url: "https://example.test/legacy" };
+            await db.prepare("INSERT INTO cache VALUES(?,?,?)").run("weibo", 1, JSON.stringify([item]));
+            const { Cache } = await import("./cache");
+            const defer = vi.fn();
+            const cache = new Cache(db, { deferMaintenance: defer });
+            await cache.openPages(true);
+            expect(await cache.get("weibo")).toMatchObject({ items: [item] });
+            expect(await cache.searchArticles({ query: "Legacy" })).toMatchObject({ status: "unavailable" });
+            expect(await db.prepare("SELECT article_key FROM articles").get()).toEqual({ article_key: "old-key" });
+            expect(
+                await db.prepare("SELECT name FROM sqlite_master WHERE name='article_schema_migrations'").get()
+            ).toBeUndefined();
+            expect(defer).not.toHaveBeenCalled();
+        } finally {
+            await db.dispose();
+        }
     });
 
     it("persists and reads news through the imported database provider", async () => {

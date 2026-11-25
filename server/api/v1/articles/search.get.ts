@@ -32,7 +32,7 @@ export default defineEventHandler(async (event): Promise<ArticleSearchResponse> 
     const limit = parseLimit(parsed.data.limit);
     const since = parseSince(parsed.data.since);
     const sourceId = parsed.data.source?.trim() || undefined;
-    const cache = await getCacheTable();
+    const cache = await getCacheTable(event);
     if (!cache) {
         throw createError({ statusCode: 503, message: "Article search is unavailable without a writable cache." });
     }

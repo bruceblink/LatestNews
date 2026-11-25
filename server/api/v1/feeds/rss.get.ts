@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
 
         const url = getRequestURL(event);
         const response = await resolveSourceBatchPayload(payload, {
+            event,
             logPrefix: "rss feed",
             signal: event.req.signal,
             background: (pending) => event.waitUntil(pending),

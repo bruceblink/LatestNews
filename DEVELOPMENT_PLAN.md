@@ -100,6 +100,8 @@ LatestNews 的主线是来源发现、关注、阅读、保存和回看。Web/PW
 
 2026-11-25（N4-N 独立质量复核）：新增 performance:quality-review，生成无既有答案/预测的双人审核包、校验 SHA-256 与完整性声明、保留争议并只评分共识；真实聚类整组/独立配对与 SQLite/字符/RRF 检索、分层/无答案指标，automaticAdmission=false。已有 73 篇/36 查询；冻结 [未审核候选保留集](test/fixtures/news-quality-holdout-candidate.json) 63 篇/22 查询，六渠道、16 中文/47 英文，精确 URL/标题/查询不重叠检查通过，但语义/事件重叠和未接触调参证明仍需独立人工审核。589 Vitest（新增 12）、lint、三端类型检查通过；旧 proposed 评分基线不变。详见[独立质量复核流程](docs/performance/n4n-quality-review.md)。未伪造人工评审或计算新候选预测，自动归属和混合检索继续禁用。
 
+2026-11-25（P0 Pages 可用性）：生产 /insights 加载失败；部署健康和文章检索各 25 秒未响应，D1 直接 SQL 可用（71 缓存、818 文章、21 pending，身份迁移完成）。已分离 Pages 请求级 D1 cache 与后台 journal 维护，限制单请求补写并使用 30 篇集合批次、10 topic 批量身份解析；Node 路径保持原行为。592 Vitest、lint、三端类型检查、Node/Pages 构建、实际 Pages 隔离 D1 17 原检查点及生产规模积压专项通过；详见[Pages 热修复](docs/performance/pages-d1-availability-hotfix.md)。生产自动部署后的接口验收单列，不手工清理数据库，不发布版本。
+
 ### 2.6 N4-O：历史检索与事件详情
 
 目标：让用户真正使用 N4-E/G/I/J 已交付的能力。新增历史文章检索入口（不替换 Ctrl/Cmd+K 的来源搜索），支持查询、来源、时间、明确的结果上限与空状态；事件详情支持规范/别名、分页、来源及时间、当前视图和历史成员的区分；复用收藏、稍后读、已读和外链。优先使用现有 TanStack Router/Query、共享 v1 类型及 Node Manifest；不增加独立前端框架。

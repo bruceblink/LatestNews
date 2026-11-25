@@ -19,11 +19,51 @@ export class Cache {
     private recoveryAvailable = false;
     private replayTail: Promise<void> = Promise.resolve();
     private readonly activeWrites = new Map<string, { payload: string; promise: Promise<void> }>();
-    constructor(db: Database) {
+    private maintenanceScheduled = false;
+    constructor(
+        db: Database,
+        private readonly options: { deferMaintenance?: (pending: Promise<unknown>) => void } = {}
+    ) {
         this.db = db;
     }
 
-    async init() {
+    /** Pages reads must not await journal replay, repair, or legacy table scans. */
+    async openPages(autoInit: boolean) {
+        const tables = (await this.db
+            .prepare(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('cache','articles','news_events','news_event_aliases','news_event_approvals','article_search')"
+            )
+            .all()) as Array<{ name: string }>;
+        const names = new Set(tables.map((row) => row.name));
+        if (!names.has("cache")) {
+            if (!autoInit) throw new Error("Source cache schema is unavailable.");
+            await this.createCacheTable();
+        }
+        const index = new ArticleIndex(this.db);
+        this.articleIndex = index;
+        this.recoveryAvailable = await index.probe(false);
+        // Only a fresh database or an already migrated index can receive the
+        // additive schema setup in an interactive request. Older data migration
+        // is an explicit maintenance operation, not part of cache availability.
+        if (
+            autoInit &&
+            (!names.has("articles") ||
+                (this.recoveryAvailable &&
+                    ["news_events", "news_event_aliases", "news_event_approvals", "article_search"].some(
+                        (name) => !names.has(name)
+                    )))
+        ) {
+            try {
+                await index.init(false);
+                this.recoveryAvailable = await index.probe(false);
+            } catch (error) {
+                this.recoveryAvailable = false;
+                logger.warn("Could not initialize Pages article schema; source cache remains available.", error);
+            }
+        }
+    }
+
+    private async createCacheTable() {
         await this.db
             .prepare(
                 `
@@ -35,6 +75,10 @@ export class Cache {
               `
             )
             .run();
+    }
+
+    async init() {
+        await this.createCacheTable();
         try {
             this.articleIndex = new ArticleIndex(this.db);
             await this.articleIndex.init();
@@ -97,7 +141,11 @@ export class Cache {
                 }
             });
             // A committed cache write is not a promise of completed indexing.
-            await this.maintainArticleIndex(2, id);
+            if (this.options.deferMaintenance) {
+                // At most one bounded maintenance job per request. Commit the
+                // durable journal before returning; waitUntil owns its lifetime.
+                this.schedulePagesMaintenance();
+            } else await this.maintainArticleIndex(2, id);
         } else {
             const result = await measureBenchmarkPhase("cache.commit", () =>
                 this.db.prepare(cacheSql).run(key, payload, now)
@@ -107,6 +155,38 @@ export class Cache {
             logger.warn("Article recovery schema unavailable; saved source cache only.");
         }
         logger.success(`set ${key} cache`);
+    }
+
+    async schedulePagesBacklogIfNeeded() {
+        if (!this.options.deferMaintenance || this.maintenanceScheduled || !this.recoveryAvailable) return;
+        try {
+            // The public insight response is already computed. Only check durable
+            // work, then attach maintenance to this request's waitUntil.
+            const row = (await this.db
+                .prepare(
+                    `SELECT EXISTS(SELECT 1 FROM article_ingest_pending)
+                OR EXISTS(SELECT 1 FROM article_fts_pending)
+                OR EXISTS(SELECT 1 FROM article_fts_repair WHERE phase='repairing')
+                OR EXISTS(SELECT 1 FROM cache c WHERE NOT EXISTS(
+                    SELECT 1 FROM article_ingest_checkpoint p WHERE p.source_id=c.id AND p.observed_at=c.updated AND p.payload=c.data
+                )) AS pending`
+                )
+                .get()) as { pending: number };
+            if (row.pending) await this.startPagesMaintenance();
+        } catch (error) {
+            logger.warn("Could not check Pages article backlog.", error);
+        }
+    }
+
+    schedulePagesMaintenance() {
+        const pending = this.startPagesMaintenance();
+        if (pending) this.options.deferMaintenance!(pending);
+    }
+
+    private startPagesMaintenance() {
+        if (!this.options.deferMaintenance || this.maintenanceScheduled || !this.recoveryAvailable) return undefined;
+        this.maintenanceScheduled = true;
+        return this.maintainArticleIndex(1);
     }
 
     /** Bounded journal replay. Persist each source snapshot until all articles succeed. */
@@ -209,6 +289,8 @@ export class Cache {
     }
 
     async searchArticles(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {
+        if (this.options.deferMaintenance && !this.recoveryAvailable)
+            return { status: "unavailable", mode: "unavailable", items: [] };
         if (this.articleIndex) return this.articleIndex.search(query);
         return new ArticleIndex(this.db).searchLike(query);
     }

@@ -8,10 +8,10 @@ import { createError, defineEventHandler } from "h3";
 import { getSourceHealthSummary } from "#/utils/source-health";
 import { getDeploymentCacheStatus, createDeploymentHealthResponse } from "@shared/deployment-health";
 
-export default defineEventHandler(async (): Promise<DeploymentHealthResponse> => {
+export default defineEventHandler(async (event): Promise<DeploymentHealthResponse> => {
     try {
-        const cacheDisabled = process.env.ENABLE_CACHE === "false";
-        const cacheTable = cacheDisabled ? undefined : await getCacheTable();
+        const cacheDisabled = (event.req.runtime?.cloudflare?.env.ENABLE_CACHE ?? process.env.ENABLE_CACHE) === "false";
+        const cacheTable = cacheDisabled ? undefined : await getCacheTable(event);
 
         return createDeploymentHealthResponse({
             appName: APP_NAME,

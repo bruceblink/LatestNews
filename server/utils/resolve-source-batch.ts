@@ -1,3 +1,4 @@
+import type { H3Event } from "h3";
 import type { SourceID } from "@shared/types";
 import type { SourceBatchPayload, SourceBatchResponse } from "@shared/source-api";
 
@@ -11,6 +12,7 @@ import { createSourceBatchResponse } from "@shared/source-batch-response";
 import { resolveEntireSourcesWithDiagnostics } from "./resolve-entire-sources";
 
 interface ResolveSourceBatchPayloadOptions {
+    event?: H3Event;
     now?: number;
     logPrefix?: string;
     signal?: AbortSignal;
@@ -21,6 +23,7 @@ interface ResolveSourceBatchPayloadOptions {
 export async function resolveSourceBatchPayload(
     payload: SourceBatchPayload,
     {
+        event,
         now = Date.now(),
         logPrefix = "v1 batch",
         signal,
@@ -37,7 +40,7 @@ export async function resolveSourceBatchPayload(
     }
 
     const { sourceIds, invalidSourceIds } = normalizeFetchableSources(selected);
-    const cacheTable = await getCacheTable();
+    const cacheTable = await getCacheTable(event);
     const caches =
         (await cacheTable?.getEntire(sourceIds).catch((error: unknown) => {
             logger.warn(`Could not read ${logPrefix} cache.`, error);

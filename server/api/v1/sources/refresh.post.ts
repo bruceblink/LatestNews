@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, message: "Invalid source refresh force. Use true or false." });
     }
 
-    const cache = await getCacheTable();
+    const cache = await getCacheTable(event);
     if (!cache) throw createError({ statusCode: 503, message: "Source refresh requires a writable news cache." });
 
     const ids = (Object.keys(dataSources) as SourceID[])
@@ -74,6 +74,7 @@ export default defineEventHandler(async (event) => {
         if (result.status === "rejected") throw result.reason;
         return result.value;
     });
+    cache.schedulePagesMaintenance();
     logger.info(`Source refresh processed ${sources.length} of ${ids.length} eligible sources.`);
     return {
         data: { sources },

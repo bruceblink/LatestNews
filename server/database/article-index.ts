@@ -11,8 +11,13 @@ import { logger } from "../utils/logger";
 import { executeArticleBatch } from "./article-atomic-batch";
 import { initArticleEventRegistry } from "./article-event-registry";
 import { ARTICLE_SOURCES_SCHEMA, migrateArticleIdentity } from "./article-identity-migration";
-import { resolveTopicEvent, initEventApprovals, provisionalTopicEvent } from "./article-event-governance";
 import { hasArticleEventAliases, initArticleEventAliases, resolveArticleEventAlias } from "./article-event-aliases";
+import {
+    resolveTopicEvent,
+    initEventApprovals,
+    resolveTopicEventsD1,
+    provisionalTopicEvent,
+} from "./article-event-governance";
 import {
     repairFtsPage,
     beginFtsRepair,
@@ -84,7 +89,7 @@ export class ArticleIndex {
 
     constructor(private readonly db: Database) {}
 
-    async init() {
+    async init(maintain = true) {
         await this.db
             .prepare(
                 `CREATE TABLE IF NOT EXISTS articles (
@@ -129,6 +134,7 @@ export class ArticleIndex {
                 )
                 .run();
             this.ftsAvailable = true;
+            if (!maintain) return;
             const state = await ftsRecoveryStatus(this.db);
             this.ftsVerified = state.phase === "ready" && state.pending === 0 && !(await ftsIsInconsistent(this.db));
             if (state.phase === "ready" && state.pending === 0 && !this.ftsVerified) await beginFtsRepair(this.db);
@@ -141,7 +147,7 @@ export class ArticleIndex {
     }
 
     /** Read-only capability detection when INIT_TABLE=false. */
-    async probe() {
+    async probe(audit = true) {
         try {
             this.recoveryAvailable = await probeArticleRecovery(this.db);
             this.ftsAvailable =
@@ -154,7 +160,7 @@ export class ArticleIndex {
             if (this.ftsAvailable) {
                 const state = await ftsRecoveryStatus(this.db);
                 this.ftsVerified =
-                    state.phase === "ready" && state.pending === 0 && !(await ftsIsInconsistent(this.db));
+                    state.phase === "ready" && state.pending === 0 && (!audit || !(await ftsIsInconsistent(this.db)));
             } else this.ftsVerified = false;
         } catch {
             this.ftsVerified = false;
@@ -217,6 +223,8 @@ export class ArticleIndex {
     }
 
     async upsertSourceItems(sourceId: SourceID, items: NewsItem[], now = Date.now()) {
+        if (this.db.connector === "cloudflare-d1") return this.upsertD1SourceItems(sourceId, items, now);
+
         let inserted = 0;
         let updated = 0;
 
@@ -288,7 +296,115 @@ export class ArticleIndex {
         return { inserted, updated };
     }
 
+    /** A normal source snapshot has at most 30 entries. Group its mutations
+     * into set-based SQL rather than two remote calls per article. */
+    private async upsertD1SourceItems(sourceId: SourceID, items: NewsItem[], now: number) {
+        const valid = filterSafeNewsItemLinks(items).flatMap((item) => {
+            const url = normalizeNewsItemUrlKey(item.url);
+            return url ? [{ item, url }] : [];
+        });
+        let inserted = 0;
+        for (let offset = 0; offset < valid.length; offset += 30) {
+            const group = valid.slice(offset, offset + 30);
+            const unique = new Map(group.map((row) => [row.url, row.item]));
+            const candidates = new Set<string>();
+            const payload = JSON.stringify(
+                [...unique].map(([url, item]) => {
+                    let candidate = "article-v2-" + createHash("sha256").update(url).digest("hex");
+                    if (candidates.has(candidate)) candidate = "article-v2-" + randomUUID();
+                    candidates.add(candidate);
+                    return {
+                        url,
+                        candidate,
+                        fallback: "article-v2-" + randomUUID(),
+                        rawId: String(item.id),
+                        title: item.title,
+                        publishedAt: articleTimestamp(item.pubDate) ?? articleTimestamp(item.extra?.date),
+                        fingerprint: createContentFingerprint(item, url),
+                        payload: JSON.stringify(item),
+                    };
+                })
+            );
+            const incoming = `WITH incoming AS (SELECT
+                json_extract(value,'$.url') AS url, json_extract(value,'$.candidate') AS candidate,
+                json_extract(value,'$.fallback') AS fallback, json_extract(value,'$.rawId') AS raw_id,
+                json_extract(value,'$.title') AS title, json_extract(value,'$.publishedAt') AS published_at,
+                json_extract(value,'$.fingerprint') AS fingerprint, json_extract(value,'$.payload') AS payload
+                FROM json_each(?))`;
+            const keySet =
+                "SELECT article_key FROM articles WHERE canonical_url IN (SELECT json_extract(value,'$.url') FROM json_each(?))";
+            const [prior, rows] = await executeArticleBatch(this.db, [
+                {
+                    sql: "SELECT COUNT(*) AS count FROM articles WHERE canonical_url IN (SELECT json_extract(value,'$.url') FROM json_each(?))",
+                    params: [payload],
+                    rows: true,
+                },
+                {
+                    sql: `${incoming} INSERT INTO articles
+                    (article_key, canonical_url, title, published_at, content_fingerprint, event_id, payload, first_seen_at, last_seen_at)
+                    SELECT CASE WHEN EXISTS(SELECT 1 FROM articles a WHERE a.article_key=i.candidate AND a.canonical_url<>i.url)
+                        THEN i.fallback ELSE i.candidate END,i.url,i.title,i.published_at,i.fingerprint,NULL,i.payload,?,?
+                    FROM incoming i WHERE 1
+                    ON CONFLICT(canonical_url) DO UPDATE SET
+                        title=CASE WHEN excluded.last_seen_at>=articles.last_seen_at THEN excluded.title ELSE articles.title END,
+                        published_at=CASE WHEN excluded.last_seen_at>=articles.last_seen_at THEN excluded.published_at ELSE articles.published_at END,
+                        content_fingerprint=CASE WHEN excluded.last_seen_at>=articles.last_seen_at THEN excluded.content_fingerprint ELSE articles.content_fingerprint END,
+                        payload=CASE WHEN excluded.last_seen_at>=articles.last_seen_at THEN excluded.payload ELSE articles.payload END,
+                        first_seen_at=min(articles.first_seen_at,excluded.first_seen_at),
+                        last_seen_at=max(articles.last_seen_at,excluded.last_seen_at)
+                    RETURNING article_key`,
+                    params: [payload, now, now],
+                    rows: true,
+                },
+                {
+                    sql: `${incoming} INSERT INTO article_sources(article_key,source_id,raw_item_id,first_seen_at,last_seen_at)
+                    SELECT a.article_key,?,i.raw_id,?,? FROM incoming i JOIN articles a ON a.canonical_url=i.url WHERE 1
+                    ON CONFLICT(article_key,source_id) DO UPDATE SET
+                        raw_item_id=CASE WHEN excluded.last_seen_at>=article_sources.last_seen_at THEN excluded.raw_item_id ELSE article_sources.raw_item_id END,
+                        first_seen_at=min(article_sources.first_seen_at,excluded.first_seen_at),
+                        last_seen_at=max(article_sources.last_seen_at,excluded.last_seen_at)`,
+                    params: [payload, sourceId, now, now],
+                },
+                ...(this.recoveryAvailable
+                    ? [{ sql: `INSERT OR IGNORE INTO article_fts_pending(article_key) ${keySet}`, params: [payload] }]
+                    : []),
+            ]);
+            if (rows.length !== unique.size) throw new Error("Article batch returned incomplete identities.");
+            inserted += unique.size - Number((prior[0] as { count: number }).count);
+            if (this.ftsAvailable && this.recoveryAvailable) {
+                try {
+                    await executeArticleBatch(this.db, [
+                        {
+                            sql: `DELETE FROM article_search WHERE article_key IN (${keySet}) AND ${FTS_READY_GUARD}`,
+                            params: [payload],
+                        },
+                        {
+                            sql: `INSERT INTO article_search(article_key,title,canonical_url) SELECT article_key,title,canonical_url FROM articles
+                            WHERE article_key IN (${keySet}) AND ${FTS_READY_GUARD}`,
+                            params: [payload],
+                        },
+                        {
+                            sql: `DELETE FROM article_fts_pending WHERE article_key IN (${keySet}) AND ${FTS_READY_GUARD}`,
+                            params: [payload],
+                        },
+                    ]);
+                } catch (error) {
+                    logger.warn("Could not update batched article FTS5 index; pending keys retained.", error);
+                }
+            }
+        }
+        return { inserted, updated: valid.length - inserted };
+    }
+
     async resolveEventIds(topicEvents: TopicEvent[]): Promise<TopicEvent[]> {
+        if (this.db.connector === "cloudflare-d1") {
+            try {
+                return await resolveTopicEventsD1(this.db, topicEvents);
+            } catch (error) {
+                logger.warn("Could not resolve batched article event identities.", error);
+                return topicEvents.map((topic) => provisionalTopicEvent(topic, "unavailable"));
+            }
+        }
         const resolved: TopicEvent[] = [];
         for (const topic of topicEvents) {
             try {
