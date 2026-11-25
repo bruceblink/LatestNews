@@ -8,6 +8,7 @@ import { it, vi, expect, afterAll, describe, beforeAll } from "vitest";
 
 import eventHandler from "./[eventId].get";
 import { getCacheTable } from "../../../database/cache";
+import { approveArticleEventAlias } from "../../../database/article-event-aliases";
 
 const { getDatabase } = vi.hoisted(() => ({ getDatabase: vi.fn() }));
 vi.mock("nitro/database", () => ({ useDatabase: getDatabase }));
@@ -87,6 +88,21 @@ describe("article event history API", () => {
         expect(combined.map((item) => item.articleKey)).toEqual(combined.map((item) => item.articleKey).sort());
         expect(combined.every((item) => item.eventId === "event-history")).toBe(true);
         expect(combined.find((item) => item.item.id === items[0].id)?.sourceIds).toEqual(["v2ex", "weibo"]);
+    });
+
+    it("resolves approved aliases while preserving original article IDs", async () => {
+        await register("event-alias-a", [fixture(501)]);
+        await register("event-alias-b", [fixture(502)]);
+        await approveArticleEventAlias(database, {
+            aliasId: "event-alias-a",
+            canonicalId: "event-alias-b",
+            actor: "tester",
+            evidence: "reviewed pair",
+        });
+        const result = await readEvent("event-alias-a");
+        expect(result.data).toMatchObject({ eventId: "event-alias-a", canonicalEventId: "event-alias-b" });
+        expect(result.data.items.map((item) => item.eventId).sort()).toEqual(["event-alias-a", "event-alias-b"]);
+        expect((await readEvent("event-alias-b")).data.items).toEqual(result.data.items);
     });
 
     it("distinguishes missing events and invalid inputs", async () => {

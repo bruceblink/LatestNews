@@ -27,7 +27,12 @@ export default defineEventHandler(async (event): Promise<ArticleEventResponse> =
         throw createError({ statusCode: 404, message: "Article event not found." });
     }
     return {
-        data: { eventId: eventId.data, registeredAt: result.registeredAt, items: result.items },
+        data: {
+            eventId: eventId.data,
+            ...(result.canonicalEventId ? { canonicalEventId: result.canonicalEventId } : {}),
+            registeredAt: result.registeredAt,
+            items: result.items,
+        },
         meta: {
             generatedAt: Date.now(),
             itemCount: result.items.length,
