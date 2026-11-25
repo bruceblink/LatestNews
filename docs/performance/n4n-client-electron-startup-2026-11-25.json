@@ -1,0 +1,487 @@
+{
+  "platform": "electron",
+  "mode": "startup",
+  "gitCommit": "07b314b7972f980bcdf8152eb1605c859ff83966",
+  "artifactSha256": "443ffed4282319b0d0e3ea0fa6767a155a5bdc4eeef88742519fd9743d6e8c56",
+  "environment": {
+    "node": "v22.23.4",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "AMD EPYC",
+    "cores": 8,
+    "ramBytes": 16772878336
+  },
+  "profile": "isolated",
+  "fixture": {
+    "articles": 30,
+    "source": "hackernews",
+    "network": "loopback fixture; external destinations blocked via Chromium proxy",
+    "serviceWorkers": "desktop adapter",
+    "gpu": "disabled"
+  },
+  "startedAt": "2026-11-25T11:41:50.749Z",
+  "runs": [
+    {
+      "pair": 1,
+      "state": "cold",
+      "shellMs": 1309.663,
+      "contentMs": 1330.682,
+      "heapUsedBytes": 7825060,
+      "heapTotalBytes": 12652544,
+      "documents": 38,
+      "nodes": 1105,
+      "jsEventListeners": 327,
+      "taskDurationSeconds": 0.000013,
+      "processCount": 6,
+      "rssKiB": 616408,
+      "native": {
+        "processes": [
+          {
+            "type": "Browser",
+            "pid": 281269,
+            "workingSetKiB": 181480,
+            "cpuPercent": 0
+          },
+          {
+            "type": "GPU",
+            "pid": 281297,
+            "workingSetKiB": 73916,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Utility",
+            "pid": 281300,
+            "workingSetKiB": 81216,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Tab",
+            "pid": 281315,
+            "workingSetKiB": 165800,
+            "cpuPercent": 0
+          }
+        ],
+        "windows": 1
+      },
+      "pendingFixtureRequests": 0,
+      "apiRequests": 4
+    },
+    {
+      "pair": 1,
+      "state": "warm",
+      "shellMs": 684.841,
+      "contentMs": 767.438,
+      "heapUsedBytes": 7869960,
+      "heapTotalBytes": 12652544,
+      "documents": 38,
+      "nodes": 1105,
+      "jsEventListeners": 327,
+      "taskDurationSeconds": 0.000016,
+      "processCount": 6,
+      "rssKiB": 622636,
+      "native": {
+        "processes": [
+          {
+            "type": "Browser",
+            "pid": 281352,
+            "workingSetKiB": 183048,
+            "cpuPercent": 0
+          },
+          {
+            "type": "GPU",
+            "pid": 281382,
+            "workingSetKiB": 74356,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Utility",
+            "pid": 281389,
+            "workingSetKiB": 82532,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Tab",
+            "pid": 281398,
+            "workingSetKiB": 167476,
+            "cpuPercent": 0
+          }
+        ],
+        "windows": 1
+      },
+      "pendingFixtureRequests": 0,
+      "apiRequests": 4
+    },
+    {
+      "pair": 2,
+      "state": "cold",
+      "shellMs": 652.795,
+      "contentMs": 725.427,
+      "heapUsedBytes": 7885832,
+      "heapTotalBytes": 12652544,
+      "documents": 38,
+      "nodes": 1105,
+      "jsEventListeners": 327,
+      "taskDurationSeconds": 0.001581,
+      "processCount": 6,
+      "rssKiB": 619236,
+      "native": {
+        "processes": [
+          {
+            "type": "Browser",
+            "pid": 281441,
+            "workingSetKiB": 183320,
+            "cpuPercent": 0
+          },
+          {
+            "type": "GPU",
+            "pid": 281470,
+            "workingSetKiB": 74260,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Utility",
+            "pid": 281473,
+            "workingSetKiB": 81788,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Tab",
+            "pid": 281488,
+            "workingSetKiB": 165092,
+            "cpuPercent": 0
+          }
+        ],
+        "windows": 1
+      },
+      "pendingFixtureRequests": 0,
+      "apiRequests": 4
+    },
+    {
+      "pair": 2,
+      "state": "warm",
+      "shellMs": 651.686,
+      "contentMs": 691.397,
+      "heapUsedBytes": 7943024,
+      "heapTotalBytes": 12390400,
+      "documents": 38,
+      "nodes": 1063,
+      "jsEventListeners": 253,
+      "taskDurationSeconds": 0.000016,
+      "processCount": 6,
+      "rssKiB": 610096,
+      "native": {
+        "processes": [
+          {
+            "type": "Browser",
+            "pid": 281523,
+            "workingSetKiB": 182048,
+            "cpuPercent": 0
+          },
+          {
+            "type": "GPU",
+            "pid": 281553,
+            "workingSetKiB": 72488,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Utility",
+            "pid": 281555,
+            "workingSetKiB": 81748,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Tab",
+            "pid": 281572,
+            "workingSetKiB": 159720,
+            "cpuPercent": 0
+          }
+        ],
+        "windows": 1
+      },
+      "pendingFixtureRequests": 0,
+      "apiRequests": 4
+    },
+    {
+      "pair": 3,
+      "state": "cold",
+      "shellMs": 654.644,
+      "contentMs": 692.122,
+      "heapUsedBytes": 7833332,
+      "heapTotalBytes": 12128256,
+      "documents": 38,
+      "nodes": 1063,
+      "jsEventListeners": 253,
+      "taskDurationSeconds": 0.000015,
+      "processCount": 6,
+      "rssKiB": 620604,
+      "native": {
+        "processes": [
+          {
+            "type": "Browser",
+            "pid": 281605,
+            "workingSetKiB": 182608,
+            "cpuPercent": 0
+          },
+          {
+            "type": "GPU",
+            "pid": 281635,
+            "workingSetKiB": 73384,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Utility",
+            "pid": 281637,
+            "workingSetKiB": 82252,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Tab",
+            "pid": 281651,
+            "workingSetKiB": 166308,
+            "cpuPercent": 0
+          }
+        ],
+        "windows": 1
+      },
+      "pendingFixtureRequests": 0,
+      "apiRequests": 4
+    },
+    {
+      "pair": 3,
+      "state": "warm",
+      "shellMs": 651.336,
+      "contentMs": 746.08,
+      "heapUsedBytes": 7857480,
+      "heapTotalBytes": 13438976,
+      "documents": 38,
+      "nodes": 1105,
+      "jsEventListeners": 327,
+      "taskDurationSeconds": 0.00001,
+      "processCount": 6,
+      "rssKiB": 618944,
+      "native": {
+        "processes": [
+          {
+            "type": "Browser",
+            "pid": 281692,
+            "workingSetKiB": 182524,
+            "cpuPercent": 0
+          },
+          {
+            "type": "GPU",
+            "pid": 281721,
+            "workingSetKiB": 74468,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Utility",
+            "pid": 281723,
+            "workingSetKiB": 81772,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Tab",
+            "pid": 281739,
+            "workingSetKiB": 166628,
+            "cpuPercent": 0
+          }
+        ],
+        "windows": 1
+      },
+      "pendingFixtureRequests": 0,
+      "apiRequests": 4
+    },
+    {
+      "pair": 4,
+      "state": "cold",
+      "shellMs": 771.203,
+      "contentMs": 779.677,
+      "heapUsedBytes": 7880384,
+      "heapTotalBytes": 12128256,
+      "documents": 38,
+      "nodes": 1105,
+      "jsEventListeners": 327,
+      "taskDurationSeconds": 0.000923,
+      "processCount": 6,
+      "rssKiB": 618268,
+      "native": {
+        "processes": [
+          {
+            "type": "Browser",
+            "pid": 281774,
+            "workingSetKiB": 182816,
+            "cpuPercent": 0
+          },
+          {
+            "type": "GPU",
+            "pid": 281803,
+            "workingSetKiB": 74228,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Utility",
+            "pid": 281809,
+            "workingSetKiB": 82064,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Tab",
+            "pid": 281821,
+            "workingSetKiB": 164924,
+            "cpuPercent": 0
+          }
+        ],
+        "windows": 1
+      },
+      "pendingFixtureRequests": 0,
+      "apiRequests": 4
+    },
+    {
+      "pair": 4,
+      "state": "warm",
+      "shellMs": 787.514,
+      "contentMs": 799.981,
+      "heapUsedBytes": 8496044,
+      "heapTotalBytes": 12128256,
+      "documents": 38,
+      "nodes": 1102,
+      "jsEventListeners": 327,
+      "taskDurationSeconds": 0.00001,
+      "processCount": 6,
+      "rssKiB": 618400,
+      "native": {
+        "processes": [
+          {
+            "type": "Browser",
+            "pid": 281867,
+            "workingSetKiB": 182156,
+            "cpuPercent": 0
+          },
+          {
+            "type": "GPU",
+            "pid": 281897,
+            "workingSetKiB": 73828,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Utility",
+            "pid": 281903,
+            "workingSetKiB": 81944,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Tab",
+            "pid": 281914,
+            "workingSetKiB": 165824,
+            "cpuPercent": 0
+          }
+        ],
+        "windows": 1
+      },
+      "pendingFixtureRequests": 0,
+      "apiRequests": 4
+    },
+    {
+      "pair": 5,
+      "state": "cold",
+      "shellMs": 774.131,
+      "contentMs": 787.307,
+      "heapUsedBytes": 8502828,
+      "heapTotalBytes": 12390400,
+      "documents": 38,
+      "nodes": 1102,
+      "jsEventListeners": 327,
+      "taskDurationSeconds": 0.000783,
+      "processCount": 6,
+      "rssKiB": 622632,
+      "native": {
+        "processes": [
+          {
+            "type": "Browser",
+            "pid": 281950,
+            "workingSetKiB": 183680,
+            "cpuPercent": 0
+          },
+          {
+            "type": "GPU",
+            "pid": 281979,
+            "workingSetKiB": 74724,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Utility",
+            "pid": 281981,
+            "workingSetKiB": 81804,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Tab",
+            "pid": 281996,
+            "workingSetKiB": 167128,
+            "cpuPercent": 0
+          }
+        ],
+        "windows": 1
+      },
+      "pendingFixtureRequests": 0,
+      "apiRequests": 4
+    },
+    {
+      "pair": 5,
+      "state": "warm",
+      "shellMs": 763.525,
+      "contentMs": 773.043,
+      "heapUsedBytes": 7947384,
+      "heapTotalBytes": 12914688,
+      "documents": 38,
+      "nodes": 1105,
+      "jsEventListeners": 329,
+      "taskDurationSeconds": 0.00002,
+      "processCount": 6,
+      "rssKiB": 619792,
+      "native": {
+        "processes": [
+          {
+            "type": "Browser",
+            "pid": 282040,
+            "workingSetKiB": 182324,
+            "cpuPercent": 0
+          },
+          {
+            "type": "GPU",
+            "pid": 282071,
+            "workingSetKiB": 73452,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Utility",
+            "pid": 282077,
+            "workingSetKiB": 82248,
+            "cpuPercent": 0
+          },
+          {
+            "type": "Tab",
+            "pid": 282087,
+            "workingSetKiB": 165640,
+            "cpuPercent": 0
+          }
+        ],
+        "windows": 1
+      },
+      "pendingFixtureRequests": 0,
+      "apiRequests": 4
+    }
+  ],
+  "result": "passed",
+  "browserVersion": "44.9.0",
+  "apiCounts": {
+    "/v1/sources": 10,
+    "/v1/auth/capability": 10,
+    "/v1/insights": 10,
+    "/v1/health/sources": 10
+  },
+  "maxActiveRequests": 1,
+  "pendingFixtureRequests": 0,
+  "unexpectedRequests": 0,
+  "staticErrors": 0
+}
