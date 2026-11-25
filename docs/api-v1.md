@@ -57,7 +57,7 @@ curl https://news.example.com/api/v1/node
 | `GET` | `/api/v1/articles/search` | 查询 Node SQLite / Pages D1 文章索引中的历史文章。使用 `q`，可选 `source`、`since` 和 `limit`。 |
 | `GET` | `/api/v1/events/{eventId}` | 查询已注册事件的历史文章和来源映射。 |
 
-洞察响应的 `data.topicEvents[]` 同时返回旧 `id` 和 `eventId`。旧客户端继续读取 `id`。服务端有索引、组内存在共同已关联文章且无多个持久化 ID 冲突时，复用已有 ID。无索引或冲突时返回候选 ID；候选 ID 不一定已注册。
+洞察响应的 `data.topicEvents[]` 保留展示 ID `id` 和 `eventId`，新增可选 `identityStatus`。旧客户端继续读取 `id`。洞察只读取持久归属，不依据展示过滤、来源选择或请求顺序改变归属。只有 `registered`（全部规范 URL 已归属同一已注册规范事件）才可进入历史详情；`candidate`（未归属）、`partial`（部分归属）、`conflict`（多个规范事件）、`unavailable`（索引/注册不可用）返回展示候选 ID，不能视为历史事件。服务端候选 ID 使用 `candidate-v2-` 与排序去重成员 SHA-256；本地计算结果及旧版本 ID 不保证已注册。新持久归属仅经受控人工审批。
 
 ### 历史文章检索
 

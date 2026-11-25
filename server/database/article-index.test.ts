@@ -9,6 +9,7 @@ import { it, expect, describe, afterEach } from "vitest";
 import sqliteConnector from "db0/connectors/better-sqlite3";
 
 import { ArticleIndex } from "./article-index";
+import { assignReviewedEvent } from "./article-event-governance";
 
 const databases: Array<Awaited<ReturnType<typeof createDatabase>> & { dispose?: () => Promise<void> }> = [];
 
@@ -50,10 +51,18 @@ describe("article index", () => {
     });
 
     it("associates stable event IDs and rebuilds the FTS index", async () => {
-        const index = await createIndex();
+        const db = createDatabase(sqliteConnector({ name: ":memory:" }));
+        databases.push(db);
+        const index = new ArticleIndex(db);
+        await index.init();
         const item = createItem("event-item", "安全事件公告", "https://example.com/security");
         await index.upsertSourceItems("weibo", [item]);
-        const events = await index.reconcileEventIds([
+        const approved = await assignReviewedEvent(db, {
+            urls: [item.url],
+            actor: "fixture",
+            evidence: "fixture only",
+        });
+        const events = await index.resolveEventIds([
             {
                 id: "legacy-topic",
                 eventId: "event-v1-stable",
@@ -67,11 +76,11 @@ describe("article index", () => {
             },
         ]);
 
-        expect(events).toMatchObject([{ id: "legacy-topic", eventId: "event-v1-stable" }]);
+        expect(events).toMatchObject([{ id: "legacy-topic", eventId: approved.eventId, identityStatus: "registered" }]);
         expect(await index.rebuildSearchIndex()).toMatchObject({ status: "ok", indexed: 1 });
         await expect(index.search({ query: "安全" })).resolves.toMatchObject({
             status: "ok",
-            items: [expect.objectContaining({ eventId: "event-v1-stable" })],
+            items: [expect.objectContaining({ eventId: approved.eventId })],
         });
     });
 

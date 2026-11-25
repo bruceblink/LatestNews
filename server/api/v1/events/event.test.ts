@@ -8,6 +8,7 @@ import { it, vi, expect, afterAll, describe, beforeAll } from "vitest";
 
 import eventHandler from "./[eventId].get";
 import { getCacheTable } from "../../../database/cache";
+import { reconcileArticleEventId } from "../../../database/article-event-identity";
 import { approveArticleEventAlias } from "../../../database/article-event-aliases";
 
 const { getDatabase } = vi.hoisted(() => ({ getDatabase: vi.fn() }));
@@ -28,23 +29,12 @@ function fixture(index: number): NewsItem {
 async function register(eventId: string, items: NewsItem[], sourceId: SourceID = "weibo") {
     const cache = (await getCacheTable())!;
     await cache.set(sourceId, items);
-    await cache.reconcileArticleEventIds([
-        {
-            id: "legacy-topic",
-            eventId,
-            title: "LatestNews event",
-            sources: [sourceId],
-            sourceNames: [sourceId],
-            itemCount: items.length,
-            keywords: ["latestnews"],
-            items: items.map((item) => ({
-                id: String(item.id),
-                sourceId,
-                title: item.title,
-                url: item.url,
-            })),
-        },
-    ]);
+    // Fixture legacy registry IDs; the production display endpoint is read-only.
+    await reconcileArticleEventId(
+        database,
+        items.map((item) => item.url),
+        eventId
+    );
     return cache;
 }
 

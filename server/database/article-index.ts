@@ -9,9 +9,9 @@ import { safeNewsUrl, safeNewsItemLinks, filterSafeNewsItemLinks } from "@shared
 
 import { logger } from "../utils/logger";
 import { executeArticleBatch } from "./article-atomic-batch";
-import { reconcileArticleEventId } from "./article-event-identity";
 import { initArticleEventRegistry } from "./article-event-registry";
 import { ARTICLE_SOURCES_SCHEMA, migrateArticleIdentity } from "./article-identity-migration";
+import { resolveTopicEvent, initEventApprovals, provisionalTopicEvent } from "./article-event-governance";
 import { hasArticleEventAliases, initArticleEventAliases, resolveArticleEventAlias } from "./article-event-aliases";
 import {
     repairFtsPage,
@@ -116,6 +116,7 @@ export class ArticleIndex {
         try {
             await initArticleEventRegistry(this.db);
             await initArticleEventAliases(this.db);
+            await initEventApprovals(this.db);
         } catch (error) {
             logger.warn("Could not initialize article event registry.", error);
         }
@@ -285,23 +286,17 @@ export class ArticleIndex {
         return { inserted, updated };
     }
 
-    async reconcileEventIds(topicEvents: TopicEvent[]): Promise<TopicEvent[]> {
-        const reconciled: TopicEvent[] = [];
-        for (const topicEvent of topicEvents) {
+    async resolveEventIds(topicEvents: TopicEvent[]): Promise<TopicEvent[]> {
+        const resolved: TopicEvent[] = [];
+        for (const topic of topicEvents) {
             try {
-                const eventId = await reconcileArticleEventId(
-                    this.db,
-                    filterSafeNewsItemLinks(topicEvent.items).map((item) => normalizeNewsItemUrlKey(item.url)),
-                    topicEvent.eventId
-                );
-                reconciled.push({ ...topicEvent, eventId });
+                resolved.push(await resolveTopicEvent(this.db, topic));
             } catch (error) {
-                // A failed index must not fail insights or discard other resolved identities.
-                logger.warn("Could not reconcile article event ID.", error);
-                reconciled.push(topicEvent);
+                logger.warn("Could not resolve article event identity.", error);
+                resolved.push(provisionalTopicEvent(topic, "unavailable"));
             }
         }
-        return reconciled;
+        return resolved;
     }
 
     async getEvent(eventId: string, query: ArticleEventQuery): Promise<ArticleEventResult> {

@@ -2,7 +2,8 @@ import type { Database } from "db0";
 
 import { hasArticleEventAliases } from "./article-event-aliases";
 
-/** Reuse an existing identity only when all persisted members agree. Never rewrite assigned rows. */
+/** Legacy fixture writer for pre-N4-M regression tests and isolated D1 smoke only.
+ * Production code must use assignReviewedEvent or the read-only resolveTopicEvent. */
 export async function reconcileArticleEventId(db: Database, canonicalUrls: string[], candidateId: string) {
     const urls = JSON.stringify([...new Set(canonicalUrls.filter(Boolean))]);
     if (urls === "[]") return candidateId;

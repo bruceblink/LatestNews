@@ -228,8 +228,9 @@ export interface TopicEventItem {
 
 export interface TopicEvent {
     id: string;
-    /** 事件标识。服务端索引可复用已持久化 ID；无索引时为本次聚类候选。旧客户端继续使用 id。 */
+    /** 仅 identityStatus=registered 时保证可查询持久历史。旧客户端继续使用 id。 */
     eventId: string;
+    identityStatus?: "registered" | "candidate" | "partial" | "conflict" | "unavailable";
     title: string;
     canonicalUrl?: string;
     sources: SourceID[];
@@ -949,6 +950,7 @@ function createTopicEvent(group: TopicGroup): TopicEvent {
     return {
         id: group.id,
         eventId: group.eventId,
+        identityStatus: "candidate",
         title: representative.title,
         canonicalUrl: representative.canonicalUrl || undefined,
         sources: uniqueSourceIds(group.items),

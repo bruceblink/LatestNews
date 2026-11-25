@@ -160,9 +160,9 @@ export class Cache {
         }
     }
 
-    async reconcileArticleEventIds(topicEvents: TopicEvent[]) {
+    async resolveArticleEventIds(topicEvents: TopicEvent[]) {
         // Existing tables remain usable when INIT_TABLE is disabled.
-        return (this.articleIndex ?? new ArticleIndex(this.db)).reconcileEventIds(topicEvents);
+        return (this.articleIndex ?? new ArticleIndex(this.db)).resolveEventIds(topicEvents);
     }
 
     async getArticleEvent(eventId: string, query: ArticleEventQuery) {

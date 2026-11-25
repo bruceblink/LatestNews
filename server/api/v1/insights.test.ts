@@ -7,6 +7,7 @@ import { it, vi, expect, afterAll, describe, beforeEach } from "vitest";
 
 import insightsHandler from "./insights.post";
 import { getCacheTable } from "../../database/cache";
+import { assignReviewedEvent } from "../../database/article-event-governance";
 
 const { getDatabase, fetchSourceItems, hasSourceGetter } = vi.hoisted(() => ({
     getDatabase: vi.fn(),
@@ -66,7 +67,7 @@ describe("insights API", () => {
         });
     });
 
-    it("reuses a persisted event ID after older reports and partial source requests", async () => {
+    it("keeps display grouping read-only and resolves only approved historical memberships", async () => {
         const cache = await getCacheTable();
         const now = Date.now();
         const original = {
@@ -95,21 +96,51 @@ describe("insights API", () => {
 
         const first = await request(["hackernews"]);
         expect(first).toHaveLength(1);
+        expect(first[0]).toMatchObject({
+            identityStatus: "candidate",
+            eventId: expect.stringMatching(/^candidate-v2-/),
+        });
+        expect(await database.prepare("SELECT event_id FROM articles WHERE canonical_url=?").get(original.url)).toEqual(
+            { event_id: null }
+        );
+        const reviewed = await assignReviewedEvent(database, {
+            urls: [original.url],
+            actor: "reviewer",
+            evidence: "isolated fixture",
+        });
         await cache!.set("weibo", [earlier]);
 
         const expanded = await request(["hackernews", "weibo"]);
         expect(expanded).toHaveLength(1);
-        expect(expanded[0]).toMatchObject({ eventId: first[0].eventId, itemCount: 2 });
+        expect(expanded[0]).toMatchObject({
+            identityStatus: "partial",
+            eventId: expect.stringMatching(/^candidate-v2-/),
+            itemCount: 2,
+        });
+        expect(await database.prepare("SELECT event_id FROM articles WHERE canonical_url=?").get(earlier.url)).toEqual({
+            event_id: null,
+        });
+        expect((await request(["weibo"]))[0].identityStatus).toBe("candidate");
+        await assignReviewedEvent(database, {
+            urls: [earlier.url],
+            eventId: reviewed.eventId,
+            actor: "reviewer",
+            evidence: "isolated fixture",
+        });
+        expect((await request(["hackernews", "weibo"]))[0]).toMatchObject({
+            identityStatus: "registered",
+            eventId: reviewed.eventId,
+        });
         expect(expanded[0].id).not.toBe(first[0].id);
 
         const partial = await request(["weibo"]);
         const hidden = await request(["hackernews", "weibo"], [original.url]);
-        expect(partial[0].eventId).toBe(first[0].eventId);
-        expect(hidden[0].eventId).toBe(first[0].eventId);
+        expect(partial[0].eventId).toBe(reviewed.eventId);
+        expect(hidden[0].eventId).toBe(reviewed.eventId);
 
         const indexed = await cache!.searchArticles({ query: "LatestNews" });
         expect(indexed.items).toHaveLength(2);
-        expect(indexed.items.map((item) => item.eventId)).toEqual([first[0].eventId, first[0].eventId]);
+        expect(indexed.items.map((item) => item.eventId)).toEqual([reviewed.eventId, reviewed.eventId]);
     });
 
     it("returns insights if event reconciliation fails", async () => {
@@ -130,7 +161,14 @@ describe("insights API", () => {
             });
             expect(response.status).toBe(200);
             expect(await response.json()).toMatchObject({
-                data: { topicEvents: [expect.objectContaining({ eventId: expect.stringMatching(/^event-v1-/) })] },
+                data: {
+                    topicEvents: [
+                        expect.objectContaining({
+                            eventId: expect.stringMatching(/^candidate-v2-/),
+                            identityStatus: "unavailable",
+                        }),
+                    ],
+                },
                 errors: [],
             });
         } finally {
