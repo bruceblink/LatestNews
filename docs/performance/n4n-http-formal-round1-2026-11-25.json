@@ -1,0 +1,1145 @@
+{
+  "formatVersion": 1,
+  "result": "passed",
+  "recordedAt": "2026-11-25T10:47:50.409Z",
+  "commit": "96016404fdf47ba650d1c101d9aa84892e129164",
+  "environment": {
+    "node": "v22.23.4",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "AMD EPYC",
+    "logicalCores": 8,
+    "totalMemoryBytes": 16772878336
+  },
+  "workload": {
+    "samplesPerScenarioAndConfiguration": 1000,
+    "clientConcurrency": 30,
+    "sourceConcurrency": [
+      4,
+      6,
+      8
+    ],
+    "seed": 20261123,
+    "scenarios": [
+      "fixed-spread",
+      "jitter-spread",
+      "single-origin",
+      "http-errors",
+      "client-cancel"
+    ],
+    "fixtureOriginCount": 4,
+    "fixtureAddress": "127.0.0.1 on ephemeral local ports only",
+    "warmupRequestsPerOrigin": 5,
+    "sourceEngineQueue": {
+      "maxQueued": 100,
+      "queueTimeoutMs": 8000
+    },
+    "fetchScheduler": {
+      "maxConcurrent": 8,
+      "maxPerKey": 2,
+      "maxQueued": 100,
+      "queueTimeoutMs": 8000,
+      "taskTimeoutMs": 8000
+    },
+    "fixtureErrors": "429/503 injected deterministically, no retries in this direct fetch harness",
+    "cache": "not exercised; this is NOT the Nitro API or SQLite cache baseline",
+    "smoke": false
+  },
+  "scenarios": [
+    {
+      "scenario": "fixed-spread",
+      "sourceConcurrency": 4,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 134.6,
+        "p95": 153.58,
+        "p99": 160.97
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 116.11,
+          "p95": 134.3,
+          "p99": 141.12
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 18.23,
+          "p95": 20.19,
+          "p99": 21.99
+        },
+        "source.normalize": {
+          "count": 1000,
+          "p50": 0.04,
+          "p95": 0.07,
+          "p99": 0.14
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 0.01,
+          "p95": 0.02,
+          "p99": 0.04
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 18.19,
+          "p95": 20.14,
+          "p99": 21.96
+        }
+      },
+      "elapsedMs": 4601,
+      "requestsPerSecond": 217.33,
+      "successfulRequests": 1000,
+      "errorRequests": 0,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 1000
+      },
+      "statusMismatchCount": 0,
+      "successRate": 1,
+      "errorRate": 0,
+      "cancellationRate": 0,
+      "maxSourceActive": 4,
+      "maxHttpActive": 4,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 1000
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "fixed-spread",
+      "sourceConcurrency": 6,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 90.78,
+        "p95": 98.22,
+        "p99": 100.77
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 72.26,
+          "p95": 78.83,
+          "p99": 80.93
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 17.99,
+          "p95": 19.96,
+          "p99": 22.21
+        },
+        "source.normalize": {
+          "count": 1000,
+          "p50": 0.03,
+          "p95": 0.07,
+          "p99": 0.1
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 0.01,
+          "p95": 0.01,
+          "p99": 0.02
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 17.96,
+          "p95": 19.93,
+          "p99": 22.18
+        }
+      },
+      "elapsedMs": 3055,
+      "requestsPerSecond": 327.32,
+      "successfulRequests": 1000,
+      "errorRequests": 0,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 1000
+      },
+      "statusMismatchCount": 0,
+      "successRate": 1,
+      "errorRate": 0,
+      "cancellationRate": 0,
+      "maxSourceActive": 6,
+      "maxHttpActive": 6,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 1000
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "fixed-spread",
+      "sourceConcurrency": 8,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 73.17,
+        "p95": 80.99,
+        "p99": 89.38
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 54.48,
+          "p95": 60.29,
+          "p99": 71.13
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 18.82,
+          "p95": 20.83,
+          "p99": 21.75
+        },
+        "source.normalize": {
+          "count": 1000,
+          "p50": 0.02,
+          "p95": 0.05,
+          "p99": 0.07
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 0.01,
+          "p95": 0.01,
+          "p99": 0.03
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 18.79,
+          "p95": 20.8,
+          "p99": 21.72
+        }
+      },
+      "elapsedMs": 2391,
+      "requestsPerSecond": 418.28,
+      "successfulRequests": 1000,
+      "errorRequests": 0,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 1000
+      },
+      "statusMismatchCount": 0,
+      "successRate": 1,
+      "errorRate": 0,
+      "cancellationRate": 0,
+      "maxSourceActive": 8,
+      "maxHttpActive": 8,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 1000
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "jitter-spread",
+      "sourceConcurrency": 4,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 277.17,
+        "p95": 299.01,
+        "p99": 306.19
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 238.38,
+          "p95": 256.24,
+          "p99": 260.65
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 36.31,
+          "p95": 58.99,
+          "p99": 60.89
+        },
+        "source.normalize": {
+          "count": 1000,
+          "p50": 0.04,
+          "p95": 0.07,
+          "p99": 0.09
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 0.01,
+          "p95": 0.01,
+          "p99": 0.04
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 36.27,
+          "p95": 58.96,
+          "p99": 60.85
+        }
+      },
+      "elapsedMs": 9213,
+      "requestsPerSecond": 108.54,
+      "successfulRequests": 1000,
+      "errorRequests": 0,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 1000
+      },
+      "statusMismatchCount": 0,
+      "successRate": 1,
+      "errorRate": 0,
+      "cancellationRate": 0,
+      "maxSourceActive": 4,
+      "maxHttpActive": 4,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 1000
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "jitter-spread",
+      "sourceConcurrency": 6,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 185.74,
+        "p95": 207.44,
+        "p99": 211.94
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 145.86,
+          "p95": 161.96,
+          "p99": 167.43
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 36.79,
+          "p95": 59.03,
+          "p99": 61.12
+        },
+        "source.normalize": {
+          "count": 1000,
+          "p50": 0.02,
+          "p95": 0.04,
+          "p99": 0.06
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 0.01,
+          "p95": 0.29,
+          "p99": 6.85
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 36.37,
+          "p95": 58.95,
+          "p99": 60.71
+        }
+      },
+      "elapsedMs": 6153,
+      "requestsPerSecond": 162.51,
+      "successfulRequests": 1000,
+      "errorRequests": 0,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 1000
+      },
+      "statusMismatchCount": 0,
+      "successRate": 1,
+      "errorRate": 0,
+      "cancellationRate": 0,
+      "maxSourceActive": 6,
+      "maxHttpActive": 6,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 1000
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "jitter-spread",
+      "sourceConcurrency": 8,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 150.72,
+        "p95": 175.3,
+        "p99": 183.12
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 109.44,
+          "p95": 121.48,
+          "p99": 126.92
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 40.55,
+          "p95": 60.7,
+          "p99": 66.13
+        },
+        "source.normalize": {
+          "count": 1000,
+          "p50": 0.02,
+          "p95": 0.03,
+          "p99": 0.05
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 0.01,
+          "p95": 19.99,
+          "p99": 29.57
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 36.35,
+          "p95": 58.59,
+          "p99": 60.77
+        }
+      },
+      "elapsedMs": 5019,
+      "requestsPerSecond": 199.26,
+      "successfulRequests": 1000,
+      "errorRequests": 0,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 1000
+      },
+      "statusMismatchCount": 0,
+      "successRate": 1,
+      "errorRate": 0,
+      "cancellationRate": 0,
+      "maxSourceActive": 8,
+      "maxHttpActive": 8,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 1000
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "single-origin",
+      "sourceConcurrency": 4,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 258.11,
+        "p95": 263.02,
+        "p99": 265.91
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 223.68,
+          "p95": 228.22,
+          "p99": 230.84
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 34.34,
+          "p95": 35.33,
+          "p99": 37.49
+        },
+        "source.normalize": {
+          "count": 1000,
+          "p50": 0.02,
+          "p95": 0.03,
+          "p99": 0.05
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 17.1,
+          "p95": 17.55,
+          "p99": 19.09
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 17.22,
+          "p95": 17.7,
+          "p99": 19.09
+        }
+      },
+      "elapsedMs": 8612,
+      "requestsPerSecond": 116.12,
+      "successfulRequests": 1000,
+      "errorRequests": 0,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 1000
+      },
+      "statusMismatchCount": 0,
+      "successRate": 1,
+      "errorRate": 0,
+      "cancellationRate": 0,
+      "maxSourceActive": 4,
+      "maxHttpActive": 2,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 1000
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        0,
+        0,
+        0
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "single-origin",
+      "sourceConcurrency": 6,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 257.01,
+        "p95": 261.29,
+        "p99": 262.44
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 205.55,
+          "p95": 209.58,
+          "p99": 210.71
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 51.26,
+          "p95": 52.5,
+          "p99": 54.38
+        },
+        "source.normalize": {
+          "count": 1000,
+          "p50": 0.01,
+          "p95": 0.03,
+          "p99": 0.05
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 34.12,
+          "p95": 35,
+          "p99": 36.67
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 17.13,
+          "p95": 17.62,
+          "p99": 18.21
+        }
+      },
+      "elapsedMs": 8553,
+      "requestsPerSecond": 116.92,
+      "successfulRequests": 1000,
+      "errorRequests": 0,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 1000
+      },
+      "statusMismatchCount": 0,
+      "successRate": 1,
+      "errorRate": 0,
+      "cancellationRate": 0,
+      "maxSourceActive": 6,
+      "maxHttpActive": 2,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 1000
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        0,
+        0,
+        0
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "single-origin",
+      "sourceConcurrency": 8,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 256.98,
+        "p95": 262.79,
+        "p99": 267.34
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 188.27,
+          "p95": 192.91,
+          "p99": 197
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 68.44,
+          "p95": 70.56,
+          "p99": 72.12
+        },
+        "source.normalize": {
+          "count": 1000,
+          "p50": 0.02,
+          "p95": 0.03,
+          "p99": 0.05
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 51.28,
+          "p95": 52.95,
+          "p99": 54.26
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 17.16,
+          "p95": 17.76,
+          "p99": 18.54
+        }
+      },
+      "elapsedMs": 8553,
+      "requestsPerSecond": 116.92,
+      "successfulRequests": 1000,
+      "errorRequests": 0,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 1000
+      },
+      "statusMismatchCount": 0,
+      "successRate": 1,
+      "errorRate": 0,
+      "cancellationRate": 0,
+      "maxSourceActive": 8,
+      "maxHttpActive": 2,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 1000
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        0,
+        0,
+        0
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "http-errors",
+      "sourceConcurrency": 4,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 154.65,
+        "p95": 162.24,
+        "p99": 164.48
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 134.33,
+          "p95": 138.1,
+          "p99": 139.47
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 20.56,
+          "p95": 26.39,
+          "p99": 27.05
+        },
+        "source.normalize": {
+          "count": 901,
+          "p50": 0.02,
+          "p95": 0.03,
+          "p99": 0.05
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 0.01,
+          "p95": 0.01,
+          "p99": 0.02
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 20.53,
+          "p95": 26.36,
+          "p99": 27.02
+        }
+      },
+      "elapsedMs": 5174,
+      "requestsPerSecond": 193.27,
+      "successfulRequests": 901,
+      "errorRequests": 99,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 901,
+        "http_429": 59,
+        "http_503": 40
+      },
+      "statusMismatchCount": 0,
+      "successRate": 0.901,
+      "errorRate": 0.099,
+      "cancellationRate": 0,
+      "maxSourceActive": 4,
+      "maxHttpActive": 4,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 901,
+        "429": 59,
+        "503": 40
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "http-errors",
+      "sourceConcurrency": 6,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 103.35,
+        "p95": 109.46,
+        "p99": 111.72
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 82.33,
+          "p95": 86.11,
+          "p99": 87.72
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 20.36,
+          "p95": 26.3,
+          "p99": 26.86
+        },
+        "source.normalize": {
+          "count": 901,
+          "p50": 0.02,
+          "p95": 0.03,
+          "p99": 0.04
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 0.01,
+          "p95": 0.01,
+          "p99": 0.03
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 20.33,
+          "p95": 26.27,
+          "p99": 26.83
+        }
+      },
+      "elapsedMs": 3445,
+      "requestsPerSecond": 290.28,
+      "successfulRequests": 901,
+      "errorRequests": 99,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 901,
+        "http_429": 59,
+        "http_503": 40
+      },
+      "statusMismatchCount": 0,
+      "successRate": 0.901,
+      "errorRate": 0.099,
+      "cancellationRate": 0,
+      "maxSourceActive": 6,
+      "maxHttpActive": 6,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 901,
+        "429": 59,
+        "503": 40
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "http-errors",
+      "sourceConcurrency": 8,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 79.5,
+        "p95": 85.84,
+        "p99": 88.07
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 58.49,
+          "p95": 62.35,
+          "p99": 63.53
+        },
+        "source.collect": {
+          "count": 1000,
+          "p50": 22.08,
+          "p95": 26.66,
+          "p99": 27.79
+        },
+        "source.normalize": {
+          "count": 901,
+          "p50": 0.01,
+          "p95": 0.02,
+          "p99": 0.04
+        },
+        "http.queue": {
+          "count": 1000,
+          "p50": 0,
+          "p95": 3.97,
+          "p99": 5.99
+        },
+        "http.request": {
+          "count": 1000,
+          "p50": 20.61,
+          "p95": 26.39,
+          "p99": 26.88
+        }
+      },
+      "elapsedMs": 2658,
+      "requestsPerSecond": 376.18,
+      "successfulRequests": 901,
+      "errorRequests": 99,
+      "cancelledRequests": 0,
+      "responseStatuses": {
+        "success": 901,
+        "http_429": 59,
+        "http_503": 40
+      },
+      "statusMismatchCount": 0,
+      "successRate": 0.901,
+      "errorRate": 0.099,
+      "cancellationRate": 0,
+      "maxSourceActive": 8,
+      "maxHttpActive": 8,
+      "fixtureRequests": 1000,
+      "fixtureHttpStatuses": {
+        "200": 901,
+        "429": 59,
+        "503": 40
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "client-cancel",
+      "sourceConcurrency": 4,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 464.53,
+        "p95": 528.06,
+        "p99": 529.58
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 398.41,
+          "p95": 462.01,
+          "p99": 463.2
+        },
+        "source.collect": {
+          "count": 858,
+          "p50": 65.68,
+          "p95": 66.68,
+          "p99": 67.39
+        },
+        "source.normalize": {
+          "count": 858,
+          "p50": 0.02,
+          "p95": 0.05,
+          "p99": 0.08
+        },
+        "http.queue": {
+          "count": 858,
+          "p50": 0.01,
+          "p95": 0.01,
+          "p99": 0.04
+        },
+        "http.request": {
+          "count": 858,
+          "p50": 65.65,
+          "p95": 66.66,
+          "p99": 67.37
+        }
+      },
+      "elapsedMs": 14151,
+      "requestsPerSecond": 70.67,
+      "successfulRequests": 858,
+      "errorRequests": 0,
+      "cancelledRequests": 142,
+      "responseStatuses": {
+        "success": 858,
+        "cancelled": 142
+      },
+      "statusMismatchCount": 0,
+      "successRate": 0.858,
+      "errorRate": 0,
+      "cancellationRate": 0.142,
+      "maxSourceActive": 4,
+      "maxHttpActive": 4,
+      "fixtureRequests": 858,
+      "fixtureHttpStatuses": {
+        "200": 858
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "client-cancel",
+      "sourceConcurrency": 6,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 329.78,
+        "p95": 335.24,
+        "p99": 337.17
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 263.63,
+          "p95": 268.13,
+          "p99": 269.48
+        },
+        "source.collect": {
+          "count": 858,
+          "p50": 66.17,
+          "p95": 67.48,
+          "p99": 68.15
+        },
+        "source.normalize": {
+          "count": 858,
+          "p50": 0.03,
+          "p95": 0.07,
+          "p99": 0.1
+        },
+        "http.queue": {
+          "count": 858,
+          "p50": 0.01,
+          "p95": 0.01,
+          "p99": 0.03
+        },
+        "http.request": {
+          "count": 858,
+          "p50": 66.13,
+          "p95": 67.45,
+          "p99": 68.13
+        }
+      },
+      "elapsedMs": 9482,
+      "requestsPerSecond": 105.47,
+      "successfulRequests": 858,
+      "errorRequests": 0,
+      "cancelledRequests": 142,
+      "responseStatuses": {
+        "success": 858,
+        "cancelled": 142
+      },
+      "statusMismatchCount": 0,
+      "successRate": 0.858,
+      "errorRate": 0,
+      "cancellationRate": 0.142,
+      "maxSourceActive": 6,
+      "maxHttpActive": 6,
+      "fixtureRequests": 858,
+      "fixtureHttpStatuses": {
+        "200": 858
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    },
+    {
+      "scenario": "client-cancel",
+      "sourceConcurrency": 8,
+      "requests": 1000,
+      "clientConcurrency": 30,
+      "latencyMs": {
+        "count": 1000,
+        "p50": 265.02,
+        "p95": 271.2,
+        "p99": 272.57
+      },
+      "phasesMs": {
+        "source.queue": {
+          "count": 1000,
+          "p50": 198.03,
+          "p95": 203.24,
+          "p99": 204.59
+        },
+        "source.collect": {
+          "count": 859,
+          "p50": 66.77,
+          "p95": 128.11,
+          "p99": 132.32
+        },
+        "source.normalize": {
+          "count": 858,
+          "p50": 0.02,
+          "p95": 0.04,
+          "p99": 0.06
+        },
+        "http.queue": {
+          "count": 859,
+          "p50": 0.2,
+          "p95": 61.81,
+          "p99": 64.65
+        },
+        "http.request": {
+          "count": 859,
+          "p50": 66.39,
+          "p95": 68.49,
+          "p99": 69.35
+        }
+      },
+      "elapsedMs": 7663,
+      "requestsPerSecond": 130.5,
+      "successfulRequests": 858,
+      "errorRequests": 0,
+      "cancelledRequests": 142,
+      "responseStatuses": {
+        "success": 858,
+        "cancelled": 142
+      },
+      "statusMismatchCount": 0,
+      "successRate": 0.858,
+      "errorRate": 0,
+      "cancellationRate": 0.142,
+      "maxSourceActive": 8,
+      "maxHttpActive": 8,
+      "fixtureRequests": 859,
+      "fixtureHttpStatuses": {
+        "200": 858
+      },
+      "fixtureMaxConcurrentByOrigin": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "schedulerPendingAfterScenario": 0,
+      "cacheHitRate": null,
+      "backgroundCacheTasks": null,
+      "passed": true
+    }
+  ]
+}
