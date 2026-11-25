@@ -26,6 +26,22 @@ const requestTimeoutMs = 30_000;
 const serverMetricsProbeSource = `import { writeFileSync } from "node:fs";
 
 const outputPath = process.env.LATESTNEWS_PERFORMANCE_METRICS_PATH;
+let traceActive=false;
+let traceValues={};
+let traceOutcomes={};
+let traceCount=0;
+let traceDropped=0;
+if(outputPath)globalThis[Symbol.for("latestnews.performance.trace")] = {
+    record(span) {
+        if(!traceActive)return;
+        if(traceCount>=100000){traceDropped++;return;}
+        if(typeof span.durationMs!=="number"||!Number.isFinite(span.durationMs))return;
+        (traceValues[span.phase]??=[]).push(span.durationMs);
+        const outcomes=traceOutcomes[span.phase]??={};
+        outcomes[span.outcome]=(outcomes[span.outcome]??0)+1;
+        traceCount++;
+    }
+};
 const startedAt = Date.now();
 const startCpu = process.cpuUsage();
 const initialRssBytes = process.memoryUsage().rss;
@@ -60,12 +76,15 @@ const finish = () => {
 };
 
 process.once("exit", finish);
-process.on("message", (message) => {
-    if (!message || typeof message !== "object" || !("type" in message) || message.type !== "latestnews-performance-stop") {
-        return;
-    }
-    finish();
-    process.exit(0);
+if(outputPath)process.on("message",(message)=>{
+    if(!message||typeof message!=="object")return;
+    if(message.type==="latestnews-performance-trace-reset"){
+        traceValues={};traceOutcomes={};traceCount=0;traceDropped=0;traceActive=true;
+        process.send?.({type:"latestnews-performance-trace-ack",id:message.id});
+    }else if(message.type==="latestnews-performance-trace-snapshot"){
+        traceActive=false;
+        process.send?.({type:"latestnews-performance-trace-ack",id:message.id,values:traceValues,outcomes:traceOutcomes,dropped:traceDropped});
+    }else if(message.type==="latestnews-performance-stop"){finish();process.exit(0);}
 });
 `;
 
@@ -93,6 +112,11 @@ interface RequestSample {
     errorCount: number;
 }
 
+interface TraceSnapshot {
+    values: Record<string, number[]>;
+    outcomes: Record<string, Record<string, number>>;
+    dropped: number;
+}
 interface ScenarioReport {
     name: string;
     expectedStatusesPerRequest: Record<string, number>;
@@ -104,6 +128,12 @@ interface ScenarioReport {
     wallRequestsPerSecond: number;
     backgroundDrainMs: { p50: number; p95: number; p99: number };
     waves: number;
+    phaseSpans: Record<
+        string,
+        { count: number; p50: number; p95: number; p99: number; outcomes: Record<string, number> }
+    >;
+    traceValid: boolean;
+    expectedCollections: number;
     errorRate: number;
     cacheHitRate: number;
     pendingSourceCount: number;
@@ -157,9 +187,12 @@ async function main() {
         await warmSourceCache(baseUrl, cacheController);
         const scenarios: ScenarioReport[] = [];
         for (const scenario of createScenarios(baseUrl, cacheController)) {
-            scenarios.push(await runScenario(scenario, options));
+            scenarios.push(await runScenario(scenario, options, server));
+            console.error("Completed " + scenario.name);
         }
-        const passed = scenarios.every((scenario) => scenario.errorRate === 0 && scenario.statusMismatchCount === 0);
+        const passed = scenarios.every(
+            (scenario) => scenario.errorRate === 0 && scenario.statusMismatchCount === 0 && scenario.traceValid
+        );
 
         cacheController.close();
         cacheController = undefined;
@@ -173,7 +206,7 @@ async function main() {
         };
         const report = {
             result: passed ? "passed" : "failed",
-            formatVersion: 2,
+            formatVersion: 3,
             capturedAt: new Date().toISOString(),
             git: readGitState(),
             packageVersion: packageJson.version,
@@ -204,6 +237,8 @@ async function main() {
                 sourceConcurrency: options.sourceConcurrency,
                 responseWindowThroughputExcludesDrain: true,
                 wallThroughputIncludesPreparationAndDrain: true,
+                phaseSpansExcludeWarmup: true,
+                phaseSpansOverlapAndAreNotAdditive: true,
             },
             startupMs,
             serverProcess: await readServerMetrics(metricsPath),
@@ -226,6 +261,9 @@ async function main() {
                             requestsPerSecond,
                             wallRequestsPerSecond,
                             backgroundDrainMs,
+                            traceValid,
+                            expectedCollections,
+                            phaseSpans,
                             errorRate,
                             cacheHitRate,
                             statusMismatchCount,
@@ -236,6 +274,9 @@ async function main() {
                             requestsPerSecond: round(requestsPerSecond),
                             wallRequestsPerSecond,
                             backgroundDrainMs,
+                            traceValid,
+                            expectedCollections,
+                            phaseSpans,
                             errorRate,
                             cacheHitRate,
                             statusMismatchCount,
@@ -486,7 +527,38 @@ function createBatchRequest(ids: string[]): RequestSpec {
     };
 }
 
-async function runScenario(scenario: ScenarioDefinition, options: Options): Promise<ScenarioReport> {
+let nextTraceRequest = 0;
+async function traceControl(server: ChildProcess, action: "reset" | "snapshot"): Promise<Partial<TraceSnapshot>> {
+    const id = ++nextTraceRequest;
+    return new Promise((resolveAck, reject) => {
+        const timer = setTimeout(() => {
+            cleanup();
+            reject(new Error("Benchmark trace control timed out"));
+        }, 5000);
+        const cleanup = () => {
+            clearTimeout(timer);
+            server.off("message", onMessage);
+        };
+        const onMessage = (message: unknown) => {
+            if (!isRecord(message) || message.type !== "latestnews-performance-trace-ack" || message.id !== id) return;
+            cleanup();
+            resolveAck(message as Partial<TraceSnapshot>);
+        };
+        server.on("message", onMessage);
+        server.send({ type: "latestnews-performance-trace-" + action, id }, (error) => {
+            if (error) {
+                cleanup();
+                reject(error);
+            }
+        });
+    });
+}
+
+async function runScenario(
+    scenario: ScenarioDefinition,
+    options: Options,
+    server: ChildProcess
+): Promise<ScenarioReport> {
     for (let index = 0; index < warmupRequestsPerScenario; index += 1) {
         scenario.prepareCache();
         const sample = await executeRequest(scenario.request.baseUrl, scenario.request);
@@ -494,6 +566,7 @@ async function runScenario(scenario: ScenarioDefinition, options: Options): Prom
         await scenario.waitForCache();
     }
 
+    await traceControl(server, "reset");
     const samples: RequestSample[] = [];
     let elapsedMs = 0;
     const drainTimes: number[] = [];
@@ -513,6 +586,26 @@ async function runScenario(scenario: ScenarioDefinition, options: Options): Prom
     }
 
     const wallElapsedMs = Math.max(0.001, performance.now() - wallStartedAt);
+    const trace = await traceControl(server, "snapshot");
+    if (!trace.values || !trace.outcomes || typeof trace.dropped !== "number")
+        throw new Error("Missing benchmark phase spans.");
+    const phaseSpans = Object.fromEntries(
+        Object.entries(trace.values).map(([phase, values]) => [
+            phase,
+            { count: values.length, ...summarize(values), outcomes: trace.outcomes![phase] ?? {} },
+        ])
+    );
+    const expectedCollections = (scenario.expectedStatusesPerRequest.success ?? 0) * drainTimes.length;
+    const commits = phaseSpans["cache.commit"]?.count ?? 0;
+    const traceValid =
+        trace.dropped === 0 &&
+        phaseSpans["cache.read"]?.count === samples.length &&
+        ["source.queue", "source.collect", "source.normalize"].every(
+            (phase) => (phaseSpans[phase]?.count ?? 0) === expectedCollections
+        ) &&
+        commits >= expectedCollections &&
+        ["index.queue", "index.replay", "index.repair"].every((phase) => (phaseSpans[phase]?.count ?? 0) === commits) &&
+        Object.values(phaseSpans).every((span) => span.outcomes.success === span.count);
     const statuses = countValues(samples.flatMap((sample) => sample.responseStatuses));
     const httpStatuses = countValues(samples.map((sample) => String(sample.httpStatus)));
     const statusMismatchCount = samples.filter((sample) => !hasExpectedResponseStatuses(sample, scenario)).length;
@@ -537,6 +630,9 @@ async function runScenario(scenario: ScenarioDefinition, options: Options): Prom
         wallRequestsPerSecond: round((samples.length / wallElapsedMs) * 1000, 2),
         backgroundDrainMs: summarize(drainTimes),
         waves: drainTimes.length,
+        phaseSpans,
+        traceValid,
+        expectedCollections,
         errorRate: round(errorCount / samples.length, 6),
         cacheHitRate: round(totalResponses === 0 ? 0 : cacheResponses / totalResponses, 6),
         pendingSourceCount: samples.reduce((count, sample) => count + sample.pendingSourceCount, 0),

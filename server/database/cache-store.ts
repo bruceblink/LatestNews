@@ -8,6 +8,7 @@ import { filterSafeNewsItemLinks } from "@shared/news-url-policy";
 import { logger } from "../utils/logger";
 import { ArticleIndex } from "./article-index";
 import { executeArticleBatch } from "./article-atomic-batch";
+import { recordTrace, monotonicNow, getBenchmarkTrace, measureBenchmarkPhase } from "../utils/collection-trace";
 
 import type { CacheRow, CacheInfo } from "../types";
 import type { ArticleEventQuery, ArticleIndexSearchQuery, ArticleIndexSearchResult } from "./article-index";
@@ -78,25 +79,29 @@ export class Cache {
             ON CONFLICT(id) DO UPDATE SET data=excluded.data,updated=max(cache.updated+1,excluded.updated)`;
         if (this.recoveryAvailable && this.articleIndex) {
             const id = randomUUID();
-            try {
-                await executeArticleBatch(this.db, [
-                    { sql: cacheSql, params: [key, payload, now] },
-                    {
-                        sql: "INSERT INTO article_ingest_pending(id,source_id,payload,observed_at) SELECT ?,id,data,updated FROM cache WHERE id=?",
-                        params: [id, key],
-                    },
-                ]);
-            } catch (error) {
-                // The cache must remain available if its indexing journal is unavailable.
-                // A checkpoint comparison will rediscover the latest snapshot when repaired.
-                logger.warn("Could not journal source cache; retaining cache-only write.", error);
-                const result = await this.db.prepare(cacheSql).run(key, payload, now);
-                if (!result.success) throw new Error("News cache write failed.");
-            }
+            await measureBenchmarkPhase("cache.commit", async () => {
+                try {
+                    await executeArticleBatch(this.db, [
+                        { sql: cacheSql, params: [key, payload, now] },
+                        {
+                            sql: "INSERT INTO article_ingest_pending(id,source_id,payload,observed_at) SELECT ?,id,data,updated FROM cache WHERE id=?",
+                            params: [id, key],
+                        },
+                    ]);
+                } catch (error) {
+                    // The cache must remain available if its indexing journal is unavailable.
+                    // A checkpoint comparison will rediscover the latest snapshot when repaired.
+                    logger.warn("Could not journal source cache; retaining cache-only write.", error);
+                    const result = await this.db.prepare(cacheSql).run(key, payload, now);
+                    if (!result.success) throw new Error("News cache write failed.");
+                }
+            });
             // A committed cache write is not a promise of completed indexing.
             await this.maintainArticleIndex(2, id);
         } else {
-            const result = await this.db.prepare(cacheSql).run(key, payload, now);
+            const result = await measureBenchmarkPhase("cache.commit", () =>
+                this.db.prepare(cacheSql).run(key, payload, now)
+            );
             if (!result.success) throw new Error("News cache write failed.");
             // Do not write an unprobed or pre-migration index.
             logger.warn("Article recovery schema unavailable; saved source cache only.");
@@ -109,7 +114,13 @@ export class Cache {
         if (!this.articleIndex || !this.recoveryAvailable) return;
         if (!Number.isInteger(limit) || limit < 1 || limit > 20)
             throw new Error("Article replay limit must be between 1 and 20.");
-        const replay = this.replayTail.then(() => this.replayArticleIndex(limit, preferredId));
+        const trace = getBenchmarkTrace();
+        const queuedAt = trace ? monotonicNow() : 0;
+        const replay = this.replayTail.then(() => {
+            if (trace)
+                recordTrace(trace, { phase: "index.queue", durationMs: monotonicNow() - queuedAt, outcome: "success" });
+            return measureBenchmarkPhase("index.replay", () => this.replayArticleIndex(limit, preferredId));
+        });
         // Keep the queue usable after an unexpected failure. A durable journal is the
         // recovery boundary across processes; this lock only serializes this Cache.
         this.replayTail = replay.catch(() => undefined);
@@ -160,7 +171,7 @@ export class Cache {
                         .run(row.id);
                 }
             }
-            await this.articleIndex.continueRepair(2);
+            await measureBenchmarkPhase("index.repair", () => this.articleIndex!.continueRepair(2));
         } catch (error) {
             logger.warn("Article maintenance is unavailable; source cache remains available.", error);
         }
@@ -208,51 +219,55 @@ export class Cache {
     }
 
     async get(key: string): Promise<CacheInfo | undefined> {
-        const row = (await this.db.prepare("SELECT id, data, updated FROM cache WHERE id = ?").get(key)) as
-            CacheRow | undefined;
-        if (row) {
-            logger.success(`get ${key} cache`);
-            return {
-                id: row.id,
-                updated: row.updated,
-                items: filterSafeNewsItemLinks(JSON.parse(row.data) as NewsItem[]),
-            };
-        }
-        return undefined;
+        return measureBenchmarkPhase("cache.read", async () => {
+            const row = (await this.db.prepare("SELECT id, data, updated FROM cache WHERE id = ?").get(key)) as
+                CacheRow | undefined;
+            if (row) {
+                logger.success(`get ${key} cache`);
+                return {
+                    id: row.id,
+                    updated: row.updated,
+                    items: filterSafeNewsItemLinks(JSON.parse(row.data) as NewsItem[]),
+                };
+            }
+            return undefined;
+        });
     }
 
     async getEntire(keys: string[]): Promise<CacheInfo[]> {
-        if (!keys.length) return [];
+        return measureBenchmarkPhase("cache.read", async () => {
+            if (!keys.length) return [];
 
-        const placeholders = keys.map(() => "?").join(", ");
-        const res = (await this.db
-            .prepare(
-                `SELECT id, data, updated
+            const placeholders = keys.map(() => "?").join(", ");
+            const res = (await this.db
+                .prepare(
+                    `SELECT id, data, updated
                     FROM cache
                     WHERE id IN (${placeholders})`
-            )
-            .all(...keys)) as any;
-        const rows = (res.results ?? res) as CacheRow[];
+                )
+                .all(...keys)) as any;
+            const rows = (res.results ?? res) as CacheRow[];
 
-        /**
-         * https://developers.cloudflare.com/d1/build-with-d1/d1-client-api/#return-object
-         * cloudflare d1 .all() will return
-         * {
-         *   success: boolean
-         *   meta:
-         *   results:
-         * }
-         */
-        if (rows?.length) {
-            logger.success("get entire (...) cache");
-            return rows.map((row) => ({
-                id: row.id,
-                updated: row.updated,
-                items: filterSafeNewsItemLinks(JSON.parse(row.data) as NewsItem[]),
-            }));
-        } else {
-            return [];
-        }
+            /**
+             * https://developers.cloudflare.com/d1/build-with-d1/d1-client-api/#return-object
+             * cloudflare d1 .all() will return
+             * {
+             *   success: boolean
+             *   meta:
+             *   results:
+             * }
+             */
+            if (rows?.length) {
+                logger.success("get entire (...) cache");
+                return rows.map((row) => ({
+                    id: row.id,
+                    updated: row.updated,
+                    items: filterSafeNewsItemLinks(JSON.parse(row.data) as NewsItem[]),
+                }));
+            } else {
+                return [];
+            }
+        });
     }
 
     async delete(key: string) {
