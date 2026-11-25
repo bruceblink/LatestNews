@@ -6,6 +6,7 @@ export const appNavigation = {
     home: { label: "首页", icon: "i-ph:squares-four", path: "/insights" },
     feed: { label: "统一 Feed", icon: "i-ph:newspaper", path: "/feed" },
     history: { label: "阅读历史", icon: "i-ph:clock-counter-clockwise", path: "/history" },
+    archive: { label: "新闻档案", icon: "i-ph:archive", path: "/archive" },
     health: { label: "数据源健康", icon: "i-ph:pulse", path: "/health" },
     settings: { label: "设置", icon: "i-ph:gear-six", path: "/settings" },
 } as const;
@@ -13,7 +14,7 @@ export const appNavigation = {
 export type AppNavigationKey = keyof typeof appNavigation;
 
 export const workspaceNavigation: Array<{
-    key: "home" | "feed" | "history" | "health";
+    key: "home" | "feed" | "history" | "health" | "archive";
     label: string;
     icon: string;
     path: string;
@@ -22,6 +23,7 @@ export const workspaceNavigation: Array<{
     { key: "feed", ...appNavigation.feed },
     { key: "history", ...appNavigation.history },
     { key: "health", ...appNavigation.health },
+    { key: "archive", ...appNavigation.archive },
 ];
 
 export const columnNavigation: Array<{
@@ -53,6 +55,7 @@ export function getAppNavigationContext(pathname: string) {
             : appNavigation.feed;
     }
     if (pathname === "/history") return appNavigation.history;
+    if (pathname === "/archive") return appNavigation.archive;
     if (pathname === "/health" || pathname.startsWith("/source/")) {
         return pathname.startsWith("/source/") ? { ...appNavigation.health, label: "来源详情" } : appNavigation.health;
     }
@@ -66,5 +69,6 @@ export function isAppNavigationActive(key: AppNavigationKey, pathname: string) {
     if (key === "feed") return pathname === "/feed" || pathname.startsWith("/c/");
     if (key === "health") return pathname === "/health" || pathname.startsWith("/source/");
     if (key === "settings") return pathname === "/settings";
+    if (key === "archive") return pathname === "/archive";
     return pathname === "/history";
 }

@@ -24,6 +24,31 @@ let apiOrigin: string;
 test.beforeAll(async () => {
     apiServer = createServer((request, response) => {
         const pathname = new URL(request.url ?? "/", "http://localhost").pathname.replace(/^\/api(?=\/|$)/, "");
+        const archiveItem = {
+            articleKey: "article-v2-fixture",
+            canonicalUrl: fixtureItem.url,
+            title: fixtureItem.title,
+            publishedAt: Date.parse(fixtureItem.pubDate),
+            eventId: "event-v2-fixture",
+            sourceIds: ["hackernews"],
+            item: fixtureItem,
+        };
+        if (pathname === "/v1/articles/search") {
+            sendJson(response, {
+                data: { status: "ok", searchMode: "fts", items: [archiveItem] },
+                meta: { itemCount: 1, limit: 50 },
+                errors: [],
+            });
+            return;
+        }
+        if (pathname === "/v1/events/event-v2-fixture") {
+            sendJson(response, {
+                data: { eventId: "event-v2-fixture", registeredAt: Date.now(), items: [archiveItem] },
+                meta: { itemCount: 1, limit: 30 },
+                errors: [],
+            });
+            return;
+        }
         if (pathname === "/v1/health/sources") {
             sendJson(response, {
                 meta: {
@@ -240,6 +265,15 @@ test("keeps invalid legacy history readable without invoking the desktop externa
         )
     ).toBe(true);
     await expect(page.getByRole("button", { name: "移除阅读记录：" + fixture.title })).toBeVisible();
+});
+
+test("reads remote article archive and reviewed event in Electron", async () => {
+    await page.goto("app://bundle/archive?q=fixture");
+    await expect(page.getByRole("heading", { name: "新闻档案" })).toBeVisible();
+    await expect(page.getByRole("link", { name: fixtureItem.title })).toBeVisible();
+    await page.getByRole("link", { name: "查看事件历史" }).click();
+    await expect(page.getByRole("heading", { name: "事件历史" })).toBeVisible();
+    await expect(page.getByRole("link", { name: fixtureItem.title })).toBeVisible();
 });
 
 test.afterAll(async () => {

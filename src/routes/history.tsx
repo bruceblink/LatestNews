@@ -198,7 +198,10 @@ function HistoryPage() {
                         记录最近点击阅读的文章，最多保留 200 条，数据存储在本地浏览器中。
                     </p>
                 </div>
-                <div className="history-heading-actions flex items-center gap-3 text-sm">
+                <div className="history-heading-actions flex flex-wrap items-center gap-3 text-sm">
+                    <Link to="/archive" search={{}} className="text-cyan-700 dark:text-cyan-300">
+                        检索新闻档案
+                    </Link>
                     <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/90 dark:border-zinc-700/50 px-3 py-1 text-zinc-700 dark:text-zinc-300">
                         共 {activeHistory.length} 条
                     </span>

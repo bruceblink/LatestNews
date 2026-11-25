@@ -763,6 +763,25 @@ function TopicPanel({
                                 </button>
                                 {expanded && (
                                     <div className="insights-topic-detail">
+                                        {topic.identityStatus === "registered" ? (
+                                            <Link
+                                                to="/archive"
+                                                search={{ event: topic.eventId }}
+                                                className="text-cyan-700 dark:text-cyan-300"
+                                            >
+                                                查看已注册事件历史
+                                            </Link>
+                                        ) : (
+                                            <span className="text-xs text-zinc-500">
+                                                {topic.identityStatus === "conflict"
+                                                    ? "归属冲突"
+                                                    : topic.identityStatus === "partial"
+                                                      ? "部分归属"
+                                                      : topic.identityStatus === "unavailable"
+                                                        ? "归属不可用"
+                                                        : "展示聚类，未确认持久归属"}
+                                            </span>
+                                        )}
                                         <div className="insights-topic-keywords">
                                             {topic.keywords.slice(0, 6).map((keyword) => (
                                                 <FeedFilterLink

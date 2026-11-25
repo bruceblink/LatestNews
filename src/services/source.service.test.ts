@@ -10,10 +10,12 @@ import {
 } from "../../shared/runtime-source-catalog";
 import {
     fetchSource,
+    fetchArchiveEvent,
     fetchNewsInsights,
     fetchSourceBatchV1,
     fetchSourceItemsV1,
     fetchSourceMetadata,
+    searchArticleArchive,
     fetchSourceMetadataItem,
     fetchSourceHealthSummary,
 } from "./source.service";
@@ -35,6 +37,35 @@ describe("desktop local crawler routing", () => {
         mockMyFetch.mockReset();
         vi.unstubAllGlobals();
         clearRuntimeSourceCatalog();
+    });
+
+    it("does not substitute local collector data for history", async () => {
+        const bridge = createDesktopBridge(
+            ["hackernews"],
+            { hackernews: localSource },
+            "https://news.example.com",
+            [],
+            createHealthSummary(),
+            "local"
+        );
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+        await expect(searchArticleArchive({ q: "history", limit: 30 })).rejects.toMatchObject({
+            code: "ARCHIVE_REMOTE_REQUIRED",
+        });
+        await expect(fetchArchiveEvent("event-reviewed")).rejects.toMatchObject({ code: "ARCHIVE_REMOTE_REQUIRED" });
+        expect(mockMyFetch).not.toHaveBeenCalled();
+        expect(bridge.fetchCrawlerSource).not.toHaveBeenCalled();
+    });
+
+    it("keeps history authorization errors and rejects candidate event navigation", async () => {
+        const bridge = createDesktopBridge(["hackernews"], { hackernews: localSource });
+        vi.stubGlobal("window", { latestNewsDesktop: bridge });
+        const error = Object.assign(new Error("forbidden"), { status: 403 });
+        mockMyFetch.mockRejectedValue(error);
+        await expect(searchArticleArchive({ q: "history", limit: 30 })).rejects.toBe(error);
+        await expect(fetchArchiveEvent("candidate-v2-abc")).rejects.toMatchObject({ status: 400 });
+        expect(mockMyFetch).toHaveBeenCalledTimes(1);
+        expect(bridge.fetchCrawlerSource).not.toHaveBeenCalled();
     });
 
     it("uses the remote API before an enabled local source", async () => {

@@ -106,7 +106,11 @@ export function AppMobileNavigation() {
             <Link
                 to="/history"
                 className="app-mobile-navigation-link"
-                aria-current={isAppNavigationActive("history", pathname) ? "page" : undefined}
+                aria-current={
+                    isAppNavigationActive("history", pathname) || isAppNavigationActive("archive", pathname)
+                        ? "page"
+                        : undefined
+                }
             >
                 <span className={workspaceNavigation[2].icon} aria-hidden="true" />
                 <span>阅读历史</span>
@@ -125,6 +129,19 @@ export function AppMobileNavigation() {
 
 function WorkspaceLink({ item, pathname }: { item: (typeof workspaceNavigation)[number]; pathname: string }) {
     const active = isAppNavigationActive(item.key, pathname);
+    if (item.key === "archive") {
+        return (
+            <Link
+                to="/archive"
+                search={{}}
+                className={clsx("app-nav-item", "app-shell-nav-link", active && "is-active")}
+                aria-current={active ? "page" : undefined}
+            >
+                <span className={item.icon} aria-hidden="true" />
+                <span>{item.label}</span>
+            </Link>
+        );
+    }
     if (item.key === "feed") {
         return (
             <Link

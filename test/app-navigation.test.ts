@@ -28,6 +28,8 @@ describe("application navigation", () => {
     it("resolves all first-level workspace routes", () => {
         expect(getAppNavigationContext("/feed")).toEqual(appNavigation.feed);
         expect(getAppNavigationContext("/history")).toEqual(appNavigation.history);
+        expect(getAppNavigationContext("/archive")).toEqual(appNavigation.archive);
+        expect(isAppNavigationActive("archive", "/archive")).toBe(true);
         expect(getAppNavigationContext("/health")).toEqual(appNavigation.health);
         expect(getAppNavigationContext("/settings")).toEqual(appNavigation.settings);
     });

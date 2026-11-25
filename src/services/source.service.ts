@@ -12,12 +12,15 @@ import type {
     NewsInsightsPayload,
     SourceItemsResponse,
     SourceBatchResponse,
+    ArticleEventResponse,
     NewsInsightsResponse,
+    ArticleSearchResponse,
     EntireSourcesResponse,
 } from "@shared/source-api";
 
 import { myFetch } from "~/utils";
 import dataSources from "@shared/data-sources";
+import { validArchiveKey } from "@shared/article-archive";
 import { isDynamicSourceId } from "@shared/dynamic-source-id";
 import { resolveSourceBatchSelection } from "@shared/source-batch";
 import { getOrCreateInFlightRequest } from "@shared/in-flight-request";
@@ -40,6 +43,43 @@ import {
 } from "./runtime-source-catalog.service";
 
 const inFlightNewsInsights = new Map<string, Promise<NewsInsightsResponse>>();
+
+/** History exists only on the remote indexed service; never fall back to collector cache. */
+async function requireArchiveRemote() {
+    const config = await getDesktopNewsApiConfig();
+    if (config.mode === "local" || !config.remoteConfigured) {
+        throw Object.assign(new Error("Remote archive required"), { code: "ARCHIVE_REMOTE_REQUIRED" });
+    }
+}
+
+export async function searchArticleArchive(
+    query: { q: string; source?: string; since?: string; limit: number },
+    signal?: AbortSignal
+) {
+    await requireArchiveRemote();
+    const result = await myFetch<ArticleSearchResponse>(sourceApi.articleSearchV1, { query, signal });
+    if (!result?.data || !Array.isArray(result.data.items) || !result.meta) throw new Error("Invalid archive response");
+    if (result.data.status === "unavailable") throw Object.assign(new Error("Index unavailable"), { status: 503 });
+    return result;
+}
+
+export async function fetchArchiveEvent(eventId: string, after?: string, signal?: AbortSignal) {
+    if (
+        !validArchiveKey(eventId) ||
+        eventId.startsWith("candidate-") ||
+        (after !== undefined && !validArchiveKey(after))
+    ) {
+        throw Object.assign(new Error("Invalid event key"), { status: 400 });
+    }
+    await requireArchiveRemote();
+    const result = await myFetch<ArticleEventResponse>(sourceApi.articleEventV1 + "/" + encodeURIComponent(eventId), {
+        query: { limit: 30, ...(after ? { after } : {}) },
+        signal,
+    });
+    if (!result?.data || result.data.eventId !== eventId || !Array.isArray(result.data.items) || !result.meta)
+        throw new Error("Invalid event response");
+    return result;
+}
 
 export async function fetchSource(query: SourceQuery, headers?: Record<string, string>): Promise<SourceResponse> {
     const { id, ...itemsQuery } = query;
