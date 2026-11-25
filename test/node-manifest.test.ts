@@ -49,6 +49,7 @@ describe("node manifest", () => {
         });
         expect(response.data.endpoints).toEqual({
             articleSearch: "/api/v1/articles/search",
+            articleEvent: "/api/v1/events/{eventId}",
             node: "/api/v1/node",
             openApi: "/api/v1/openapi.json",
             source: "/api/v1/sources/{id}",

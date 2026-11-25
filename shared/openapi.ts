@@ -48,6 +48,23 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                     },
                 },
             },
+            [`${withApiPrefix(sourceApi.articleEventV1)}/{eventId}`]: {
+                get: {
+                    summary: "Read persisted articles for a registered news event",
+                    tags: ["Articles"],
+                    parameters: [
+                        pathParameter("eventId", "Persisted event ID"),
+                        queryParameter("limit", "Maximum result count (1–100, default 30)"),
+                        queryParameter("after", "Previous page nextCursor"),
+                    ],
+                    responses: {
+                        ...okJsonResponse("Article event envelope"),
+                        400: { description: "Invalid event ID or pagination" },
+                        404: { description: "Event not found" },
+                        503: { description: "Event registry unavailable" },
+                    },
+                },
+            },
             [withApiPrefix(sourceApi.nodeV1)]: {
                 get: {
                     summary: "Get node manifest",

@@ -54,9 +54,16 @@ curl https://news.example.com/api/v1/node
 | `POST` | `/api/v1/sources/batch` | Items for multiple sources, columns, or source types. |
 | `POST` | `/api/v1/sources/refresh` | 分批刷新来源。默认只刷新到期缓存，`force=true` 采集全部可用来源。 |
 | `POST` | `/api/v1/insights` | 计算所选来源的阅读洞察。请求体包含 `sources`，可设置 `trendWindow` 等分析选项。 |
-| `GET` | `/api/v1/articles/search` | 查询 Node SQLite 文章索引中的历史文章。使用 `q`，可选 `source`、`since` 和 `limit`。 |
+| `GET` | `/api/v1/articles/search` | 查询 Node SQLite / Pages D1 文章索引中的历史文章。使用 `q`，可选 `source`、`since` 和 `limit`。 |
+| `GET` | `/api/v1/events/{eventId}` | 查询已注册事件的历史文章和来源映射。 |
 
-洞察响应的 `data.topicEvents[]` 同时返回旧 `id` 和稳定 `eventId`。旧客户端继续读取 `id`。需要保存或关联事件的客户端使用 `eventId`。新增较晚报道不会改变同一事件的 `eventId`。
+洞察响应的 `data.topicEvents[]` 同时返回旧 `id` 和 `eventId`。旧客户端继续读取 `id`。服务端有索引、组内存在共同已关联文章且无多个持久化 ID 冲突时，复用已有 ID。无索引或冲突时返回候选 ID；候选 ID 不一定已注册。
+
+### 历史事件查询
+
+`GET /api/v1/events/{eventId}?limit=30` 返回 `data.eventId`、`data.registeredAt`（毫秒时间戳，表示注册表首次写入时间而非新闻发布时间）和 `data.items`（沿用文章搜索的条目格式）。事件历史独立于当前来源缓存。默认 30 条，`limit` 允许 1–100。若返回 `meta.nextCursor`，将该值作为同一事件下一页的 `after` 参数；省略时从第一页开始。分页按文章主键稳定排序，不是发布时间排序；并发新增文章时不保证跨页固定快照。
+
+`400` 表示 ID 或分页参数无效；`404` 表示 ID 尚未注册（包括仅计算出的候选 ID）；`503` 表示索引、注册表或旧成员迁移不可用。此接口仅支持已启用索引及注册表的 Node/Pages 部署；Electron 本地 JSON 缓存不提供历史注册表，连接远端服务时按远端能力使用。该接口不合并事件、不重新聚类，不提供客户端修改注册表的入口。
 
 Single-source metadata keeps item payloads out of discovery responses. If `{id}` is a redirect alias, `meta.canonicalSourceId` points to the source used by item endpoints and `meta.redirected` is `true`.
 
