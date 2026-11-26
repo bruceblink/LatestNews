@@ -10,6 +10,7 @@ import {
     getFederationRetryDelay,
     fetchUpstreamNodeManifest,
     fetchConfiguredUpstreamNodeManifest,
+    UPSTREAM_MANIFEST_MAX_RESPONSE_BYTES,
 } from "../server/utils/upstream-node-client";
 
 function createManifest(overrides: Record<string, unknown> = {}) {
@@ -165,6 +166,101 @@ describe("upstream node manifest client", () => {
         expect(redirect).toMatchObject({ ok: false, code: "federation_manifest_invalid" });
         expect(nonJson).toMatchObject({ ok: false, code: "federation_manifest_invalid" });
         expect(incomplete).toMatchObject({ ok: false, code: "federation_manifest_invalid" });
+    });
+
+    it("rejects a manifest whose declared content length exceeds the fixed response budget", async () => {
+        let cancelled = false;
+        const body = new ReadableStream<Uint8Array>({
+            start(controller) {
+                controller.enqueue(new Uint8Array(1));
+            },
+            cancel() {
+                cancelled = true;
+            },
+        });
+        const fetcher = vi.fn(
+            async () =>
+                new Response(body, {
+                    headers: { "content-length": String(UPSTREAM_MANIFEST_MAX_RESPONSE_BYTES + 1) },
+                })
+        );
+
+        const result = await fetchUpstreamNodeManifest({
+            endpoint: "https://news.example.com",
+            fetcher,
+            resolveHostname: async () => ["1.1.1.1"],
+        });
+
+        expect(result).toMatchObject({ ok: false, attempts: 1, code: "federation_manifest_invalid", retriable: false });
+        expect(result).toMatchObject({
+            message: expect.stringContaining(String(UPSTREAM_MANIFEST_MAX_RESPONSE_BYTES)),
+        });
+        expect(fetcher).toHaveBeenCalledTimes(1);
+        expect(cancelled).toBe(true);
+    });
+
+    it("cancels a chunked manifest as soon as the streamed body exceeds the response budget", async () => {
+        let cancelled = false;
+        const body = new ReadableStream<Uint8Array>({
+            start(controller) {
+                controller.enqueue(new Uint8Array(UPSTREAM_MANIFEST_MAX_RESPONSE_BYTES));
+                controller.enqueue(new Uint8Array(1));
+            },
+            cancel() {
+                cancelled = true;
+            },
+        });
+        const fetcher = vi.fn(async () => new Response(body));
+
+        const result = await fetchUpstreamNodeManifest({
+            endpoint: "https://news.example.com",
+            fetcher,
+            resolveHostname: async () => ["1.1.1.1"],
+        });
+
+        expect(result).toMatchObject({ ok: false, attempts: 1, code: "federation_manifest_invalid", retriable: false });
+        expect(fetcher).toHaveBeenCalledTimes(1);
+        expect(cancelled).toBe(true);
+    });
+
+    it("aborts a slow response body at the shared deadline and cancels the stream", async () => {
+        vi.useFakeTimers();
+        try {
+            let cancelled = false;
+            let aborted = false;
+            const body = new ReadableStream<Uint8Array>({
+                pull() {
+                    return new Promise<void>(() => undefined);
+                },
+                cancel() {
+                    cancelled = true;
+                },
+            });
+            const fetcher = vi.fn(async (_input: string, init: RequestInit) => {
+                init.signal?.addEventListener("abort", () => {
+                    aborted = true;
+                });
+                return new Response(body);
+            });
+            const pending = fetchUpstreamNodeManifest({
+                endpoint: "https://news.example.com",
+                fetcher,
+                resolveHostname: async () => ["1.1.1.1"],
+                timeoutMs: 100,
+            });
+
+            const assertion = expect(pending).resolves.toMatchObject({
+                ok: false,
+                attempts: 1,
+                code: "federation_upstream_timeout",
+            });
+            await vi.advanceTimersByTimeAsync(100);
+            await assertion;
+            expect(aborted).toBe(true);
+            expect(cancelled).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it("does not retry a 5xx response after receiving upstream headers", async () => {

@@ -19,6 +19,7 @@ import {
 } from "@shared/upstream-node-federation";
 
 const MANIFEST_TIMEOUT_MS = 3_000;
+export const UPSTREAM_MANIFEST_MAX_RESPONSE_BYTES = 256 * 1024;
 const RETRY_DELAY_MS = 250;
 const MAX_RETRY_DELAY_MS = 1_000;
 const SUPPORTED_FEDERATION_PROTOCOL_MAJOR = 1;
@@ -33,6 +34,7 @@ type HostnameResolution = { kind: "success"; addresses: string[] } | { kind: "fa
 
 interface NodeHttpResponse {
     headers: Record<string, string | string[] | number | undefined>;
+    destroy(error?: Error): void;
     on(event: "data", listener: (chunk: Uint8Array) => void): void;
     on(event: "end", listener: () => void): void;
     on(event: "error", listener: (error: Error) => void): void;
@@ -236,45 +238,61 @@ async function requestManifest(
     });
 
     try {
-        const response = await Promise.race([
-            fetcher(endpoint.manifestUrl, {
-                method: "GET",
-                redirect: "manual",
-                signal: controller.signal,
-                headers: {
-                    Accept: "application/json",
-                    "User-Agent": "LatestNews-Node-Federation/1.0",
-                    ...(token?.trim() && { Authorization: `Bearer ${token.trim()}` }),
-                },
-            }),
-            timeout,
-        ]);
+        const request = fetcher(endpoint.manifestUrl, {
+            method: "GET",
+            redirect: "manual",
+            signal: controller.signal,
+            headers: {
+                Accept: "application/json",
+                "User-Agent": "LatestNews-Node-Federation/1.0",
+                ...(token?.trim() && { Authorization: `Bearer ${token.trim()}` }),
+            },
+        }).then(async (response) => {
+            if (response.status >= 300 && response.status < 400) {
+                await cancelResponseBody(response);
+                return {
+                    ok: false as const,
+                    shouldRetry: false,
+                    failure: manifestFailureFactory("Upstream node returned a redirect."),
+                };
+            }
+            if (!response.ok) {
+                await cancelResponseBody(response);
+                return {
+                    ok: false as const,
+                    shouldRetry: false,
+                    failure: unavailableFailureFactory(`Upstream node returned HTTP ${response.status}.`),
+                };
+            }
 
-        if (response.status >= 300 && response.status < 400) {
-            return {
-                ok: false as const,
-                shouldRetry: false,
-                failure: manifestFailureFactory("Upstream node returned a redirect."),
-            };
-        }
-        if (!response.ok) {
-            return {
-                ok: false as const,
-                shouldRetry: false,
-                failure: unavailableFailureFactory(`Upstream node returned HTTP ${response.status}.`),
-            };
-        }
+            try {
+                const body = await readBoundedResponseText(response, controller.signal);
+                try {
+                    return { ok: true as const, value: JSON.parse(body) as unknown };
+                } catch {
+                    return {
+                        ok: false as const,
+                        shouldRetry: false,
+                        failure: manifestFailureFactory("Upstream node did not return JSON."),
+                    };
+                }
+            } catch (error) {
+                if (error instanceof UpstreamManifestResponseTooLargeError) {
+                    return {
+                        ok: false as const,
+                        shouldRetry: false,
+                        failure: manifestFailureFactory(error.message),
+                    };
+                }
+                throw error;
+            }
+        });
 
-        try {
-            return { ok: true as const, value: await response.json() };
-        } catch {
-            return {
-                ok: false as const,
-                shouldRetry: false,
-                failure: manifestFailureFactory("Upstream node did not return JSON."),
-            };
-        }
+        return await Promise.race([request, timeout]);
     } catch (error) {
+        if (error instanceof UpstreamManifestResponseTooLargeError) {
+            return { ok: false as const, shouldRetry: false, failure: manifestFailureFactory(error.message) };
+        }
         const failure =
             error === timeoutError || controller.signal.aborted
                 ? timeoutFailureFactory("Upstream node did not respond before the request deadline.")
@@ -282,6 +300,83 @@ async function requestManifest(
         return { ok: false as const, shouldRetry: true, failure };
     } finally {
         if (timeoutTimer) clearTimeout(timeoutTimer);
+    }
+}
+
+class UpstreamManifestResponseTooLargeError extends Error {
+    constructor() {
+        super(`Upstream node manifest exceeds ${UPSTREAM_MANIFEST_MAX_RESPONSE_BYTES} bytes.`);
+        this.name = "UpstreamManifestResponseTooLargeError";
+    }
+}
+
+class UpstreamManifestResponseAbortedError extends Error {
+    constructor() {
+        super("Upstream node manifest response was aborted.");
+        this.name = "UpstreamManifestResponseAbortedError";
+    }
+}
+
+/** 在解析 JSON 前限制响应体大小，并在截止时间触发时主动取消流。 */
+async function readBoundedResponseText(response: Response, signal: AbortSignal) {
+    const declaredLength = parseContentLength(response.headers.get("content-length"));
+    if (declaredLength !== undefined && declaredLength > UPSTREAM_MANIFEST_MAX_RESPONSE_BYTES) {
+        await cancelResponseBody(response);
+        throw new UpstreamManifestResponseTooLargeError();
+    }
+
+    if (!response.body) return "";
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+    const cancelOnAbort = () => {
+        void reader.cancel().catch(() => undefined);
+    };
+    signal.addEventListener("abort", cancelOnAbort, { once: true });
+
+    try {
+        while (true) {
+            if (signal.aborted) throw new UpstreamManifestResponseAbortedError();
+            const { done, value } = await reader.read();
+            if (done) break;
+            totalBytes += value.byteLength;
+            if (totalBytes > UPSTREAM_MANIFEST_MAX_RESPONSE_BYTES) {
+                try {
+                    await reader.cancel();
+                } catch {
+                    // 超限结果优先于底层流的取消错误。
+                }
+                throw new UpstreamManifestResponseTooLargeError();
+            }
+            chunks.push(value);
+        }
+        if (signal.aborted) throw new UpstreamManifestResponseAbortedError();
+    } finally {
+        signal.removeEventListener("abort", cancelOnAbort);
+        reader.releaseLock();
+    }
+
+    const bytes = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+        bytes.set(chunk, offset);
+        offset += chunk.byteLength;
+    }
+    return new TextDecoder().decode(bytes);
+}
+
+function parseContentLength(value: string | number | string[] | null | undefined) {
+    const raw = Array.isArray(value) ? value[0] : value;
+    if (raw === null || raw === undefined) return undefined;
+    const length = typeof raw === "number" ? raw : Number(raw.trim());
+    return Number.isSafeInteger(length) && length >= 0 ? length : undefined;
+}
+
+async function cancelResponseBody(response: Response) {
+    try {
+        await response.body?.cancel();
+    } catch {
+        // 响应已经结束时，取消失败不应覆盖原始协议错误。
     }
 }
 
@@ -360,6 +455,22 @@ function createPinnedNodeFetch(address: string): UpstreamFetch {
         const transport = (await import(transportModuleName)) as unknown as NodeHttpRequestModule;
 
         return new Promise<Response>((resolve, reject) => {
+            let settled = false;
+            let responseStream: NodeHttpResponse | undefined;
+            let abortRequest = () => undefined;
+            const cleanup = () => init.signal?.removeEventListener("abort", abortRequest);
+            const settleResolve = (value: Response) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                resolve(value);
+            };
+            const settleReject = (error: Error) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                reject(error);
+            };
             const request = transport.request(
                 url,
                 {
@@ -370,12 +481,32 @@ function createPinnedNodeFetch(address: string): UpstreamFetch {
                     },
                 },
                 (response) => {
+                    responseStream = response;
+                    const declaredLength = parseContentLength(response.headers["content-length"]);
+                    if (declaredLength !== undefined && declaredLength > UPSTREAM_MANIFEST_MAX_RESPONSE_BYTES) {
+                        const error = new UpstreamManifestResponseTooLargeError();
+                        response.destroy(error);
+                        settleReject(error);
+                        return;
+                    }
                     const chunks: Uint8Array[] = [];
-                    response.on("data", (chunk) => chunks.push(chunk));
-                    response.on("error", reject);
+                    let totalBytes = 0;
+                    response.on("data", (chunk) => {
+                        if (settled) return;
+                        totalBytes += chunk.byteLength;
+                        if (totalBytes > UPSTREAM_MANIFEST_MAX_RESPONSE_BYTES) {
+                            const error = new UpstreamManifestResponseTooLargeError();
+                            response.destroy(error);
+                            settleReject(error);
+                            return;
+                        }
+                        chunks.push(chunk);
+                    });
+                    response.on("error", settleReject);
                     response.on("end", () => {
+                        if (settled) return;
                         const body = combineChunks(chunks);
-                        resolve(
+                        settleResolve(
                             new Response(body, {
                                 status: response.statusCode ?? 502,
                                 headers: normalizeResponseHeaders(response.headers),
@@ -385,8 +516,13 @@ function createPinnedNodeFetch(address: string): UpstreamFetch {
                 }
             );
 
-            const abortRequest = () => request.destroy(new Error("Upstream manifest request was aborted"));
-            request.on("error", reject);
+            abortRequest = () => {
+                const error = new Error("Upstream manifest request was aborted");
+                responseStream?.destroy(error);
+                request.destroy(error);
+                settleReject(error);
+            };
+            request.on("error", settleReject);
             if (init.signal?.aborted) {
                 abortRequest();
                 return;
