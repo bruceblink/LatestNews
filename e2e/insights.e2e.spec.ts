@@ -402,6 +402,40 @@ test("reuses a fresh insight and catalog across reload, but an explicit query by
     expect(mocks.insightsRequests).toHaveLength(2);
 });
 
+test("reuses a successfully resolved empty insight across reload without suppressing explicit queries", async ({
+    page,
+}) => {
+    const mocks = await installInsightsMocks(page, {
+        respondToInsights: (_payload, index) => ({
+            body: createInsightsEnvelope(
+                index === 0 ? { itemCount: 0, headlines: [], sourceActivity: [] } : { headlines: [secondHeadline] }
+            ),
+        }),
+    });
+    await page.goto("/insights");
+    await expect(page.getByText("暂无热点", { exact: true })).toBeVisible();
+    await expect(page.locator(".insights-page-status").first()).toContainText("暂无内容");
+    expect(mocks.insightsRequests).toHaveLength(1);
+    await expect
+        .poll(() =>
+            page.evaluate(() => {
+                const rows = JSON.parse(localStorage.getItem("latestnews:news-reload-cache:v1") ?? "[]");
+                return rows.some(
+                    (row: { data?: { data?: { itemCount?: number }; meta?: { resolvedSourceCount?: number } } }) =>
+                        row.data?.data?.itemCount === 0 && row.data?.meta?.resolvedSourceCount === 2
+                );
+            })
+        )
+        .toBe(true);
+    await page.reload();
+    await expect(page.locator(".insights-page-status").first()).toContainText("暂无内容");
+    await expect(page.getByText("暂无热点", { exact: true })).toBeVisible();
+    expect(mocks.insightsRequests).toHaveLength(1);
+    await page.getByRole("button", { name: "查询", exact: true }).filter({ visible: true }).click();
+    await expect(page.getByRole("link", { name: secondHeadline, exact: true })).toBeVisible();
+    expect(mocks.insightsRequests).toHaveLength(2);
+});
+
 test("does not reuse a cached ranking after the local reading filter changes", async ({ page }) => {
     const release = Promise.withResolvers<void>();
     const requested = Promise.withResolvers<void>();

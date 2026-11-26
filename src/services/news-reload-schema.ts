@@ -56,7 +56,9 @@ const insights = z.object({
     data: z.object({
         generatedAt: num,
         sourceCount: num,
-        itemCount: num.positive(),
+        // A resolved source can legitimately contain no visible articles.
+        // Total failure is rejected independently by the envelope metadata.
+        itemCount: num.int().nonnegative(),
         hotRankings: z.array(
             z.object({
                 ...articleFields,
