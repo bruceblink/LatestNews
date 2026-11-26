@@ -68,6 +68,11 @@ def expected_artifacts(tag):
     }
 
 
+def is_docker_build_record(name):
+    """识别 Buildx 自动生成的构建记录，不把它当作发布资产。"""
+    return re.fullmatch(r'[^/]+\.dockerbuild', name) is not None
+
+
 REQUIRED_JOBS = {'Verify release source', 'Build Web deployment package', 'Build Windows x64',
                  'Build Windows ARM64', 'Build macOS Apple Silicon', 'Build Linux x64', 'Build Linux ARM64'}
 DOCKER_JOB = 'Publish multi-architecture Docker image'
@@ -166,7 +171,8 @@ def verify_recovery(api, tag, commit, run_id):
         require(len(found) == 1 and found[0]['status'] == 'completed' and found[0]['conclusion'] == 'success',
                 f'Required source job has not succeeded: {name}')
     artifact_commit = run.get('head_sha') if manual_dispatch_run else commit
-    artifacts = api.list(f'actions/runs/{run_id}/artifacts?per_page=100', 'artifacts')
+    artifacts = [a for a in api.list(f'actions/runs/{run_id}/artifacts?per_page=100', 'artifacts')
+                 if not is_docker_build_record(a.get('name', ''))]
     names = [a['name'] for a in artifacts]
     require(set(names) == expected_artifacts(tag) and len(names) == len(set(names)),
             'Missing, extra or duplicate source artifacts')

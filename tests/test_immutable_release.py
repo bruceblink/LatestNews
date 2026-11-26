@@ -31,6 +31,7 @@ class FakeGitHub:
         self.artifact_error = None
         self.wrong_source = False
         self.manual_source = False
+        self.extra_docker_build_record = False
         self.published_immutable = True
         self.attempt = 1
         self.archives = {}
@@ -87,6 +88,10 @@ class FakeGitHub:
             artifacts.pop()
         if self.artifact_error == 'wrong-run':
             artifacts[0]['workflow_run']['id'] = 1
+        if self.extra_docker_build_record:
+            artifacts.append({'id': 999, 'name': 'bruceblink~LatestNews~ABC123.dockerbuild', 'expired': False,
+                              'size_in_bytes': 10, 'digest': 'sha256:' + '0' * 64,
+                              'workflow_run': {'head_sha': self.commit, 'id': int(RUN)}})
         return artifacts
 
     def download(self, artifact_id, archive):
@@ -194,6 +199,14 @@ class ReleaseTests(unittest.TestCase):
         r.recover(self.api, TAG, self.commit, RUN, Path('recovered-desktop'), Path('recovered-web'))
         self.assertEqual(len(list(Path('recovered-desktop').iterdir())), 5)
         self.assertEqual(Path('recovered-web/fixture.txt').read_text(), f'web-{TAG}')
+        self.assert_no_writes()
+
+    def test_docker_build_record_artifact_is_ignored(self):
+        self.tag()
+        self.api.extra_docker_build_record = True
+        self.assertEqual(self.preflight(), (self.commit, 'not-verified'))
+        r.recover(self.api, TAG, self.commit, RUN, Path('recovered-desktop'), Path('recovered-web'))
+        self.assertEqual(len(list(Path('recovered-desktop').iterdir())), 5)
         self.assert_no_writes()
 
     def test_recovery_zip_digest_mismatch_fails(self):

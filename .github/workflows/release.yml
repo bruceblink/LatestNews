@@ -272,6 +272,8 @@ jobs:
     needs: [release-context, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      DOCKER_BUILD_RECORD_UPLOAD: false
     permissions:
       contents: read
       packages: write
