@@ -70,3 +70,5 @@
 `pnpm performance:article-online --size 100000 --page 100 --seconds 1800 --rebuild-every 300 --write-rate 1 --read-rate 2 --journal delete --evidence-dir /path/to/new-evidence-directory`
 
 须完成全部 1800/3600 操作、无未解释失败/跳过、最终一致性和积压收敛、完整压力与锁统计后才评估 N4-P3 正式准入。此次 1800 秒结果交接失败与后续 90 秒吞吐失败均保留，不将工具修复误记为生产性能问题已关闭。原始结果摘要见 [n4p3-stall-diagnostics-2026-11-26.json](n4p3-stall-diagnostics-2026-11-26.json)。
+
+后续正式 SQLite 1800 秒验收及三轮 DELETE/WAL 配对已通过，见 [正式在线负载验收](n4p3-formal-online-acceptance.md)。以上保留为历史证据，不删除此前失败结果。
