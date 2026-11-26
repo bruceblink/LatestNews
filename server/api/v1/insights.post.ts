@@ -56,7 +56,7 @@ async function readInsights(event: H3Event): Promise<NewsInsightsResponse> {
         cacheEntries: caches,
         invalidSourceIds: invalidIds,
         signal: event.req.signal,
-        fetchMissing: (id, signal) => fetchSourceItems(id, { signal }),
+        fetchMissing: (id, signal) => fetchSourceItems(id, { signal, event }),
         saveCache: async (id, items) => {
             if (!cacheTable) return;
             await cacheTable.set(id, items);

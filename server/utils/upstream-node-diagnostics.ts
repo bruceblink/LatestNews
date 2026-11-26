@@ -90,6 +90,7 @@ export function createUpstreamNodeDiagnostic(options: CreateUpstreamNodeDiagnost
 function toLocalHealthSummary(summary: SourceHealthSummary): LocalSourceHealthSummary {
     return {
         updatedAt: summary.updatedAt,
+        ...(summary.sampleScope ? { sampleScope: summary.sampleScope } : {}),
         total: summary.total,
         healthy: summary.healthy,
         failing: summary.failing,

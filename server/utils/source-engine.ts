@@ -15,6 +15,8 @@ import {
     type CollectionTraceOutcome,
 } from "./collection-trace";
 
+import type { SourceHealthPersistence } from "../database/source-health-events";
+
 export interface SourceExecutionContext {
     sourceId: SourceID;
     signal: AbortSignal;
@@ -35,9 +37,19 @@ export interface SourceEngineQueueOptions {
 export interface SourceEngineOptions extends SourceEngineQueueOptions {
     adapters?: readonly SourceAdapter[];
     resolveAdapter?: (id: SourceID) => SourceAdapter | undefined;
-    onSuccess: (id: SourceID, durationMs: number, itemCount: number) => void;
+    onSuccess: (
+        id: SourceID,
+        durationMs: number,
+        itemCount: number,
+        persistence?: SourceHealthPersistence
+    ) => void | Promise<void>;
     onQuality?: (id: SourceID, quality: NewsItemsNormalizationQuality, sampledAt: number) => void;
-    onFailure: (id: SourceID, durationMs: number, error: unknown) => void;
+    onFailure: (
+        id: SourceID,
+        durationMs: number,
+        error: unknown,
+        persistence?: SourceHealthPersistence
+    ) => void | Promise<void>;
     onAdapter?: (id: SourceID, descriptor: SourceDescriptor) => void;
     now?: () => number;
     trace?: CollectionTrace;
@@ -46,6 +58,7 @@ export interface SourceEngineOptions extends SourceEngineQueueOptions {
 export interface SourceCollectOptions {
     signal?: AbortSignal;
     requestId?: string;
+    healthPersistence?: SourceHealthPersistence;
 }
 
 interface SourceTraceState {
@@ -118,10 +131,14 @@ export function createSourceEngine({
         },
     };
 
-    function collect(id: SourceID, { signal, requestId }: SourceCollectOptions = {}): Promise<NewsItem[]> {
+    function collect(
+        id: SourceID,
+        { signal, requestId, healthPersistence }: SourceCollectOptions = {}
+    ): Promise<NewsItem[]> {
         if (closed || signal?.aborted) return Promise.reject(cancelledCollection(id));
         const pending = inflightRequests.get(id);
-        const collection = pending && !pending.controller.signal.aborted ? pending : startCollection(id, requestId);
+        const collection =
+            pending && !pending.controller.signal.aborted ? pending : startCollection(id, requestId, healthPersistence);
         collection.callers += 1;
         if (!signal) return collection.result;
 
@@ -145,7 +162,12 @@ export function createSourceEngine({
         });
     }
 
-    function startCollection(id: SourceID, requestId?: string): SourceCollection {
+    function startCollection(
+        id: SourceID,
+        requestId?: string,
+        healthPersistence?: SourceHealthPersistence
+    ): SourceCollection {
+        let healthWork: void | Promise<void>;
         const controller = new AbortController();
         const startTime = now();
         const traceState: SourceTraceState | undefined = trace
@@ -180,7 +202,9 @@ export function createSourceEngine({
                 const normalized = normalizeNewsItemsWithQuality(items, { sourceId: id });
                 if (traceState) traceState.normalizeEndedAt = monotonicNow();
                 const completedAt = now();
-                onSuccess(id, completedAt - startTime, normalized.items.length);
+                healthWork = healthPersistence
+                    ? onSuccess(id, completedAt - startTime, normalized.items.length, healthPersistence)
+                    : onSuccess(id, completedAt - startTime, normalized.items.length);
                 onQuality?.(id, normalized.quality, completedAt);
                 return normalized.items;
             })
@@ -192,7 +216,11 @@ export function createSourceEngine({
                 const outcome = controller.signal.aborted ? "cancelled" : getTraceOutcome(error);
                 if (traceState) finishSourceTrace(traceState, outcome, id);
                 if (controller.signal.aborted) throw cancelledCollection(id);
-                if (!isCancellationError(error)) onFailure(id, now() - startTime, error);
+                if (!isCancellationError(error)) {
+                    healthWork = healthPersistence
+                        ? onFailure(id, now() - startTime, error, healthPersistence)
+                        : onFailure(id, now() - startTime, error);
+                }
                 throw error;
             })
             .finally(() => {
@@ -201,6 +229,14 @@ export function createSourceEngine({
 
         const collection = { controller, result, callers: 0 };
         inflightRequests.set(id, collection);
+        // Register lifetime ownership before returning to the first caller.
+        // A joiner must not append the same sample or replace its D1 binding.
+        healthPersistence?.retain(
+            result.then(
+                () => healthWork,
+                () => healthWork
+            )
+        );
         return collection;
     }
 

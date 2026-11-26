@@ -96,5 +96,6 @@ describe("source health cache degradation", () => {
             lastFreshnessMs: 90_000,
         });
         expect(getSourceHealthSummary().sampleWindowStartedAt).toBeDefined();
+        expect(getSourceHealthSummary().sampleScope).toBe("instance");
     });
 });

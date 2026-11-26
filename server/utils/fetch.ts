@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { $fetch, type FetchOptions, type FetchResponse } from "ofetch";
 
-import { createFetchScheduler } from "./fetch-scheduler";
+import { FetchSchedulerError, createFetchScheduler } from "./fetch-scheduler";
 
 import type { CollectionTrace } from "./collection-trace";
 
@@ -47,6 +47,61 @@ const baseFetch = $fetch.create(
 );
 
 const fetchScheduler = createFetchScheduler(fetchSchedulerDefaults);
+type RequestFetchScheduler = ReturnType<typeof createFetchScheduler>;
+const requestFetchScheduler = new AsyncLocalStorage<RequestFetchScheduler>();
+
+/** Workers cannot transfer queued I/O or abort handles across requests.
+ * The shared admission gate contains only counters, never a promise or timer.
+ * A saturated cross-request budget rejects rather than borrowing another request's queue. */
+export function createFetchAdmission(maxConcurrent: number, maxPerKey: number, leaseMs = 30_000, now = Date.now) {
+    // The lease is longer than the request scheduler's task deadline.
+    // If the platform kills a request without running finally, its slot
+    // becomes available again. No cross-request timer is needed.
+    const active = new Map<symbol, { key: string; expiresAt: number }>();
+    return (key: string) => {
+        const time = now();
+        let count = 0;
+        for (const [token, entry] of active) {
+            if (entry.expiresAt <= time) active.delete(token);
+            else if (entry.key === key) count++;
+        }
+        if (active.size >= maxConcurrent || count >= maxPerKey) {
+            throw new FetchSchedulerError("QUEUE_FULL", "Request fetch admission limit reached.");
+        }
+        const token = Symbol();
+        active.set(token, { key, expiresAt: time + leaseMs });
+        return () => {
+            active.delete(token);
+        };
+    };
+}
+
+const admitPagesFetch = createFetchAdmission(fetchSchedulerDefaults.maxConcurrent, fetchSchedulerDefaults.maxPerKey);
+
+export function createRequestFetchScheduler() {
+    return createFetchScheduler(fetchSchedulerDefaults);
+}
+
+export function runWithRequestFetchScheduler<T>(scheduler: RequestFetchScheduler, task: () => T): T {
+    return requestFetchScheduler.run(scheduler, task);
+}
+
+function scheduleFetch<T>(key: string, task: (signal: AbortSignal) => Promise<T>, signal?: AbortSignal) {
+    const local = requestFetchScheduler.getStore();
+    if (!local) return fetchScheduler.run(key, task, signal);
+    return local.run(
+        key,
+        async (collectionSignal) => {
+            const release = admitPagesFetch(key);
+            try {
+                return await task(collectionSignal);
+            } finally {
+                release();
+            }
+        },
+        signal
+    );
+}
 
 export function setFetchTrace(trace?: CollectionTrace) {
     fetchScheduler.setTrace(trace);
@@ -66,7 +121,7 @@ function normalizeHeaders(h?: FetchOptions["headers"]): Record<string, string> {
 
 export function myFetch<T>(url: string, options: FetchOptions<any> = {}): Promise<T> {
     const { signal: externalSignal, ...fetchOptions } = options;
-    return fetchScheduler.run(
+    return scheduleFetch(
         getFetchKey(url),
         (signal) =>
             baseFetch<T>(url, {
@@ -83,7 +138,7 @@ export function myFetch<T>(url: string, options: FetchOptions<any> = {}): Promis
 
 export function myFetchRaw<T>(url: string, options: FetchOptions<any> = {}): Promise<FetchResponse<T>> {
     const { signal: externalSignal, ...fetchOptions } = options;
-    return fetchScheduler.run(
+    return scheduleFetch(
         getFetchKey(url),
         (signal) =>
             baseFetch.raw<T>(url, {

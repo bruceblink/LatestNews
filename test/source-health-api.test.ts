@@ -123,6 +123,13 @@ describe("source health sources API", () => {
         expect(summary.sources[0].lastErrorMessage).toBe(marker);
     });
 
+    it("labels instance-local counters in both JSON metadata and text diagnostics", () => {
+        const summary: SourceHealthSummary = { ...createSummary(), sampleScope: "instance" };
+        expect(createSourceHealthSourcesResponse(summary).meta.sampleScope).toBe("instance");
+        expect(formatSourceHealthDiagnostics(summary)).toContain("当前运行实例；不代表持久累计或跨实例统计");
+        expect(createSourceHealthSourcesResponse(createSummary()).meta.sampleScope).toBeUndefined();
+    });
+
     it("normalizes limit values with a max guard", () => {
         expect(normalizeHealthSourcesLimit("20")).toBe(20);
         expect(normalizeHealthSourcesLimit(600, 500)).toBe(500);

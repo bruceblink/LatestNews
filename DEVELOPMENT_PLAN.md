@@ -30,8 +30,8 @@ LatestNews 的主线是来源发现、关注、阅读、保存和回看。Web/PW
 | 顺序 | 切片 | 优先级 | 目标 / 依赖 |
 | --- | --- | --- | --- |
 | 1 | N3-G1：公开诊断错误安全边界 | P0 | #35 已变基合并，CI 通过；本地验收通过；A09 回归通过；详见[专项报告](docs/performance/n3g1-public-error-boundary.md)，目标部署另验 |
-| 2 | N4-P1：持久索引审核与就绪语义 | P0 | A10 本地与隔离 D1 专项通过；[报告](docs/performance/n4p1-fts-audit.md)；生产迁移与长测另验 |
-| 3 | N3-G2：请求级观测与健康持久化 | P1 | A13；依赖 G1；真实 Pages worker 并发/生命周期 |
+| 2 | N4-P1：持久索引审核与就绪语义 | P0 | #36 已变基合并，CI 通过；A10 本地与隔离 D1 专项通过；[报告](docs/performance/n4p1-fts-audit.md)；生产迁移与长测另验 |
+| 3 | N3-G2：请求级观测与健康持久化 | P1 | A13 本地及实际 Pages 产物隔离 D1 验收通过；[报告](docs/performance/n3g2-request-source-health.md)；目标部署另验 |
 | 4 | N4-P2：独立有界索引维护与积压治理 | P1 | A11；依赖 P1；不依赖用户打开 insights |
 | 5 | N4-P3：持续写入及审计锁性能验收 | P1 | 依赖 P1/P2；#33 50/200 同条件对照与回退 |
 | 并行 | N1-D：v0.9.0 资产与正式包验收 | P1 | 已发布版本只读验证；下版发布另行授权 |
@@ -168,6 +168,8 @@ N5：只有真实独立升级需求或维护者、插件协议和宿主稳定性
 - 输入：A13；复用 request-d1.ts 已建立的 binding 捕获，不再让 Pages 的持久事件依赖 mutable global 或跨请求 promise。
 - 实现：显式传递请求持久化上下文与 waitUntil 所有权；singleflight 共享采集事件不得重复记账，取消/异常时保留定义好的记录语义。Node 可保留进程级实例。明确公开内存摘要是实例/窗口，若读取持久数据则注明覆盖范围、时间和版本；勿把 20 条近期事件当七天完整统计。
 - 验收：双绑定隔离、请求结束/取消、同源并发、冷启动及重启、持久化故障不阻塞主采集；实际 Pages 产物 + Miniflare/workerd 并发测试；健康 JSON/文本与旧 API 兼容，A09 不回归。
+
+2026-11-26：N3-G2 移除 mutable global D1 binding；请求级 binding/初始化及 waitUntil，单次实际采集一次事件。实际 workerd 验证跨请求 AbortController 失败后改为 Pages 请求内去重和队列、同步网络 admission 租约；Node 仍进程级去重。健康摘要标注实例范围。112 文件 623 项、lint/三端 typecheck、Node/Pages 构建、隔离 D1 6 个新检查点及既有回归通过；见[专项报告](docs/performance/n3g2-request-source-health.md)。目标 D1 与真实上游未验，下一切片 N4-P2。
 
 #### N4-P2（P1）：独立有界维护与积压治理
 

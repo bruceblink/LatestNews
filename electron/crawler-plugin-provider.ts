@@ -159,6 +159,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                 const cacheDegraded = sources.filter((source) => source.cacheDegraded).length;
                 return {
                     updatedAt: Date.now(),
+                    sampleScope: "instance",
                     total: sources.length,
                     healthy,
                     failing,
@@ -294,6 +295,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
             listSourceMetadata: () => [],
             getHealthSummary: async (): Promise<SourceHealthSummary> => ({
                 updatedAt: Date.now(),
+                sampleScope: "instance",
                 total: 0,
                 healthy: 0,
                 failing: 0,

@@ -44,6 +44,8 @@ export interface SourceHealthSnapshot {
 }
 
 export interface SourceHealthSummary {
+    /** Counters describe the current runtime instance, not durable cross-instance totals. */
+    sampleScope?: "instance";
     updatedAt: number;
     total: number;
     healthy: number;

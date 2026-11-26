@@ -10,6 +10,8 @@ import { getCrawlerSourceKind } from "#/utils/crawler-plugin-runtime";
 import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 import { getSourceHealthEventsTable } from "#/database/source-health-events";
 
+import type { SourceHealthPersistence } from "../database/source-health-events";
+
 export type ServerSourceHealthStatus = "idle" | "healthy" | "failing";
 
 export interface ServerSourceHealthEvent {
@@ -76,7 +78,12 @@ function getOrCreateSnapshot(id: SourceID): MutableSourceHealthSnapshot {
     return snapshot;
 }
 
-export function recordSourceSuccess(id: SourceID, durationMs: number, itemCount: number) {
+export function recordSourceSuccess(
+    id: SourceID,
+    durationMs: number,
+    itemCount: number,
+    persistence?: SourceHealthPersistence
+) {
     const snapshot = getOrCreateSnapshot(id);
     const occurredAt = Date.now();
     snapshot.status = "healthy";
@@ -94,7 +101,7 @@ export function recordSourceSuccess(id: SourceID, durationMs: number, itemCount:
         durationMs,
         itemCount,
     });
-    persistSourceHealthEvent(id, snapshot.recentEvents[0]);
+    return persistSourceHealthEvent(id, snapshot.recentEvents[0], persistence);
 }
 
 export function recordSourceAdapter(id: SourceID, kind: SourceAdapterKind) {
@@ -124,7 +131,12 @@ export function recordSourceQuality(id: SourceID, quality: NewsItemsNormalizatio
         quality.newestPublishedAt === undefined ? undefined : Math.max(0, sampledAt - quality.newestPublishedAt);
 }
 
-export function recordSourceFailure(id: SourceID, durationMs: number, error: unknown) {
+export function recordSourceFailure(
+    id: SourceID,
+    durationMs: number,
+    error: unknown,
+    persistence?: SourceHealthPersistence
+) {
     const snapshot = getOrCreateSnapshot(id);
     const occurredAt = Date.now();
     const errorMessage = describeSourceError(error).message;
@@ -142,7 +154,7 @@ export function recordSourceFailure(id: SourceID, durationMs: number, error: unk
         durationMs,
         errorMessage,
     });
-    persistSourceHealthEvent(id, snapshot.recentEvents[0]);
+    return persistSourceHealthEvent(id, snapshot.recentEvents[0], persistence);
 }
 
 export function getSourceHealthSnapshot(id: SourceID): ServerSourceHealthSnapshot {
@@ -178,6 +190,7 @@ export function getSourceHealthSummary() {
         .sort((left, right) => left - right)[0];
     return {
         updatedAt: Date.now(),
+        sampleScope: "instance" as const,
         total: sources.length,
         healthy: sources.filter((source) => source.status === "healthy").length,
         failing: sources.filter((source) => source.status === "failing").length,
@@ -199,8 +212,10 @@ function createEmptyQuality(): SourceHealthQuality {
     };
 }
 
-function persistSourceHealthEvent(id: SourceID, event: ServerSourceHealthEvent) {
-    void getSourceHealthEventsTable()
-        .then((table) => table?.append(id, event, RECENT_EVENT_LIMIT))
-        .catch((error) => logger.warn(`persist ${id} source health event failed`, describeSourceError(error)));
+function persistSourceHealthEvent(id: SourceID, event: ServerSourceHealthEvent, persistence?: SourceHealthPersistence) {
+    return (
+        persistence
+            ? persistence.append(id, event)
+            : getSourceHealthEventsTable().then((table) => table?.append(id, event, RECENT_EVENT_LIMIT))
+    ).catch((error) => logger.warn(`persist ${id} source health event failed`, describeSourceError(error)));
 }

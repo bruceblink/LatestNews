@@ -55,7 +55,7 @@ export interface UpstreamCircuitSnapshot {
 
 export type LocalSourceHealthSummary = Pick<
     SourceHealthSummary,
-    "updatedAt" | "total" | "healthy" | "failing" | "idle" | "cacheDegraded"
+    "updatedAt" | "total" | "healthy" | "failing" | "idle" | "cacheDegraded" | "sampleScope"
 >;
 
 export interface UpstreamFederationHealth {

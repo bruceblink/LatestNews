@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
             }
 
             try {
-                const items = await fetchSourceItems(id, { signal });
+                const items = await fetchSourceItems(id, { signal, event });
                 signal.throwIfAborted();
                 if (!items.length) return { id, status: "empty" as const };
                 await cache.set(id, items);

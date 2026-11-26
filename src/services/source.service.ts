@@ -419,6 +419,7 @@ export function fetchSourceHealthSummary(): Promise<SourceHealthSummary> {
                 failing: meta.failingCount,
                 idle: meta.idleCount,
                 cacheDegraded: meta.cacheDegradedCount,
+                ...(meta.sampleScope ? { sampleScope: meta.sampleScope } : {}),
                 sampleWindowStartedAt: meta.sampleWindowStartedAt,
             };
         },
