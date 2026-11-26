@@ -50,6 +50,7 @@
         "performance:hybrid-search": "tsx --tsconfig tsconfig.node.json scripts/performance/hybrid-search-quality.ts",
         "performance:chinese-search": "tsx --tsconfig tsconfig.node.json scripts/performance/chinese-search-quality.ts",
         "performance:article-capacity": "tsx --tsconfig tsconfig.node.json scripts/performance/article-capacity.ts",
+        "performance:article-online": "tsx --tsconfig tsconfig.node.json scripts/performance/article-online-benchmark.ts",
         "performance:article-recovery": "tsx --tsconfig tsconfig.node.json scripts/performance/article-recovery-benchmark.ts",
         "performance:article-index": "tsx --tsconfig tsconfig.node.json scripts/performance/article-index-baseline.ts",
         "performance:quality-review": "tsx --tsconfig tsconfig.node.json scripts/performance/quality-review-cli.ts",

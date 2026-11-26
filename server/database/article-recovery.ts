@@ -9,6 +9,9 @@ const PAGE = 50;
 // Local profiling shows transaction boundaries dominate rebuild cost.
 // Keep the remote D1 and incremental backlog budgets unchanged.
 const SQLITE_BUILD_PAGE = 200;
+export type SqliteBuildPage = 50 | 100 | 200;
+// Online maintenance has a separate tail-latency budget from direct rebuilds.
+export const SQLITE_ONLINE_BUILD_PAGE: SqliteBuildPage = 100;
 
 // The audit certifies row consistency at a point in time, not immunity to
 // out-of-band writes. Keep a bounded validity window and fail closed on expiry.
@@ -198,7 +201,9 @@ export async function beginFtsRepair(db: Database) {
  * FTS readers/writers must respect the persisted phase. No source, event or
  * article record is deleted. A legacy interrupted repair restarts at clear.
  */
-export async function repairFtsPage(db: Database) {
+export async function repairFtsPage(db: Database, sqliteBuildPage: SqliteBuildPage = SQLITE_BUILD_PAGE) {
+    if (sqliteBuildPage !== 50 && sqliteBuildPage !== 100 && sqliteBuildPage !== 200)
+        throw new RangeError("Unsupported SQLite rebuild page size.");
     const state = (await db.prepare("SELECT phase,cursor,generation FROM article_fts_repair WHERE id=1").get()) as {
         phase: string;
         cursor: string;
@@ -268,7 +273,7 @@ export async function repairFtsPage(db: Database) {
         ]);
         return { done: ready.length > 0, indexed: 0 };
     }
-    const buildPage = db.connector === "sqlite" ? SQLITE_BUILD_PAGE : PAGE;
+    const buildPage = db.connector === "sqlite" ? sqliteBuildPage : PAGE;
     const keys = (
         state.cursor === BUILD_START
             ? await db.prepare(`SELECT article_key FROM articles ORDER BY article_key LIMIT ${buildPage}`).all()

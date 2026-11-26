@@ -19,3 +19,5 @@
 - 有限输入的正确性与积压收敛已验收。持续输入时的吞吐、真实锁等待、P95/P99 和恢复时间候选门槛仍属于 N4-P3。目标 D1 的费用、硬时限与生产调度未验收，不能从本地时延外推。
 
 复现：先构建 Pages，再在安装有 Miniflare 的独立目录设置 LATESTNEWS_MINIFLARE_DIR，并设置 LATESTNEWS_D1_TEST_COMPAT_DATE=2026-08-06，执行 pnpm exec tsx --tsconfig tsconfig.node.json scripts/performance/article-maintenance-d1-smoke.mjs。
+
+N4-P3 后续调整：SQLite leased journal 使用集合式分片写入，在线 build 页默认 100；直接重建仍为 200，D1 50 不变。详见 [在线负载报告](n4p3-online-load.md)。
