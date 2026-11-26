@@ -22,8 +22,9 @@ Linux x64 / Node 22.23.4 / pnpm 12.21.0；合成标记和临时 SQLite / mock �
 | Electron 本地采集 | 缓存回退与冷缓存异常安全投影通过 |
 | 全量 | 109 文件、606 Vitest；lint、Node/Web/Electron typecheck 全通过 |
 | 构建 | Node、Cloudflare Pages（output verification）、Electron 均通过；跳过在线 favicon |
+| 独立宿主 | 直接 tsx 导入和本地真实 Electron Crawler Host smoke 通过（Xvfb + utility process） |
 | 隔离 Pages/D1 | 实际 Pages 产物，Miniflare/workerd 兼容日期 2026-08-06：缓存可用性 4 检查点、事件/索引 17 检查点通过 |
 
-首次集成夹具误用 v2ex 重定向 ID，修正为 v2ex-share 后通过；未将该失败算成功。未测真实公网来源、真实 Pages/D1、正式安装包或历史生产记录清理。旧部署的原始日志/数据库须由操作者独立评估，不能由本轮本地回归推断未曾泄露。
+首次集成夹具误用 v2ex 重定向 ID，修正为 v2ex-share 后通过；远端首轮 Crawler Host CI 在独立 tsx 入口无法解析新增 @shared 别名，改为相对导入后本地直接入口、真实 Electron smoke、606 Vitest、lint 与三端类型检查重跑通过。未将首轮失败算成功。未测真实公网来源、真实 Pages/D1、正式安装包或历史生产记录清理。旧部署的原始日志/数据库须由操作者独立评估，不能由本轮本地回归推断未曾泄露。
 
 回退必须保留安全的通用文本和错误投影，不能恢复直接透传原始异常。A13 请求级健康持久化和 A10/A11 索引审核/积压仍开放。下一独立切片 N4-P1。
