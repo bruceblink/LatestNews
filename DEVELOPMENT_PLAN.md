@@ -10,7 +10,7 @@ LatestNews 的主线是来源发现、关注、阅读、保存和回看。Web/PW
 
 | 范围 | 开发/验收状态 | 剩余条件 |
 | --- | --- | --- |
-| 发布 | [v0.9.0](https://github.com/bruceblink/LatestNews/releases/tag/v0.9.0) 已发布；immutable=true、18 项资产均有 digest 元数据；标签指向 baacb5d | 未逐件下载复算或实机安装；#33 不包含在 v0.9.0 中 |
+| 发布 | [v0.9.0](https://github.com/bruceblink/LatestNews/releases/tag/v0.9.0) 已发布；immutable=true、18 项资产均有 digest 元数据；标签指向 baacb5d | 18 项公开资产实际复算通过；Web 回环 HTTP 启动及 Linux amd64 提取包 HTTPS 启动通过；系统安装及其他平台另验；#33 不包含在 v0.9.0 中 |
 | 开发 | main a222a88，版本字段 0.9.0；Node 22.23.4 / pnpm 12.21.0，React 18.3.1 | 下个版本号与发布另行决定，不修改已有不可变标签 |
 | 回归 | 本轮 107 文件 593 Vitest、32 Python release guard、lint、Node/Web/Electron typecheck 全通过；#33 的 Node/Pages 构建、远端 CI 与 D1 17 点本地回归通过 | 本轮未重复构建、未重测生产和实机 |
 | N3/N5 采集 | N3-E 输入安全、本地可信插件/来源/宿主、SourceEngine/FetchScheduler 已实现；4/6/8 全 API 与回环重复性通过；默认并发 8 | A09 本地验收通过；A13、真实 Docker、目标 Pages 与七天来源质量观察；联邦 A15 条件性 |
@@ -34,10 +34,10 @@ LatestNews 的主线是来源发现、关注、阅读、保存和回看。Web/PW
 | 3 | N3-G2：请求级观测与健康持久化 | P1 | #37 已变基合并，CI 通过；A13 本地及实际 Pages 产物隔离 D1 验收通过；[报告](docs/performance/n3g2-request-source-health.md)；目标部署另验 |
 | 4 | N4-P2：独立有界索引维护与积压治理 | P1 | #38 已变基合并，CI 通过；A11；本地与实际 Pages 隔离 D1 正确性通过；[报告](docs/performance/n4p2-bounded-maintenance.md)；持续负载转 P3，生产调度另行授权 |
 | 5 | N4-P3：持续写入及审计锁性能验收 | P1 | 在线批量回放与 100 键候选、27 轮规模对照已实现/验收；[报告](docs/performance/n4p3-online-load.md)；诊断工具已扩展；[停顿诊断](docs/performance/n4p3-stall-diagnostics.md)；1800 秒实跑未取得有效汇总，文件交接已修；90 秒复测仍出现负载跳过；最终工具 60 秒 DELETE/WAL 完整通过，正式准入开放 |
-| 并行 | N1-D：v0.9.0 资产与正式包验收 | P1 | 已发布版本只读验证；下版发布另行授权 |
+| 并行 | N1-D：v0.9.0 资产与正式包验收 | P1 | 公开资产全量复算、Web/Linux amd64 正式包启动及 OCI 双架构清单核验通过；[报告](docs/performance/n1d-v0.9.0-release.md)；安装/升级/签名/Docker 运行另验；下版发布另行授权 |
 | 延后 | N2-D1：SyncHub 传输与连接验证 | P0 | 用户要求延后；A12 仍开放，不降级为已修复，不扩大同步能力 |
 | 延后 | N2-D2：账户与服务切换隔离 | P1 | A14；等待 N2-D1 恢复并验收 |
-| 插入 | N4-R：Web 短期重载缓存 | P1 | 用户反馈刷新慢；#41 已变基合并，独立审阅 P2 空结果缓存修复已本地验收；刷新可见时延中位数 1878.4→196.3 ms，三个样本均无目录/洞察重复请求；[报告](docs/performance/web-reload-cache-2026-11-26.md)，生产另验 |
+| 插入 | N4-R：Web 短期重载缓存 | P1 | 用户反馈刷新慢；#41 已变基合并，独立审阅 P2 空结果缓存修复 #42 已变基合并、CI 通过；刷新可见时延中位数 1878.4→196.3 ms，三个样本均无目录/洞察重复请求；[报告](docs/performance/web-reload-cache-2026-11-26.md)，生产另验 |
 | 并行 | N4-N：客户端长测、独立质量门槛 | P1 | 30 分钟 Web/Electron 各自验收；独立人工标注 |
 | 延后/条件性 | N2-D3：删除与 CAS 协议 | P1 | A07；依赖 D2 与 SyncHub 服务契约/授权，禁止直接启用 v2 |
 | 条件性 | N3-F / N4-P4：目标 D1、真实宿主/上游验收 | P1 | 依赖 G2/P2/P3；测试绑定、备份、授权、目标版本明确 |
@@ -200,6 +200,8 @@ N5：只有真实独立升级需求或维护者、插件协议和宿主稳定性
 - 对已发布 v0.9.0 从 tag、commit、workflow、资产 SHA-256、更新清单/签名及公开 Docker 镜像逐项核验；下载至隔离目录，禁止重建或覆盖不可变资产。按正式版本、主线候选分开记录。
 - 在可用平台测试实际安装、启动、卸载、覆盖升级、托盘、关闭/恢复、包内 HTTPS/API 代理、离线和读取；补上历史正式包 HTTP fixture 与 HTTPS 策略冲突、原生最小化未验收的问题，不用放松生产 HTTPS 通过测试。检查无损升级、回滚和持久数据。
 - 双架构 Docker 使用临时卷和回环 fixture 测启动、重启、备份/恢复与 SQLite ABI；评估固定基础镜像摘要。没有真实平台时明确未验收，不因 CI 包装成功而宣称实机成功。下个版本需另行决定，不主动发布。
+
+2026-11-26：v0.9.0 18/18 公开资产实际下载（1,138,699,189 字节）复算 SHA-256 全匹配，17 项 SHA256SUMS、四份更新清单 8 项 SHA-512 及大小通过；公开 GHCR OCI index 与源作业摘要一致，amd64/arm64 revision 均为 baacb5d。正式 Web.zip 独立 Node 22/SQLite 启动、目录及历史 API 通过；Linux amd64.deb 提取后实际 packaged 0.9.0 在临时受信 HTTPS 夹具显示新闻、拒绝 HTTP 且配置不变，复用脚本通过。签名、实机安装/升级/回退、AppImage 集成与 Docker 实际运行仍开放。详见[报告](docs/performance/n1d-v0.9.0-release.md)。
 
 #### N4-R（P1，用户反馈）：Web 短期重载缓存
 
