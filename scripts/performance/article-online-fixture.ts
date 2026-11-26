@@ -11,11 +11,14 @@ import { ftsIsInconsistent } from "../../server/database/article-recovery";
 import type { OnlineSample } from "./article-online-worker";
 import type { NativeSqlite } from "./article-online-metrics";
 
-export async function initializeOnlineFixture(path: string, size: number) {
+export async function initializeOnlineFixture(path: string, size: number, journal: "delete" | "wal" = "delete") {
     const db = createDatabase(sqliteConnector({ path }));
     try {
-        await new Cache(db).init();
         const native = (await db.getInstance()) as NativeSqlite;
+        native.pragma("journal_mode = " + journal);
+        native.pragma("synchronous = FULL");
+        assert.deepEqual(native.pragma("journal_mode"), [{ journal_mode: journal }]);
+        await new Cache(db).init();
         const insert = native.prepare("INSERT INTO articles VALUES(?,?,?,?,?,?,?,?,?)");
         const mapping = native.prepare("INSERT INTO article_sources VALUES(?,?,?,?,?)");
         const fts = native.prepare("INSERT INTO article_search VALUES(?,?,?)");

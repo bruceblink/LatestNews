@@ -5,8 +5,10 @@ import { setTimeout as delay } from "node:timers/promises";
 import sqliteConnector from "db0/connectors/better-sqlite3";
 
 import { logger } from "../../server/utils/logger";
+import { slotExpired } from "./article-online-gate";
 import { Cache } from "../../server/database/cache-store";
 import { ArticleIndex } from "../../server/database/article-index";
+import { slowSpans, captureSpan } from "./article-online-diagnostics";
 import { isBusy, runtimeMetrics, instrumentSqlite, type NativeSqlite } from "./article-online-metrics";
 
 import type { NewsItem, SourceID } from "../../shared/types";
@@ -49,6 +51,7 @@ export async function runOnlineWorker(
     const db = createDatabase(sqliteConnector({ path }));
     try {
         const native = (await db.getInstance()) as NativeSqlite;
+        native.pragma("synchronous = FULL");
         const cache = new Cache(db, { sqliteBuildPage: page });
         await cache.check(false);
         const index = new ArticleIndex(db);
@@ -61,19 +64,29 @@ export async function runOnlineWorker(
         const { startAt, endAt } = await start;
         const runtime = runtimeMetrics();
         const samples: OnlineSample[] = [];
+        const slow = slowSpans();
         const interval = 1000 / rate;
+        const slots = Math.round(((endAt - startAt) / 1000) * rate);
         let skipped = 0;
         let sequence = 0;
-        while (startAt + sequence * interval < endAt) {
+        while (sequence < slots) {
             const due = startAt + sequence * interval;
-            if (Date.now() >= due + interval) {
+            if (slotExpired(Date.now(), due, interval, endAt)) {
                 sequence++;
                 skipped++;
                 continue;
             }
             if (due > Date.now()) await delay(due - Date.now());
+            // Timer callbacks can resume after a scheduler/storage stall.
+            // Never execute an expired slot just because its sleep completed.
+            if (slotExpired(Date.now(), due, interval, endAt)) {
+                sequence++;
+                skipped++;
+                continue;
+            }
             const startedAt = Date.now();
             const t = performance.now();
+            const done = captureSpan(role);
             let ok = false;
             let retries = 0;
             let mode: string | undefined;
@@ -98,6 +111,7 @@ export async function runOnlineWorker(
                     await delay(10 * retries);
                 }
             }
+            slow.record(done());
             samples.push({
                 sequence,
                 startedAt,
@@ -111,10 +125,16 @@ export async function runOnlineWorker(
             runtime.sample();
             sequence++;
         }
-        process.send?.({
-            kind: "result",
-            result: { role, rate, slots: sequence, skipped, samples, metrics: metrics(), runtime: runtime.finish() },
-        });
+        return {
+            role,
+            rate,
+            slots: sequence,
+            skipped,
+            samples,
+            metrics: metrics(),
+            runtime: runtime.finish(),
+            slow: slow.finish(),
+        };
     } finally {
         await db.dispose();
     }
