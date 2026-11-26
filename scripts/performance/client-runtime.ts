@@ -10,6 +10,15 @@ import { rm, mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promis
 import { chromium, _electron, type Page, type BrowserContext, type ElectronApplication } from "@playwright/test";
 
 import { createNewsInsights } from "../../shared/news-insights";
+import {
+    CLIENT_CYCLE_MS,
+    clientSlotExpired,
+    CLIENT_TIMING_NAMES,
+    writeClientEvidence,
+    expectedClientCycles,
+    summarizeMetricTrend,
+    summarizeClientCycles,
+} from "./client-runtime-evidence";
 
 import type { SourceResponse } from "../../shared/types";
 
@@ -85,6 +94,8 @@ let activeRequests = 0,
     maxActiveRequests = 0,
     unexpectedRequests = 0,
     staticErrors = 0;
+let feedAvailable = true,
+    plannedFeedFailures = 0;
 const server = createServer((req, res) => {
     activeRequests++;
     maxActiveRequests = Math.max(maxActiveRequests, activeRequests);
@@ -121,12 +132,22 @@ async function serve(req: IncomingMessage, res: ServerResponse) {
                 errors: [],
             });
         if (path === "/v1/insights") return json(res, { data: insights, meta: baseMeta, errors: [] });
-        if (path === "/v1/sources/batch")
+        if (path === "/v1/sources/batch") {
+            if (!feedAvailable) {
+                plannedFeedFailures++;
+                return json(res, { message: "Fixture feed temporarily unavailable" }, 503);
+            }
             return json(res, {
                 data: rows,
-                meta: { ...baseMeta, itemCount: count, unfilteredItemCount: count },
+                meta: {
+                    ...baseMeta,
+                    itemCount: count,
+                    unfilteredItemCount: count,
+                    filters: { sourceIds: [sourceId], columns: [], types: [] },
+                },
                 errors: [],
             });
+        }
         if (path === "/v1/sources/hackernews")
             return json(res, {
                 data: catalog,
@@ -325,7 +346,16 @@ async function snapshot(profile: string) {
     const process = await rssForProfile(profile);
     assert.ok(process.processCount > 0 && process.rssKiB > 0);
     const native = await desktopMetrics();
-    return { ...renderer, ...process, ...(native ? { native } : {}), pendingFixtureRequests: activeRequests };
+    const windows = desktop ? native?.windows : context?.pages().length;
+    assert.equal(windows, 1, "Unexpected retained client windows");
+    return {
+        ...renderer,
+        ...process,
+        windows,
+        ...(native ? { native } : {}),
+        pendingFixtureRequests: activeRequests,
+        apiCounts: { ...apiCounts },
+    };
 }
 async function select(label: string, heading: string) {
     assert.ok(page);
@@ -338,9 +368,11 @@ async function cycle(readIndex = 0) {
     assert.ok(page);
     const times: number[] = [];
     const item = items[readIndex % count];
-    times.push(await select("统一 Feed", "统一 Feed"));
+    const feedStart = performance.now();
+    await select("统一 Feed", "统一 Feed");
     const readingLink = page.getByRole("link", { name: new RegExp(item.title) }).first();
     await readingLink.waitFor({ timeout: 15000 });
+    times.push(round(performance.now() - feedStart));
     const readStart = performance.now();
     if (web) {
         const popup = page.waitForEvent("popup", { timeout: 15000 });
@@ -350,7 +382,8 @@ async function cycle(readIndex = 0) {
         await readingLink.click();
     }
     times.push(round(performance.now() - readStart));
-    times.push(await select("新闻档案", "新闻档案"));
+    const archiveStart = performance.now();
+    await select("新闻档案", "新闻档案");
     await page.getByLabel("关键词").fill("fixture");
     await page.getByRole("button", { name: "检索历史文章" }).click();
     await page
@@ -363,13 +396,18 @@ async function cycle(readIndex = 0) {
         .getByRole("link", { name: new RegExp(title) })
         .first()
         .waitFor({ timeout: 15000 });
-    times.push(await select("阅读历史", "阅读历史"));
+    times.push(round(performance.now() - archiveStart));
+    const historyStart = performance.now();
+    await select("阅读历史", "阅读历史");
     await page.getByText(item.title, { exact: true }).first().waitFor({ timeout: 15000 });
-    times.push(await select("首页", "阅读洞察"));
+    times.push(round(performance.now() - historyStart));
+    const insightsStart = performance.now();
+    await select("首页", "阅读洞察");
     await page
         .getByRole("link", { name: new RegExp(title) })
         .first()
         .waitFor({ timeout: 15000 });
+    times.push(round(performance.now() - insightsStart));
     return times;
 }
 async function quiet() {
@@ -407,10 +445,15 @@ const report: Record<string, unknown> = {
         gpu: "disabled",
     },
     startedAt: new Date().toISOString(),
+    harnessSha256: await sha(join(root, "scripts/performance/client-runtime.ts")),
+    evidenceHelperSha256: await sha(join(root, "scripts/performance/client-runtime-evidence.ts")),
+    result: "running",
 };
 const reportPath = join(root, ".data/performance", `client-${platform}-${mode}-${Date.now()}.json`);
 await mkdir(join(root, ".data/performance"), { recursive: true });
 try {
+    console.log("evidence", reportPath);
+    await writeClientEvidence(reportPath, report);
     if (mode === "startup") {
         const runs = [];
         for (let i = 0; i < 5; i++) {
@@ -452,13 +495,7 @@ try {
                 });
             });
         report.externalOpen = "fixture only; web popup intercepted and closed, Electron shell opener mocked";
-        report.cycleTimingOrder = [
-            "feed navigation",
-            "read action",
-            "archive navigation",
-            "history navigation",
-            "insights navigation",
-        ];
+        report.cycleTimingOrder = CLIENT_TIMING_NAMES;
         // Warm up one complete route cycle before measuring the fixed-duration run.
         await cycle();
         await quiet();
@@ -467,35 +504,158 @@ try {
         const cycles: number[][] = [];
         report.samples = samples;
         report.cycles = cycles;
+        const planned = expectedClientCycles(requestedSeconds);
+        report.requestedSeconds = requestedSeconds;
+        report.plannedCycles = planned;
+        const completedSlots: number[] = [];
+        const skippedSlots: number[] = [];
+        report.completedSlots = completedSlots;
+        report.skippedSlots = skippedSlots;
         let nextSample = 60;
-        while (performance.now() - start < requestedSeconds * 1000) {
-            const cycleStart = performance.now();
-            cycles.push(await cycle(cycles.length));
+        const checkpoint = async () => {
+            report.elapsedSeconds = round((performance.now() - start) / 1000);
+            report.apiCounts = { ...apiCounts };
+            report.pageErrorCount = errors.length;
+            report.unexpectedRequests = unexpectedRequests;
+            report.staticErrors = staticErrors;
+            report.pendingFixtureRequests = activeRequests;
+            await writeClientEvidence(reportPath, report);
+        };
+        await checkpoint();
+        for (let slot = 0; slot < planned; slot++) {
+            const due = start + slot * CLIENT_CYCLE_MS;
+            await delay(Math.max(0, due - performance.now()));
+            if (clientSlotExpired(performance.now(), start, slot, requestedSeconds)) {
+                skippedSlots.push(slot);
+                continue;
+            }
+            cycles.push(await cycle(slot));
+            completedSlots.push(slot);
             assert.equal(errors.length, 0, errors.join("; "));
             await quiet();
             const elapsed = (performance.now() - start) / 1000;
             if (elapsed >= nextSample) {
                 samples.push({ elapsedSeconds: round(elapsed), ...(await snapshot(profile)) });
-                nextSample += 60;
-                console.log(platform, "elapsed", round(elapsed), "cycles", cycles.length);
+                nextSample = (Math.floor(elapsed / 60) + 1) * 60;
+                await checkpoint();
+                console.log(
+                    platform,
+                    "elapsed",
+                    round(elapsed),
+                    "cycles",
+                    cycles.length,
+                    "skipped",
+                    skippedSlots.length
+                );
             }
-            const remaining = requestedSeconds * 1000 - (performance.now() - start);
-            await delay(Math.max(0, Math.min(remaining, 15000 - (performance.now() - cycleStart))));
         }
+        await delay(Math.max(0, requestedSeconds * 1000 - (performance.now() - start)));
         await quiet();
         const elapsedSeconds = round((performance.now() - start) / 1000);
         samples.push({ elapsedSeconds, ...(await snapshot(profile)) });
-        assert.ok(elapsedSeconds >= requestedSeconds);
-        assert.equal(errors.length, 0, errors.join("; "));
-        report.requestedSeconds = requestedSeconds;
         report.elapsedSeconds = elapsedSeconds;
-        report.cycles = cycles;
-        report.samples = samples;
+        report.operationLatency = summarizeClientCycles(cycles);
+        report.metricTrends = Object.fromEntries(
+            (
+                [
+                    "heapUsedBytes",
+                    "rssKiB",
+                    "nodes",
+                    "documents",
+                    "jsEventListeners",
+                    "processCount",
+                    "windows",
+                ] as const
+            ).map((key) => [key, summarizeMetricTrend(samples.map((s) => Number(s[key])))])
+        );
+        assert.ok(elapsedSeconds >= requestedSeconds);
+        assert.equal(completedSlots.length + skippedSlots.length, planned);
+        assert.equal(errors.length, 0, errors.join("; "));
+        const expectedItems = new Set([items[0].url, ...completedSlots.map((slot) => items[slot % count].url)]);
+        const verifyHistory = async () => {
+            const history = (await page!.evaluate("JSON.parse(localStorage.getItem('reading-history') || '[]')")) as {
+                url: string;
+            }[];
+            assert(Array.isArray(history));
+            assert.equal(history.length, expectedItems.size, "Reading history lost or duplicated");
+            assert.deepEqual([...history.map((item) => item.url)].sort(), [...expectedItems].sort());
+            return history.length;
+        };
+        report.historyBeforeReload = await verifyHistory();
+        await select("统一 Feed", "统一 Feed");
+        await page!
+            .getByRole("link", { name: new RegExp(title) })
+            .first()
+            .waitFor({ timeout: 15000 });
+        await quiet();
+        const batchBefore = apiCounts["/v1/sources/batch"] ?? 0;
+        feedAvailable = false;
+        try {
+            await page!.reload({ waitUntil: "domcontentloaded" });
+            await page!
+                .getByRole("link", { name: new RegExp(title) })
+                .first()
+                .waitFor({ timeout: 15000 });
+            await page!.locator(".feed-refresh").click({ timeout: 15000 });
+            await page!
+                .getByText(/Feed 更新失败|更新失败，可点击刷新重试/)
+                .first()
+                .waitFor({ timeout: 15000 });
+            await page!
+                .getByRole("link", { name: new RegExp(title) })
+                .first()
+                .waitFor({ timeout: 15000 });
+            report.backendOutage = {
+                restored: true,
+                failures: plannedFeedFailures,
+                requests: (apiCounts["/v1/sources/batch"] ?? 0) - batchBefore,
+            };
+            assert(plannedFeedFailures > 0, "Outage did not exercise the API");
+            report.historyAfterReload = await verifyHistory();
+        } finally {
+            feedAvailable = true;
+        }
+        await page!.locator(".feed-refresh").click({ timeout: 15000 });
+        await page!
+            .getByText(/Feed 更新失败|更新失败，可点击刷新重试/)
+            .first()
+            .waitFor({ state: "hidden", timeout: 15000 });
+        await quiet();
+        report.backendRecovered = true;
+        if (web) {
+            const before = { catalog: apiCounts["/v1/sources"] ?? 0, batch: apiCounts["/v1/sources/batch"] ?? 0 };
+            await page!.reload({ waitUntil: "domcontentloaded" });
+            await page!
+                .getByRole("link", { name: new RegExp(title) })
+                .first()
+                .waitFor({ timeout: 15000 });
+            await page!.getByText("本地缓存", { exact: false }).first().waitFor({ timeout: 15000 });
+            await quiet();
+            const after = { catalog: apiCounts["/v1/sources"] ?? 0, batch: apiCounts["/v1/sources/batch"] ?? 0 };
+            assert.deepEqual(after, before, "Fresh Feed reload requested data again");
+            report.freshFeedReload = { before, after };
+        }
+        assert.equal(errors.length, 0, errors.join("; "));
+        report.historyAfterRecovery = await verifyHistory();
+        assert.equal(skippedSlots.length, 0, "Missed scheduled route cycles");
         await close();
         await quiet();
         const afterClose = await rssForProfile(profile);
         report.afterClose = afterClose;
         assert.equal(afterClose.processCount, 0, "Profile-associated processes remained after close");
+        await launch(profile);
+        await select("阅读历史", "阅读历史");
+        await page!.getByText(items[0].title, { exact: true }).first().waitFor({ timeout: 15000 });
+        report.historyAfterReopen = await verifyHistory();
+        assert.equal(errors.length, 0, errors.join("; "));
+        await close();
+        await quiet();
+        report.afterReopenClose = await rssForProfile(profile);
+        assert.equal(
+            (report.afterReopenClose as { processCount: number }).processCount,
+            0,
+            "Reopened profile processes remained"
+        );
     }
     assert.equal(activeRequests, 0);
     assert.equal(staticErrors, 0);
@@ -509,6 +669,10 @@ try {
 } finally {
     try {
         await close();
+    } catch (error) {
+        report.result = "failed";
+        report.failure = String(error);
+        throw error;
     } finally {
         server.closeAllConnections();
         await new Promise<void>((done) => server.close(() => done()));
@@ -518,7 +682,8 @@ try {
         report.pendingFixtureRequests = activeRequests;
         report.unexpectedRequests = unexpectedRequests;
         report.staticErrors = staticErrors;
-        await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n");
+        report.plannedFeedFailures = plannedFeedFailures;
+        await writeClientEvidence(reportPath, report);
         console.log("report", reportPath, report.result);
         await rm(temp, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     }
