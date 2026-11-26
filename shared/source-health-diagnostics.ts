@@ -1,3 +1,4 @@
+import { safeSourceErrorMessage } from "./source-error";
 import { getSourceAdapterKindLabel } from "./source-adapter";
 import { rankFailingSourcesByPriority } from "./source-ranking-policy";
 import {
@@ -158,7 +159,7 @@ function formatFailingSection(
                 `失败次数：${source.errorCount}`,
                 `最近错误：${formatOptionalTime(source.lastErrorAt, formatTime)}`,
                 `最近耗时：${formatDuration(source.lastDurationMs)}`,
-                `错误信息：${source.lastErrorMessage ?? "无"}`,
+                `错误信息：${source.lastErrorMessage ? safeSourceErrorMessage(source.lastErrorMessage) : "无"}`,
                 formatRecentEvents(source.recentEvents, formatTime, maxRecentEvents),
             ].join("\n")
         ),
@@ -226,7 +227,7 @@ function formatRecentEvents(
                     formatTime(event.occurredAt),
                     formatDuration(event.durationMs),
                     event.itemCount !== undefined ? `返回 ${event.itemCount} 条` : undefined,
-                    event.errorMessage,
+                    event.errorMessage ? safeSourceErrorMessage(event.errorMessage) : undefined,
                 ]
                     .filter(Boolean)
                     .join(" · ")

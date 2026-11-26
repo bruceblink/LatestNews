@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import dataSources from "../shared/data-sources";
 import { CrawlerCacheStore } from "./crawler-cache";
 import { createElectronCrawlerHost } from "./crawler-host";
+import { describeSourceError } from "../shared/source-error";
 import { seedBuiltinCrawlerPlugins } from "./crawler-plugin-seeder";
 import { getCachedSourceResponseStatus } from "../shared/source-response-status";
 import { readEnabledCrawlerPluginIds } from "../crawler-platform/host/plugin-store";
@@ -227,7 +228,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                 };
                 if (response.items.length > 0) {
                     await cache.write(sourceId, response.items, updatedTime).catch((error: unknown) => {
-                        console.warn("Desktop crawler cache write failed.", error);
+                        console.warn("Desktop crawler cache write failed.", describeSourceError(error));
                     });
                 }
                 const previous = getHealthRecord(sourceId);
@@ -239,6 +240,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                     cacheDegraded: false,
                     lastDurationMs: Math.max(0, updatedTime - startedAt),
                     lastSuccessAt: updatedTime,
+                    lastErrorMessage: undefined,
                     lastItemCount: response.items.length,
                     recentEvents: appendHealthEvent(previous.recentEvents, {
                         status: "healthy",
@@ -254,7 +256,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                 const cached = await cache.read(sourceId);
                 const failedAt = Date.now();
                 const previous = getHealthRecord(sourceId);
-                const errorMessage = sanitizeCrawlerHealthError(error);
+                const errorMessage = describeSourceError(error).message;
                 const durationMs = Math.max(0, failedAt - startedAt);
                 healthBySource.set(sourceId, {
                     ...previous,
@@ -272,7 +274,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
                         errorMessage,
                     }),
                 });
-                if (!cached) throw error;
+                if (!cached) throw new Error(describeSourceError(error).message);
                 const interval = info?.interval ?? 600_000;
                 const age = Math.max(0, failedAt - cached.updatedTime);
                 return {
@@ -285,10 +287,7 @@ export async function createElectronCrawlerPluginRuntime(options: ElectronCrawle
             }
         }
     } catch (error) {
-        console.warn(
-            "Desktop local crawler plugins were disabled.",
-            error instanceof Error ? error.message : "Invalid settings."
-        );
+        console.warn("Desktop local crawler plugins were disabled.", describeSourceError(error));
         return {
             listSourceIds: () => [],
             listRefreshSources: () => [],
@@ -312,19 +311,6 @@ export type ElectronCrawlerPluginRuntime = Awaited<ReturnType<typeof createElect
 
 function appendHealthEvent(events: SourceHealthEvent[], event: SourceHealthEvent) {
     return [...events, event].slice(-MAX_RECENT_HEALTH_EVENTS);
-}
-
-function sanitizeCrawlerHealthError(error: unknown) {
-    const message = error instanceof Error ? error.message : "本地采集失败。";
-    return (
-        message
-            .replace(/https?:\/\/[^\s"'<>]+/gi, "[上游地址]")
-            .replace(/\bBearer\s+[^\s,;]+/gi, "Bearer [已隐藏]")
-            .replace(/\b(token|authorization|cookie|password|api[_-]?key)\s*[:=]\s*[^\s,;]+/gi, "$1=[已隐藏]")
-            .replace(/[\r\n\t]+/g, " ")
-            .trim()
-            .slice(0, 240) || "本地采集失败。"
-    );
 }
 
 function readEnabledPluginIds(path: string) {

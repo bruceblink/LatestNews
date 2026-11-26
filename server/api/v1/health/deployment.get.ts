@@ -1,11 +1,11 @@
 import type { DeploymentHealthResponse } from "@shared/deployment-health";
 
 import process from "node:process";
-import { logger } from "#/utils/logger";
+import { defineEventHandler } from "h3";
 import { getCacheTable } from "#/database/cache";
 import { Version, APP_NAME } from "@shared/consts";
-import { createError, defineEventHandler } from "h3";
 import { getSourceHealthSummary } from "#/utils/source-health";
+import { publicSourceHttpError } from "#/utils/public-source-error";
 import { getDeploymentCacheStatus, createDeploymentHealthResponse } from "@shared/deployment-health";
 
 export default defineEventHandler(async (event): Promise<DeploymentHealthResponse> => {
@@ -33,10 +33,6 @@ export default defineEventHandler(async (event): Promise<DeploymentHealthRespons
                   },
         });
     } catch (error) {
-        logger.error(error);
-        throw createError({
-            statusCode: 500,
-            message: error instanceof Error ? error.message : "Internal Server Error",
-        });
+        throw publicSourceHttpError(error);
     }
 });

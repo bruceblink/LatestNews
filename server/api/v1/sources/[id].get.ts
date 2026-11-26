@@ -1,7 +1,7 @@
 import type { SourceID } from "@shared/types";
 import type { SourceMetadataItemResponse } from "@shared/source-metadata";
 
-import { logger } from "#/utils/logger";
+import { publicSourceHttpError } from "#/utils/public-source-error";
 import { createError, getRouterParam, defineEventHandler } from "h3";
 import { createSourceMetadataItemResponse } from "@shared/source-metadata";
 import { initializeCrawlerPluginCatalog } from "#/utils/crawler-plugin-runtime";
@@ -31,11 +31,6 @@ export default defineEventHandler((event): SourceMetadataItemResponse => {
 
         return response;
     } catch (error) {
-        logger.error(error);
-        if (error && typeof error === "object" && "statusCode" in error) throw error;
-        throw createError({
-            statusCode: 500,
-            message: error instanceof Error ? error.message : "Internal Server Error",
-        });
+        throw publicSourceHttpError(error);
     }
 });

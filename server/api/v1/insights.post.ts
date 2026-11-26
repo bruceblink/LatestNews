@@ -1,3 +1,4 @@
+import type { H3Event } from "h3";
 import type { SourceID } from "@shared/types";
 import type { NewsInsightsResponse } from "@shared/source-api";
 
@@ -5,7 +6,9 @@ import { z } from "zod";
 import { logger } from "#/utils/logger";
 import { getCacheTable } from "#/database/cache";
 import dataSources from "@shared/data-sources.ts";
+import { describeSourceError } from "@shared/source-error";
 import { readBody, createError, defineEventHandler } from "h3";
+import { publicSourceHttpError } from "#/utils/public-source-error";
 import { resolveNewsInsights } from "#/utils/resolve-news-insights";
 import { hasSourceGetter, fetchSourceItems } from "#/utils/source-fetch";
 import { provisionalTopicEvent } from "#/database/article-event-governance";
@@ -24,6 +27,14 @@ const newsInsightsSchema = z.object({
 });
 
 export default defineEventHandler(async (event): Promise<NewsInsightsResponse> => {
+    try {
+        return await readInsights(event);
+    } catch (error) {
+        throw publicSourceHttpError(error);
+    }
+});
+
+async function readInsights(event: H3Event): Promise<NewsInsightsResponse> {
     const parsedBody = newsInsightsSchema.safeParse(await readBody(event));
     if (!parsedBody.success) {
         throw createError({
@@ -36,7 +47,7 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
     const { ids, invalidIds } = normalizeSourceIds(parsedBody.data.sources);
     const caches =
         (await cacheTable?.getEntire(ids).catch((error: unknown) => {
-            logger.warn("Could not read insights cache.", error);
+            logger.warn("Could not read insights cache.", describeSourceError(error));
             return [];
         })) ?? [];
 
@@ -54,8 +65,8 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
         insightOptions: parsedBody.data,
         // D1 写入必须在当前请求内完成。Cloudflare Pages 不允许把绑定请求产生的
         // Promise 延迟到响应结束后继续结算，否则会触发跨请求 Promise 异常。
-        onFetchError: (error, id) => logger.error(`fetch ${id} insights failed`, error),
-        onCacheError: (error, id) => logger.warn(`Could not save ${id} insights cache.`, error),
+        onFetchError: (error, id) => logger.error(`fetch ${id} insights failed`, describeSourceError(error)),
+        onCacheError: (error, id) => logger.warn(`Could not save ${id} insights cache.`, describeSourceError(error)),
     });
 
     response.data.topicEvents = cacheTable
@@ -68,7 +79,7 @@ export default defineEventHandler(async (event): Promise<NewsInsightsResponse> =
         event.waitUntil(cacheTable.schedulePagesBacklogIfNeeded());
     }
     return response;
-});
+}
 
 function normalizeSourceIds(sources: string[]) {
     const ids: SourceID[] = [];

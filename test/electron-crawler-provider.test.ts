@@ -134,6 +134,22 @@ describe("desktop crawler provider cache fallback", () => {
         runtime.dispose?.();
     });
 
+    it("does not forward an uncached plugin exception to the renderer", async () => {
+        const root = await mkdtemp(join(tmpdir(), "latestnews-safe-crawler-"));
+        temporaryDirectories.push(root);
+        const marker = "AUDIT_SYNTHETIC_NOT_A_SECRET";
+        collect.mockRejectedValue(new Error(marker + " /private/path", { cause: new Error(marker) }));
+        const runtime = await createElectronCrawlerPluginRuntime({ userDataPath: root });
+        try {
+            await expect(runtime.fetchSource("juejin")).rejects.toThrow("Source collection failed.");
+            const summary = await runtime.getHealthSummary();
+            expect(JSON.stringify(summary)).not.toContain(marker);
+            expect(summary.sources[0].lastErrorMessage).toBe("Source collection failed.");
+        } finally {
+            runtime.dispose?.();
+        }
+    });
+
     it("reads persisted history immediately and bounds the wait for a manual refresh", async () => {
         const root = await mkdtemp(join(tmpdir(), "latestnews-read-cache-"));
         temporaryDirectories.push(root);

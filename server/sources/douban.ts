@@ -1,3 +1,5 @@
+import { describeSourceError } from "@shared/source-error";
+
 import { myFetch } from "../utils/fetch";
 import { defineSource, generateUrlHashId } from "../utils/source";
 
@@ -59,7 +61,7 @@ export default defineSource(async () => {
             })
         );
     } catch (err) {
-        console.error("获取豆瓣热门电影失败:", err);
+        console.error("获取豆瓣热门电影失败:", describeSourceError(err));
         return []; // 优雅降级
     }
 });

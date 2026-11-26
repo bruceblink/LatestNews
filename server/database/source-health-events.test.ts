@@ -37,6 +37,33 @@ describe("source health event persistence", () => {
         }
     });
 
+    it("writes only safe failure text and safely projects legacy rows without changing them", async () => {
+        const database = createDatabase(sqliteConnector({ name: ":memory:" }));
+        try {
+            const { SourceHealthEvents } = await import("./source-health-events");
+            const table = new SourceHealthEvents(database);
+            await table.init();
+            const marker = "AUDIT_SYNTHETIC_NOT_A_SECRET";
+            await table.append("weibo", { status: "failing", occurredAt: 2, durationMs: 1, errorMessage: marker });
+            expect(await database.prepare("SELECT error_message FROM source_health_events").get()).toEqual({
+                error_message: "Source collection failed.",
+            });
+            await database
+                .prepare("INSERT INTO source_health_events VALUES(?,?,?,?,?,?,?)")
+                .run("legacy", "weibo", "failing", 1, 1, null, marker);
+            const events = await table.listRecent("weibo");
+            expect(events.map((x) => x.errorMessage)).toEqual([
+                "Source collection failed.",
+                "Source collection failed.",
+            ]);
+            expect(
+                await database.prepare("SELECT error_message FROM source_health_events WHERE id='legacy'").get()
+            ).toEqual({ error_message: marker });
+        } finally {
+            await database.dispose();
+        }
+    });
+
     it("does not open the database when cache persistence is disabled", async () => {
         vi.stubEnv("ENABLE_CACHE", "false");
         const { getSourceHealthEventsTable } = await import("./source-health-events");

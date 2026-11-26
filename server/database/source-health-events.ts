@@ -4,6 +4,7 @@ import type { SourceHealthEvent } from "@shared/source-health-types";
 
 import process from "node:process";
 import { useDatabase } from "nitro/database";
+import { describeSourceError, safeSourceErrorMessage } from "@shared/source-error";
 
 import { logger } from "../utils/logger";
 
@@ -70,7 +71,7 @@ export class SourceHealthEvents {
                 event.occurredAt,
                 event.durationMs,
                 event.itemCount ?? null,
-                event.errorMessage ?? null
+                event.errorMessage ? safeSourceErrorMessage(event.errorMessage) : null
             );
         await this.trim(sourceId, limit);
     }
@@ -133,7 +134,7 @@ export async function getSourceHealthEventsTable() {
             return table;
         } catch (error) {
             sourceHealthEventsTablePromise = undefined;
-            logger.error("failed to init source health events table", error);
+            logger.error("failed to init source health events table", describeSourceError(error));
             return undefined;
         }
     })();
@@ -148,7 +149,7 @@ function rowToEventRecord(row: SourceHealthEventRow): SourceHealthEventRecord {
         occurredAt: row.occurred_at,
         durationMs: row.duration_ms,
         ...(row.item_count !== null && row.item_count !== undefined && { itemCount: row.item_count }),
-        ...(row.error_message && { errorMessage: row.error_message }),
+        ...(row.error_message && { errorMessage: safeSourceErrorMessage(row.error_message) }),
     };
 }
 

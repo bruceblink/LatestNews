@@ -3,6 +3,7 @@ import type { SourceApiError, EntireSourcesResponse } from "@shared/source-api";
 
 import { TTL } from "@shared/consts";
 import dataSources from "@shared/data-sources";
+import { describeSourceError } from "@shared/source-error";
 import { getCachedSourceResponseStatus, getFetchedSourceResponseStatus } from "@shared/source-response-status";
 
 import { isCancellationError } from "./source-engine";
@@ -164,7 +165,7 @@ export async function resolveEntireSourcesWithDiagnostics({
         onFetchError: (error, id) => {
             errors.push({
                 sourceId: id,
-                message: getErrorMessage(error),
+                ...describeSourceError(error),
             });
             onFetchError?.(error, id);
         },
@@ -183,10 +184,4 @@ export async function resolveEntireSourcesWithDiagnostics({
         },
         errors,
     };
-}
-
-function getErrorMessage(error: unknown) {
-    if (error instanceof Error) return error.message;
-    if (typeof error === "string" && error.trim()) return error;
-    return "Unknown source fetch error";
 }

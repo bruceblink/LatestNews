@@ -1,8 +1,8 @@
 import type { SourceHealthDiagnosticsResponse } from "@shared/source-health-diagnostics";
 
 import { z } from "zod";
-import { logger } from "#/utils/logger";
 import { getSourceHealthSummary } from "#/utils/source-health";
+import { publicSourceHttpError } from "#/utils/public-source-error";
 import { getQuery, setHeader, createError, defineEventHandler } from "h3";
 import { initializeCrawlerPluginCatalog } from "#/utils/crawler-plugin-runtime";
 import {
@@ -42,11 +42,6 @@ export default defineEventHandler((event): SourceHealthDiagnosticsResponse | str
 
         return createSourceHealthDiagnosticsResponse(summary);
     } catch (error) {
-        logger.error(error);
-        if (error && typeof error === "object" && "statusCode" in error) throw error;
-        throw createError({
-            statusCode: 500,
-            message: error instanceof Error ? error.message : "Internal Server Error",
-        });
+        throw publicSourceHttpError(error);
     }
 });

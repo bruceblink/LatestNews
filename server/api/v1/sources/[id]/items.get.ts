@@ -3,9 +3,9 @@ import type { SourceID } from "@shared/types";
 import type { SourceItemsResponse } from "@shared/source-api";
 
 import { z } from "zod";
-import { logger } from "#/utils/logger";
 import { readSource } from "#/utils/read-source";
 import { resolveSourceId } from "#/utils/resolve-source-id";
+import { publicSourceHttpError } from "#/utils/public-source-error";
 import { getQuery, createError, getRouterParam, defineEventHandler } from "h3";
 import {
     filterSourceItems,
@@ -54,12 +54,7 @@ export default defineEventHandler(async (event): Promise<SourceItemsResponse> =>
         const id = resolveSourceId(sourceId);
         return await getSourceItemsResponse(id, parsedQuery.data, event);
     } catch (error) {
-        logger.error(error);
-        if (error && typeof error === "object" && "statusCode" in error) throw error;
-        throw createError({
-            statusCode: 500,
-            message: error instanceof Error ? error.message : "Internal Server Error",
-        });
+        throw publicSourceHttpError(error);
     }
 });
 

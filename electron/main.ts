@@ -21,6 +21,7 @@ import {
 } from "electron";
 
 import { registerUpdateIpc } from "./updates/update-ipc";
+import { describeSourceError } from "../shared/source-error";
 import { createDesktopBackgroundRefresh } from "./background-refresh";
 import { isDesktopCollectionMode } from "../shared/desktop-collection-mode";
 import { createElectronCrawlerPluginRuntime } from "./crawler-plugin-provider";
@@ -707,7 +708,7 @@ async function installTrayMode(runtime: ElectronCrawlerPluginRuntime) {
             },
             canRefresh: () => shouldKeepBackgroundAlive() && desktopCollectionMode !== "remote",
             onError: (sourceId, error) => {
-                console.warn(`Background refresh failed for ${sourceId}.`, error);
+                console.warn(`Background refresh failed for ${sourceId}.`, describeSourceError(error));
             },
         });
         backgroundRefresh.start();
