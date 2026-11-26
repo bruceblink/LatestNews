@@ -19,10 +19,16 @@ import {
     provisionalTopicEvent,
 } from "./article-event-governance";
 import {
+    readFtsAudit,
+    getFtsTables,
     repairFtsPage,
+    auditReadyFts,
+    ftsAuditBounds,
     beginFtsRepair,
+    FTS_AUDIT_GUARD,
     FTS_READY_GUARD,
     repairPendingFts,
+    readFtsReadiness,
     ftsIsInconsistent,
     ftsRecoveryStatus,
     initArticleRecovery,
@@ -84,7 +90,9 @@ interface ArticleSourceRow {
 /** 文章级 SQLite 索引。索引故障由上层捕获，不能阻塞来源缓存。 */
 export class ArticleIndex {
     private ftsAvailable = false;
-    private ftsVerified = false;
+    private ftsAuditAvailable = false;
+    // Local negative observation is conservative until an explicit maintenance pass.
+    private ftsRejected = false;
     private recoveryAvailable = false;
 
     constructor(private readonly db: Database) {}
@@ -128,20 +136,28 @@ export class ArticleIndex {
         }
 
         try {
+            // Recreating a missing virtual table invalidates any certificate
+            // from its former contents, including in additive Pages setup.
+            if (
+                !(await this.db
+                    .prepare("SELECT name FROM sqlite_master WHERE name='article_search' AND type='table'")
+                    .get())
+            )
+                await this.db.prepare("DELETE FROM article_fts_audit WHERE id=1").run();
             await this.db
                 .prepare(
                     "CREATE VIRTUAL TABLE IF NOT EXISTS article_search USING fts5(article_key UNINDEXED, title, canonical_url UNINDEXED)"
                 )
                 .run();
             this.ftsAvailable = true;
+            this.ftsAuditAvailable = true;
+            this.ftsRejected = false;
             if (!maintain) return;
-            const state = await ftsRecoveryStatus(this.db);
-            this.ftsVerified = state.phase === "ready" && state.pending === 0 && !(await ftsIsInconsistent(this.db));
-            if (state.phase === "ready" && state.pending === 0 && !this.ftsVerified) await beginFtsRepair(this.db);
+            await auditReadyFts(this.db, true);
             await this.continueRepair();
         } catch (error) {
             this.ftsAvailable = false;
-            this.ftsVerified = false;
+            this.ftsRejected = true;
             logger.warn("Article FTS5 index is unavailable. Article persistence remains enabled.", error);
         }
     }
@@ -150,24 +166,29 @@ export class ArticleIndex {
     async probe(audit = true) {
         try {
             this.recoveryAvailable = await probeArticleRecovery(this.db);
-            this.ftsAvailable =
-                this.recoveryAvailable &&
-                Boolean(
-                    await this.db
-                        .prepare("SELECT name FROM sqlite_master WHERE name='article_search' AND type='table'")
-                        .get()
-                );
-            if (this.ftsAvailable) {
+            const tables = this.recoveryAvailable ? await getFtsTables(this.db) : { fts: false, audit: false };
+            this.ftsAvailable = tables.fts;
+            this.ftsAuditAvailable = tables.fts && tables.audit;
+            this.ftsRejected = false;
+            if (audit && this.ftsAuditAvailable) {
                 const state = await ftsRecoveryStatus(this.db);
-                this.ftsVerified =
-                    state.phase === "ready" && state.pending === 0 && (!audit || !(await ftsIsInconsistent(this.db)));
-            } else this.ftsVerified = false;
+                // The managed-schema probe can detect damage, but must not
+                // create or renew durable proof from a read-only observation.
+                if (state.phase === "ready" && !state.pending) this.ftsRejected = await ftsIsInconsistent(this.db);
+            }
         } catch {
-            this.ftsVerified = false;
+            this.ftsRejected = true;
+            this.ftsAuditAvailable = false;
             this.recoveryAvailable = false;
             this.ftsAvailable = false;
         }
         return this.recoveryAvailable;
+    }
+
+    async needsFtsAudit() {
+        return (
+            this.ftsAuditAvailable && (this.ftsRejected || (await readFtsAudit(this.db, true)).status !== "verified")
+        );
     }
 
     async getRecoveryStatus() {
@@ -189,15 +210,13 @@ export class ArticleIndex {
                     "SELECT COUNT(*) AS count FROM sqlite_master WHERE name IN ('news_events','news_event_aliases') AND type='table'"
                 )
                 .get()) as { count: number };
-            const fts = await ftsRecoveryStatus(this.db);
-            const ftsExists = Boolean(
-                await this.db
-                    .prepare("SELECT name FROM sqlite_master WHERE name='article_search' AND type='table'")
-                    .get()
-            );
+            const tables = await getFtsTables(this.db);
+            const ftsExists = tables.fts;
+            const fts = await readFtsReadiness(this.db, tables.fts && tables.audit);
+            const ftsAudit = this.ftsRejected ? { status: "failed" as const } : fts.audit;
             const status = !ftsExists
                 ? "unavailable"
-                : fts.phase === "repairing" || fts.pending || !this.ftsVerified
+                : fts.phase !== "ready" || fts.pending || ftsAudit.status !== "verified"
                   ? "degraded"
                   : "ok";
             const eventRegistry = Number(registry.count) === 2 ? "ok" : "unavailable";
@@ -207,6 +226,7 @@ export class ArticleIndex {
                         ? ("ok" as const)
                         : ("degraded" as const),
                 fts: status,
+                ftsAudit,
                 pendingIngest: Number(journal.count),
                 pendingFts: fts.pending,
                 eventRegistry,
@@ -460,7 +480,8 @@ export class ArticleIndex {
     }
 
     async rebuildSearchIndex() {
-        if (!this.ftsAvailable || !this.recoveryAvailable) return { status: "unavailable" as const, indexed: 0 };
+        if (!this.ftsAvailable || !this.recoveryAvailable || !this.ftsAuditAvailable)
+            return { status: "unavailable" as const, indexed: 0 };
         try {
             await beginFtsRepair(this.db);
             return await this.continueRepair();
@@ -474,48 +495,41 @@ export class ArticleIndex {
         if (!this.ftsAvailable || !this.recoveryAvailable) return { status: "unavailable" as const, indexed: 0 };
         let indexed = 0;
         try {
-            const initial = await ftsRecoveryStatus(this.db);
-            if (
-                initial.phase === "ready" &&
-                initial.pending === 0 &&
-                !this.ftsVerified &&
-                (await ftsIsInconsistent(this.db))
-            ) {
-                await beginFtsRepair(this.db);
-            }
-            let completedRepair = false;
-            for (let i = 0; i < maxPages; i++) {
-                const result = await repairFtsPage(this.db);
-                indexed += result.indexed;
-                if (result.done) {
-                    completedRepair = true;
-                    break;
-                }
-            }
             let state = await ftsRecoveryStatus(this.db);
             if (state.phase === "ready" && state.pending) {
                 await repairPendingFts(this.db);
                 state = await ftsRecoveryStatus(this.db);
             }
-            const ready = state.phase === "ready" && state.pending === 0;
-            // The persisted verify transition audits the complete rebuilt index.
-            // If we only drained an incremental backlog after an unverified probe,
-            // audit before promoting this instance to FTS reads.
-            if (
-                ready &&
-                !this.ftsVerified &&
-                !(initial.phase === "repairing" && completedRepair) &&
-                (await ftsIsInconsistent(this.db))
-            ) {
-                await beginFtsRepair(this.db);
-                this.ftsVerified = false;
-            } else this.ftsVerified = ready;
-            return {
-                status: this.ftsVerified ? ("ok" as const) : ("pending" as const),
-                indexed,
-            };
+            // Managed legacy schemas remain readable and can drain incremental
+            // keys, but only an explicit additive migration enables auditing.
+            if (!this.ftsAuditAvailable) return { status: "pending" as const, indexed };
+
+            if (state.phase === "ready" && !state.pending) {
+                const proof = await readFtsAudit(this.db, true);
+                if (!this.ftsRejected && proof.status === "verified") return { status: "ok" as const, indexed };
+                await auditReadyFts(this.db, this.ftsRejected);
+                this.ftsRejected = false;
+                state = await ftsRecoveryStatus(this.db);
+            }
+
+            if (state.phase === "repairing") {
+                for (let i = 0; i < maxPages; i++) {
+                    const result = await repairFtsPage(this.db);
+                    indexed += result.indexed;
+                    if (result.done) break;
+                }
+                state = await ftsRecoveryStatus(this.db);
+            }
+            if (state.phase === "ready" && state.pending) {
+                await repairPendingFts(this.db);
+                state = await ftsRecoveryStatus(this.db);
+            }
+            const ready =
+                state.phase === "ready" && !state.pending && (await readFtsAudit(this.db, true)).status === "verified";
+            if (ready) this.ftsRejected = false;
+            return { status: ready && !this.ftsRejected ? ("ok" as const) : ("pending" as const), indexed };
         } catch (error) {
-            this.ftsVerified = false;
+            this.ftsRejected = true;
             logger.warn("Could not repair article FTS index; durable work remains pending.", error);
             return { status: "unavailable" as const, indexed };
         }
@@ -523,12 +537,13 @@ export class ArticleIndex {
 
     async search(query: ArticleIndexSearchQuery): Promise<ArticleIndexSearchResult> {
         const text = query.query.trim();
-        if (!text) return { status: "ok", mode: this.ftsAvailable ? "fts" : "like", items: [] };
+        if (!text) return { status: "ok", mode: "like", items: [] };
         // unicode61 can return a nonempty but incomplete set for Han substrings.
         // Keep the literal path independent of the FTS result count.
         if (
             !this.ftsAvailable ||
-            !this.ftsVerified ||
+            !this.ftsAuditAvailable ||
+            this.ftsRejected ||
             /[\p{Script=Han}%_]/u.test(text) ||
             !/[\p{L}\p{N}]/u.test(text)
         ) {
@@ -538,11 +553,11 @@ export class ArticleIndex {
         const limit = Math.min(Math.max(query.limit ?? DEFAULT_SEARCH_LIMIT, 1), MAX_SEARCH_LIMIT);
         const conditions = [
             "article_search MATCH ?",
-            "EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='ready')",
+            FTS_AUDIT_GUARD,
             "NOT EXISTS(SELECT 1 FROM article_fts_pending)",
             "NOT EXISTS(SELECT 1 FROM article_ingest_pending)",
         ];
-        const parameters: Array<string | number> = [toFtsQuery(text)];
+        const parameters: Array<string | number> = [toFtsQuery(text), ...ftsAuditBounds()];
         if (query.sourceId) {
             conditions.push(
                 "EXISTS (SELECT 1 FROM article_sources source WHERE source.article_key = articles.article_key AND source.source_id = ?)"
@@ -569,7 +584,7 @@ export class ArticleIndex {
                 .all(...parameters);
             const ftsRows = getRows(rows) as ArticleRow[];
             if (new Set(ftsRows.map((row) => row.article_key)).size !== ftsRows.length) {
-                this.ftsVerified = false;
+                this.ftsRejected = true;
                 return this.searchLike(query);
             }
             if (ftsRows.length) return { status: "ok", mode: "fts", items: await this.mapRows(ftsRows) };

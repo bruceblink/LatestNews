@@ -1,0 +1,280 @@
+{
+  "baselineCommit": "972ce4124503a8106dc087c4bdbcd036c9aaa512",
+  "date": "2026-11-26",
+  "order": [
+    "initial candidate (excluded)",
+    "baseline",
+    "final candidate"
+  ],
+  "baseline": {
+    "size": 100000,
+    "samples": 100,
+    "rounds": [
+      {
+        "health": {
+          "samples": 100,
+          "p50Ms": 0.99283000000014,
+          "p95Ms": 1.1092899999994188,
+          "p99Ms": 1.1669000000001688,
+          "minStatements": 14,
+          "maxStatements": 14
+        },
+        "search": {
+          "samples": 100,
+          "p50Ms": 0.7838309999997364,
+          "p95Ms": 0.8660799999997835,
+          "p99Ms": 0.9126100000003134,
+          "minStatements": 8,
+          "maxStatements": 8
+        }
+      },
+      {
+        "health": {
+          "samples": 100,
+          "p50Ms": 1.03708000000006,
+          "p95Ms": 1.2039009999998598,
+          "p99Ms": 1.4060210000006919,
+          "minStatements": 14,
+          "maxStatements": 14
+        },
+        "search": {
+          "samples": 100,
+          "p50Ms": 0.826310000000376,
+          "p95Ms": 0.9573110000001179,
+          "p99Ms": 1.0912109999999302,
+          "minStatements": 8,
+          "maxStatements": 8
+        }
+      },
+      {
+        "health": {
+          "samples": 100,
+          "p50Ms": 0.9972999999999956,
+          "p95Ms": 1.1602609999999913,
+          "p99Ms": 1.2813509999996313,
+          "minStatements": 14,
+          "maxStatements": 14
+        },
+        "search": {
+          "samples": 100,
+          "p50Ms": 0.8272699999997712,
+          "p95Ms": 0.9435000000003129,
+          "p99Ms": 1.0349009999999907,
+          "minStatements": 8,
+          "maxStatements": 8
+        }
+      }
+    ],
+    "fullAuditStartupMs": 281.9807439999995,
+    "fullAuditStatements": 0,
+    "uniqueHotStatements": 11,
+    "proofGuard": false,
+    "searchPlan": [
+      {
+        "id": 11,
+        "parent": 0,
+        "notused": 45,
+        "detail": "SEARCH article_fts_repair EXISTS USING INTEGER PRIMARY KEY (rowid=?)"
+      },
+      {
+        "id": 16,
+        "parent": 0,
+        "notused": 0,
+        "detail": "SCALAR SUBQUERY 2"
+      },
+      {
+        "id": 20,
+        "parent": 16,
+        "notused": 216,
+        "detail": "SCAN article_fts_pending"
+      },
+      {
+        "id": 29,
+        "parent": 0,
+        "notused": 0,
+        "detail": "SCALAR SUBQUERY 3"
+      },
+      {
+        "id": 33,
+        "parent": 29,
+        "notused": 212,
+        "detail": "SCAN article_ingest_pending USING COVERING INDEX idx_article_ingest_pending_order"
+      },
+      {
+        "id": 42,
+        "parent": 0,
+        "notused": 156,
+        "detail": "SCAN article_search VIRTUAL TABLE INDEX 0:M3"
+      },
+      {
+        "id": 47,
+        "parent": 0,
+        "notused": 46,
+        "detail": "SEARCH articles USING INDEX sqlite_autoindex_articles_2 (canonical_url=?)"
+      },
+      {
+        "id": 76,
+        "parent": 0,
+        "notused": 0,
+        "detail": "USE TEMP B-TREE FOR ORDER BY"
+      }
+    ],
+    "sqliteVersion": [
+      {
+        "version": "3.53.4"
+      }
+    ],
+    "journalMode": [
+      {
+        "journal_mode": "delete"
+      }
+    ],
+    "environment": {
+      "node": "v22.23.4",
+      "cpus": 8
+    },
+    "productionD1": false
+  },
+  "candidate": {
+    "size": 100000,
+    "samples": 100,
+    "rounds": [
+      {
+        "health": {
+          "samples": 100,
+          "p50Ms": 1.0029109999995853,
+          "p95Ms": 1.1805300000005445,
+          "p99Ms": 1.2269710000000487,
+          "minStatements": 13,
+          "maxStatements": 13
+        },
+        "search": {
+          "samples": 100,
+          "p50Ms": 0.7985599999992701,
+          "p95Ms": 0.8936709999998129,
+          "p99Ms": 1.1319899999998597,
+          "minStatements": 7,
+          "maxStatements": 7
+        }
+      },
+      {
+        "health": {
+          "samples": 100,
+          "p50Ms": 0.9436709999999948,
+          "p95Ms": 1.0324009999994814,
+          "p99Ms": 1.1393410000000586,
+          "minStatements": 13,
+          "maxStatements": 13
+        },
+        "search": {
+          "samples": 100,
+          "p50Ms": 0.7632009999997535,
+          "p95Ms": 0.843431000000237,
+          "p99Ms": 0.9714709999998377,
+          "minStatements": 7,
+          "maxStatements": 7
+        }
+      },
+      {
+        "health": {
+          "samples": 100,
+          "p50Ms": 0.9155709999995452,
+          "p95Ms": 1.020180999999866,
+          "p99Ms": 1.0436099999997168,
+          "minStatements": 13,
+          "maxStatements": 13
+        },
+        "search": {
+          "samples": 100,
+          "p50Ms": 0.7635900000004767,
+          "p95Ms": 0.8218999999999141,
+          "p99Ms": 0.8777099999997517,
+          "minStatements": 7,
+          "maxStatements": 7
+        }
+      }
+    ],
+    "fullAuditStartupMs": 300.49477299999944,
+    "fullAuditStatements": 0,
+    "uniqueHotStatements": 11,
+    "proofGuard": true,
+    "searchPlan": [
+      {
+        "id": 8,
+        "parent": 0,
+        "notused": 156,
+        "detail": "SCAN article_search VIRTUAL TABLE INDEX 0:M3"
+      },
+      {
+        "id": 15,
+        "parent": 0,
+        "notused": 0,
+        "detail": "SCALAR SUBQUERY 1"
+      },
+      {
+        "id": 20,
+        "parent": 15,
+        "notused": 45,
+        "detail": "SEARCH a USING INTEGER PRIMARY KEY (rowid=?)"
+      },
+      {
+        "id": 35,
+        "parent": 15,
+        "notused": 45,
+        "detail": "SEARCH r USING INTEGER PRIMARY KEY (rowid=?)"
+      },
+      {
+        "id": 50,
+        "parent": 0,
+        "notused": 0,
+        "detail": "SCALAR SUBQUERY 2"
+      },
+      {
+        "id": 54,
+        "parent": 50,
+        "notused": 216,
+        "detail": "SCAN article_fts_pending"
+      },
+      {
+        "id": 63,
+        "parent": 0,
+        "notused": 0,
+        "detail": "SCALAR SUBQUERY 3"
+      },
+      {
+        "id": 67,
+        "parent": 63,
+        "notused": 212,
+        "detail": "SCAN article_ingest_pending USING COVERING INDEX idx_article_ingest_pending_order"
+      },
+      {
+        "id": 74,
+        "parent": 0,
+        "notused": 46,
+        "detail": "SEARCH articles USING INDEX sqlite_autoindex_articles_2 (canonical_url=?)"
+      },
+      {
+        "id": 102,
+        "parent": 0,
+        "notused": 0,
+        "detail": "USE TEMP B-TREE FOR ORDER BY"
+      }
+    ],
+    "sqliteVersion": [
+      {
+        "version": "3.53.4"
+      }
+    ],
+    "journalMode": [
+      {
+        "journal_mode": "delete"
+      }
+    ],
+    "environment": {
+      "node": "v22.23.4",
+      "cpus": 8
+    },
+    "productionD1": false
+  },
+  "method": "Sequential warm synthetic file SQLite; three rounds of 100 health and 100 one-hit FTS queries per version; includes new Cache/openPages(false), no HTTP/network; actual statement preparation counts; query plan, not engine row-read metrics."
+}

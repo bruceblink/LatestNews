@@ -8,6 +8,7 @@ import { filterSafeNewsItemLinks } from "@shared/news-url-policy";
 
 import { logger } from "../utils/logger";
 import { ArticleIndex } from "./article-index";
+import { initArticleFtsAudit } from "./article-recovery";
 import { executeArticleBatch } from "./article-atomic-batch";
 import { recordTrace, monotonicNow, getBenchmarkTrace, measureBenchmarkPhase } from "../utils/collection-trace";
 
@@ -32,7 +33,7 @@ export class Cache {
     async openPages(autoInit: boolean) {
         const tables = (await this.db
             .prepare(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('cache','articles','news_events','news_event_aliases','news_event_approvals','article_search')"
+                "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('cache','articles','news_events','news_event_aliases','news_event_approvals','article_search','article_fts_audit')"
             )
             .all()) as Array<{ name: string }>;
         const names = new Set(tables.map((row) => row.name));
@@ -63,6 +64,15 @@ export class Cache {
                     "Could not initialize Pages article schema; source cache remains available.",
                     describeSourceError(error)
                 );
+            }
+        } else if (autoInit && this.recoveryAvailable && !names.has("article_fts_audit")) {
+            // Additive migration only; do not re-run article schema migration
+            // or perform a full FTS audit in an interactive Pages read.
+            try {
+                await initArticleFtsAudit(this.db);
+                await index.probe(false);
+            } catch (error) {
+                logger.warn("Could not initialize Pages FTS audit evidence.", describeSourceError(error));
             }
         }
     }
@@ -182,7 +192,7 @@ export class Cache {
                 )) AS pending`
                 )
                 .get()) as { pending: number };
-            if (row.pending) await this.startPagesMaintenance();
+            if (row.pending || (await this.articleIndex?.needsFtsAudit())) await this.startPagesMaintenance();
         } catch (error) {
             logger.warn("Could not check Pages article backlog.", describeSourceError(error));
         }

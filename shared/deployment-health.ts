@@ -30,6 +30,7 @@ export interface DeploymentArticleIndexCheck {
     fts: "ok" | "degraded" | "unavailable" | "disabled";
     pendingIngest: number | null;
     pendingFts: number | null;
+    ftsAudit?: { status: "verified" | "unverified" | "expired" | "failed"; auditedAt?: number };
     eventRegistry: "ok" | "unavailable" | "unknown" | "disabled";
     untrackedCache?: number | null;
 }
