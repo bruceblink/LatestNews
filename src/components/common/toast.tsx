@@ -2,7 +2,6 @@ import type { ToastItem } from "~/atoms/types";
 
 import clsx from "clsx";
 import { Timer } from "~/utils";
-import { useMount } from "react-use";
 import { toastAtom } from "~/hooks/useToast";
 import { useSetAtom, useAtomValue } from "jotai";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -39,15 +38,18 @@ function Item({ info }: { info: ToastItem }) {
         },
         [info, setToastItems]
     );
-    // @ts-ignore
-    const timer = useRef<Timer>();
+    const timer = useRef<Timer | undefined>(undefined);
 
-    useMount(() => {
-        timer.current = new Timer(() => {
+    useEffect(() => {
+        const current = new Timer(() => {
             hidden();
         }, info.duration ?? 5000);
-        return () => timer.current?.clear();
-    });
+        timer.current = current;
+        return () => {
+            current.clear();
+            if (timer.current === current) timer.current = undefined;
+        };
+    }, [hidden, info.duration]);
 
     const [hovered, setHovered] = useState(false);
     useEffect(() => {

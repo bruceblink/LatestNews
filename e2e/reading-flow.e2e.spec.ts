@@ -81,6 +81,55 @@ test("blocks unsafe remote and legacy reading links and falls back from invalid 
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem("reading-history") ?? "[]").length)).toBe(1);
 });
 
+test("releases document visibility listeners when leaving reading history", async ({ page }) => {
+    await installReadingFlowMocks(page);
+    await page.addInitScript(() => {
+        localStorage.setItem(
+            "reading-history",
+            JSON.stringify(
+                Array.from({ length: 12 }, (_, index) => ({
+                    newsId: "listener-" + index,
+                    title: "Lifecycle fixture " + index,
+                    url: "https://example.test/lifecycle/" + index,
+                    sourceId: "hackernews",
+                    sourceName: "Hacker News",
+                    readAt: Date.now() - index * 1000,
+                }))
+            )
+        );
+    });
+    await page.goto("/archive");
+    await expect(page.getByRole("heading", { name: "新闻档案", level: 1 })).toBeVisible();
+    const session = await page.context().newCDPSession(page);
+    const count = async () => {
+        const group = "visibility-listener-probe";
+        try {
+            const { result } = await session.send("Runtime.evaluate", { expression: "document", objectGroup: group });
+            if (!result.objectId) throw new Error("Document object unavailable");
+            const { listeners } = await session.send("DOMDebugger.getEventListeners", { objectId: result.objectId });
+            return listeners.filter((listener) => listener.type === "visibilitychange").length;
+        } finally {
+            await session.send("Runtime.releaseObjectGroup", { objectGroup: group });
+        }
+    };
+    const nav = page.getByRole("navigation", { name: "主要页面" });
+    try {
+        // Wait for the initial route's effects to settle. No forced GC:
+        // the document itself must no longer retain unmounted handlers.
+        const initial = await count();
+        for (let round = 0; round < 4; round++) {
+            await nav.getByRole("link", { name: "阅读历史", exact: true }).click();
+            await expect(page.getByText("Lifecycle fixture 11", { exact: true })).toBeVisible();
+            await expect.poll(count).toBeGreaterThanOrEqual(initial + 12);
+            await nav.getByRole("link", { name: "新闻档案", exact: true }).click();
+            await expect(page.getByRole("heading", { name: "新闻档案", level: 1 })).toBeVisible();
+            await expect.poll(count, { timeout: 3000 }).toBe(initial);
+        }
+    } finally {
+        await session.detach();
+    }
+});
+
 async function installReadingFlowMocks(
     page: Page,
     items: Array<typeof fixtureItem & { mobileUrl?: string }> = [fixtureItem]
