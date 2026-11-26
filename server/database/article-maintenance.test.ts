@@ -1,13 +1,14 @@
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createDatabase } from "db0";
+import { createHash } from "node:crypto";
 import { rm, mkdtemp } from "node:fs/promises";
 import { it, vi, expect, describe } from "vitest";
 import sqliteConnector from "db0/connectors/better-sqlite3";
 
 import { Cache } from "./cache-store";
 import { ArticleIndex } from "./article-index";
-import { ftsIsInconsistent } from "./article-recovery";
+import { repairFtsPage, beginFtsRepair, ftsIsInconsistent } from "./article-recovery";
 import { ownsMaintenanceLease, acquireMaintenanceLease, releaseMaintenanceLease } from "./article-maintenance";
 
 const article = (id: string, title = "Maintenance fixture " + id) => ({
@@ -290,6 +291,92 @@ describe("N4-P2 independent index maintenance", () => {
             expect((await cache.searchArticles({ query: "Newer lease title" })).items).toHaveLength(1);
             expect((await cache.searchArticles({ query: "Stale lease title" })).items).toHaveLength(0);
             await releaseMaintenanceLease(db, next);
+        });
+    });
+
+    it("batches leased SQLite chunks without losing canonical identity or the newest observation", async () => {
+        await fixture(async (db, cache) => {
+            const index = new ArticleIndex(db);
+            await index.probe(false);
+            const items = Array.from({ length: 29 }, (_, i) => article("batch-" + i));
+            const last = { ...items[0], id: "last-duplicate", title: "Last duplicate title" };
+            const occupiedKey = "article-v2-" + createHash("sha256").update(items[1].url).digest("hex");
+            const occupied = article("occupied");
+            await db
+                .prepare("INSERT INTO articles VALUES(?,?,?,?,?,?,?,?,?)")
+                .run(occupiedKey, occupied.url, occupied.title, null, "occupied", null, JSON.stringify(occupied), 1, 1);
+            await db.prepare("INSERT INTO article_search VALUES(?,?,?)").run(occupiedKey, occupied.title, occupied.url);
+            const owner = (await acquireMaintenanceLease(db))!;
+            const native = (await db.getInstance()) as { transaction<T>(fn: () => T): { immediate(): T } };
+            const tx = vi.spyOn(native, "transaction");
+            try {
+                expect(await index.upsertSourceItems("weibo", [...items, last], 2000, owner)).toEqual({
+                    inserted: 29,
+                    updated: 1,
+                });
+                expect(tx).toHaveBeenCalledTimes(2);
+                expect(
+                    await db.prepare("SELECT article_key FROM articles WHERE canonical_url=?").get(items[1].url)
+                ).not.toEqual({ article_key: occupiedKey });
+                expect(await db.prepare("SELECT title FROM articles WHERE canonical_url=?").get(occupied.url)).toEqual({
+                    title: occupied.title,
+                });
+                await index.upsertSourceItems("v2ex", [{ ...items[0], title: "Older title" }], 1000, owner);
+                const match = (await cache.searchArticles({ query: "Last duplicate title" })).items[0];
+                expect(match.item.id).toBe(last.id);
+                expect(match.sourceIds).toEqual(["v2ex", "weibo"]);
+                expect(await ftsIsInconsistent(db)).toBe(false);
+            } finally {
+                tx.mockRestore();
+                await releaseMaintenanceLease(db, owner);
+            }
+        });
+    });
+
+    it("rolls back a failed leased SQLite chunk and retains its journal until successful retry", async () => {
+        await fixture(async (db, cache) => {
+            const items = Array.from({ length: 30 }, (_, i) => article("retry-" + i));
+            await db
+                .prepare(
+                    "CREATE TRIGGER reject_middle BEFORE INSERT ON article_sources WHEN NEW.raw_item_id='retry-15' BEGIN SELECT RAISE(ABORT,'fixture failure'); END"
+                )
+                .run();
+            await cache.set("weibo", items);
+            expect((await cache.get("weibo"))?.items).toEqual(items);
+            expect(await db.prepare("SELECT COUNT(*) AS count FROM articles").get()).toEqual({ count: 0 });
+            expect(await db.prepare("SELECT COUNT(*) AS count FROM article_fts_pending").get()).toEqual({ count: 0 });
+            expect((await cache.getArticleIndexHealth()).pendingIngest).toBe(1);
+            await db.prepare("DROP TRIGGER reject_middle").run();
+            expect(await cache.runArticleMaintenance()).toMatchObject({ status: "ok", completed: 1 });
+            expect(await db.prepare("SELECT COUNT(*) AS count FROM articles").get()).toEqual({ count: 30 });
+            expect(await db.prepare("SELECT COUNT(*) AS count FROM article_sources").get()).toEqual({ count: 30 });
+            expect(await ftsIsInconsistent(db)).toBe(false);
+        });
+    });
+
+    it("uses 100-key pages by default for online SQLite maintenance while direct repair retains its default", async () => {
+        await fixture(async (db, cache) => {
+            const index = new ArticleIndex(db);
+            await index.probe(false);
+            await index.upsertSourceItems(
+                "weibo",
+                Array.from({ length: 450 }, (_, i) => article("online-page-" + i))
+            );
+            await db.prepare("DELETE FROM article_search").run();
+            await beginFtsRepair(db);
+            expect(await repairFtsPage(db)).toEqual({ done: false, indexed: 0 });
+            expect(await cache.runArticleMaintenance(1)).toMatchObject({ status: "pending" });
+            expect(await db.prepare("SELECT COUNT(*) AS count FROM article_search").get()).toEqual({ count: 200 });
+            expect((await repairFtsPage(db)).indexed).toBe(200);
+            for (let i = 0; i < 10; i++) {
+                if ((await cache.runArticleMaintenance(1)).status === "ok") break;
+            }
+            expect(await ftsIsInconsistent(db)).toBe(false);
+            expect(await cache.getArticleIndexHealth()).toMatchObject({
+                status: "ok",
+                pendingIngest: 0,
+                pendingFts: 0,
+            });
         });
     });
 });

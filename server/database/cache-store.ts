@@ -9,7 +9,7 @@ import { filterSafeNewsItemLinks } from "@shared/news-url-policy";
 import { logger } from "../utils/logger";
 import { ArticleIndex } from "./article-index";
 import { executeArticleBatch } from "./article-atomic-batch";
-import { ftsRecoveryStatus, initArticleFtsAudit } from "./article-recovery";
+import { ftsRecoveryStatus, initArticleFtsAudit, SQLITE_ONLINE_BUILD_PAGE } from "./article-recovery";
 import { recordTrace, monotonicNow, getBenchmarkTrace, measureBenchmarkPhase } from "../utils/collection-trace";
 import {
     leaseGuard,
@@ -26,6 +26,7 @@ import {
 } from "./article-maintenance";
 
 import type { CacheRow, CacheInfo } from "../types";
+import type { SqliteBuildPage } from "./article-recovery";
 import type { MaintenanceResult } from "./article-maintenance";
 import type { ArticleEventQuery, ArticleIndexSearchQuery, ArticleIndexSearchResult } from "./article-index";
 
@@ -39,7 +40,11 @@ export class Cache {
     private maintenanceScheduled = false;
     constructor(
         db: Database,
-        private readonly options: { deferMaintenance?: (pending: Promise<unknown>) => void } = {}
+        private readonly options: {
+            deferMaintenance?: (pending: Promise<unknown>) => void;
+            /** Internal controlled benchmark override; D1 never uses this value. */
+            sqliteBuildPage?: SqliteBuildPage;
+        } = {}
     ) {
         this.db = db;
     }
@@ -395,7 +400,9 @@ export class Cache {
                 }
             }
             const repair = (await canContinue())
-                ? await measureBenchmarkPhase("index.repair", () => this.articleIndex!.continueRepair(2))
+                ? await measureBenchmarkPhase("index.repair", () =>
+                      this.articleIndex!.continueRepair(2, this.options.sqliteBuildPage ?? SQLITE_ONLINE_BUILD_PAGE)
+                  )
                 : undefined;
             result.remaining = await readMaintenanceBacklog(this.db);
             result.pendingFts = (await ftsRecoveryStatus(this.db)).pending;

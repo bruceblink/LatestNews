@@ -78,6 +78,22 @@ describe("N4-L2 durable article recovery", () => {
             expect(await db.prepare("SELECT count(*) AS count FROM article_search").get()).toEqual({ count: 413 });
         });
     });
+    it.each([50, 100, 200] as const)("accepts only bounded internal SQLite rebuild page size %s", async (page) => {
+        await fixture(async (db, index) => {
+            await index.upsertSourceItems(
+                "weibo",
+                Array.from({ length: 230 }, (_, i) => article("page-" + i))
+            );
+            await db.prepare("DELETE FROM article_search").run();
+            await beginFtsRepair(db);
+            await repairFtsPage(db, page);
+            expect((await repairFtsPage(db, page)).indexed).toBe(page);
+            await expect(repairFtsPage(db, 0 as 50)).rejects.toThrow(RangeError);
+            expect((await index.continueRepair(20, page)).status).toBe("ok");
+            expect(await ftsIsInconsistent(db)).toBe(false);
+        });
+    });
+
     it("bounds derived-row clearing, preserves articles and replays writes behind the build cursor", async () => {
         await fixture(async (db, index) => {
             await index.upsertSourceItems(

@@ -35,6 +35,8 @@ import {
     probeArticleRecovery,
 } from "./article-recovery";
 
+import type { SqliteBuildPage } from "./article-recovery";
+
 const DEFAULT_SEARCH_LIMIT = 30;
 const MAX_SEARCH_LIMIT = 100;
 
@@ -243,8 +245,11 @@ export class ArticleIndex {
     }
 
     async upsertSourceItems(sourceId: SourceID, items: NewsItem[], now = Date.now(), maintenanceOwner?: string) {
-        if (this.db.connector === "cloudflare-d1")
-            return this.upsertD1SourceItems(sourceId, items, now, maintenanceOwner);
+        // The journal owns a bounded (<=30) snapshot chunk. Reuse the existing
+        // set-based D1 mutations for leased SQLite replay: one FTS scan per
+        // chunk instead of one per article, without changing direct writers.
+        if (this.db.connector === "cloudflare-d1" || (this.db.connector === "sqlite" && maintenanceOwner !== undefined))
+            return this.upsertBatchedSourceItems(sourceId, items, now, maintenanceOwner);
 
         let inserted = 0;
         let updated = 0;
@@ -325,9 +330,14 @@ export class ArticleIndex {
         return { inserted, updated };
     }
 
-    /** A normal source snapshot has at most 30 entries. Group its mutations
-     * into set-based SQL rather than two remote calls per article. */
-    private async upsertD1SourceItems(sourceId: SourceID, items: NewsItem[], now: number, maintenanceOwner?: string) {
+    /** Group bounded snapshot mutations into set-based SQL: one article
+     * transaction and one derived FTS transaction per <=30 entries. */
+    private async upsertBatchedSourceItems(
+        sourceId: SourceID,
+        items: NewsItem[],
+        now: number,
+        maintenanceOwner?: string
+    ) {
         const valid = filterSafeNewsItemLinks(items).flatMap((item) => {
             const url = normalizeNewsItemUrlKey(item.url);
             return url ? [{ item, url }] : [];
@@ -513,7 +523,7 @@ export class ArticleIndex {
         }
     }
 
-    async continueRepair(maxPages = 20) {
+    async continueRepair(maxPages = 20, sqliteBuildPage?: SqliteBuildPage) {
         if (!this.ftsAvailable || !this.recoveryAvailable) return { status: "unavailable" as const, indexed: 0 };
         let indexed = 0;
         try {
@@ -536,7 +546,7 @@ export class ArticleIndex {
 
             if (state.phase === "repairing") {
                 for (let i = 0; i < maxPages; i++) {
-                    const result = await repairFtsPage(this.db);
+                    const result = await repairFtsPage(this.db, sqliteBuildPage);
                     indexed += result.indexed;
                     if (result.done) break;
                 }
