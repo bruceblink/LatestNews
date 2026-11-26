@@ -5,9 +5,7 @@ import type { SourceID } from "@shared/types";
 
 import clsx from "clsx";
 import { Command } from "cmdk";
-import { useMount } from "react-use";
 import pinyin from "@shared/pinyin.json";
-import { useRef, useState } from "react";
 import { atom, useAtomValue } from "jotai";
 import { metadata } from "@shared/metadata";
 import { useFocusWith } from "~/hooks/useFocus";
@@ -15,6 +13,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useSearchBar } from "~/hooks/useSearch";
 import dataSources from "@shared/data-sources.ts";
 import { objectEntries } from "@shared/type.util";
+import { useRef, useState, useEffect } from "react";
 import { CardWrapper } from "~/components/column/card";
 import { runtimeCatalogRevisionAtom } from "~/services/runtime-source-catalog.service";
 
@@ -87,7 +86,7 @@ export function SearchBar() {
 
     const [value, setValue] = useState<SourceID>("github-trending-today");
 
-    useMount(() => {
+    useEffect(() => {
         inputRef?.current?.focus();
         const keydown = (e: KeyboardEvent) => {
             if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -99,7 +98,7 @@ export function SearchBar() {
         return () => {
             document.removeEventListener("keydown", keydown);
         };
-    });
+    }, [toggle]);
 
     return (
         <Command.Dialog

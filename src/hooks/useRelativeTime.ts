@@ -1,4 +1,3 @@
-import { useMount } from "react-use";
 import { atom, useAtomValue } from "jotai";
 import { useState, useEffect } from "react";
 import { relativeTime } from "@shared/utils.ts";
@@ -17,7 +16,7 @@ timerAtom.onMount = (set) => {
 
 function useVisibility() {
     const [visible, setVisible] = useState(true);
-    useMount(() => {
+    useEffect(() => {
         const handleVisibilityChange = () => {
             setVisible(document.visibilityState === "visible");
         };
@@ -25,7 +24,7 @@ function useVisibility() {
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
         };
-    });
+    }, []);
     return visible;
 }
 

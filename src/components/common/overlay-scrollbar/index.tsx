@@ -86,7 +86,7 @@ export function GlobalOverlayScrollbar({
 }: PropsWithChildren<ComponentPropsWithoutRef<"div">>) {
     const ref = useRef<HTMLDivElement>(null);
     const lastTrigger = useRef(0);
-    const timer = useRef<any>(null);
+    const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const setGoToTop = useSetAtom(goToTopAtom);
     const onScroll = useCallback(
         (e: Event) => {
@@ -118,7 +118,6 @@ export function GlobalOverlayScrollbar({
         defer: true,
     });
 
-    // eslint-disable-next-line consistent-return
     useMount(() => {
         initialize({
             target: ref.current!,
@@ -126,14 +125,17 @@ export function GlobalOverlayScrollbar({
                 nativeScrollbarsOverlaid: true,
             },
         });
-        const el = ref.current;
-        if (el) {
-            ref.current?.addEventListener("scroll", onScroll);
-            return () => {
-                el?.removeEventListener("scroll", onScroll);
-            };
-        }
     });
+
+    useEffect(() => {
+        const el = ref.current;
+        if (!el) return undefined;
+        el.addEventListener("scroll", onScroll);
+        return () => {
+            el.removeEventListener("scroll", onScroll);
+            clearTimeout(timer.current);
+        };
+    }, [onScroll]);
 
     useEffect(() => {
         if (ref.current) {
