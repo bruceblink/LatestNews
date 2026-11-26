@@ -2,6 +2,8 @@ import type { SourceID, SourceResponse } from "@shared/types";
 import type { NewsInsightOptions } from "@shared/news-insights";
 import type { SourceApiError, NewsInsightsResponse } from "@shared/source-api";
 
+import { describeSourceError } from "@shared/source-error";
+
 import { createServerNewsInsights } from "./news-insights";
 import { resolveEntireSources } from "./resolve-entire-sources";
 
@@ -55,7 +57,7 @@ export async function resolveNewsInsights({
         onFetchError: (error, id) => {
             errors.push({
                 sourceId: id,
-                message: getErrorMessage(error),
+                ...describeSourceError(error),
             });
             onFetchError?.(error, id);
         },
@@ -77,10 +79,4 @@ export async function resolveNewsInsights({
         },
         errors,
     };
-}
-
-function getErrorMessage(error: unknown) {
-    if (error instanceof Error) return error.message;
-    if (typeof error === "string") return error;
-    return "Unknown source fetch error";
 }

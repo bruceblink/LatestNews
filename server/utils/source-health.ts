@@ -5,6 +5,7 @@ import type { NewsItemsNormalizationQuality } from "@shared/news-item-schema";
 
 import { logger } from "#/utils/logger";
 import dataSources from "@shared/data-sources";
+import { describeSourceError } from "@shared/source-error";
 import { getCrawlerSourceKind } from "#/utils/crawler-plugin-runtime";
 import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 import { getSourceHealthEventsTable } from "#/database/source-health-events";
@@ -126,7 +127,7 @@ export function recordSourceQuality(id: SourceID, quality: NewsItemsNormalizatio
 export function recordSourceFailure(id: SourceID, durationMs: number, error: unknown) {
     const snapshot = getOrCreateSnapshot(id);
     const occurredAt = Date.now();
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = describeSourceError(error).message;
     snapshot.status = "failing";
     snapshot.errorCount += 1;
     snapshot.consecutiveFailures += 1;
@@ -201,5 +202,5 @@ function createEmptyQuality(): SourceHealthQuality {
 function persistSourceHealthEvent(id: SourceID, event: ServerSourceHealthEvent) {
     void getSourceHealthEventsTable()
         .then((table) => table?.append(id, event, RECENT_EVENT_LIMIT))
-        .catch((error) => logger.warn(`persist ${id} source health event failed`, error));
+        .catch((error) => logger.warn(`persist ${id} source health event failed`, describeSourceError(error)));
 }

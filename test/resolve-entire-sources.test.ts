@@ -237,7 +237,8 @@ describe("resolveEntireSources", () => {
             },
             {
                 sourceId: "weibo",
-                message: "fetch failed",
+                code: "UNKNOWN",
+                message: "Source collection failed.",
             },
         ]);
         expect(result.data.map((item) => item.id)).toEqual(["v2ex"]);

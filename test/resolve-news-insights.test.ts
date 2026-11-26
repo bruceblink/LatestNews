@@ -90,7 +90,8 @@ describe("resolveNewsInsights", () => {
             },
             {
                 sourceId: "weibo",
-                message: "source failed",
+                code: "UNKNOWN",
+                message: "Source collection failed.",
             },
         ]);
         expect(result.data.sourceCount).toBe(1);

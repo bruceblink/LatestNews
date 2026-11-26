@@ -1,6 +1,7 @@
 import type { H3Event } from "h3";
 
 import process from "node:process";
+import { describeSourceError } from "@shared/source-error";
 import { useDatabase as getDatabase } from "nitro/database";
 
 import { Cache } from "./cache-store";
@@ -23,7 +24,7 @@ export async function getCacheTable(event?: H3Event) {
             await cache.openPages((cloudflare.env.INIT_TABLE ?? process.env.INIT_TABLE) !== "false");
             return cache;
         } catch (error) {
-            logger.error("failed to open request D1 cache", error);
+            logger.error("failed to open request D1 cache", describeSourceError(error));
             return undefined;
         }
     }
@@ -38,7 +39,7 @@ export async function getCacheTable(event?: H3Event) {
             return initialized;
         } catch (error) {
             cacheTablePromise = undefined;
-            logger.error("failed to init database ", error);
+            logger.error("failed to init database ", describeSourceError(error));
             return undefined;
         }
     })();

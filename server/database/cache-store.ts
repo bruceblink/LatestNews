@@ -3,6 +3,7 @@ import type { NewsItem, SourceID } from "@shared/types";
 import type { TopicEvent } from "@shared/news-insights";
 
 import { randomUUID } from "node:crypto";
+import { describeSourceError } from "@shared/source-error";
 import { filterSafeNewsItemLinks } from "@shared/news-url-policy";
 
 import { logger } from "../utils/logger";
@@ -58,7 +59,10 @@ export class Cache {
                 this.recoveryAvailable = await index.probe(false);
             } catch (error) {
                 this.recoveryAvailable = false;
-                logger.warn("Could not initialize Pages article schema; source cache remains available.", error);
+                logger.warn(
+                    "Could not initialize Pages article schema; source cache remains available.",
+                    describeSourceError(error)
+                );
             }
         }
     }
@@ -86,7 +90,10 @@ export class Cache {
             if (this.recoveryAvailable) await this.maintainArticleIndex(5);
         } catch (error) {
             this.articleIndex = undefined;
-            logger.warn("Could not initialize article index. Source cache remains available.", error);
+            logger.warn(
+                "Could not initialize article index. Source cache remains available.",
+                describeSourceError(error)
+            );
         }
         logger.success("init cache table");
     }
@@ -135,7 +142,10 @@ export class Cache {
                 } catch (error) {
                     // The cache must remain available if its indexing journal is unavailable.
                     // A checkpoint comparison will rediscover the latest snapshot when repaired.
-                    logger.warn("Could not journal source cache; retaining cache-only write.", error);
+                    logger.warn(
+                        "Could not journal source cache; retaining cache-only write.",
+                        describeSourceError(error)
+                    );
                     const result = await this.db.prepare(cacheSql).run(key, payload, now);
                     if (!result.success) throw new Error("News cache write failed.");
                 }
@@ -174,7 +184,7 @@ export class Cache {
                 .get()) as { pending: number };
             if (row.pending) await this.startPagesMaintenance();
         } catch (error) {
-            logger.warn("Could not check Pages article backlog.", error);
+            logger.warn("Could not check Pages article backlog.", describeSourceError(error));
         }
     }
 
@@ -245,7 +255,7 @@ export class Cache {
                         { sql: "DELETE FROM article_ingest_pending WHERE id=?", params: [row.id] },
                     ]);
                 } catch (error) {
-                    logger.warn("Could not replay article snapshot; journal retained.", error);
+                    logger.warn("Could not replay article snapshot; journal retained.", describeSourceError(error));
                     await this.db
                         .prepare("UPDATE article_ingest_pending SET attempts=attempts+1 WHERE id=?")
                         .run(row.id);
@@ -253,7 +263,10 @@ export class Cache {
             }
             await measureBenchmarkPhase("index.repair", () => this.articleIndex!.continueRepair(2));
         } catch (error) {
-            logger.warn("Article maintenance is unavailable; source cache remains available.", error);
+            logger.warn(
+                "Article maintenance is unavailable; source cache remains available.",
+                describeSourceError(error)
+            );
         }
     }
 

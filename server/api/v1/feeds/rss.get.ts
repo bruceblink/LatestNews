@@ -1,6 +1,6 @@
-import { logger } from "#/utils/logger";
 import { HOME_PAGE } from "@shared/consts";
 import { createRssFeedXml } from "@shared/feed-export";
+import { publicSourceHttpError } from "#/utils/public-source-error";
 import { getQuery, createError, getRequestURL, setResponseHeader, defineEventHandler } from "h3";
 
 import { resolveSourceBatchPayload } from "../../../utils/resolve-source-batch";
@@ -48,11 +48,6 @@ export default defineEventHandler(async (event) => {
             maxItems: getMaxFeedItems(parsedQuery.data),
         });
     } catch (error) {
-        if (error && typeof error === "object" && "statusCode" in error) throw error;
-        logger.error(error);
-        throw createError({
-            statusCode: 500,
-            message: error instanceof Error ? error.message : "Internal Server Error",
-        });
+        throw publicSourceHttpError(error);
     }
 });

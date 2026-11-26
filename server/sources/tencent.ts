@@ -1,4 +1,5 @@
 import { myFetch } from "#/utils/fetch";
+import { describeSourceError } from "@shared/source-error";
 import { defineSource, generateUrlHashId } from "#/utils/source";
 
 interface WapRes {
@@ -63,7 +64,7 @@ const comprehensiveNews = defineSource(async () => {
             })
         );
     } catch (err) {
-        console.error("获取腾讯新闻-综合早报失败:", err instanceof Error ? err.message : err);
+        console.error("获取腾讯新闻-综合早报失败:", describeSourceError(err));
         return []; // 优雅降级
     }
 });

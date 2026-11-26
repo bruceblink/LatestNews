@@ -1,8 +1,8 @@
 import type { SourceBatchResponse } from "@shared/source-api";
 
 import { z } from "zod";
-import { logger } from "#/utils/logger";
 import { readBody, createError, defineEventHandler } from "h3";
+import { publicSourceHttpError } from "#/utils/public-source-error";
 
 import { hasSourceBatchSelector, resolveSourceBatchPayload } from "../../../utils/resolve-source-batch";
 
@@ -41,11 +41,6 @@ export default defineEventHandler(async (event): Promise<SourceBatchResponse> =>
             preferCached: true,
         });
     } catch (error) {
-        if (error && typeof error === "object" && "statusCode" in error) throw error;
-        logger.error(error);
-        throw createError({
-            statusCode: 500,
-            message: error instanceof Error ? error.message : "Internal Server Error",
-        });
+        throw publicSourceHttpError(error);
     }
 });

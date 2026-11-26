@@ -1,3 +1,4 @@
+import { safeSourceErrorMessage } from "./source-error";
 import { filterSourceHealthSnapshots } from "./source-health-filter";
 
 import type { SourceApiError } from "./source-api";
@@ -43,7 +44,15 @@ export function createSourceHealthSourcesResponse(
     const keyword = query.keyword?.trim();
     const limit = normalizeHealthSourcesLimit(query.limit);
     const filteredSources = filterSourceHealthSnapshots(summary.sources, { keyword, status, adapterKind });
-    const data = typeof limit === "number" ? filteredSources.slice(0, limit) : filteredSources;
+    const data = (typeof limit === "number" ? filteredSources.slice(0, limit) : filteredSources).map((source) => ({
+        ...source,
+        lastErrorMessage:
+            source.lastErrorMessage === undefined ? undefined : safeSourceErrorMessage(source.lastErrorMessage),
+        recentEvents: source.recentEvents.map((event) => ({
+            ...event,
+            errorMessage: event.errorMessage === undefined ? undefined : safeSourceErrorMessage(event.errorMessage),
+        })),
+    }));
 
     return {
         data,

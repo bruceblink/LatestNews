@@ -4,6 +4,7 @@ import type { SourceHealthSummary, SourceHealthSnapshot } from "@shared/source-h
 
 import { it, expect, describe } from "vitest";
 
+import { formatSourceHealthDiagnostics } from "../shared/source-health-diagnostics";
 import { normalizeHealthSourcesLimit, createSourceHealthSourcesResponse } from "../shared/source-health-api";
 
 const NOW = Date.parse("2026-07-05T08:00:00.000Z");
@@ -107,6 +108,19 @@ describe("source health sources API", () => {
 
         expect(response.data.map((source) => source.id)).toEqual(["jin10"]);
         expect(response.meta.filters).toEqual({ status: "all", adapterKind: "plugin" });
+    });
+
+    it("reprojects legacy failure strings at JSON and text boundaries without mutating the summary", () => {
+        const summary = createSummary();
+        const marker = "AUDIT_SYNTHETIC_NOT_A_SECRET";
+        summary.sources[0].lastErrorMessage = marker;
+        summary.sources[0].recentEvents = [{ status: "failing", occurredAt: NOW, durationMs: 1, errorMessage: marker }];
+        const response = createSourceHealthSourcesResponse(summary);
+        expect(JSON.stringify(response)).not.toContain(marker);
+        const report = formatSourceHealthDiagnostics(summary);
+        expect(report).not.toContain(marker);
+        expect(report).toContain("Source collection failed.");
+        expect(summary.sources[0].lastErrorMessage).toBe(marker);
     });
 
     it("normalizes limit values with a max guard", () => {

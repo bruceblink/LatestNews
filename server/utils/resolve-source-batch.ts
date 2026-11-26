@@ -5,6 +5,7 @@ import type { SourceBatchPayload, SourceBatchResponse } from "@shared/source-api
 import { createError } from "h3";
 import { logger } from "#/utils/logger";
 import { getCacheTable } from "#/database/cache";
+import { describeSourceError } from "@shared/source-error";
 import { resolveSourceBatchSelection } from "@shared/source-batch";
 import { hasSourceGetter, fetchSourceItems } from "#/utils/source-fetch";
 import { createSourceBatchResponse } from "@shared/source-batch-response";
@@ -43,7 +44,7 @@ export async function resolveSourceBatchPayload(
     const cacheTable = await getCacheTable(event);
     const caches =
         (await cacheTable?.getEntire(sourceIds).catch((error: unknown) => {
-            logger.warn(`Could not read ${logPrefix} cache.`, error);
+            logger.warn(`Could not read ${logPrefix} cache.`, describeSourceError(error));
             return [];
         })) ?? [];
     const response = await resolveEntireSourcesWithDiagnostics({
@@ -59,8 +60,9 @@ export async function resolveSourceBatchPayload(
         now,
         background,
         preferCached,
-        onFetchError: (error, id) => logger.error(`fetch ${id} ${logPrefix} failed`, error),
-        onCacheError: (error, id) => logger.warn(`Could not save ${id} ${logPrefix} cache.`, error),
+        onFetchError: (error, id) => logger.error(`fetch ${id} ${logPrefix} failed`, describeSourceError(error)),
+        onCacheError: (error, id) =>
+            logger.warn(`Could not save ${id} ${logPrefix} cache.`, describeSourceError(error)),
     });
 
     return createSourceBatchResponse(

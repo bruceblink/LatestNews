@@ -1,9 +1,9 @@
 import type { SourceHealthSourcesResponse } from "@shared/source-health-api";
 
 import { z } from "zod";
-import { logger } from "#/utils/logger";
 import { getSourceHealthSummary } from "#/utils/source-health";
 import { getQuery, createError, defineEventHandler } from "h3";
+import { publicSourceHttpError } from "#/utils/public-source-error";
 import { createSourceHealthSourcesResponse } from "@shared/source-health-api";
 import { initializeCrawlerPluginCatalog } from "#/utils/crawler-plugin-runtime";
 
@@ -59,11 +59,6 @@ export default defineEventHandler((event): SourceHealthSourcesResponse => {
             keyword: parsedQuery.data.q ?? parsedQuery.data.keyword,
         });
     } catch (error) {
-        logger.error(error);
-        if (error && typeof error === "object" && "statusCode" in error) throw error;
-        throw createError({
-            statusCode: 500,
-            message: error instanceof Error ? error.message : "Internal Server Error",
-        });
+        throw publicSourceHttpError(error);
     }
 });

@@ -4,6 +4,7 @@ import type { SourceID } from "@shared/types";
 import { TTL } from "@shared/consts";
 import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
+import { describeSourceError } from "@shared/source-error";
 import { shouldDegradeSourceToCache } from "@shared/source-health-policy";
 
 import { logger } from "./logger";
@@ -15,7 +16,7 @@ import { resolveSourceResponse } from "./resolve-source-response";
 export async function readSource(id: SourceID, latest: boolean, clearCache: boolean, event: H3Event) {
     const cacheTable = await getCacheTable(event);
     const cache = await cacheTable?.get(id).catch((error: unknown) => {
-        logger.warn(`Could not read source cache for ${id}.`, error);
+        logger.warn(`Could not read source cache for ${id}.`, describeSourceError(error));
         return undefined;
     });
     const health = getSourceHealthSnapshot(id);
@@ -36,6 +37,6 @@ export async function readSource(id: SourceID, latest: boolean, clearCache: bool
         fetchLatest: (signal) => fetchSourceItems(id, { signal }),
         saveCache: cacheTable ? (items) => cacheTable.set(id, items) : undefined,
         background: (pending) => event.waitUntil(pending),
-        onFetchError: (error) => logger.warn(`Source update for ${id} failed.`, error),
+        onFetchError: (error) => logger.warn(`Source update for ${id} failed.`, describeSourceError(error)),
     });
 }

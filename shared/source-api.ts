@@ -1,4 +1,5 @@
 import type { SourceID, SourceResponse } from "./types";
+import type { PublicSourceErrorCode } from "./source-error";
 import type { SourceResponseStatus } from "./source-response-status";
 import type { NewsInsights, InsightTrendWindow } from "./news-insights";
 
@@ -59,6 +60,7 @@ export interface UnifiedFeedPayload {
 }
 
 export interface SourceApiError {
+    code?: PublicSourceErrorCode;
     sourceId?: string;
     message: string;
 }

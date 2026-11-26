@@ -2,6 +2,7 @@ import type { NewsItem, SourceID } from "@shared/types";
 
 import process from "node:process";
 import { resolve } from "node:path";
+import { describeSourceError } from "@shared/source-error";
 
 import { dataSources } from "../shared/data-sources";
 import { createConfiguredSourceRuntime } from "./configured-source-runtime.node.ts";
@@ -28,7 +29,7 @@ if (enabledPluginIds.length === 0) {
     } catch (error) {
         console.warn(
             "Node crawler plugin settings are invalid; local plugins remain disabled.",
-            error instanceof Error ? error.message : "Invalid settings."
+            describeSourceError(error)
         );
         enabledPluginIds = [];
     }
@@ -51,7 +52,7 @@ if (enabledPluginIds.length > 0) {
     } catch (error) {
         console.warn(
             "Node crawler plugins are invalid and remain disabled; built-in sources stay available.",
-            error instanceof Error ? error.message : "Invalid plugin settings."
+            describeSourceError(error)
         );
     }
 }
@@ -65,10 +66,7 @@ if (configuredSourceManifest) {
             process.env.LATESTNEWS_CONFIGURED_SOURCE_ALLOWED_HOSTS ?? ""
         );
     } catch (error) {
-        console.warn(
-            "Configured sources are invalid and remain disabled.",
-            error instanceof Error ? error.message : "Invalid configuration."
-        );
+        console.warn("Configured sources are invalid and remain disabled.", describeSourceError(error));
     }
 }
 
@@ -82,7 +80,7 @@ if (runtimeSourceDefinitions.length > 0) {
     } catch (error) {
         console.warn(
             "Crawler plugin source metadata conflicts; local crawler plugins remain disabled.",
-            error instanceof Error ? error.message : "Invalid runtime source metadata."
+            describeSourceError(error)
         );
         pluginProvider?.dispose();
         pluginProvider = undefined;

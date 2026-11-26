@@ -18,7 +18,7 @@ Most v1 endpoints return a stable envelope:
 
 - `data`: endpoint-specific payload.
 - `meta`: request or generation metadata.
-- `errors`: non-fatal errors, especially for partial source responses.
+- `errors`: non-fatal errors, especially for partial source responses. Source collection errors retain `sourceId` and `message`; an optional `code` classifies the failure (for example `TIMEOUT`, `HTTP_FAILED`, `QUEUE_FULL`, `INVALID_OUTPUT`, `RESOURCE_LIMIT`, `UNKNOWN`). These are fixed public messages or numeric HTTP status text, not the original exception. Consumers must accept unknown future codes and must not parse message text as a stable protocol.
 
 ## Node Discovery
 
@@ -158,6 +158,8 @@ exit "$failed"
 | `GET` | `/api/v1/auth/capability` | 返回 `{ "enable": true }` 或 `{ "enable": false }`。 |
 
 ## Health And Diagnostics
+
+Source health `lastErrorMessage` and recent event `errorMessage` contain bounded, fixed public text. Raw exception messages, stacks, URLs with query parameters, credentials, and response bodies are not part of these fields. Historic stored event messages are safely projected when read; old database rows are not implicitly rewritten. Health counters, status and cache-degradation behavior are unchanged. Node manifests and federation diagnostics expose aggregate local health rather than raw source exceptions.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
