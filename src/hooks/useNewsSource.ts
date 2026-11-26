@@ -2,7 +2,6 @@ import type { SourceQuery } from "@shared/source-api";
 import type { SourceID, SourceResponse } from "@shared/types";
 
 import { useAtomValue } from "jotai";
-import { useQuery } from "@tanstack/react-query";
 import dataSources from "@root/shared/data-sources";
 import { fetchSource } from "~/services/source.service";
 import { getSourceQuerySchedule } from "@shared/source-query-schedule";
@@ -11,6 +10,7 @@ import { runtimeCatalogRevisionAtom } from "~/services/runtime-source-catalog.se
 
 import { useSourceHealthSummary } from "./useSourceHealth";
 import { cacheSources, refetchSources } from "../utils/data";
+import { useReloadCachedQuery } from "./useReloadCachedQuery";
 
 /**
  * 自定义 Hook: 管理单个新闻源的数据获取与缓存
@@ -21,10 +21,11 @@ export function useNewsSource(id: SourceID) {
     const sourceHealth = sourceHealthMap.get(id);
     const schedule = getSourceQuerySchedule(id, sourceHealth?.status === "failing");
 
-    return useQuery<SourceResponse>({
+    return useReloadCachedQuery<SourceResponse>({
+        kind: "source",
         enabled: !dataSources[id].disable,
         queryKey: getSourceCacheKey(id),
-        queryFn: async () => {
+        queryFn: async ({ client, queryKey }) => {
             const query: SourceQuery = { id };
             let headers: Record<string, string> | undefined;
 
@@ -36,7 +37,7 @@ export function useNewsSource(id: SourceID) {
             }
 
             const response = await fetchSource(query, headers);
-            const previous = cacheSources.get(id);
+            const previous = client.getQueryData<SourceResponse>(queryKey) ?? cacheSources.get(id);
             if (response.status === "empty" && previous?.items.length) {
                 return { ...previous, status: "stale-cache" };
             }

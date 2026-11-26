@@ -26,7 +26,11 @@ import { fetchUnifiedFeed } from "~/services/source.service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { memo, useMemo, useState, useEffect, useCallback } from "react";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
-import { saveOfflineFeedSnapshot, readOfflineFeedSnapshotStatus } from "~/services/offline-feed-snapshot.service";
+import {
+    readOnlineFeedSnapshot,
+    saveOfflineFeedSnapshot,
+    readOfflineFeedSnapshotStatus,
+} from "~/services/offline-feed-snapshot.service";
 import {
     unifiedFeedPageSize,
     createUnifiedFeedView,
@@ -96,14 +100,7 @@ function FeedPage() {
     }, [hasFocus, search.category, search.q, search.scope, search.since, search.source]);
 
     const sources = scopeSources[scope];
-    const sinceValue = useMemo(() => getSinceValue(since), [since]);
-    const payload = useMemo(
-        () => ({
-            sources,
-            ...(sinceValue && { since: sinceValue }),
-        }),
-        [sinceValue, sources]
-    );
+    const payload = useMemo(() => ({ sources, ...(since !== "all" ? { since } : {}) }), [since, sources]);
     const offlineSnapshotPayload = useMemo(
         () => ({
             scope,
@@ -118,10 +115,12 @@ function FeedPage() {
         [offlineSnapshotPayload]
     );
     const offlineSnapshot = savedSnapshot.snapshot;
-    const { data, isFetching, isError, refetch } = useQuery({
+    const onlineSnapshot = useMemo(() => readOnlineFeedSnapshot(offlineSnapshotPayload), [offlineSnapshotPayload]);
+    const { data, dataUpdatedAt, isFetching, isError, refetch } = useQuery({
         queryKey: getUnifiedFeedCacheKey(payload),
         queryFn: async ({ queryKey }) => {
-            const response = await fetchUnifiedFeed(payload);
+            const currentSince = getSinceValue(since);
+            const response = await fetchUnifiedFeed({ sources, ...(currentSince && { since: currentSince }) });
             const previous = queryClient.getQueryData<SourceBatchResponse>(queryKey);
             const historical = previous ?? offlineSnapshot?.response;
             const display = mergeFeedHistory(response, historical);
@@ -136,11 +135,17 @@ function FeedPage() {
             return display;
         },
         enabled: sources.length > 0,
+        initialData: () => onlineSnapshot?.response,
+        initialDataUpdatedAt: () => onlineSnapshot?.savedAt,
         staleTime: 1000 * 60 * 2,
         retry: false,
     });
 
     const isOfflineSnapshotActive = !data && Boolean(offlineSnapshot);
+    const isReloadSnapshot = Boolean(onlineSnapshot && dataUpdatedAt === onlineSnapshot.savedAt);
+    // The rolling request window is recomputed for each fetch. Local filtering
+    // uses the current wall clock whenever new data or a new filter is rendered.
+    const sinceValue = useMemo(() => getSinceValue(since, Math.max(Date.now(), dataUpdatedAt)), [since, dataUpdatedAt]);
     const activeResponse = data ?? offlineSnapshot?.response;
     const loadedResponses = useMemo(
         () =>
@@ -213,7 +218,15 @@ function FeedPage() {
                             ) : (
                                 <SignalPill
                                     icon="i-ph:clock-clockwise-duotone"
-                                    label={isFetching ? "更新中" : isError ? "更新失败" : "已就绪"}
+                                    label={
+                                        isFetching
+                                            ? "更新中"
+                                            : isError
+                                              ? "更新失败"
+                                              : isReloadSnapshot
+                                                ? "本地缓存"
+                                                : "已就绪"
+                                    }
                                 />
                             )}
                         </div>
@@ -676,8 +689,7 @@ function EmptyState() {
     );
 }
 
-function getSinceValue(value: UnifiedFeedSince) {
-    const now = Date.now();
+function getSinceValue(value: UnifiedFeedSince, now = Date.now()) {
     if (value === "24h") return now - 24 * 60 * 60 * 1000;
     if (value === "3d") return now - 3 * 24 * 60 * 60 * 1000;
     if (value === "7d") return now - 7 * 24 * 60 * 60 * 1000;

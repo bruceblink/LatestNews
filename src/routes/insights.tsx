@@ -22,7 +22,6 @@ import { APP_TITLE } from "~/utils/app-title";
 import { feedScopeSourcesAtom } from "~/atoms";
 import dataSources from "@shared/data-sources";
 import { useHistory } from "~/hooks/useHistory";
-import { useQuery } from "@tanstack/react-query";
 import { NewsLink } from "~/components/reading/NewsLink";
 import { useReadingState } from "~/hooks/useReadingState";
 import { useRef, useMemo, useState, useEffect } from "react";
@@ -31,6 +30,7 @@ import { fetchNewsInsights } from "~/services/source.service";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { NEWS_INSIGHTS_TIME_ZONE } from "@shared/news-insights";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
+import { useReloadCachedQuery } from "~/hooks/useReloadCachedQuery";
 type InsightScope = UnifiedFeedScope;
 type SourceFilter = SourceID | "all";
 type InsightFilters = {
@@ -131,7 +131,8 @@ function InsightsPage() {
         [hiddenUrls, readUrls, sources, trendWindow]
     );
 
-    const { data, isFetching, isError, refetch, isPlaceholderData } = useQuery({
+    const { data, isFetching, isError, refetch, isPlaceholderData, isReloadSnapshot } = useReloadCachedQuery({
+        kind: "insights",
         queryKey: getNewsInsightsCacheKey(payload),
         queryFn: () => fetchNewsInsights(payload),
         placeholderData: (previousData) => previousData,
@@ -186,7 +187,9 @@ function InsightsPage() {
               ? "部分数据"
               : insights.itemCount === 0
                 ? "暂无内容"
-                : "数据已更新";
+                : isReloadSnapshot
+                  ? "本地缓存"
+                  : "数据已更新";
 
     const applyMobileFilters = () => {
         setScope(draftFilters.scope);

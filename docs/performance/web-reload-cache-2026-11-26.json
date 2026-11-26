@@ -1,0 +1,100 @@
+{
+  "catalogDelayMs": 300,
+  "insightsDelayMs": 1200,
+  "rounds": 3,
+  "assetCache": "no-store",
+  "serviceWorker": "blocked",
+  "results": [
+    {
+      "samples": [
+        {
+          "round": 1,
+          "cold": {
+            "visibleMs": 4172,
+            "catalogRequests": 1,
+            "insightsRequests": 1
+          },
+          "reload": {
+            "visibleMs": 1879.8,
+            "catalogRequests": 1,
+            "insightsRequests": 1
+          }
+        },
+        {
+          "round": 2,
+          "cold": {
+            "visibleMs": 1880.8,
+            "catalogRequests": 1,
+            "insightsRequests": 1
+          },
+          "reload": {
+            "visibleMs": 1878.4,
+            "catalogRequests": 1,
+            "insightsRequests": 1
+          }
+        },
+        {
+          "round": 3,
+          "cold": {
+            "visibleMs": 1874.9,
+            "catalogRequests": 1,
+            "insightsRequests": 1
+          },
+          "reload": {
+            "visibleMs": 1876.1,
+            "catalogRequests": 1,
+            "insightsRequests": 1
+          }
+        }
+      ],
+      "variant": "baseline",
+      "medianReloadVisibleMs": 1878.4
+    },
+    {
+      "samples": [
+        {
+          "round": 1,
+          "cold": {
+            "visibleMs": 2493.9,
+            "catalogRequests": 1,
+            "insightsRequests": 1
+          },
+          "reload": {
+            "visibleMs": 196.3,
+            "catalogRequests": 0,
+            "insightsRequests": 0
+          }
+        },
+        {
+          "round": 2,
+          "cold": {
+            "visibleMs": 1874.6,
+            "catalogRequests": 1,
+            "insightsRequests": 1
+          },
+          "reload": {
+            "visibleMs": 197.4,
+            "catalogRequests": 0,
+            "insightsRequests": 0
+          }
+        },
+        {
+          "round": 3,
+          "cold": {
+            "visibleMs": 1877,
+            "catalogRequests": 1,
+            "insightsRequests": 1
+          },
+          "reload": {
+            "visibleMs": 195.1,
+            "catalogRequests": 0,
+            "insightsRequests": 0
+          }
+        }
+      ],
+      "variant": "candidate",
+      "medianReloadVisibleMs": 196.3
+    }
+  ],
+  "baselineCommit": "2c006e3b874f4aeebec3d761a1de01efd67eb651"
+}

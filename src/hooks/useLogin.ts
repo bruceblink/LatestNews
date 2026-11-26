@@ -3,6 +3,7 @@ import { queryClient } from "~/query-client";
 import { atomWithStorage } from "jotai/utils";
 import { sourceApi } from "@shared/source-api";
 import { atom, useAtomValue, getDefaultStore } from "jotai";
+import { clearBrowserNewsReloadCache } from "~/services/news-reload-cache.service";
 
 import { userAtom, authStatusAtom } from "../auth/authAtoms";
 
@@ -69,6 +70,7 @@ export async function logout() {
     store.set(authStatusAtom, "unauthenticated");
 
     // 3️⃣ 清空所有登录态相关缓存
+    clearBrowserNewsReloadCache();
     queryClient.clear();
 
     // 4️⃣ 路由级跳转（而不是刷新页面）

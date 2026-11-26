@@ -13,14 +13,19 @@ import {
     OFFLINE_FEED_SNAPSHOT_VERSION,
 } from "@shared/offline-feed-snapshot";
 
+import { validNewsReloadData } from "./news-reload-schema";
+import { NEWS_RELOAD_MAX_AGE_MS, getBrowserNewsCacheScope } from "./news-reload-cache.service";
+
 const STORAGE_KEY = "latestnews:offline-feed-snapshots";
 const STORE_VERSION = 1;
 const MAX_OFFLINE_FEED_SNAPSHOTS = 12;
 
 interface OfflineFeedSnapshotStore {
     version: typeof STORE_VERSION;
-    snapshots: OfflineFeedSnapshot[];
+    snapshots: StoredFeedSnapshot[];
 }
+
+type StoredFeedSnapshot = OfflineFeedSnapshot & { apiScope?: string };
 
 export type OfflineFeedSnapshotAvailability = OfflineFeedSnapshotState | "missing";
 
@@ -36,12 +41,16 @@ export function saveOfflineFeedSnapshot(
     const storage = getLocalStorage();
     if (!storage) return undefined;
 
-    const snapshot = createOfflineFeedSnapshot(payload, response);
+    const scope = getBrowserNewsCacheScope();
+    const snapshot: StoredFeedSnapshot = {
+        ...createOfflineFeedSnapshot(payload, response),
+        ...(scope ? { apiScope: scope } : {}),
+    };
     const store = readOfflineFeedSnapshotStore();
-    const snapshots = [snapshot, ...store.snapshots.filter((item) => item.key !== snapshot.key)].slice(
-        0,
-        MAX_OFFLINE_FEED_SNAPSHOTS
-    );
+    const snapshots = [
+        snapshot,
+        ...store.snapshots.filter((item) => item.key !== snapshot.key || item.apiScope !== scope),
+    ].slice(0, MAX_OFFLINE_FEED_SNAPSHOTS);
 
     try {
         storage.setItem(
@@ -61,7 +70,7 @@ export function readOfflineFeedSnapshot(
     payload: OfflineFeedSnapshotPayload,
     now = Date.now()
 ): OfflineFeedSnapshot | undefined {
-    return selectOfflineFeedSnapshot(readOfflineFeedSnapshotStore().snapshots, payload, now);
+    return selectOfflineFeedSnapshot(scopedSnapshots(), payload, now);
 }
 
 /** Reads the newest matching fresh or stale snapshot without treating expired content as current data. */
@@ -69,7 +78,7 @@ export function readOfflineFeedSnapshotStatus(
     payload: OfflineFeedSnapshotPayload,
     now = Date.now()
 ): OfflineFeedSnapshotReadResult {
-    const snapshots = readOfflineFeedSnapshotStore().snapshots;
+    const snapshots = scopedSnapshots();
     const key = createOfflineFeedSnapshotKey(payload);
     const matchingSnapshots = snapshots
         .filter((snapshot) => snapshot.key === key)
@@ -83,6 +92,31 @@ export function readOfflineFeedSnapshotStatus(
     if (staleSnapshot) return { state: "stale", snapshot: staleSnapshot };
 
     return { state: "invalid" };
+}
+
+function scopedSnapshots() {
+    const scope = getBrowserNewsCacheScope();
+    // Legacy records still support the existing offline fallback but never
+    // become a fresh online cache for an unverified API target.
+    return readOfflineFeedSnapshotStore().snapshots.filter(
+        (snapshot) => snapshot.apiScope === undefined || snapshot.apiScope === scope
+    );
+}
+
+export function readOnlineFeedSnapshot(payload: OfflineFeedSnapshotPayload, now = Date.now()) {
+    const scope = getBrowserNewsCacheScope();
+    if (!scope || typeof navigator === "undefined" || !navigator.onLine) return undefined;
+    const key = createOfflineFeedSnapshotKey(payload);
+    return scopedSnapshots()
+        .filter(
+            (snapshot) =>
+                snapshot.apiScope === scope &&
+                snapshot.key === key &&
+                snapshot.savedAt <= now &&
+                now - snapshot.savedAt <= NEWS_RELOAD_MAX_AGE_MS &&
+                validNewsReloadData("feed", snapshot.response)
+        )
+        .sort((a, b) => b.savedAt - a.savedAt)[0];
 }
 
 function readOfflineFeedSnapshotStore(): OfflineFeedSnapshotStore {
@@ -112,14 +146,15 @@ function createEmptyStore(): OfflineFeedSnapshotStore {
     };
 }
 
-function isStoredOfflineFeedSnapshot(value: unknown): value is OfflineFeedSnapshot {
+function isStoredOfflineFeedSnapshot(value: unknown): value is StoredFeedSnapshot {
     if (!value || typeof value !== "object") return false;
 
-    const snapshot = value as Partial<OfflineFeedSnapshot>;
+    const snapshot = value as Partial<StoredFeedSnapshot>;
     return (
         snapshot.version === OFFLINE_FEED_SNAPSHOT_VERSION &&
         typeof snapshot.key === "string" &&
         typeof snapshot.savedAt === "number" &&
+        (snapshot.apiScope === undefined || typeof snapshot.apiScope === "string") &&
         Array.isArray(snapshot.sourceIds) &&
         Boolean(snapshot.response && Array.isArray(snapshot.response.data))
     );
