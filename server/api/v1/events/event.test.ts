@@ -29,6 +29,13 @@ function fixture(index: number): NewsItem {
 async function register(eventId: string, items: NewsItem[], sourceId: SourceID = "weibo") {
     const cache = (await getCacheTable())!;
     await cache.set(sourceId, items);
+    // Large snapshots are now replayed in bounded chunks. Event registration
+    // requires all fixture articles to be persisted, not just cache commit.
+    for (let pass = 0; pass < Math.ceil(items.length / 30); pass++) {
+        if ((await cache.getArticleIndexHealth()).pendingIngest === 0) break;
+        await cache.runArticleMaintenance();
+    }
+    expect(await cache.getArticleIndexHealth()).toMatchObject({ pendingIngest: 0 });
     // Fixture legacy registry IDs; the production display endpoint is read-only.
     await reconcileArticleEventId(
         database,

@@ -186,6 +186,8 @@ The Pages build must emit a self-contained dist/_worker.js/index.js. The build c
 
 第三方程序调用[定时刷新接口](api-v1.md#定时刷新所有来源)，按返回的游标串行遍历所有页。可从每 10 分钟开始，使用默认模式更新到期的来源。需要重新采集全部来源时，在每一页请求中传入 `force=true`。调度程序需能运行脚本或读取响应后发出后续请求。一条固定 HTTP 请求只处理第一页。
 
+启用独立索引维护时，调度器还可使用同一令牌调用 [articles/maintenance](api-v1.md#独立索引维护)，按返回状态、积压和退避情况安排后续调用。维护无需用户打开页面；不调用真实上游，不保证单次排空全部积压。先在隔离库校验，生产调度、频率及预算另行授权。
+
 ## Node Output
 
 For a custom host, build once and start the Nitro server with a runtime env file:

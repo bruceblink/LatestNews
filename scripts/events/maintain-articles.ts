@@ -22,13 +22,13 @@ const passes = Number(values.passes);
 if (
     !values.db ||
     positionals.length !== 1 ||
-    !["status", "repair", "migrate", "backup", "restore-copy"].includes(command) ||
+    !["status", "drain", "repair", "migrate", "backup", "restore-copy"].includes(command) ||
     !Number.isInteger(passes) ||
     passes < 1 ||
     passes > 100
 )
     throw new Error(
-        "Usage: pnpm articles:maintain --db <existing file> status|repair|migrate|backup|restore-copy [--backup <new file>] [--confirm] [--passes 1..100]"
+        "Usage: pnpm articles:maintain --db <existing file> status|drain|repair|migrate|backup|restore-copy [--backup <new file>] [--confirm] [--passes 1..100]"
     );
 const path = resolve(values.db);
 if (!(await stat(path)).isFile()) throw new Error("Database must be an existing file.");
@@ -47,6 +47,17 @@ if (command === "restore-copy") {
         if (command === "status") {
             await cache.check();
             console.log(JSON.stringify(await cache.getArticleIndexHealth(), null, 2));
+        } else if (command === "drain") {
+            if (!values.confirm) throw new Error("Drain requires --confirm.");
+            await cache.check(false);
+            let status = "pending";
+            for (let i = 0; i < passes; i++) {
+                const result = await cache.runArticleMaintenance(5);
+                console.log(JSON.stringify(result));
+                status = result.status;
+                if (status !== "pending" || (result.attempted === 0 && result.remaining?.deferred)) break;
+            }
+            if (status !== "ok") process.exitCode = 2;
         } else if (command === "backup" || command === "migrate") {
             if (!values.backup) throw new Error("Specify a new --backup path.");
             const target = resolve(values.backup);

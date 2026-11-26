@@ -14,11 +14,14 @@ FTS 对账检测重复、缺失、孤立、过期标题/URL。每步至多 50 �
 
 ```bash
 pnpm articles:maintain --db /path/to/existing.sqlite status
+pnpm articles:maintain --db /path/to/existing.sqlite drain --confirm --passes 5
 pnpm articles:maintain --db /path/to/existing.sqlite backup --backup /path/to/new-backup.sqlite
 pnpm articles:maintain --db /path/to/existing.sqlite migrate --backup /path/to/new-before-upgrade.sqlite --confirm --passes 5
 pnpm articles:maintain --db /path/to/existing.sqlite repair --confirm --passes 5
 pnpm articles:maintain --db /path/to/new-backup.sqlite restore-copy --backup /path/to/new-restored.sqlite --confirm
 ```
+
+N4-P2 的 drain 仅执行有界 journal/FTS 维护，不主动重建索引；租约、重试和独立调度见[维护报告](n4p2-bounded-maintenance.md)。
 
 备份使用 SQLite backup API 并执行 integrity_check。修复仍有积压或不可用时返回退出码 2，重复执行有界批次，检查故障原因；不自动清理或恢复生产。恢复副本先验证读写、身份、事件与版本，再由运维决定切换。D1 备份、规模化迁移/恢复需在目标授权环境验收；本地 Miniflare 不能替代。
 

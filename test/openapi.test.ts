@@ -17,6 +17,7 @@ describe("OpenAPI document", () => {
         expect(Object.keys(document.paths)).toEqual(
             expect.arrayContaining([
                 "/api/v1/node",
+                "/api/v1/articles/maintenance",
                 "/api/v1/articles/search",
                 "/api/v1/events/{eventId}",
                 "/api/v1/openapi.json",

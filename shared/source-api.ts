@@ -4,6 +4,7 @@ import type { SourceResponseStatus } from "./source-response-status";
 import type { NewsInsights, InsightTrendWindow } from "./news-insights";
 
 export const sourceApi = {
+    articleMaintenanceV1: "/v1/articles/maintenance",
     articleSearchV1: "/v1/articles/search",
     articleEventV1: "/v1/events",
     insightsV1: "/v1/insights",

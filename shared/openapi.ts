@@ -26,11 +26,27 @@ export function createOpenApiDocument(options: OpenApiDocumentOptions) {
                 SourceRefreshBearer: {
                     type: "http",
                     scheme: "bearer",
-                    description: "Deployment-specific machine credential for scheduled source refresh.",
+                    description:
+                        "Deployment-specific machine credential for scheduled source refresh and index maintenance.",
                 },
             },
         },
         paths: {
+            [withApiPrefix(sourceApi.articleMaintenanceV1)]: {
+                post: {
+                    summary: "Run one bounded article index maintenance pass",
+                    tags: ["Articles"],
+                    security: [{ SourceRefreshBearer: [] }],
+                    parameters: [queryParameter("limit", "Journal chunks per pass (1–20, default 5)")],
+                    responses: {
+                        ...okJsonResponse("Maintenance outcome and remaining backlog"),
+                        400: { description: "Invalid limit" },
+                        401: { description: "Missing or invalid maintenance token" },
+                        409: { description: "Another maintenance pass holds the lease" },
+                        503: { description: "Maintenance unavailable or interrupted" },
+                    },
+                },
+            },
             [withApiPrefix(sourceApi.articleSearchV1)]: {
                 get: {
                     summary: "Search persisted article titles",
