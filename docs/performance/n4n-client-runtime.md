@@ -44,3 +44,5 @@ xvfb-run --auto-servernum pnpm performance:client-runtime electron endurance 180
 ## 仍需独立验收
 
 真实源站、生产 D1、独立人工标注、PWA service worker 长测、正式包受信 HTTPS、原生托盘和 Windows/macOS 实机。此处无生产运行时变更或发布。
+
+后续正式双端 1800 秒验收与生命周期修复：[N4-N 客户端持续运行](n4n-client-endurance.md)。使用新版实际内容可见时延定义，旧启动与短时预检数据不直接混比。
