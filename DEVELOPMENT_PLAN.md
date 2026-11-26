@@ -102,6 +102,8 @@ LatestNews 的主线是来源发现、关注、阅读、保存和回看。Web/PW
 
 2026-11-25（P0 Pages 可用性）：生产 /insights 加载失败；部署健康和文章检索各 25 秒未响应，D1 直接 SQL 可用（71 缓存、818 文章、21 pending，身份迁移完成）。已分离 Pages 请求级 D1 cache 与后台 journal 维护，限制单请求补写并使用 30 篇集合批次、10 topic 批量身份解析；Node 路径保持原行为。592 Vitest、lint、三端类型检查、Node/Pages 构建、实际 Pages 隔离 D1 17 原检查点及生产规模积压专项通过；详见[Pages 热修复](docs/performance/pages-d1-availability-hotfix.md)。生产自动部署后的接口验收单列，不手工清理数据库，不发布版本。
 
+2026-11-26（N4-N FTS 专项复验）：在已合并的有界重建基础上，三轮 100,010 key 本地 SQLite 完整对照均通过，50→200 键仅改变 SQLite build 页，恢复中位数 7.208→4.222 秒，事务数 2,504→1,004；保留完整原子校验及 D1 50 键。文件库 SIGKILL（提交前/后）、重开与跨连接交错写入通过；本地 Miniflare 221 篇 D1 connector 检查通过。593 Vitest、lint、三端类型检查通过。详见[专项复验](docs/performance/n4n-fts-recovery-profile.md)。生产 D1、长时间写入和最终审计锁占用仍未验收。
+
 ### 2.6 N4-O：历史检索与事件详情
 
 目标：让用户真正使用 N4-E/G/I/J 已交付的能力。新增历史文章检索入口（不替换 Ctrl/Cmd+K 的来源搜索），支持查询、来源、时间、明确的结果上限与空状态；事件详情支持规范/别名、分页、来源及时间、当前视图和历史成员的区分；复用收藏、稍后读、已读和外链。优先使用现有 TanStack Router/Query、共享 v1 类型及 Node Manifest；不增加独立前端框架。

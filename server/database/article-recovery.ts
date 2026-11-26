@@ -5,6 +5,9 @@ import { randomUUID } from "node:crypto";
 import { executeArticleBatch } from "./article-atomic-batch";
 
 const PAGE = 50;
+// Local profiling shows transaction boundaries dominate rebuild cost.
+// Keep the remote D1 and incremental backlog budgets unchanged.
+const SQLITE_BUILD_PAGE = 200;
 
 export async function initArticleRecovery(db: Database) {
     await db
@@ -49,7 +52,7 @@ export async function probeArticleRecovery(db: Database) {
 }
 
 // The expensive full audit is used at startup or the final verification gate,
-// never for each 50-key rebuild page.
+// never for each bounded rebuild page.
 const inconsistent = `EXISTS(
         SELECT 1 FROM articles a LEFT JOIN (
             SELECT article_key, COUNT(*) AS copies, MIN(title) AS title, MIN(canonical_url) AS canonical_url
@@ -145,11 +148,14 @@ export async function repairFtsPage(db: Database) {
         ]);
         return { done: ready.length > 0, indexed: 0 };
     }
+    const buildPage = db.connector === "sqlite" ? SQLITE_BUILD_PAGE : PAGE;
     const keys = (
         state.cursor === BUILD_START
-            ? await db.prepare(`SELECT article_key FROM articles ORDER BY article_key LIMIT ${PAGE}`).all()
+            ? await db.prepare(`SELECT article_key FROM articles ORDER BY article_key LIMIT ${buildPage}`).all()
             : await db
-                  .prepare(`SELECT article_key FROM articles WHERE article_key > ? ORDER BY article_key LIMIT ${PAGE}`)
+                  .prepare(
+                      `SELECT article_key FROM articles WHERE article_key > ? ORDER BY article_key LIMIT ${buildPage}`
+                  )
                   .all(state.cursor.slice(BUILD_PREFIX.length))
     ) as Array<{ article_key: string }>;
     if (!keys.length) {

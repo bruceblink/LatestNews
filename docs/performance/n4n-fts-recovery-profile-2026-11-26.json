@@ -1,0 +1,1508 @@
+{
+  "formatVersion": 1,
+  "baselineCommit": "baacb5d292dc0bf23467f2c2b98171d402695fca",
+  "date": "2026-11-26",
+  "fixture": "100000 seeded articles + 10 double-source articles; full FTS at start; fresh temporary SQLite per run; sequential execution",
+  "notes": [
+    "First pair did not record per-phase transaction wall quantiles; first baseline did not record initial call and max transaction wall. Pairs 2/3 use the expanded probe. Recovery logic and measured additive phase categories are unchanged.",
+    "The first attempted baseline failed due to read-only native transaction instrumentation; excluded from performance results.",
+    "No real D1 or production database access."
+  ],
+  "variants": {
+    "baseline": {
+      "sqliteBuildPage": 50,
+      "runs": [
+        {
+          "round": 1,
+          "fixture": {
+            "fixtureMs": 22690.343629000003,
+            "size": 100000,
+            "node": "v22.23.4",
+            "cpu": "AMD EPYC",
+            "cores": 8,
+            "memory": 16772878336,
+            "sqlite": {
+              "version": "3.53.4"
+            },
+            "journal": [
+              {
+                "journal_mode": "delete"
+              }
+            ],
+            "synchronous": [
+              {
+                "synchronous": 2
+              }
+            ]
+          },
+          "queryPlans": [
+            {
+              "sql": "SELECT article_key FROM articles WHERE article_key > ? ORDER BY article_key LIMIT 50",
+              "plan": [
+                {
+                  "id": 4,
+                  "parent": 0,
+                  "notused": 190,
+                  "detail": "SEARCH articles USING COVERING INDEX sqlite_autoindex_articles_1 (article_key>?)"
+                }
+              ]
+            },
+            {
+              "sql": "INSERT INTO article_search(article_key,title,canonical_url) SELECT article_key,title,canonical_url FROM articles WHERE article_key IN (SELECT value FROM json_each(?)) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 6,
+                  "parent": 0,
+                  "notused": 45,
+                  "detail": "SEARCH article_fts_repair EXISTS USING INTEGER PRIMARY KEY (rowid=?)"
+                },
+                {
+                  "id": 15,
+                  "parent": 0,
+                  "notused": 92,
+                  "detail": "SEARCH articles USING INDEX sqlite_autoindex_articles_1 (article_key=?)"
+                },
+                {
+                  "id": 19,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 21,
+                  "parent": 19,
+                  "notused": 0,
+                  "detail": "SCAN json_each VIRTUAL TABLE INDEX 1:"
+                }
+              ]
+            },
+            {
+              "sql": "DELETE FROM article_search WHERE rowid IN (SELECT rowid FROM article_search ORDER BY rowid LIMIT 200) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 3,
+                  "parent": 0,
+                  "notused": 46,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 0:="
+                },
+                {
+                  "id": 7,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 11,
+                  "parent": 7,
+                  "notused": 215,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 64:"
+                },
+                {
+                  "id": 30,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "SCALAR SUBQUERY 2"
+                },
+                {
+                  "id": 34,
+                  "parent": 30,
+                  "notused": 33,
+                  "detail": "SEARCH article_fts_repair USING INTEGER PRIMARY KEY (rowid=?)"
+                }
+              ]
+            }
+          ],
+          "progress": [
+            {
+              "progress": 200,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 662.1921739999998
+            },
+            {
+              "progress": 400,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 1269.4217830000016
+            },
+            {
+              "progress": 600,
+              "phase": "build",
+              "indexed": 5900,
+              "elapsedMs": 1799.558605000002
+            },
+            {
+              "progress": 800,
+              "phase": "build",
+              "indexed": 15900,
+              "elapsedMs": 2274.1374319999995
+            },
+            {
+              "progress": 1000,
+              "phase": "build",
+              "indexed": 25900,
+              "elapsedMs": 2842.464122000001
+            },
+            {
+              "progress": 1200,
+              "phase": "build",
+              "indexed": 35900,
+              "elapsedMs": 3325.8380419999994
+            },
+            {
+              "progress": 1400,
+              "phase": "build",
+              "indexed": 45900,
+              "elapsedMs": 3807.3551700000025
+            },
+            {
+              "progress": 1600,
+              "phase": "build",
+              "indexed": 55900,
+              "elapsedMs": 4280.043395000001
+            },
+            {
+              "progress": 1800,
+              "phase": "build",
+              "indexed": 65900,
+              "elapsedMs": 4758.606242000002
+            },
+            {
+              "progress": 2000,
+              "phase": "build",
+              "indexed": 75900,
+              "elapsedMs": 5267.060904000002
+            },
+            {
+              "progress": 2200,
+              "phase": "build",
+              "indexed": 85900,
+              "elapsedMs": 5746.992112
+            },
+            {
+              "progress": 2400,
+              "phase": "build",
+              "indexed": 95900,
+              "elapsedMs": 6305.254797000001
+            }
+          ],
+          "result": {
+            "result": "passed",
+            "size": 100000,
+            "indexed": 100010,
+            "calls": 2485,
+            "repairMs": 7215.678019999999,
+            "externalAuditMs": 550.8146919999999,
+            "phases": {
+              "clear": {
+                "calls": 481,
+                "ms": 1412.5450960000126
+              },
+              "build": {
+                "calls": 2002,
+                "ms": 4877.978142999982
+              },
+              "verify": {
+                "calls": 1,
+                "ms": 712.9916589999993
+              }
+            },
+            "stats": {
+              "state": {
+                "count": 9979,
+                "ms": 1098.6583240001419,
+                "maxMs": 60.905219000003854
+              },
+              "fts.clear": {
+                "count": 501,
+                "ms": 503.8593009999895,
+                "maxMs": 1.670100999999704
+              },
+              "transaction.overhead": {
+                "count": 2504,
+                "ms": 3022.8166600000513,
+                "maxMs": 21.46863000000303
+              },
+              "key.scan": {
+                "count": 2002,
+                "ms": 182.65042699996047,
+                "maxMs": 4.597342999997636
+              },
+              "fts.build": {
+                "count": 2001,
+                "ms": 1095.7290110000176,
+                "maxMs": 1.1298610000048939
+              },
+              "pending.delete": {
+                "count": 2002,
+                "ms": 172.38526200001797,
+                "maxMs": 0.2962699999989127
+              },
+              "fts.pending.delete": {
+                "count": 1,
+                "ms": 33.92088700000022,
+                "maxMs": 33.92088700000022
+              },
+              "fts.pending.insert": {
+                "count": 1,
+                "ms": 0.19122000000061234,
+                "maxMs": 0.19122000000061234
+              },
+              "audit": {
+                "count": 1,
+                "ms": 676.438811,
+                "maxMs": 676.438811
+              }
+            },
+            "rss": 1667268608,
+            "final": {
+              "status": "ok",
+              "fts": "ok",
+              "pendingIngest": 0,
+              "pendingFts": 0,
+              "eventRegistry": "ok"
+            }
+          }
+        },
+        {
+          "round": 2,
+          "fixture": {
+            "fixtureMs": 22032.519538,
+            "size": 100000,
+            "node": "v22.23.4",
+            "cpu": "AMD EPYC",
+            "cores": 8,
+            "memory": 16772878336,
+            "sqlite": {
+              "version": "3.53.4"
+            },
+            "journal": [
+              {
+                "journal_mode": "delete"
+              }
+            ],
+            "synchronous": [
+              {
+                "synchronous": 2
+              }
+            ]
+          },
+          "queryPlans": [
+            {
+              "sql": "SELECT article_key FROM articles WHERE article_key > ? ORDER BY article_key LIMIT 50",
+              "plan": [
+                {
+                  "id": 4,
+                  "parent": 0,
+                  "notused": 190,
+                  "detail": "SEARCH articles USING COVERING INDEX sqlite_autoindex_articles_1 (article_key>?)"
+                }
+              ]
+            },
+            {
+              "sql": "INSERT INTO article_search(article_key,title,canonical_url) SELECT article_key,title,canonical_url FROM articles WHERE article_key IN (SELECT value FROM json_each(?)) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 6,
+                  "parent": 0,
+                  "notused": 45,
+                  "detail": "SEARCH article_fts_repair EXISTS USING INTEGER PRIMARY KEY (rowid=?)"
+                },
+                {
+                  "id": 15,
+                  "parent": 0,
+                  "notused": 92,
+                  "detail": "SEARCH articles USING INDEX sqlite_autoindex_articles_1 (article_key=?)"
+                },
+                {
+                  "id": 19,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 21,
+                  "parent": 19,
+                  "notused": 0,
+                  "detail": "SCAN json_each VIRTUAL TABLE INDEX 1:"
+                }
+              ]
+            },
+            {
+              "sql": "DELETE FROM article_search WHERE rowid IN (SELECT rowid FROM article_search ORDER BY rowid LIMIT 200) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 3,
+                  "parent": 0,
+                  "notused": 46,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 0:="
+                },
+                {
+                  "id": 7,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 11,
+                  "parent": 7,
+                  "notused": 215,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 64:"
+                },
+                {
+                  "id": 30,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "SCALAR SUBQUERY 2"
+                },
+                {
+                  "id": 34,
+                  "parent": 30,
+                  "notused": 33,
+                  "detail": "SEARCH article_fts_repair USING INTEGER PRIMARY KEY (rowid=?)"
+                }
+              ]
+            }
+          ],
+          "progress": [
+            {
+              "progress": 200,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 614.4977720000024
+            },
+            {
+              "progress": 400,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 1193.4816570000003
+            },
+            {
+              "progress": 600,
+              "phase": "build",
+              "indexed": 5900,
+              "elapsedMs": 1691.5707040000016
+            },
+            {
+              "progress": 800,
+              "phase": "build",
+              "indexed": 15900,
+              "elapsedMs": 2156.4216750000014
+            },
+            {
+              "progress": 1000,
+              "phase": "build",
+              "indexed": 25900,
+              "elapsedMs": 2700.936124
+            },
+            {
+              "progress": 1200,
+              "phase": "build",
+              "indexed": 35900,
+              "elapsedMs": 3227.6932940000006
+            },
+            {
+              "progress": 1400,
+              "phase": "build",
+              "indexed": 45900,
+              "elapsedMs": 3676.1463170000025
+            },
+            {
+              "progress": 1600,
+              "phase": "build",
+              "indexed": 55900,
+              "elapsedMs": 4132.103153
+            },
+            {
+              "progress": 1800,
+              "phase": "build",
+              "indexed": 65900,
+              "elapsedMs": 4588.65278
+            },
+            {
+              "progress": 2000,
+              "phase": "build",
+              "indexed": 75900,
+              "elapsedMs": 5062.988996
+            },
+            {
+              "progress": 2200,
+              "phase": "build",
+              "indexed": 85900,
+              "elapsedMs": 5509.891248
+            },
+            {
+              "progress": 2400,
+              "phase": "build",
+              "indexed": 95900,
+              "elapsedMs": 5984.675604
+            }
+          ],
+          "result": {
+            "result": "passed",
+            "size": 100000,
+            "indexed": 100010,
+            "calls": 2485,
+            "repairMs": 6873.406707000002,
+            "externalAuditMs": 528.5909909999973,
+            "initialCallMs": 51.07199400000172,
+            "maxTransactionMs": 661.8901250000017,
+            "transactionWall": {
+              "clear": {
+                "count": 501,
+                "p95Ms": 3.4551619999983814,
+                "maxMs": 21.691969999999856
+              },
+              "build": {
+                "count": 2001,
+                "p95Ms": 2.3519210000013118,
+                "maxMs": 62.85938899999746
+              },
+              "pending": {
+                "count": 1,
+                "p95Ms": 31.43562500000189,
+                "maxMs": 31.43562500000189
+              },
+              "verify": {
+                "count": 1,
+                "p95Ms": 661.8901250000017,
+                "maxMs": 661.8901250000017
+              }
+            },
+            "phases": {
+              "clear": {
+                "calls": 481,
+                "ms": 1332.593191999953
+              },
+              "build": {
+                "calls": 2002,
+                "ms": 4649.511199000077
+              },
+              "verify": {
+                "calls": 1,
+                "ms": 693.8887509999986
+              }
+            },
+            "stats": {
+              "state": {
+                "count": 9979,
+                "ms": 1079.6908280000425,
+                "maxMs": 58.507228000002215
+              },
+              "fts.clear": {
+                "count": 501,
+                "ms": 479.2607839999837,
+                "maxMs": 1.6762410000010277
+              },
+              "transaction.overhead": {
+                "count": 2504,
+                "ms": 2802.366049999546,
+                "maxMs": 20.72196999999869
+              },
+              "key.scan": {
+                "count": 2002,
+                "ms": 172.93786000017644,
+                "maxMs": 0.1952099999980419
+              },
+              "fts.build": {
+                "count": 2001,
+                "ms": 1064.4117970001498,
+                "maxMs": 0.8830099999977392
+              },
+              "pending.delete": {
+                "count": 2002,
+                "ms": 174.41374100009853,
+                "maxMs": 0.3065199999982724
+              },
+              "fts.pending.delete": {
+                "count": 1,
+                "ms": 31.1266140000007,
+                "maxMs": 31.1266140000007
+              },
+              "fts.pending.insert": {
+                "count": 1,
+                "ms": 0.15497099999993225,
+                "maxMs": 0.15497099999993225
+              },
+              "audit": {
+                "count": 1,
+                "ms": 660.5992850000002,
+                "maxMs": 660.5992850000002
+              }
+            },
+            "rss": 1648152576,
+            "final": {
+              "status": "ok",
+              "fts": "ok",
+              "pendingIngest": 0,
+              "pendingFts": 0,
+              "eventRegistry": "ok"
+            }
+          }
+        },
+        {
+          "round": 3,
+          "fixture": {
+            "fixtureMs": 22017.064205,
+            "size": 100000,
+            "node": "v22.23.4",
+            "cpu": "AMD EPYC",
+            "cores": 8,
+            "memory": 16772878336,
+            "sqlite": {
+              "version": "3.53.4"
+            },
+            "journal": [
+              {
+                "journal_mode": "delete"
+              }
+            ],
+            "synchronous": [
+              {
+                "synchronous": 2
+              }
+            ]
+          },
+          "queryPlans": [
+            {
+              "sql": "SELECT article_key FROM articles WHERE article_key > ? ORDER BY article_key LIMIT 50",
+              "plan": [
+                {
+                  "id": 4,
+                  "parent": 0,
+                  "notused": 190,
+                  "detail": "SEARCH articles USING COVERING INDEX sqlite_autoindex_articles_1 (article_key>?)"
+                }
+              ]
+            },
+            {
+              "sql": "INSERT INTO article_search(article_key,title,canonical_url) SELECT article_key,title,canonical_url FROM articles WHERE article_key IN (SELECT value FROM json_each(?)) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 6,
+                  "parent": 0,
+                  "notused": 45,
+                  "detail": "SEARCH article_fts_repair EXISTS USING INTEGER PRIMARY KEY (rowid=?)"
+                },
+                {
+                  "id": 15,
+                  "parent": 0,
+                  "notused": 92,
+                  "detail": "SEARCH articles USING INDEX sqlite_autoindex_articles_1 (article_key=?)"
+                },
+                {
+                  "id": 19,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 21,
+                  "parent": 19,
+                  "notused": 0,
+                  "detail": "SCAN json_each VIRTUAL TABLE INDEX 1:"
+                }
+              ]
+            },
+            {
+              "sql": "DELETE FROM article_search WHERE rowid IN (SELECT rowid FROM article_search ORDER BY rowid LIMIT 200) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 3,
+                  "parent": 0,
+                  "notused": 46,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 0:="
+                },
+                {
+                  "id": 7,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 11,
+                  "parent": 7,
+                  "notused": 215,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 64:"
+                },
+                {
+                  "id": 30,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "SCALAR SUBQUERY 2"
+                },
+                {
+                  "id": 34,
+                  "parent": 30,
+                  "notused": 33,
+                  "detail": "SEARCH article_fts_repair USING INTEGER PRIMARY KEY (rowid=?)"
+                }
+              ]
+            }
+          ],
+          "progress": [
+            {
+              "progress": 200,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 656.9389929999998
+            },
+            {
+              "progress": 400,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 1257.2192590000013
+            },
+            {
+              "progress": 600,
+              "phase": "build",
+              "indexed": 5900,
+              "elapsedMs": 1779.5318660000012
+            },
+            {
+              "progress": 800,
+              "phase": "build",
+              "indexed": 15900,
+              "elapsedMs": 2263.148595999999
+            },
+            {
+              "progress": 1000,
+              "phase": "build",
+              "indexed": 25900,
+              "elapsedMs": 2809.8401760000015
+            },
+            {
+              "progress": 1200,
+              "phase": "build",
+              "indexed": 35900,
+              "elapsedMs": 3266.288843000002
+            },
+            {
+              "progress": 1400,
+              "phase": "build",
+              "indexed": 45900,
+              "elapsedMs": 3726.6664820000005
+            },
+            {
+              "progress": 1600,
+              "phase": "build",
+              "indexed": 55900,
+              "elapsedMs": 4207.960921000002
+            },
+            {
+              "progress": 1800,
+              "phase": "build",
+              "indexed": 65900,
+              "elapsedMs": 4667.151109000002
+            },
+            {
+              "progress": 2000,
+              "phase": "build",
+              "indexed": 75900,
+              "elapsedMs": 5150.401300000001
+            },
+            {
+              "progress": 2200,
+              "phase": "build",
+              "indexed": 85900,
+              "elapsedMs": 5624.3490249999995
+            },
+            {
+              "progress": 2400,
+              "phase": "build",
+              "indexed": 95900,
+              "elapsedMs": 6210.079303999999
+            }
+          ],
+          "result": {
+            "result": "passed",
+            "size": 100000,
+            "indexed": 100010,
+            "calls": 2485,
+            "repairMs": 7208.047247999999,
+            "externalAuditMs": 582.9526479999986,
+            "initialCallMs": 54.66003600000113,
+            "maxTransactionMs": 762.6773130000001,
+            "transactionWall": {
+              "clear": {
+                "count": 501,
+                "p95Ms": 3.5621009999995294,
+                "maxMs": 22.702700999998342
+              },
+              "build": {
+                "count": 2001,
+                "p95Ms": 2.4188409999987925,
+                "maxMs": 64.17484100000001
+              },
+              "pending": {
+                "count": 1,
+                "p95Ms": 33.87791599999764,
+                "maxMs": 33.87791599999764
+              },
+              "verify": {
+                "count": 1,
+                "p95Ms": 762.6773130000001,
+                "maxMs": 762.6773130000001
+              }
+            },
+            "phases": {
+              "clear": {
+                "calls": 481,
+                "ms": 1408.8367239999825
+              },
+              "build": {
+                "calls": 2002,
+                "ms": 4793.423848999944
+              },
+              "verify": {
+                "calls": 1,
+                "ms": 797.2956889999987
+              }
+            },
+            "stats": {
+              "state": {
+                "count": 9979,
+                "ms": 1190.7942309998507,
+                "maxMs": 74.04479500000161
+              },
+              "fts.clear": {
+                "count": 501,
+                "ms": 501.97405600000275,
+                "maxMs": 1.5639200000005076
+              },
+              "transaction.overhead": {
+                "count": 2504,
+                "ms": 2907.8463289998654,
+                "maxMs": 21.734840999997687
+              },
+              "key.scan": {
+                "count": 2002,
+                "ms": 181.395902999815,
+                "maxMs": 0.24451999999655527
+              },
+              "fts.build": {
+                "count": 2001,
+                "ms": 1100.2281510000757,
+                "maxMs": 1.0523400000056427
+              },
+              "pending.delete": {
+                "count": 2002,
+                "ms": 174.1466780000701,
+                "maxMs": 0.3481199999987439
+              },
+              "fts.pending.delete": {
+                "count": 1,
+                "ms": 33.4963659999994,
+                "maxMs": 33.4963659999994
+              },
+              "fts.pending.insert": {
+                "count": 1,
+                "ms": 0.18223000000216416,
+                "maxMs": 0.18223000000216416
+              },
+              "audit": {
+                "count": 1,
+                "ms": 761.219683000003,
+                "maxMs": 761.219683000003
+              }
+            },
+            "rss": 1652592640,
+            "final": {
+              "status": "ok",
+              "fts": "ok",
+              "pendingIngest": 0,
+              "pendingFts": 0,
+              "eventRegistry": "ok"
+            }
+          }
+        }
+      ],
+      "medianRepairMs": 7208.047247999999,
+      "medianTransactionOverheadMs": 2907.8463289998654
+    },
+    "optimized": {
+      "sqliteBuildPage": 200,
+      "runs": [
+        {
+          "round": 1,
+          "fixture": {
+            "fixtureMs": 22737.839701,
+            "size": 100000,
+            "node": "v22.23.4",
+            "cpu": "AMD EPYC",
+            "cores": 8,
+            "memory": 16772878336,
+            "sqlite": {
+              "version": "3.53.4"
+            },
+            "journal": [
+              {
+                "journal_mode": "delete"
+              }
+            ],
+            "synchronous": [
+              {
+                "synchronous": 2
+              }
+            ]
+          },
+          "queryPlans": [
+            {
+              "sql": "SELECT article_key FROM articles WHERE article_key > ? ORDER BY article_key LIMIT 50",
+              "plan": [
+                {
+                  "id": 4,
+                  "parent": 0,
+                  "notused": 190,
+                  "detail": "SEARCH articles USING COVERING INDEX sqlite_autoindex_articles_1 (article_key>?)"
+                }
+              ]
+            },
+            {
+              "sql": "INSERT INTO article_search(article_key,title,canonical_url) SELECT article_key,title,canonical_url FROM articles WHERE article_key IN (SELECT value FROM json_each(?)) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 6,
+                  "parent": 0,
+                  "notused": 45,
+                  "detail": "SEARCH article_fts_repair EXISTS USING INTEGER PRIMARY KEY (rowid=?)"
+                },
+                {
+                  "id": 15,
+                  "parent": 0,
+                  "notused": 92,
+                  "detail": "SEARCH articles USING INDEX sqlite_autoindex_articles_1 (article_key=?)"
+                },
+                {
+                  "id": 19,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 21,
+                  "parent": 19,
+                  "notused": 0,
+                  "detail": "SCAN json_each VIRTUAL TABLE INDEX 1:"
+                }
+              ]
+            },
+            {
+              "sql": "DELETE FROM article_search WHERE rowid IN (SELECT rowid FROM article_search ORDER BY rowid LIMIT 200) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 3,
+                  "parent": 0,
+                  "notused": 46,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 0:="
+                },
+                {
+                  "id": 7,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 11,
+                  "parent": 7,
+                  "notused": 215,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 64:"
+                },
+                {
+                  "id": 30,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "SCALAR SUBQUERY 2"
+                },
+                {
+                  "id": 34,
+                  "parent": 30,
+                  "notused": 33,
+                  "detail": "SEARCH article_fts_repair USING INTEGER PRIMARY KEY (rowid=?)"
+                }
+              ]
+            }
+          ],
+          "progress": [
+            {
+              "progress": 200,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 635.4242219999978
+            },
+            {
+              "progress": 400,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 1213.3591769999985
+            },
+            {
+              "progress": 600,
+              "phase": "build",
+              "indexed": 23600,
+              "elapsedMs": 1958.3182510000006
+            },
+            {
+              "progress": 800,
+              "phase": "build",
+              "indexed": 63600,
+              "elapsedMs": 2727.217586999999
+            }
+          ],
+          "result": {
+            "result": "passed",
+            "size": 100000,
+            "indexed": 100010,
+            "calls": 985,
+            "repairMs": 4338.488943,
+            "externalAuditMs": 556.3148250000013,
+            "initialCallMs": 59.00626799999736,
+            "maxTransactionMs": 773.9982479999999,
+            "phases": {
+              "clear": {
+                "calls": 481,
+                "ms": 1347.0007839999853
+              },
+              "build": {
+                "calls": 502,
+                "ms": 2064.6479010000476
+              },
+              "verify": {
+                "calls": 1,
+                "ms": 806.6123930000031
+              }
+            },
+            "stats": {
+              "state": {
+                "count": 3979,
+                "ms": 563.3690079998523,
+                "maxMs": 51.8033940000023
+              },
+              "fts.clear": {
+                "count": 501,
+                "ms": 484.7164420000008,
+                "maxMs": 5.095193000001018
+              },
+              "transaction.overhead": {
+                "count": 1004,
+                "ms": 1438.6849129999937,
+                "maxMs": 21.64571000000433
+              },
+              "key.scan": {
+                "count": 502,
+                "ms": 71.58444000003146,
+                "maxMs": 0.7907700000032492
+              },
+              "fts.build": {
+                "count": 501,
+                "ms": 741.9307950000366,
+                "maxMs": 2.342562000001635
+              },
+              "pending.delete": {
+                "count": 502,
+                "ms": 73.95020899997326,
+                "maxMs": 0.2424009999995178
+              },
+              "fts.pending.delete": {
+                "count": 1,
+                "ms": 31.610994999999093,
+                "maxMs": 31.610994999999093
+              },
+              "fts.pending.insert": {
+                "count": 1,
+                "ms": 0.17475999999805936,
+                "maxMs": 0.17475999999805936
+              },
+              "audit": {
+                "count": 1,
+                "ms": 772.6638779999994,
+                "maxMs": 772.6638779999994
+              }
+            },
+            "rss": 1613946880,
+            "final": {
+              "status": "ok",
+              "fts": "ok",
+              "pendingIngest": 0,
+              "pendingFts": 0,
+              "eventRegistry": "ok"
+            }
+          }
+        },
+        {
+          "round": 2,
+          "fixture": {
+            "fixtureMs": 23477.530754,
+            "size": 100000,
+            "node": "v22.23.4",
+            "cpu": "AMD EPYC",
+            "cores": 8,
+            "memory": 16772878336,
+            "sqlite": {
+              "version": "3.53.4"
+            },
+            "journal": [
+              {
+                "journal_mode": "delete"
+              }
+            ],
+            "synchronous": [
+              {
+                "synchronous": 2
+              }
+            ]
+          },
+          "queryPlans": [
+            {
+              "sql": "SELECT article_key FROM articles WHERE article_key > ? ORDER BY article_key LIMIT 50",
+              "plan": [
+                {
+                  "id": 4,
+                  "parent": 0,
+                  "notused": 190,
+                  "detail": "SEARCH articles USING COVERING INDEX sqlite_autoindex_articles_1 (article_key>?)"
+                }
+              ]
+            },
+            {
+              "sql": "INSERT INTO article_search(article_key,title,canonical_url) SELECT article_key,title,canonical_url FROM articles WHERE article_key IN (SELECT value FROM json_each(?)) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 6,
+                  "parent": 0,
+                  "notused": 45,
+                  "detail": "SEARCH article_fts_repair EXISTS USING INTEGER PRIMARY KEY (rowid=?)"
+                },
+                {
+                  "id": 15,
+                  "parent": 0,
+                  "notused": 92,
+                  "detail": "SEARCH articles USING INDEX sqlite_autoindex_articles_1 (article_key=?)"
+                },
+                {
+                  "id": 19,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 21,
+                  "parent": 19,
+                  "notused": 0,
+                  "detail": "SCAN json_each VIRTUAL TABLE INDEX 1:"
+                }
+              ]
+            },
+            {
+              "sql": "DELETE FROM article_search WHERE rowid IN (SELECT rowid FROM article_search ORDER BY rowid LIMIT 200) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 3,
+                  "parent": 0,
+                  "notused": 46,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 0:="
+                },
+                {
+                  "id": 7,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 11,
+                  "parent": 7,
+                  "notused": 215,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 64:"
+                },
+                {
+                  "id": 30,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "SCALAR SUBQUERY 2"
+                },
+                {
+                  "id": 34,
+                  "parent": 30,
+                  "notused": 33,
+                  "detail": "SEARCH article_fts_repair USING INTEGER PRIMARY KEY (rowid=?)"
+                }
+              ]
+            }
+          ],
+          "progress": [
+            {
+              "progress": 200,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 637.6068919999998
+            },
+            {
+              "progress": 400,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 1233.4102760000023
+            },
+            {
+              "progress": 600,
+              "phase": "build",
+              "indexed": 23600,
+              "elapsedMs": 2007.5782940000026
+            },
+            {
+              "progress": 800,
+              "phase": "build",
+              "indexed": 63600,
+              "elapsedMs": 2786.5540550000005
+            }
+          ],
+          "result": {
+            "result": "passed",
+            "size": 100000,
+            "indexed": 100010,
+            "calls": 985,
+            "repairMs": 4126.874914,
+            "externalAuditMs": 532.8435640000025,
+            "initialCallMs": 77.03152600000249,
+            "maxTransactionMs": 594.3170229999996,
+            "transactionWall": {
+              "clear": {
+                "count": 501,
+                "p95Ms": 3.694132000000536,
+                "maxMs": 23.136250999999902
+              },
+              "build": {
+                "count": 501,
+                "p95Ms": 4.552182999999786,
+                "maxMs": 60.498247999999876
+              },
+              "pending": {
+                "count": 1,
+                "p95Ms": 32.41474599999856,
+                "maxMs": 32.41474599999856
+              },
+              "verify": {
+                "count": 1,
+                "p95Ms": 594.3170229999996,
+                "maxMs": 594.3170229999996
+              }
+            },
+            "phases": {
+              "clear": {
+                "calls": 481,
+                "ms": 1351.3194730000396
+              },
+              "build": {
+                "calls": 502,
+                "ms": 2007.62388000001
+              },
+              "verify": {
+                "calls": 1,
+                "ms": 627.2869890000002
+              }
+            },
+            "stats": {
+              "state": {
+                "count": 3979,
+                "ms": 512.4430689998553,
+                "maxMs": 52.27939499999775
+              },
+              "fts.clear": {
+                "count": 501,
+                "ms": 502.09078300002875,
+                "maxMs": 1.726740999998583
+              },
+              "transaction.overhead": {
+                "count": 1004,
+                "ms": 1437.6228269999847,
+                "maxMs": 22.14074100000289
+              },
+              "key.scan": {
+                "count": 502,
+                "ms": 70.93618700000297,
+                "maxMs": 0.27974100000210456
+              },
+              "fts.build": {
+                "count": 501,
+                "ms": 744.3339490000799,
+                "maxMs": 3.6913319999985106
+              },
+              "pending.delete": {
+                "count": 502,
+                "ms": 74.97705599999972,
+                "maxMs": 0.24666999999681138
+              },
+              "fts.pending.delete": {
+                "count": 1,
+                "ms": 32.06631599999673,
+                "maxMs": 32.06631599999673
+              },
+              "fts.pending.insert": {
+                "count": 1,
+                "ms": 0.18022999999811873,
+                "maxMs": 0.18022999999811873
+              },
+              "audit": {
+                "count": 1,
+                "ms": 592.8846219999978,
+                "maxMs": 592.8846219999978
+              }
+            },
+            "rss": 1608876032,
+            "final": {
+              "status": "ok",
+              "fts": "ok",
+              "pendingIngest": 0,
+              "pendingFts": 0,
+              "eventRegistry": "ok"
+            }
+          }
+        },
+        {
+          "round": 3,
+          "fixture": {
+            "fixtureMs": 22353.211902,
+            "size": 100000,
+            "node": "v22.23.4",
+            "cpu": "AMD EPYC",
+            "cores": 8,
+            "memory": 16772878336,
+            "sqlite": {
+              "version": "3.53.4"
+            },
+            "journal": [
+              {
+                "journal_mode": "delete"
+              }
+            ],
+            "synchronous": [
+              {
+                "synchronous": 2
+              }
+            ]
+          },
+          "queryPlans": [
+            {
+              "sql": "SELECT article_key FROM articles WHERE article_key > ? ORDER BY article_key LIMIT 50",
+              "plan": [
+                {
+                  "id": 4,
+                  "parent": 0,
+                  "notused": 190,
+                  "detail": "SEARCH articles USING COVERING INDEX sqlite_autoindex_articles_1 (article_key>?)"
+                }
+              ]
+            },
+            {
+              "sql": "INSERT INTO article_search(article_key,title,canonical_url) SELECT article_key,title,canonical_url FROM articles WHERE article_key IN (SELECT value FROM json_each(?)) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 6,
+                  "parent": 0,
+                  "notused": 45,
+                  "detail": "SEARCH article_fts_repair EXISTS USING INTEGER PRIMARY KEY (rowid=?)"
+                },
+                {
+                  "id": 15,
+                  "parent": 0,
+                  "notused": 92,
+                  "detail": "SEARCH articles USING INDEX sqlite_autoindex_articles_1 (article_key=?)"
+                },
+                {
+                  "id": 19,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 21,
+                  "parent": 19,
+                  "notused": 0,
+                  "detail": "SCAN json_each VIRTUAL TABLE INDEX 1:"
+                }
+              ]
+            },
+            {
+              "sql": "DELETE FROM article_search WHERE rowid IN (SELECT rowid FROM article_search ORDER BY rowid LIMIT 200) AND EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)",
+              "plan": [
+                {
+                  "id": 3,
+                  "parent": 0,
+                  "notused": 46,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 0:="
+                },
+                {
+                  "id": 7,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "LIST SUBQUERY 1"
+                },
+                {
+                  "id": 11,
+                  "parent": 7,
+                  "notused": 215,
+                  "detail": "SCAN article_search VIRTUAL TABLE INDEX 64:"
+                },
+                {
+                  "id": 30,
+                  "parent": 0,
+                  "notused": 0,
+                  "detail": "SCALAR SUBQUERY 2"
+                },
+                {
+                  "id": 34,
+                  "parent": 30,
+                  "notused": 33,
+                  "detail": "SEARCH article_fts_repair USING INTEGER PRIMARY KEY (rowid=?)"
+                }
+              ]
+            }
+          ],
+          "progress": [
+            {
+              "progress": 200,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 711.2922790000011
+            },
+            {
+              "progress": 400,
+              "phase": "clear",
+              "indexed": 0,
+              "elapsedMs": 1311.1345250000013
+            },
+            {
+              "progress": 600,
+              "phase": "build",
+              "indexed": 23600,
+              "elapsedMs": 2055.021348000002
+            },
+            {
+              "progress": 800,
+              "phase": "build",
+              "indexed": 63600,
+              "elapsedMs": 2837.587000000003
+            }
+          ],
+          "result": {
+            "result": "passed",
+            "size": 100000,
+            "indexed": 100010,
+            "calls": 985,
+            "repairMs": 4221.771729,
+            "externalAuditMs": 553.5558430000019,
+            "initialCallMs": 52.45327600000019,
+            "maxTransactionMs": 618.6091950000009,
+            "transactionWall": {
+              "clear": {
+                "count": 501,
+                "p95Ms": 3.5170519999992393,
+                "maxMs": 78.52693799999906
+              },
+              "build": {
+                "count": 501,
+                "p95Ms": 4.461731999999756,
+                "maxMs": 61.560669000002235
+              },
+              "pending": {
+                "count": 1,
+                "p95Ms": 34.177026000001206,
+                "maxMs": 34.177026000001206
+              },
+              "verify": {
+                "count": 1,
+                "p95Ms": 618.6091950000009,
+                "maxMs": 618.6091950000009
+              }
+            },
+            "phases": {
+              "clear": {
+                "calls": 481,
+                "ms": 1447.7603360000103
+              },
+              "build": {
+                "calls": 502,
+                "ms": 2005.9144799999704
+              },
+              "verify": {
+                "calls": 1,
+                "ms": 653.4539410000034
+              }
+            },
+            "stats": {
+              "state": {
+                "count": 3979,
+                "ms": 516.2335710000953,
+                "maxMs": 53.250914999996894
+              },
+              "fts.clear": {
+                "count": 501,
+                "ms": 496.2302919999893,
+                "maxMs": 1.6426509999982954
+              },
+              "transaction.overhead": {
+                "count": 1004,
+                "ms": 1493.1000769999737,
+                "maxMs": 77.4013169999962
+              },
+              "key.scan": {
+                "count": 502,
+                "ms": 73.50433100000373,
+                "maxMs": 0.39920100000017555
+              },
+              "fts.build": {
+                "count": 501,
+                "ms": 750.0716079999547,
+                "maxMs": 2.5059609999989334
+              },
+              "pending.delete": {
+                "count": 502,
+                "ms": 75.30874000001495,
+                "maxMs": 0.24987999999939348
+              },
+              "fts.pending.delete": {
+                "count": 1,
+                "ms": 33.82333600000129,
+                "maxMs": 33.82333600000129
+              },
+              "fts.pending.insert": {
+                "count": 1,
+                "ms": 0.18227000000479165,
+                "maxMs": 0.18227000000479165
+              },
+              "audit": {
+                "count": 1,
+                "ms": 617.4208840000028,
+                "maxMs": 617.4208840000028
+              }
+            },
+            "rss": 1598345216,
+            "final": {
+              "status": "ok",
+              "fts": "ok",
+              "pendingIngest": 0,
+              "pendingFts": 0,
+              "eventRegistry": "ok"
+            }
+          }
+        }
+      ],
+      "medianRepairMs": 4221.771729,
+      "medianTransactionOverheadMs": 1438.6849129999937
+    }
+  },
+  "isolatedD1": {
+    "result": "passed",
+    "compatibilityDate": "2026-08-06",
+    "fixtureArticles": 221,
+    "firstBuildPage": 50,
+    "productionD1": false
+  },
+  "regression": {
+    "testFiles": 107,
+    "tests": 593,
+    "lint": "passed",
+    "typecheckNodeWeb": "passed",
+    "typecheckElectron": "passed",
+    "productionD1": "not tested"
+  }
+}
