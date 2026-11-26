@@ -2,6 +2,7 @@ import { it, expect, describe } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 
 import { projectNewsReloadData } from "./news-reload-schema";
+import { createNewsInsights } from "../../shared/news-insights";
 import { getUnifiedFeedCacheKey, getNewsInsightsCacheKey } from "../../shared/source-api";
 import {
     digestReloadKey,
@@ -160,5 +161,49 @@ describe("browser reload cache", () => {
         expect(writeReloadSnapshot(key, complete, accept, storage, now + 1)).toBe(true);
         expect(writeReloadSnapshot(key, partial, accept, storage, now + 2)).toBe(false);
         expect(readReloadSnapshot(key, accept, storage, now + 3)).toEqual({ key, savedAt: now + 1, data: complete });
+    });
+
+    it("persists a resolved empty insight, including one produced by hiding all articles", async () => {
+        const storage = memoryStorage();
+        const key = (await digestReloadKey(scope, "insights", ["hidden-all"]))!;
+        const data = createNewsInsights([{ ...fixture, id: "hackernews", status: "success" }], {
+            generatedAt: now,
+            hiddenUrls: [fixture.items[0].url],
+        });
+        expect(data.itemCount).toBe(0);
+        const response = {
+            data,
+            meta: {
+                generatedAt: now,
+                requestedSourceCount: 1,
+                resolvedSourceCount: 1,
+                partial: false,
+                omittedSourceIds: [],
+            },
+            errors: [],
+        };
+        const projectInsights = (value: unknown) => projectNewsReloadData("insights", value);
+        expect(writeReloadSnapshot(key, response, projectInsights, storage, now)).toBe(true);
+        expect(readReloadSnapshot(key, projectInsights, storage, now + 1000)).toMatchObject({
+            savedAt: now,
+            data: { data: { itemCount: 0 }, meta: { partial: false, resolvedSourceCount: 1 } },
+        });
+        const partialEmpty = {
+            ...response,
+            meta: { ...response.meta, requestedSourceCount: 2, partial: true, omittedSourceIds: ["weibo"] },
+        };
+        expect(projectInsights(partialEmpty)).toBeDefined();
+        expect(writeReloadSnapshot(key, partialEmpty, projectInsights, storage, now + 2000)).toBe(false);
+        for (const failure of [
+            {
+                ...response,
+                meta: { ...response.meta, partial: true, resolvedSourceCount: 0, omittedSourceIds: ["hackernews"] },
+            },
+            { ...response, data: { ...data, itemCount: -1 } },
+            { ...response, data: { ...data, itemCount: 0.5 } },
+        ]) {
+            expect(writeReloadSnapshot(key, failure, projectInsights, storage, now + 3000)).toBe(false);
+        }
+        expect(readReloadSnapshot(key, projectInsights, storage, now + 4000)?.savedAt).toBe(now);
     });
 });
