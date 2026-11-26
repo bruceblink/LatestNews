@@ -3,6 +3,7 @@ import type { Database } from "db0";
 import { randomUUID } from "node:crypto";
 
 import { executeArticleBatch } from "./article-atomic-batch";
+import { initArticleMaintenance } from "./article-maintenance";
 
 const PAGE = 50;
 // Local profiling shows transaction boundaries dominate rebuild cost.
@@ -108,6 +109,7 @@ export async function initArticleRecovery(db: Database) {
         .run();
     await db.prepare("INSERT OR IGNORE INTO article_fts_repair VALUES (1,'ready','','')").run();
     await initArticleFtsAudit(db);
+    await initArticleMaintenance(db);
 }
 
 export async function probeArticleRecovery(db: Database) {

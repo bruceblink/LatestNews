@@ -242,8 +242,9 @@ export class ArticleIndex {
         }
     }
 
-    async upsertSourceItems(sourceId: SourceID, items: NewsItem[], now = Date.now()) {
-        if (this.db.connector === "cloudflare-d1") return this.upsertD1SourceItems(sourceId, items, now);
+    async upsertSourceItems(sourceId: SourceID, items: NewsItem[], now = Date.now(), maintenanceOwner?: string) {
+        if (this.db.connector === "cloudflare-d1")
+            return this.upsertD1SourceItems(sourceId, items, now, maintenanceOwner);
 
         let inserted = 0;
         let updated = 0;
@@ -258,10 +259,16 @@ export class ArticleIndex {
             const publishedAt = articleTimestamp(item.pubDate) ?? articleTimestamp(item.extra?.date);
             // Resolve the actual row by canonical URL inside the same transaction.
             // Raw IDs and fingerprints are metadata, never equivalence proofs.
-            const [prior, rows] = await executeArticleBatch(this.db, [
-                { sql: "SELECT article_key FROM articles WHERE canonical_url = ?", params: [canonicalUrl], rows: true },
-                {
-                    sql: `INSERT INTO articles
+            const [prior, rows] = await executeArticleBatch(
+                this.db,
+                [
+                    {
+                        sql: "SELECT article_key FROM articles WHERE canonical_url = ?",
+                        params: [canonicalUrl],
+                        rows: true,
+                    },
+                    {
+                        sql: `INSERT INTO articles
                           (article_key, canonical_url, title, published_at, content_fingerprint, event_id, payload, first_seen_at, last_seen_at)
                           VALUES (CASE WHEN EXISTS (SELECT 1 FROM articles WHERE article_key = ? AND canonical_url <> ?)
                                   THEN ? ELSE ? END, ?, ?, ?, ?, NULL, ?, ?, ?)
@@ -273,44 +280,46 @@ export class ArticleIndex {
                             first_seen_at = min(articles.first_seen_at, excluded.first_seen_at),
                             last_seen_at = max(articles.last_seen_at, excluded.last_seen_at)
                           RETURNING article_key`,
-                    params: [
-                        candidate,
-                        canonicalUrl,
-                        fallback,
-                        candidate,
-                        canonicalUrl,
-                        item.title,
-                        publishedAt,
-                        contentFingerprint,
-                        JSON.stringify(item),
-                        now,
-                        now,
-                    ],
-                    rows: true,
-                },
-                {
-                    sql: `INSERT INTO article_sources (article_key, source_id, raw_item_id, first_seen_at, last_seen_at)
+                        params: [
+                            candidate,
+                            canonicalUrl,
+                            fallback,
+                            candidate,
+                            canonicalUrl,
+                            item.title,
+                            publishedAt,
+                            contentFingerprint,
+                            JSON.stringify(item),
+                            now,
+                            now,
+                        ],
+                        rows: true,
+                    },
+                    {
+                        sql: `INSERT INTO article_sources (article_key, source_id, raw_item_id, first_seen_at, last_seen_at)
                           SELECT article_key, ?, ?, ?, ? FROM articles WHERE canonical_url = ?
                           ON CONFLICT(article_key, source_id) DO UPDATE SET
                             raw_item_id = CASE WHEN excluded.last_seen_at >= article_sources.last_seen_at THEN excluded.raw_item_id ELSE article_sources.raw_item_id END,
                             first_seen_at = min(article_sources.first_seen_at, excluded.first_seen_at),
                             last_seen_at = max(article_sources.last_seen_at, excluded.last_seen_at)`,
-                    params: [sourceId, rawItemId, now, now, canonicalUrl],
-                },
-                ...(this.recoveryAvailable
-                    ? [
-                          {
-                              sql: "INSERT OR IGNORE INTO article_fts_pending(article_key) SELECT article_key FROM articles WHERE canonical_url=?",
-                              params: [canonicalUrl],
-                          },
-                      ]
-                    : []),
-            ]);
+                        params: [sourceId, rawItemId, now, now, canonicalUrl],
+                    },
+                    ...(this.recoveryAvailable
+                        ? [
+                              {
+                                  sql: "INSERT OR IGNORE INTO article_fts_pending(article_key) SELECT article_key FROM articles WHERE canonical_url=?",
+                                  params: [canonicalUrl],
+                              },
+                          ]
+                        : []),
+                ],
+                maintenanceOwner
+            );
             const articleKey = (rows[0] as { article_key: string } | undefined)?.article_key;
             if (!articleKey) throw new Error("Article upsert returned no identity.");
             if (prior.length) updated += 1;
             else inserted += 1;
-            await this.updateFts(articleKey);
+            await this.updateFts(articleKey, maintenanceOwner);
         }
 
         return { inserted, updated };
@@ -318,7 +327,7 @@ export class ArticleIndex {
 
     /** A normal source snapshot has at most 30 entries. Group its mutations
      * into set-based SQL rather than two remote calls per article. */
-    private async upsertD1SourceItems(sourceId: SourceID, items: NewsItem[], now: number) {
+    private async upsertD1SourceItems(sourceId: SourceID, items: NewsItem[], now: number, maintenanceOwner?: string) {
         const valid = filterSafeNewsItemLinks(items).flatMap((item) => {
             const url = normalizeNewsItemUrlKey(item.url);
             return url ? [{ item, url }] : [];
@@ -353,14 +362,16 @@ export class ArticleIndex {
                 FROM json_each(?))`;
             const keySet =
                 "SELECT article_key FROM articles WHERE canonical_url IN (SELECT json_extract(value,'$.url') FROM json_each(?))";
-            const [prior, rows] = await executeArticleBatch(this.db, [
-                {
-                    sql: "SELECT COUNT(*) AS count FROM articles WHERE canonical_url IN (SELECT json_extract(value,'$.url') FROM json_each(?))",
-                    params: [payload],
-                    rows: true,
-                },
-                {
-                    sql: `${incoming} INSERT INTO articles
+            const [prior, rows] = await executeArticleBatch(
+                this.db,
+                [
+                    {
+                        sql: "SELECT COUNT(*) AS count FROM articles WHERE canonical_url IN (SELECT json_extract(value,'$.url') FROM json_each(?))",
+                        params: [payload],
+                        rows: true,
+                    },
+                    {
+                        sql: `${incoming} INSERT INTO articles
                     (article_key, canonical_url, title, published_at, content_fingerprint, event_id, payload, first_seen_at, last_seen_at)
                     SELECT CASE WHEN EXISTS(SELECT 1 FROM articles a WHERE a.article_key=i.candidate AND a.canonical_url<>i.url)
                         THEN i.fallback ELSE i.candidate END,i.url,i.title,i.published_at,i.fingerprint,NULL,i.payload,?,?
@@ -373,41 +384,52 @@ export class ArticleIndex {
                         first_seen_at=min(articles.first_seen_at,excluded.first_seen_at),
                         last_seen_at=max(articles.last_seen_at,excluded.last_seen_at)
                     RETURNING article_key`,
-                    params: [payload, now, now],
-                    rows: true,
-                },
-                {
-                    sql: `${incoming} INSERT INTO article_sources(article_key,source_id,raw_item_id,first_seen_at,last_seen_at)
+                        params: [payload, now, now],
+                        rows: true,
+                    },
+                    {
+                        sql: `${incoming} INSERT INTO article_sources(article_key,source_id,raw_item_id,first_seen_at,last_seen_at)
                     SELECT a.article_key,?,i.raw_id,?,? FROM incoming i JOIN articles a ON a.canonical_url=i.url WHERE 1
                     ON CONFLICT(article_key,source_id) DO UPDATE SET
                         raw_item_id=CASE WHEN excluded.last_seen_at>=article_sources.last_seen_at THEN excluded.raw_item_id ELSE article_sources.raw_item_id END,
                         first_seen_at=min(article_sources.first_seen_at,excluded.first_seen_at),
                         last_seen_at=max(article_sources.last_seen_at,excluded.last_seen_at)`,
-                    params: [payload, sourceId, now, now],
-                },
-                ...(this.recoveryAvailable
-                    ? [{ sql: `INSERT OR IGNORE INTO article_fts_pending(article_key) ${keySet}`, params: [payload] }]
-                    : []),
-            ]);
+                        params: [payload, sourceId, now, now],
+                    },
+                    ...(this.recoveryAvailable
+                        ? [
+                              {
+                                  sql: `INSERT OR IGNORE INTO article_fts_pending(article_key) ${keySet}`,
+                                  params: [payload],
+                              },
+                          ]
+                        : []),
+                ],
+                maintenanceOwner
+            );
             if (rows.length !== unique.size) throw new Error("Article batch returned incomplete identities.");
             inserted += unique.size - Number((prior[0] as { count: number }).count);
             if (this.ftsAvailable && this.recoveryAvailable) {
                 try {
-                    await executeArticleBatch(this.db, [
-                        {
-                            sql: `DELETE FROM article_search WHERE article_key IN (${keySet}) AND ${FTS_READY_GUARD}`,
-                            params: [payload],
-                        },
-                        {
-                            sql: `INSERT INTO article_search(article_key,title,canonical_url) SELECT article_key,title,canonical_url FROM articles
+                    await executeArticleBatch(
+                        this.db,
+                        [
+                            {
+                                sql: `DELETE FROM article_search WHERE article_key IN (${keySet}) AND ${FTS_READY_GUARD}`,
+                                params: [payload],
+                            },
+                            {
+                                sql: `INSERT INTO article_search(article_key,title,canonical_url) SELECT article_key,title,canonical_url FROM articles
                             WHERE article_key IN (${keySet}) AND ${FTS_READY_GUARD}`,
-                            params: [payload],
-                        },
-                        {
-                            sql: `DELETE FROM article_fts_pending WHERE article_key IN (${keySet}) AND ${FTS_READY_GUARD}`,
-                            params: [payload],
-                        },
-                    ]);
+                                params: [payload],
+                            },
+                            {
+                                sql: `DELETE FROM article_fts_pending WHERE article_key IN (${keySet}) AND ${FTS_READY_GUARD}`,
+                                params: [payload],
+                            },
+                        ],
+                        maintenanceOwner
+                    );
                 } catch (error) {
                     logger.warn("Could not update batched article FTS5 index; pending keys retained.", error);
                 }
@@ -643,23 +665,27 @@ export class ArticleIndex {
         }
     }
 
-    private async updateFts(articleKey: string) {
+    private async updateFts(articleKey: string, maintenanceOwner?: string) {
         if (!this.ftsAvailable) return;
         try {
-            await executeArticleBatch(this.db, [
-                {
-                    sql: `DELETE FROM article_search WHERE article_key = ? AND ${FTS_READY_GUARD}`,
-                    params: [articleKey],
-                },
-                {
-                    sql: `INSERT INTO article_search (article_key, title, canonical_url) SELECT article_key, title, canonical_url FROM articles WHERE article_key = ? AND ${FTS_READY_GUARD}`,
-                    params: [articleKey],
-                },
-                {
-                    sql: `DELETE FROM article_fts_pending WHERE article_key = ? AND ${FTS_READY_GUARD}`,
-                    params: [articleKey],
-                },
-            ]);
+            await executeArticleBatch(
+                this.db,
+                [
+                    {
+                        sql: `DELETE FROM article_search WHERE article_key = ? AND ${FTS_READY_GUARD}`,
+                        params: [articleKey],
+                    },
+                    {
+                        sql: `INSERT INTO article_search (article_key, title, canonical_url) SELECT article_key, title, canonical_url FROM articles WHERE article_key = ? AND ${FTS_READY_GUARD}`,
+                        params: [articleKey],
+                    },
+                    {
+                        sql: `DELETE FROM article_fts_pending WHERE article_key = ? AND ${FTS_READY_GUARD}`,
+                        params: [articleKey],
+                    },
+                ],
+                maintenanceOwner
+            );
         } catch (error) {
             logger.warn("Could not update article FTS5 index.", error);
         }

@@ -54,6 +54,7 @@ curl https://news.example.com/api/v1/node
 | `POST` | `/api/v1/sources/batch` | Items for multiple sources, columns, or source types. |
 | `POST` | `/api/v1/sources/refresh` | 分批刷新来源。默认只刷新到期缓存，`force=true` 采集全部可用来源。 |
 | `POST` | `/api/v1/insights` | 计算所选来源的阅读洞察。请求体包含 `sources`，可设置 `trendWindow` 等分析选项。 |
+| `POST` | `/api/v1/articles/maintenance` | 独立有界索引维护（使用定时刷新 Bearer 令牌）。 |
 | `GET` | `/api/v1/articles/search` | 查询 Node SQLite / Pages D1 文章索引中的历史文章。使用 `q`，可选 `source`、`since` 和 `limit`。 |
 | `GET` | `/api/v1/events/{eventId}` | 查询已注册事件的历史文章和来源映射。 |
 
@@ -150,6 +151,14 @@ exit "$failed"
 | `failed` | 采集或缓存写入失败，保留旧缓存，并在 `errors` 中返回来源 ID。 |
 
 游标无效，或 `force` 的值超出 `true` 和 `false`，返回 HTTP 400。令牌缺失或错误返回 401。遇到令牌未配置、缓存不可用或服务停止采集时，服务返回 503。连接断开或服务停止后，可用相同游标重试。默认模式下，已写入且仍在刷新间隔内的来源返回 `fresh`。全量模式会再次采集该页。计划任务应串行处理各页，并在本轮结束后再启动下一轮。
+
+### 独立索引维护
+
+由部署调度器调用 `POST /api/v1/articles/maintenance?limit=5`，使用同一个 `LATESTNEWS_REFRESH_TOKEN`，无需请求体。不采集来源；不需要用户打开页面。limit 为 1–20，默认 5；每轮至多处理指定数量的 journal 分片，每分片最多 30 条，最多两页 FTS 修复。5 秒软预算在操作间检查，不保证正在执行的数据库操作及时结束。
+
+返回 data.status：ok 表示检查时无已知积压且索引健康，pending 表示尚有积压/修复，busy（HTTP 409）表示已有维护租约，unavailable/interrupted（HTTP 503）表示不可用/中断。HTTP 400 表示限额非法；401 表示令牌缺失或错误；未配置令牌返回 503。不要在 busy 或错误后立即无限循环。报告 data.attempted/completed/failed/advanced、data.remaining（pendingIngest、oldestObservedAt、oldestAgeMs、attempts、deferred）、pendingFts、untrackedCache 和 durationMs。无法取得统计时字段为 null。快照提交不等于索引已完成；失败数据保留并退避，不能据 HTTP 200 推断全部处理完成。
+
+生产调度须独立授权；具体边界见 [N4-P2](performance/n4p2-bounded-maintenance.md)。
 
 ## 登录能力
 

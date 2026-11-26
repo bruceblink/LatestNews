@@ -21,6 +21,7 @@ import {
 describe("source API contract", () => {
     it("keeps source endpoints centralized", () => {
         expect(sourceApi).toEqual({
+            articleMaintenanceV1: "/v1/articles/maintenance",
             articleSearchV1: "/v1/articles/search",
             articleEventV1: "/v1/events",
             insightsV1: "/v1/insights",

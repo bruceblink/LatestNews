@@ -24,7 +24,25 @@ interface D1Binding {
     batch(statements: D1Statement[]): Promise<Array<{ success: boolean; results?: unknown[] }>>;
 }
 
-export async function executeArticleBatch(db: Database, statements: AtomicStatement[]): Promise<unknown[][]> {
+export async function executeArticleBatch(
+    db: Database,
+    statements: AtomicStatement[],
+    maintenanceOwner?: string
+): Promise<unknown[][]> {
+    // A stale maintenance worker must not mutate articles after another owner
+    // has acquired the lease. The sentinel deliberately violates CHECK(id=1)
+    // only on a lost lease, aborting the whole atomic SQLite/D1 batch.
+    const fenced = maintenanceOwner !== undefined;
+    if (fenced)
+        statements = [
+            {
+                sql: `INSERT INTO article_maintenance_lease(id,owner,expires_at)
+            SELECT 0,'',0 WHERE NOT EXISTS(SELECT 1 FROM article_maintenance_lease
+                WHERE id=1 AND owner=? AND expires_at>?)`,
+                params: [maintenanceOwner, Date.now()],
+            },
+            ...statements,
+        ];
     const instance = await db.getInstance();
     if (db.connector === "sqlite") {
         const sqlite = instance as LocalSqlite;
@@ -37,7 +55,8 @@ export async function executeArticleBatch(db: Database, statements: AtomicStatem
                     return [];
                 })
             )
-            .immediate();
+            .immediate()
+            .slice(fenced ? 1 : 0);
     }
     if (db.connector === "cloudflare-d1") {
         const binding = instance as D1Binding;
@@ -50,7 +69,7 @@ export async function executeArticleBatch(db: Database, statements: AtomicStatem
         if (results.length !== statements.length || results.some((result) => !result.success)) {
             throw new Error("Article database batch failed.");
         }
-        return results.map((result) => result.results ?? []);
+        return results.slice(fenced ? 1 : 0).map((result) => result.results ?? []);
     }
     throw new Error("Unsupported article database connector.");
 }

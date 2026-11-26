@@ -1,31 +1,18 @@
 import type { SourceID } from "@shared/types";
 
-import process from "node:process";
 import { logger } from "#/utils/logger";
 import dataSources from "@shared/data-sources";
 import { getCacheTable } from "#/database/cache";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { requireRefreshToken } from "#/utils/refresh-token";
 import { isCancellationError } from "#/utils/source-engine";
+import { getQuery, createError, defineEventHandler } from "h3";
 import { hasSourceGetter, fetchSourceItems } from "#/utils/source-fetch";
-import { getQuery, getHeader, setHeader, createError, defineEventHandler } from "h3";
 
 const batchSize = 3;
-const tokenPattern = /^[A-Za-z0-9_-]{32,128}$/;
 
 /** Refresh one bounded page of the active catalog and confirm each cache write before reporting success. */
 export default defineEventHandler(async (event) => {
-    setHeader(event, "Cache-Control", "no-store");
-    const cloudflare = event.req.runtime?.cloudflare;
-    const secret = cloudflare ? cloudflare.env.LATESTNEWS_REFRESH_TOKEN : process.env.LATESTNEWS_REFRESH_TOKEN;
-    if (typeof secret !== "string" || !tokenPattern.test(secret)) {
-        throw createError({ statusCode: 503, message: "Source refresh is not configured." });
-    }
-
-    const token = /^Bearer\s+(\S+)$/i.exec(getHeader(event, "authorization") ?? "")?.[1];
-    if (!token || !tokenPattern.test(token) || !timingSafeEqual(hashToken(token), hashToken(secret))) {
-        setHeader(event, "WWW-Authenticate", "Bearer");
-        throw createError({ statusCode: 401, message: "A valid source refresh token is required." });
-    }
+    requireRefreshToken(event);
 
     const { cursor, force } = getQuery(event);
     if (cursor !== undefined && (typeof cursor !== "string" || !/^[A-Za-z0-9_.-]{1,120}$/.test(cursor))) {
@@ -88,7 +75,3 @@ export default defineEventHandler(async (event) => {
             .map(({ id }) => ({ sourceId: id, message: "Source collection or cache write failed." })),
     };
 });
-
-function hashToken(value: string) {
-    return createHash("sha256").update(value).digest();
-}

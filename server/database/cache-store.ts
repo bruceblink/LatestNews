@@ -8,17 +8,32 @@ import { filterSafeNewsItemLinks } from "@shared/news-url-policy";
 
 import { logger } from "../utils/logger";
 import { ArticleIndex } from "./article-index";
-import { initArticleFtsAudit } from "./article-recovery";
 import { executeArticleBatch } from "./article-atomic-batch";
+import { ftsRecoveryStatus, initArticleFtsAudit } from "./article-recovery";
 import { recordTrace, monotonicNow, getBenchmarkTrace, measureBenchmarkPhase } from "../utils/collection-trace";
+import {
+    leaseGuard,
+    retryDelay,
+    maintenanceTables,
+    SNAPSHOT_CHUNK_SIZE,
+    ownsMaintenanceLease,
+    hasArticleMaintenance,
+    MAINTENANCE_BUDGET_MS,
+    initArticleMaintenance,
+    readMaintenanceBacklog,
+    acquireMaintenanceLease,
+    releaseMaintenanceLease,
+} from "./article-maintenance";
 
 import type { CacheRow, CacheInfo } from "../types";
+import type { MaintenanceResult } from "./article-maintenance";
 import type { ArticleEventQuery, ArticleIndexSearchQuery, ArticleIndexSearchResult } from "./article-index";
 
 export class Cache {
     private db: Database;
     private articleIndex?: ArticleIndex;
     private recoveryAvailable = false;
+    private maintenanceAvailable = false;
     private replayTail: Promise<void> = Promise.resolve();
     private readonly activeWrites = new Map<string, { payload: string; promise: Promise<void> }>();
     private maintenanceScheduled = false;
@@ -33,7 +48,7 @@ export class Cache {
     async openPages(autoInit: boolean) {
         const tables = (await this.db
             .prepare(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('cache','articles','news_events','news_event_aliases','news_event_approvals','article_search','article_fts_audit')"
+                "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('cache','articles','news_events','news_event_aliases','news_event_approvals','article_search','article_fts_audit','article_maintenance_lease','article_ingest_work')"
             )
             .all()) as Array<{ name: string }>;
         const names = new Set(tables.map((row) => row.name));
@@ -75,6 +90,17 @@ export class Cache {
                 logger.warn("Could not initialize Pages FTS audit evidence.", describeSourceError(error));
             }
         }
+        if (this.recoveryAvailable) {
+            this.maintenanceAvailable = maintenanceTables.every((name) => names.has(name));
+            if (autoInit && !this.maintenanceAvailable) {
+                try {
+                    await initArticleMaintenance(this.db);
+                    this.maintenanceAvailable = true;
+                } catch (error) {
+                    logger.warn("Could not initialize article maintenance.", describeSourceError(error));
+                }
+            }
+        }
     }
 
     private async createCacheTable() {
@@ -97,7 +123,8 @@ export class Cache {
             this.articleIndex = new ArticleIndex(this.db);
             await this.articleIndex.init();
             this.recoveryAvailable = await this.articleIndex.probe();
-            if (this.recoveryAvailable) await this.maintainArticleIndex(5);
+            this.maintenanceAvailable = this.recoveryAvailable && (await hasArticleMaintenance(this.db));
+            if (this.maintenanceAvailable) await this.maintainArticleIndex(5);
         } catch (error) {
             this.articleIndex = undefined;
             logger.warn(
@@ -108,10 +135,11 @@ export class Cache {
         logger.success("init cache table");
     }
 
-    async check() {
+    async check(audit = true) {
         await this.db.prepare("SELECT id FROM cache LIMIT 1").get();
         this.articleIndex = new ArticleIndex(this.db);
-        this.recoveryAvailable = await this.articleIndex.probe();
+        this.recoveryAvailable = await this.articleIndex.probe(audit);
+        this.maintenanceAvailable = this.recoveryAvailable && (await hasArticleMaintenance(this.db));
     }
 
     async set(key: string, value: NewsItem[]) {
@@ -178,7 +206,7 @@ export class Cache {
     }
 
     async schedulePagesBacklogIfNeeded() {
-        if (!this.options.deferMaintenance || this.maintenanceScheduled || !this.recoveryAvailable) return;
+        if (!this.options.deferMaintenance || this.maintenanceScheduled || !this.maintenanceAvailable) return;
         try {
             // The public insight response is already computed. Only check durable
             // work, then attach maintenance to this request's waitUntil.
@@ -204,14 +232,14 @@ export class Cache {
     }
 
     private startPagesMaintenance() {
-        if (!this.options.deferMaintenance || this.maintenanceScheduled || !this.recoveryAvailable) return undefined;
+        if (!this.options.deferMaintenance || this.maintenanceScheduled || !this.maintenanceAvailable) return undefined;
         this.maintenanceScheduled = true;
         return this.maintainArticleIndex(1);
     }
 
     /** Bounded journal replay. Persist each source snapshot until all articles succeed. */
     async maintainArticleIndex(limit = 5, preferredId = "") {
-        if (!this.articleIndex || !this.recoveryAvailable) return;
+        if (!this.articleIndex || !this.maintenanceAvailable) return;
         if (!Number.isInteger(limit) || limit < 1 || limit > 20)
             throw new Error("Article replay limit must be between 1 and 20.");
         const trace = getBenchmarkTrace();
@@ -219,65 +247,183 @@ export class Cache {
         const replay = this.replayTail.then(() => {
             if (trace)
                 recordTrace(trace, { phase: "index.queue", durationMs: monotonicNow() - queuedAt, outcome: "success" });
-            return measureBenchmarkPhase("index.replay", () => this.replayArticleIndex(limit, preferredId));
+            return measureBenchmarkPhase("index.replay", () =>
+                this.runArticleMaintenance(limit, undefined, preferredId)
+            );
         });
         // Keep the queue usable after an unexpected failure. A durable journal is the
         // recovery boundary across processes; this lock only serializes this Cache.
-        this.replayTail = replay.catch(() => undefined);
+        this.replayTail = replay.then(
+            () => undefined,
+            () => undefined
+        );
         await replay;
     }
 
-    private async replayArticleIndex(limit: number, preferredId: string) {
-        if (!this.articleIndex) return;
+    /** Independent durable-lease pass. Bounds apply between DB operations;
+     * an atomic query already running cannot be preempted. */
+    async runArticleMaintenance(limit = 5, signal?: AbortSignal, preferredId = ""): Promise<MaintenanceResult> {
+        if (!Number.isInteger(limit) || limit < 1 || limit > 20)
+            throw new Error("Article replay limit must be between 1 and 20.");
+        const started = monotonicNow();
+        const result: MaintenanceResult = {
+            status: "unavailable",
+            attempted: 0,
+            completed: 0,
+            failed: 0,
+            advanced: 0,
+            remaining: null,
+            pendingFts: null,
+            untrackedCache: null,
+            durationMs: 0,
+        };
+        const finish = () => ({ ...result, durationMs: Math.round(monotonicNow() - started) });
+        if (!this.articleIndex || !this.maintenanceAvailable) return finish();
+        if (signal?.aborted) return { ...finish(), status: "interrupted" };
+        let owner: string | undefined;
         try {
-            // Recover pre-journal snapshots or a cache-only fallback without duplicating work.
+            owner = await acquireMaintenanceLease(this.db);
+            if (!owner) {
+                result.status = "busy";
+                return finish();
+            }
+            const canContinue = async () =>
+                !signal?.aborted &&
+                monotonicNow() - started < MAINTENANCE_BUDGET_MS &&
+                (await ownsMaintenanceLease(this.db, owner!));
+            if (!(await canContinue())) return { ...finish(), status: signal?.aborted ? "interrupted" : "pending" };
+            // Recover cache-only fallbacks under the same lease.
             await this.db
                 .prepare(
                     `INSERT INTO article_ingest_pending(id,source_id,payload,observed_at)
                 SELECT lower(hex(randomblob(16))),c.id,c.data,c.updated FROM cache c
-                WHERE NOT EXISTS(SELECT 1 FROM article_ingest_checkpoint p WHERE p.source_id=c.id AND p.observed_at=c.updated AND p.payload=c.data)
+                WHERE ${leaseGuard}
+                AND NOT EXISTS(SELECT 1 FROM article_ingest_checkpoint p WHERE p.source_id=c.id AND p.observed_at=c.updated AND p.payload=c.data)
                 AND NOT EXISTS(SELECT 1 FROM article_ingest_pending p WHERE p.source_id=c.id AND p.observed_at=c.updated AND p.payload=c.data)
                 ORDER BY c.updated,c.id LIMIT ?`
                 )
-                .run(limit);
+                .run(owner, Date.now(), limit);
+            if (!(await canContinue())) return { ...finish(), status: signal?.aborted ? "interrupted" : "pending" };
             const pending = (await this.db
                 .prepare(
-                    "SELECT id,source_id,payload,observed_at FROM article_ingest_pending ORDER BY CASE WHEN id=? THEN 0 ELSE 1 END, attempts, observed_at,id LIMIT ?"
+                    `SELECT p.id,p.source_id,p.payload,p.observed_at,p.attempts,COALESCE(w.next_offset,0) AS next_offset
+                FROM article_ingest_pending p LEFT JOIN article_ingest_work w ON w.id=p.id
+                WHERE COALESCE(w.next_attempt_at,0)<=?
+                ORDER BY CASE WHEN p.id=? THEN 0 ELSE 1 END,p.observed_at,p.id LIMIT ?`
                 )
-                .all(preferredId, limit)) as Array<{
+                .all(Date.now(), preferredId, limit)) as Array<{
                 id: string;
                 source_id: string;
                 payload: string;
                 observed_at: number;
+                attempts: number;
+                next_offset: number;
             }>;
             for (const row of pending) {
+                if (!(await canContinue())) break;
+                result.attempted++;
                 try {
                     const items = JSON.parse(row.payload) as NewsItem[];
-                    if (!Array.isArray(items)) throw new Error("Invalid cached article snapshot.");
-                    await this.articleIndex.upsertSourceItems(row.source_id as SourceID, items, row.observed_at);
-                    await executeArticleBatch(this.db, [
-                        {
-                            sql: `INSERT INTO article_ingest_checkpoint(source_id,payload,observed_at)
-                            SELECT id,data,updated FROM cache WHERE id=? AND data=? AND updated=?
-                            ON CONFLICT(source_id) DO UPDATE SET payload=excluded.payload,observed_at=excluded.observed_at`,
-                            params: [row.source_id, row.payload, row.observed_at],
-                        },
-                        { sql: "DELETE FROM article_ingest_pending WHERE id=?", params: [row.id] },
-                    ]);
+                    const offset = Number(row.next_offset);
+                    if (!Array.isArray(items) || !Number.isSafeInteger(offset) || offset < 0 || offset > items.length)
+                        throw new Error("Invalid cached article snapshot.");
+                    const next = Math.min(items.length, offset + SNAPSHOT_CHUNK_SIZE);
+                    const chunk = items.slice(offset, next);
+                    if (
+                        chunk.some(
+                            (item) =>
+                                !item ||
+                                typeof item !== "object" ||
+                                !["string", "number"].includes(typeof item.id) ||
+                                typeof item.title !== "string" ||
+                                typeof item.url !== "string"
+                        )
+                    )
+                        throw new Error("Invalid cached article item.");
+                    // A crash between upsert and checkpoint repeats a chunk:
+                    // canonical identity and observation timestamps are unchanged.
+                    await this.articleIndex.upsertSourceItems(row.source_id as SourceID, chunk, row.observed_at, owner);
+                    const fence = [owner, Date.now()];
+                    if (next === items.length) {
+                        const [, removed] = await executeArticleBatch(this.db, [
+                            {
+                                sql: `INSERT INTO article_ingest_checkpoint(source_id,payload,observed_at)
+                                SELECT id,data,updated FROM cache WHERE id=? AND data=? AND updated=? AND ${leaseGuard}
+                                ON CONFLICT(source_id) DO UPDATE SET payload=excluded.payload,observed_at=excluded.observed_at`,
+                                params: [row.source_id, row.payload, row.observed_at, ...fence],
+                            },
+                            {
+                                sql: `DELETE FROM article_ingest_pending WHERE id=? AND ${leaseGuard} RETURNING id`,
+                                params: [row.id, ...fence],
+                                rows: true,
+                            },
+                            {
+                                sql: `DELETE FROM article_ingest_work WHERE id=? AND ${leaseGuard}`,
+                                params: [row.id, ...fence],
+                            },
+                        ]);
+                        result.completed += removed.length;
+                    } else {
+                        const [advanced] = await executeArticleBatch(this.db, [
+                            {
+                                sql: `INSERT INTO article_ingest_work(id,next_offset,next_attempt_at)
+                                SELECT ?,?,0 WHERE ${leaseGuard}
+                                ON CONFLICT(id) DO UPDATE SET next_offset=excluded.next_offset,next_attempt_at=0 RETURNING id`,
+                                params: [row.id, next, ...fence],
+                                rows: true,
+                            },
+                        ]);
+                        result.advanced += advanced.length;
+                    }
                 } catch (error) {
                     logger.warn("Could not replay article snapshot; journal retained.", describeSourceError(error));
-                    await this.db
-                        .prepare("UPDATE article_ingest_pending SET attempts=attempts+1 WHERE id=?")
-                        .run(row.id);
+                    const now = Date.now();
+                    const [failed] = await executeArticleBatch(this.db, [
+                        {
+                            sql: `UPDATE article_ingest_pending SET attempts=attempts+1 WHERE id=? AND ${leaseGuard} RETURNING id`,
+                            params: [row.id, owner, now],
+                            rows: true,
+                        },
+                        {
+                            sql: `INSERT INTO article_ingest_work(id,next_offset,next_attempt_at)
+                            SELECT ?,?,? WHERE ${leaseGuard}
+                            ON CONFLICT(id) DO UPDATE SET next_attempt_at=excluded.next_attempt_at`,
+                            params: [row.id, row.next_offset, now + retryDelay(row.attempts + 1), owner, now],
+                        },
+                    ]);
+                    result.failed += failed.length;
                 }
             }
-            await measureBenchmarkPhase("index.repair", () => this.articleIndex!.continueRepair(2));
+            const repair = (await canContinue())
+                ? await measureBenchmarkPhase("index.repair", () => this.articleIndex!.continueRepair(2))
+                : undefined;
+            result.remaining = await readMaintenanceBacklog(this.db);
+            result.pendingFts = (await ftsRecoveryStatus(this.db)).pending;
+            const health = await this.getArticleIndexHealth();
+            result.untrackedCache = "untrackedCache" in health ? (health.untrackedCache ?? null) : null;
+            result.status = signal?.aborted
+                ? "interrupted"
+                : repair?.status === "unavailable"
+                  ? "unavailable"
+                  : health.status === "ok" && result.remaining.pendingIngest === 0 && result.pendingFts === 0
+                    ? "ok"
+                    : "pending";
         } catch (error) {
             logger.warn(
                 "Article maintenance is unavailable; source cache remains available.",
                 describeSourceError(error)
             );
+            result.status = "unavailable";
+        } finally {
+            if (owner) {
+                try {
+                    await releaseMaintenanceLease(this.db, owner);
+                } catch (error) {
+                    logger.warn("Article maintenance lease release failed.", describeSourceError(error));
+                }
+            }
         }
+        return finish();
     }
 
     async getArticleIndexHealth() {
