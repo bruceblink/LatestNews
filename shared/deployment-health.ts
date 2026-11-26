@@ -23,6 +23,7 @@ export interface DeploymentHealthSourcesCheck {
     idle: number;
     cacheDegraded: number;
     updatedAt: number;
+    sampleScope?: SourceHealthSummary["sampleScope"];
 }
 
 export interface DeploymentArticleIndexCheck {
@@ -112,6 +113,7 @@ function createSourcesCheck(summary: SourceHealthSummary): DeploymentHealthSourc
         idle: summary.idle,
         cacheDegraded: summary.cacheDegraded,
         updatedAt: summary.updatedAt,
+        ...(summary.sampleScope ? { sampleScope: summary.sampleScope } : {}),
     };
 }
 

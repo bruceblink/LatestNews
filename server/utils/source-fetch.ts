@@ -1,8 +1,10 @@
+import type { H3Event } from "h3";
 import type { NewsItem, SourceID } from "@shared/types";
 import type { NewsItemsNormalizationQuality } from "@shared/news-item-schema";
 
 import process from "node:process";
 import { getters } from "#/getters";
+import { getRequestSourceHealthPersistence } from "#/database/source-health-events";
 import {
     getCrawlerSourceKind,
     fetchConfiguredSource,
@@ -10,12 +12,12 @@ import {
     fetchInstalledCrawlerSource,
 } from "#/utils/crawler-plugin-runtime";
 
-import { legacySourceSignal } from "./fetch";
 import { createSourceEngine, parseSourceConcurrency } from "./source-engine";
+import { legacySourceSignal, createRequestFetchScheduler, runWithRequestFetchScheduler } from "./fetch";
 import { recordSourceAdapter, recordSourceFailure, recordSourceQuality, recordSourceSuccess } from "./source-health";
 
-import type { SourceAdapter } from "./source-engine";
 import type { CollectionTrace } from "./collection-trace";
+import type { SourceAdapter, SourceCollectOptions } from "./source-engine";
 
 interface SourceFetcherQueueOptions {
     /** Maximum number of source collectors that may execute at the same time. */
@@ -64,36 +66,57 @@ export function createSourceFetcher({
     return engine.collect;
 }
 
-const sourceEngine = createSourceEngine({
-    maxConcurrent: parseSourceConcurrency(process.env.LATESTNEWS_SOURCE_MAX_CONCURRENT),
-    resolveAdapter: (id) => {
-        const crawlerSourceKind = getCrawlerSourceKind(id);
-        if (crawlerSourceKind) {
-            return {
-                descriptor: { id, kind: crawlerSourceKind },
-                collect: async ({ signal }) =>
-                    (await (crawlerSourceKind === "plugin"
-                        ? fetchInstalledCrawlerSource(id, signal)
-                        : fetchConfiguredSource(id, signal))) ?? [],
-            } satisfies SourceAdapter;
-        }
+function createRuntimeSourceEngine(scheduler?: ReturnType<typeof createRequestFetchScheduler>) {
+    return createSourceEngine({
+        maxConcurrent: parseSourceConcurrency(process.env.LATESTNEWS_SOURCE_MAX_CONCURRENT),
+        resolveAdapter: (id) => {
+            const crawlerSourceKind = getCrawlerSourceKind(id);
+            if (crawlerSourceKind) {
+                return {
+                    descriptor: { id, kind: crawlerSourceKind },
+                    collect: async ({ signal }) =>
+                        (await (crawlerSourceKind === "plugin"
+                            ? fetchInstalledCrawlerSource(id, signal)
+                            : fetchConfiguredSource(id, signal))) ?? [],
+                } satisfies SourceAdapter;
+            }
 
-        if (typeof getters[id] === "function") {
-            return {
-                descriptor: { id, kind: "legacy" },
-                collect: ({ signal }) => legacySourceSignal.run(signal, getters[id]),
-            } satisfies SourceAdapter;
-        }
+            if (typeof getters[id] === "function") {
+                return {
+                    descriptor: { id, kind: "legacy" },
+                    collect: ({ signal }) =>
+                        legacySourceSignal.run(signal, () =>
+                            scheduler ? runWithRequestFetchScheduler(scheduler, getters[id]) : getters[id]()
+                        ),
+                } satisfies SourceAdapter;
+            }
 
-        return undefined;
-    },
-    onSuccess: recordSourceSuccess,
-    onQuality: recordSourceQuality,
-    onFailure: recordSourceFailure,
-    onAdapter: (id, descriptor) => recordSourceAdapter(id, descriptor.kind),
-});
+            return undefined;
+        },
+        onSuccess: recordSourceSuccess,
+        onQuality: recordSourceQuality,
+        onFailure: recordSourceFailure,
+        onAdapter: (id, descriptor) => recordSourceAdapter(id, descriptor.kind),
+    });
+}
 
-export const fetchSourceItems = sourceEngine.collect;
+const sourceEngine = createRuntimeSourceEngine();
+const requestEngines = new WeakMap<H3Event, ReturnType<typeof createRuntimeSourceEngine>>();
+
+export function fetchSourceItems(id: SourceID, options: SourceCollectOptions & { event?: H3Event } = {}) {
+    const { event, ...collectOptions } = options;
+    const persistence = event?.req.runtime?.cloudflare ? getRequestSourceHealthPersistence(event) : undefined;
+    let engine = sourceEngine;
+    if (event && persistence) {
+        const existing = requestEngines.get(event);
+        engine = existing ?? createRuntimeSourceEngine(createRequestFetchScheduler());
+        if (!existing) requestEngines.set(event, engine);
+    }
+    return engine.collect(id, {
+        ...collectOptions,
+        healthPersistence: persistence,
+    });
+}
 export const hasSourceGetter = sourceEngine.hasSource;
 
 export function setSourceCollectionTrace(trace?: CollectionTrace) {

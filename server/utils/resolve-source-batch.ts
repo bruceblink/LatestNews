@@ -52,7 +52,7 @@ export async function resolveSourceBatchPayload(
         invalidSourceIds,
         cacheEntries: caches,
         signal,
-        fetchMissing: (id, collectionSignal) => fetchSourceItems(id, { signal: collectionSignal }),
+        fetchMissing: (id, collectionSignal) => fetchSourceItems(id, { signal: collectionSignal, event }),
         saveCache: async (id, items) => {
             if (!cacheTable) return;
             await cacheTable.set(id, items);

@@ -31,6 +31,7 @@ export interface SourceHealthDiagnosticsResponse {
         sourceCount: number;
         failingCount: number;
         cacheDegradedCount: number;
+        sampleScope?: SourceHealthSummary["sampleScope"];
         sampleWindowStartedAt?: number;
     };
     errors: SourceApiError[];
@@ -73,6 +74,7 @@ export function formatSourceHealthDiagnostics(
         `异常：${summary.failing}`,
         `未采样：${summary.idle}`,
         `缓存降级：${summary.cacheDegraded}`,
+        ...(summary.sampleScope === "instance" ? ["采样范围：当前运行实例；不代表持久累计或跨实例统计。"] : []),
         `采样窗口开始：${formatOptionalTime(summary.sampleWindowStartedAt, formatTime)}`,
         "",
         formatQualitySection(qualitySources, formatTime),
@@ -110,6 +112,7 @@ export function createSourceHealthDiagnosticsResponse(
             sourceCount: summary.total,
             failingCount: summary.failing,
             cacheDegradedCount: summary.cacheDegraded,
+            ...(summary.sampleScope ? { sampleScope: summary.sampleScope } : {}),
             ...(summary.sampleWindowStartedAt !== undefined
                 ? { sampleWindowStartedAt: summary.sampleWindowStartedAt }
                 : {}),

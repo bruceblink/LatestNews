@@ -1,3 +1,4 @@
+import type { H3Event } from "h3";
 import type { Database } from "db0";
 import type { SourceID } from "@shared/types";
 import type { SourceHealthEvent } from "@shared/source-health-types";
@@ -7,6 +8,7 @@ import { useDatabase } from "nitro/database";
 import { describeSourceError, safeSourceErrorMessage } from "@shared/source-error";
 
 import { logger } from "../utils/logger";
+import { createRequestD1Database } from "./request-d1";
 
 export interface SourceHealthEventRecord extends SourceHealthEvent {
     sourceId: SourceID;
@@ -83,7 +85,7 @@ export class SourceHealthEvents {
                       `SELECT id, source_id, status, occurred_at, duration_ms, item_count, error_message
                        FROM source_health_events
                        WHERE source_id = ?
-                       ORDER BY occurred_at DESC
+                       ORDER BY occurred_at DESC, id DESC
                        LIMIT ?;`
                   )
                   .all(sourceId, limit)
@@ -91,7 +93,7 @@ export class SourceHealthEvents {
                   .prepare(
                       `SELECT id, source_id, status, occurred_at, duration_ms, item_count, error_message
                        FROM source_health_events
-                       ORDER BY occurred_at DESC
+                       ORDER BY occurred_at DESC, id DESC
                        LIMIT ?;`
                   )
                   .all(limit);
@@ -114,7 +116,7 @@ export class SourceHealthEvents {
                      SELECT id
                      FROM source_health_events
                      WHERE source_id = ?
-                     ORDER BY occurred_at DESC
+                     ORDER BY occurred_at DESC, id DESC
                      LIMIT ?
                    );`
             )
@@ -140,6 +142,58 @@ export async function getSourceHealthEventsTable() {
     })();
 
     return sourceHealthEventsTablePromise;
+}
+
+/** A collection owns the request that first started it, including its health write. */
+export interface SourceHealthPersistence {
+    append(sourceId: SourceID, event: SourceHealthEvent): Promise<void>;
+    retain(work: Promise<unknown>): void;
+}
+
+const requestPersistence = new WeakMap<H3Event, SourceHealthPersistence>();
+
+export function getRequestSourceHealthPersistence(event?: H3Event): SourceHealthPersistence | undefined {
+    const cloudflare = event?.req.runtime?.cloudflare;
+    if (!event || !cloudflare) return undefined;
+    const existing = requestPersistence.get(event);
+    if (existing) return existing;
+
+    // Capture the binding and flags now. Neither a subsequent request nor
+    // a process-global D1 connector can change the destination of this write.
+    const binding = cloudflare.env.LATESTNEWS_DB;
+    const enabled = (cloudflare.env.ENABLE_CACHE ?? process.env.ENABLE_CACHE) !== "false";
+    const initialize = (cloudflare.env.INIT_TABLE ?? process.env.INIT_TABLE) !== "false";
+    let tablePromise: Promise<SourceHealthEvents> | undefined;
+    const persistence: SourceHealthPersistence = {
+        async append(sourceId, sample) {
+            if (!enabled) return;
+            tablePromise ??= (async () => {
+                const table = new SourceHealthEvents(createRequestD1Database(binding));
+                if (initialize) await table.init();
+                return table;
+            })();
+            try {
+                const table = await tablePromise;
+                await table.append(sourceId, sample);
+            } catch (error) {
+                tablePromise = undefined;
+                logger.warn("Could not persist request source health", describeSourceError(error));
+            }
+        },
+        retain(work) {
+            try {
+                event.waitUntil(
+                    work.catch((error: unknown) => {
+                        logger.warn("Source health background work failed", describeSourceError(error));
+                    })
+                );
+            } catch (error) {
+                logger.warn("Could not retain request source health work", describeSourceError(error));
+            }
+        },
+    };
+    requestPersistence.set(event, persistence);
+    return persistence;
 }
 
 function rowToEventRecord(row: SourceHealthEventRow): SourceHealthEventRecord {

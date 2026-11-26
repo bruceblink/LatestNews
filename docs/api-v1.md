@@ -182,6 +182,8 @@ Example:
 curl "https://news.example.com/api/v1/health/sources?adapterKind=plugin&status=cache-degraded&limit=20"
 ```
 
+来源健康摘要的可选字段 `sampleScope: "instance"` 表示当前运行实例的采样计数，重启可归零，不代表跨实例累计。诊断文本也标注这一范围。持久健康事件按来源仅保留近期记录；不能据此推断完整七天采集质量。旧版本可能不返回该字段。
+
 ## Feed Export
 
 | Method | Path | Purpose |

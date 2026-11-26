@@ -55,6 +55,7 @@ export interface NodeManifestResponse {
         };
         health: {
             updatedAt: number;
+            sampleScope?: SourceHealthSummary["sampleScope"];
             total: number;
             healthy: number;
             failing: number;
@@ -106,6 +107,7 @@ export function createNodeManifestResponse(options: CreateNodeManifestOptions): 
             },
             health: {
                 updatedAt: options.healthSummary.updatedAt,
+                ...(options.healthSummary.sampleScope ? { sampleScope: options.healthSummary.sampleScope } : {}),
                 total: options.healthSummary.total,
                 healthy: options.healthSummary.healthy,
                 failing: options.healthSummary.failing,

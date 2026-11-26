@@ -34,7 +34,7 @@ export async function readSource(id: SourceID, latest: boolean, clearCache: bool
         now: Date.now(),
         lastAttemptAt: health.status === "failing" ? health.lastErrorAt : health.lastSuccessAt,
         signal: event.req.signal,
-        fetchLatest: (signal) => fetchSourceItems(id, { signal }),
+        fetchLatest: (signal) => fetchSourceItems(id, { signal, event }),
         saveCache: cacheTable ? (items) => cacheTable.set(id, items) : undefined,
         background: (pending) => event.waitUntil(pending),
         onFetchError: (error) => logger.warn(`Source update for ${id} failed.`, describeSourceError(error)),

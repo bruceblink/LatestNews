@@ -249,6 +249,9 @@ function HealthPage() {
                 </div>
             </div>
 
+            {data?.sampleScope === "instance" && (
+                <p className="text-xs op-65">当前运行实例的采样统计，不代表持久累计或跨实例统计。</p>
+            )}
             <div className="health-summary-grid grid grid-cols-2 gap-3 md:grid-cols-5">
                 <SummaryCard label="总数据源" value={data?.total ?? 0} tone="neutral" />
                 <SummaryCard label="正常" value={data?.healthy ?? 0} tone="green" />
