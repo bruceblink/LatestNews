@@ -9,15 +9,16 @@ import { useMemo, useState } from "react";
 import { APP_TITLE } from "~/utils/app-title";
 import { useFocusWith } from "~/hooks/useFocus";
 import { useHistory } from "~/hooks/useHistory";
+import { useQueryClient } from "@tanstack/react-query";
 import { NewsLink } from "~/components/reading/NewsLink";
 import { useRelativeTime } from "~/hooks/useRelativeTime";
 import { useReadingState } from "~/hooks/useReadingState";
 import { createUnifiedFeedView } from "@shared/unified-feed";
 import { isDynamicSourceId } from "@shared/dynamic-source-id";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSourceHealthSummary } from "~/hooks/useSourceHealth";
 import { getSourceAdapterKindLabel } from "@shared/source-adapter";
+import { useReloadCachedQuery } from "~/hooks/useReloadCachedQuery";
 import { ReadingStateActions } from "~/components/reading/ReadingStateActions";
 import { runtimeCatalogRevisionAtom } from "~/services/runtime-source-catalog.service";
 import {
@@ -49,7 +50,10 @@ function SourceDetailPage() {
     const [clearCacheError, setClearCacheError] = useState<string>();
     const [refreshMessage, setRefreshMessage] = useState<string>();
 
-    const metadataItemQuery = useQuery({
+    const metadataItemQuery = useReloadCachedQuery({
+        kind: "metadata-item",
+        // Dynamic identity changes with the live catalog revision.
+        persist: !isDynamicSourceId(requestedId),
         queryKey: [...getSourceMetadataItemCacheKey(requestedId), isDynamicSourceId(requestedId) ? catalogRevision : 0],
         queryFn: () => fetchSourceMetadataItem(requestedId),
         staleTime: 1000 * 60 * 10,
@@ -60,7 +64,8 @@ function SourceDetailPage() {
     const { sourceHealthMap } = useSourceHealthSummary();
     const { isFocused, toggleFocus } = useFocusWith(id);
     const health = sourceHealthMap.get(id);
-    const metadataQuery = useQuery({
+    const metadataQuery = useReloadCachedQuery({
+        kind: "metadata",
         queryKey: sourceMetadataCacheKey,
         queryFn: fetchSourceMetadata,
         enabled: Boolean(metadataItem?.column),
@@ -71,7 +76,8 @@ function SourceDetailPage() {
     useTitle(`${APP_TITLE} | ${metadataItem?.name ?? sourceId}`);
 
     const sourceItemsQueryKey = useMemo(() => getSourceItemsV1CacheKey(id, { limit: 20 }), [id]);
-    const itemsQuery = useQuery({
+    const itemsQuery = useReloadCachedQuery({
+        kind: "source-items",
         queryKey: sourceItemsQueryKey,
         queryFn: async () => {
             const response = await fetchSourceItemsV1(id, { limit: 20 });
@@ -102,7 +108,8 @@ function SourceDetailPage() {
         [id, metadataItem?.column, metadataQuery.data?.data.columns]
     );
 
-    const relatedFeedQuery = useQuery({
+    const relatedFeedQuery = useReloadCachedQuery({
+        kind: "feed",
         queryKey: getUnifiedFeedCacheKey(relatedFeedPayload),
         queryFn: () => fetchUnifiedFeed(relatedFeedPayload),
         enabled: relatedFeedPayload.sources.length > 0,
@@ -140,6 +147,7 @@ function SourceDetailPage() {
             const response = await fetchSourceItemsV1(id, { limit: 20, latest: true, clearCache: true });
             if (response.data.items.length || !previousItems?.items.length) {
                 queryClient.setQueryData(sourceItemsQueryKey, response);
+                void itemsQuery.remember(response);
             }
             if (response.data.status === "stale-cache" || response.data.status === "degraded-cache") {
                 setRefreshMessage("来源暂未更新，正在显示历史数据。");
@@ -155,7 +163,7 @@ function SourceDetailPage() {
 
     const handleRetryMetadata = () => void metadataItemQuery.refetch();
 
-    if (metadataItemQuery.isLoading) {
+    if (metadataItemQuery.isPending && !metadataItemQuery.isError) {
         return (
             <section className="mx-auto max-w-5xl px-1 md:px-4">
                 <PanelEmpty label="正在加载来源详情" />

@@ -365,6 +365,151 @@ test.describe("mobile insights controls", () => {
     });
 });
 
+test("reuses a fresh insight and catalog across reload, but an explicit query bypasses the cache", async ({ page }) => {
+    const mocks = await installInsightsMocks(page, {
+        respondToInsights: (_payload, index) => ({
+            body: createInsightsEnvelope({ headlines: [index === 0 ? firstHeadline : secondHeadline] }),
+        }),
+    });
+    await page.goto("/insights");
+    await expect(page.getByRole("link", { name: firstHeadline, exact: true })).toBeVisible();
+    expect(mocks.insightsRequests).toHaveLength(1);
+    expect(mocks.catalogRequests).toHaveLength(1);
+    await expect
+        .poll(() => page.evaluate(() => Boolean(localStorage.getItem("latestnews:news-reload-cache:v1"))))
+        .toBe(true);
+    await page.reload();
+    await expect(page.getByRole("link", { name: firstHeadline, exact: true })).toBeVisible();
+    await expect(page.locator(".insights-page-status").first()).toContainText("本地缓存");
+    expect(mocks.insightsRequests).toHaveLength(1);
+    expect(mocks.catalogRequests).toHaveLength(1);
+    const reopened = await page.context().newPage();
+    try {
+        const reopenedMocks = await installInsightsMocks(reopened);
+        await reopened.goto("/insights");
+        await expect(reopened.getByRole("link", { name: firstHeadline, exact: true })).toBeVisible();
+        expect(reopenedMocks.insightsRequests).toHaveLength(0);
+        expect(reopenedMocks.catalogRequests).toHaveLength(0);
+    } finally {
+        await reopened.close();
+    }
+    await page.getByRole("button", { name: "查询", exact: true }).filter({ visible: true }).click();
+    await expect(page.getByRole("link", { name: secondHeadline, exact: true })).toBeVisible();
+    expect(mocks.insightsRequests).toHaveLength(2);
+    await page.reload();
+    await expect(page.getByRole("link", { name: secondHeadline, exact: true })).toBeVisible();
+    await expect(page.locator(".insights-page-status").first()).toContainText("本地缓存");
+    expect(mocks.insightsRequests).toHaveLength(2);
+});
+
+test("does not reuse a cached ranking after the local reading filter changes", async ({ page }) => {
+    const release = Promise.withResolvers<void>();
+    const requested = Promise.withResolvers<void>();
+    const mocks = await installInsightsMocks(page, {
+        respondToInsights: async (_payload, index) => {
+            if (index === 1) {
+                requested.resolve();
+                await release.promise;
+            }
+            return { body: createInsightsEnvelope({ headlines: [index === 0 ? firstHeadline : secondHeadline] }) };
+        },
+    });
+    await page.goto("/insights");
+    await expect(page.getByRole("link", { name: firstHeadline, exact: true })).toBeVisible();
+    await page.evaluate(() => {
+        localStorage.setItem(
+            "reading-history",
+            JSON.stringify([
+                {
+                    newsId: "read",
+                    title: "Already read",
+                    url: "https://example.test/insights/1",
+                    sourceId: "hackernews",
+                    sourceName: "Hacker News",
+                    readAt: Date.now(),
+                },
+            ])
+        );
+    });
+    try {
+        await page.reload();
+        await requested.promise;
+        await expect(page.getByRole("link", { name: firstHeadline, exact: true })).toHaveCount(0);
+    } finally {
+        release.resolve();
+    }
+    await expect(page.getByRole("link", { name: secondHeadline, exact: true })).toBeVisible();
+    expect(mocks.insightsRequests).toHaveLength(2);
+});
+
+test("briefly reuses a usable partial insight without persisting total failures", async ({ page }) => {
+    const mocks = await installInsightsMocks(page, {
+        respondToInsights: (_payload, index) => {
+            const body = createInsightsEnvelope({ partial: true, headlines: index === 0 ? [firstHeadline] : [] });
+            body.meta.resolvedSourceCount = index === 0 ? 1 : 0;
+            body.meta.omittedSourceIds = index === 0 ? ["weibo"] : ["weibo", "hackernews"];
+            return { body };
+        },
+    });
+    await page.goto("/insights");
+    await expect(page.getByRole("link", { name: firstHeadline, exact: true })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("link", { name: firstHeadline, exact: true })).toBeVisible();
+    await expect(page.locator(".insights-page-status").first()).toContainText("部分数据");
+    expect(mocks.insightsRequests).toHaveLength(1);
+    await page.getByRole("button", { name: "查询", exact: true }).filter({ visible: true }).click();
+    await expect(page.getByRole("alert")).toContainText("当前保留上次结果");
+    await page.reload();
+    await expect(page.getByRole("link", { name: firstHeadline, exact: true })).toBeVisible();
+    expect(mocks.insightsRequests).toHaveLength(2);
+});
+
+test("shows an expired insight immediately while a slow revalidation runs, without blocking on the catalog", async ({
+    page,
+}) => {
+    const release = Promise.withResolvers<void>();
+    const started = Promise.withResolvers<void>();
+    const mocks = await installInsightsMocks(page, {
+        respondToInsights: async (_payload, index) => {
+            if (index === 1) {
+                started.resolve();
+                await release.promise;
+            }
+            return { body: createInsightsEnvelope({ headlines: [index === 0 ? firstHeadline : secondHeadline] }) };
+        },
+    });
+    await page.goto("/insights");
+    await expect(page.getByRole("link", { name: firstHeadline, exact: true })).toBeVisible();
+    await page.evaluate(() => {
+        const key = "latestnews:news-reload-cache:v1";
+        const rows = JSON.parse(localStorage.getItem(key)!);
+        rows.forEach((row: { savedAt: number }) => {
+            row.savedAt = Date.now() - 4 * 60_000;
+        });
+        localStorage.setItem(key, JSON.stringify(rows));
+        const catalogKey = "latestnews:runtime-source-catalog";
+        const catalog = JSON.parse(localStorage.getItem(catalogKey)!);
+        catalog.remoteCheckedAt = Date.now() - 4 * 60_000;
+        localStorage.setItem(catalogKey, JSON.stringify(catalog));
+    });
+    const releaseCatalog = Promise.withResolvers<void>();
+    await page.route("**/api/v1/sources", async (route) => {
+        await releaseCatalog.promise;
+        await route.fulfill({ json: { data: { sources: [] } } });
+    });
+    try {
+        await page.reload({ waitUntil: "domcontentloaded" });
+        await started.promise;
+        await expect(page.getByRole("link", { name: firstHeadline, exact: true })).toBeVisible();
+        await expect(page.locator(".insights-page-status").first()).toContainText("更新中");
+    } finally {
+        releaseCatalog.resolve();
+        release.resolve();
+    }
+    await expect(page.getByRole("link", { name: secondHeadline, exact: true })).toBeVisible();
+    expect(mocks.insightsRequests).toHaveLength(2);
+});
+
 function createInsightsEnvelope(options: InsightsResponseOptions = {}) {
     const now = Date.now();
     const headlines = options.headlines ?? [firstHeadline];
@@ -422,6 +567,7 @@ function getInsightFilter(page: Page, label: string) {
 
 async function installInsightsMocks(page: Page, options: MockOptions = {}) {
     const insightsRequests: InsightsPayload[] = [];
+    const catalogRequests: string[] = [];
     let markFirstRequestStarted!: () => void;
     let releaseFirstRequest!: () => void;
     let heldFirstRequest = false;
@@ -474,6 +620,7 @@ async function installInsightsMocks(page: Page, options: MockOptions = {}) {
             return;
         }
         if (pathname.endsWith("/v1/sources")) {
+            catalogRequests.push(pathname);
             const sources = [
                 { id: "weibo", name: "微博", type: "hottest", column: "china" },
                 { id: "hackernews", name: "Hacker News", type: "hottest", column: "tech" },
@@ -506,6 +653,7 @@ async function installInsightsMocks(page: Page, options: MockOptions = {}) {
 
     return {
         insightsRequests,
+        catalogRequests,
         firstInsightsRequestStarted,
         releaseFirstInsightsRequest: () => {
             if (heldFirstRequest) releaseFirstRequest();

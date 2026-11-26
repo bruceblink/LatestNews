@@ -77,3 +77,55 @@ test("keeps history visible during a slow feed refresh and restores omitted sour
     await expect(page.getByText("部分来源正在显示历史数据。")).toHaveCount(0);
     expect(pageErrors).toEqual([]);
 });
+
+test("uses a scoped recent Feed snapshot on reload and recalculates the rolling query on explicit refresh", async ({
+    page,
+}) => {
+    let batchCalls = 0;
+    const cutoffs: number[] = [];
+    const title = "Recent rolling Feed snapshot";
+    await page.route("**/api/v1/sources", (route) => route.fulfill({ json: { data: { sources: [] } } }));
+    await page.route("**/api/v1/sources/batch", async (route) => {
+        batchCalls++;
+        const payload = route.request().postDataJSON() as { since: number; sources: string[] };
+        cutoffs.push(payload.since);
+        const now = Date.now();
+        await route.fulfill({
+            json: {
+                data: [
+                    {
+                        id: "zhihu",
+                        status: "success",
+                        updatedTime: now,
+                        items: [{ id: "rolling", title, url: "https://example.test/rolling", pubDate: now }],
+                    },
+                ],
+                meta: {
+                    generatedAt: now,
+                    requestedSourceCount: 1,
+                    resolvedSourceCount: 1,
+                    partial: false,
+                    omittedSourceIds: [],
+                    itemCount: 1,
+                    unfilteredItemCount: 1,
+                    filters: { sourceIds: payload.sources, columns: [], types: [], since: payload.since },
+                },
+                errors: [],
+            },
+        });
+    });
+    await page.goto("/feed?scope=hottest&since=24h");
+    await expect(page.getByRole("link", { name: title })).toBeVisible();
+    expect(batchCalls).toBe(1);
+    await page.reload();
+    await expect(page.getByRole("link", { name: title })).toBeVisible();
+    await expect(page.getByText("本地缓存", { exact: true })).toBeVisible();
+    expect(batchCalls).toBe(1);
+    await page.getByRole("button", { name: "刷新", exact: true }).click();
+    await expect.poll(() => batchCalls).toBe(2);
+    await expect(page.getByRole("button", { name: "刷新", exact: true })).toBeEnabled();
+    expect(cutoffs[1]).toBeGreaterThan(cutoffs[0]);
+    await page.reload();
+    await expect(page.getByRole("link", { name: title })).toBeVisible();
+    expect(batchCalls).toBe(2);
+});

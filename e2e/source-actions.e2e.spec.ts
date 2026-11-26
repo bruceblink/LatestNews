@@ -65,6 +65,31 @@ test("shows metadata service errors separately from a missing source and allows 
     expect(pageErrors).toEqual([]);
 });
 
+test("restores the source detail without an items request and persists manual refresh", async ({ page }) => {
+    let itemCalls = 0;
+    let metadataCalls = 0;
+    await installSourceMocks(page, {
+        onMetadata: () => {
+            metadataCalls++;
+            return { data: sourceMetadata };
+        },
+        onItems: () => ({
+            items: [{ ...fixtureItem, title: ++itemCalls === 1 ? fixtureItem.title : "Refreshed source item" }],
+        }),
+    });
+    await page.goto("/source/hackernews");
+    await expect(page.getByText(fixtureItem.title, { exact: true })).toBeVisible();
+    await page.reload();
+    await expect(page.getByText(fixtureItem.title, { exact: true })).toBeVisible();
+    expect(itemCalls).toBe(1);
+    expect(metadataCalls).toBe(1);
+    await page.getByRole("button", { name: "清缓存刷新", exact: true }).click();
+    await expect(page.getByText("Refreshed source item", { exact: true })).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("Refreshed source item", { exact: true })).toBeVisible();
+    expect(itemCalls).toBe(2);
+});
+
 async function installSourceMocks(
     page: Page,
     options: {
