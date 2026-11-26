@@ -1,24 +1,28 @@
 import type { ChildProcess } from "node:child_process";
 
 import os from "node:os";
-import { join } from "node:path";
 import { createDatabase } from "db0";
 import { parseArgs } from "node:util";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { fork } from "node:child_process";
 import { performance } from "node:perf_hooks";
-import { rm, mkdtemp } from "node:fs/promises";
+import { rm, mkdir, mkdtemp } from "node:fs/promises";
+import { join, resolve as resolvePath } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import sqliteConnector from "db0/connectors/better-sqlite3";
 
 import { logger } from "../../server/utils/logger";
 import { Cache } from "../../server/database/cache-store";
 import { runOnlineWorker } from "./article-online-worker";
+import { readOnlineResult, publishOnlineResult } from "./article-online-result";
+import { validateSlotResult, evaluateOnlineAcceptance } from "./article-online-gate";
 import { verifyOnlineFixture, initializeOnlineFixture } from "./article-online-fixture";
 import { distribution, runtimeMetrics, instrumentSqlite } from "./article-online-metrics";
+import { slowSpans, captureSpan, runHostProbe, hostPressure } from "./article-online-diagnostics";
 import { readFtsAudit, beginFtsRepair, ftsRecoveryStatus } from "../../server/database/article-recovery";
 
+import type { PressureSample } from "./article-online-diagnostics";
 import type { OnlineStart, OnlineSample } from "./article-online-worker";
 import type { SqliteBuildPage } from "../../server/database/article-recovery";
 import type {
@@ -35,64 +39,61 @@ interface WorkerResult {
     samples: OnlineSample[];
     metrics: ReturnType<ReturnType<typeof instrumentType>>;
     runtime: ReturnType<ReturnType<typeof runtimeType>["finish"]>;
+    slow: ReturnType<ReturnType<typeof slowSpans>["finish"]>;
 }
 interface RecoveryWindow {
     startedAt: number;
     endedAt: number;
 }
-interface WorkerHandle {
+interface WorkerHandle<T = WorkerResult> {
     child: ChildProcess;
     ready: Promise<void>;
-    done: Promise<WorkerResult>;
+    done: Promise<T>;
     exited: Promise<void>;
+}
+function startProcess<T>(args: string[], resultPath: string): WorkerHandle<T> {
+    const child = fork(fileURLToPath(import.meta.url), [...args, resultPath], {
+        execArgv: ["--import", "tsx"],
+        env: { ...process.env, TSX_TSCONFIG_PATH: "tsconfig.node.json" },
+        stdio: ["ignore", "ignore", "inherit", "ipc"],
+    });
+    let readyResolve!: () => void, readyReject!: (e: Error) => void;
+    const ready = new Promise<void>((resolve, reject) => {
+        readyResolve = resolve;
+        readyReject = reject;
+    });
+    void ready.catch(() => {});
+    child.on("message", (message: unknown) => {
+        if ((message as { kind?: string })?.kind === "ready") readyResolve();
+    });
+    child.once("error", readyReject);
+    const closed = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve) =>
+        child.once("close", (code, signal) => {
+            readyReject(new Error(args[0] + " exited before readiness: " + code + "/" + signal));
+            resolve({ code, signal });
+        })
+    );
+    const done = closed.then(async ({ code, signal }) => {
+        if (code !== 0 || signal !== null) throw new Error(args[0] + " failed: " + code + "/" + signal);
+        return readOnlineResult<T>(resultPath);
+    });
+    void done.catch(() => {});
+    return { child, ready, done, exited: closed.then(() => {}) };
 }
 function startWorker(
     path: string,
     role: "write" | "read",
     rate: number,
     size: number,
-    page: SqliteBuildPage
-): WorkerHandle {
-    const child = fork(
-        fileURLToPath(import.meta.url),
+    page: SqliteBuildPage,
+    evidenceDir: string
+) {
+    return startProcess<WorkerResult>(
         ["worker", path, role, String(rate), String(size), String(page)],
-        {
-            execArgv: ["--import", "tsx"],
-            env: { ...process.env, TSX_TSCONFIG_PATH: "tsconfig.node.json" },
-            stdio: ["ignore", "ignore", "inherit", "ipc"],
-        }
+        join(evidenceDir, role + ".json")
     );
-    let readyResolve!: () => void, doneResolve!: (r: WorkerResult) => void;
-    let readyReject!: (e: Error) => void, doneReject!: (e: Error) => void;
-    const ready = new Promise<void>((resolve, reject) => {
-        readyResolve = resolve;
-        readyReject = reject;
-    });
-    const done = new Promise<WorkerResult>((resolve, reject) => {
-        doneResolve = resolve;
-        doneReject = reject;
-    });
-    // Register rejection handlers before the parent starts waiting on other work.
-    void ready.catch(() => {});
-    void done.catch(() => {});
-    child.on("message", (message: unknown) => {
-        const m = message as { kind: string; result: WorkerResult };
-        if (m.kind === "ready") readyResolve();
-        if (m.kind === "result") doneResolve(m.result);
-    });
-    const fail = (error: Error) => {
-        readyReject(error);
-        doneReject(error);
-    };
-    child.once("error", fail);
-    const exited = new Promise<void>((resolve) =>
-        child.once("close", (code, signal) => {
-            fail(new Error(role + " worker exited: " + code + "/" + signal));
-            resolve();
-        })
-    );
-    return { child, ready, done, exited };
 }
+
 function summarizeWorker(worker: WorkerResult, windows: RecoveryWindow[]) {
     const ok = worker.samples.filter((s) => s.ok);
     const overlapping = ok.filter((s) => windows.some((w) => s.startedAt <= w.endedAt && s.endedAt >= w.startedAt));
@@ -112,6 +113,7 @@ function summarizeWorker(worker: WorkerResult, windows: RecoveryWindow[]) {
         modes,
         sql: worker.metrics,
         runtime: worker.runtime,
+        slow: worker.slow,
     };
 }
 function integer(value: string | undefined, min: number, max: number) {
@@ -130,6 +132,8 @@ async function main() {
             "write-rate": { type: "string", default: "1" },
             "read-rate": { type: "string", default: "2" },
             "rebuild-every": { type: "string", default: "0" },
+            journal: { type: "string", default: "delete" },
+            "evidence-dir": { type: "string" },
         },
     });
     const size = integer(values.size, 1000, 100000);
@@ -141,25 +145,39 @@ async function main() {
     const rebuildEvery = integer(values["rebuild-every"], 0, 1800);
     assert(values.mode === "repair" || values.mode === "control");
     const mode = values.mode;
+    assert(values.journal === "delete" || values.journal === "wal");
+    const journal = values.journal;
+    const evidenceDir = values["evidence-dir"]
+        ? resolvePath(values["evidence-dir"])
+        : await mkdtemp(join(os.tmpdir(), "latestnews-online-evidence-"));
+    if (values["evidence-dir"]) await mkdir(evidenceDir, { mode: 0o700 });
+    console.log("EVIDENCE:" + evidenceDir);
     const dir = await mkdtemp(join(os.tmpdir(), "latestnews-online-"));
     const path = join(dir, "fixture.sqlite");
     const workers: WorkerHandle[] = [];
     let db: ReturnType<typeof createDatabase> | undefined;
+    let observer: WorkerHandle<PressureSample[]> | undefined;
     logger.level = 2;
     try {
-        const config = await initializeOnlineFixture(path, size);
+        const fixtureDone = captureSpan("fixture");
+        const pressureBefore = hostPressure();
+        const config = await initializeOnlineFixture(path, size, journal);
+        const fixture = fixtureDone();
+        const pressureAfterFixture = hostPressure();
         db = createDatabase(sqliteConnector({ path }));
         const cache = new Cache(db, { sqliteBuildPage: page });
         await cache.check(false);
         const native = (await db.getInstance()) as NativeSqlite;
+        native.pragma("synchronous = FULL");
         const sqlMetrics = instrumentSqlite(native);
+        observer = startProcess<PressureSample[]>(["host-observer"], join(evidenceDir, "host.json"));
         workers.push(
-            startWorker(path, "write", writeRate, size, page),
-            startWorker(path, "read", readRate, size, page)
+            startWorker(path, "write", writeRate, size, page, evidenceDir),
+            startWorker(path, "read", readRate, size, page, evidenceDir)
         );
         const readyDeadline = AbortSignal.timeout(15000);
         await Promise.race([
-            Promise.all(workers.map((w) => w.ready)),
+            Promise.all([...workers.map((w) => w.ready), observer.ready]),
             new Promise<never>((_, reject) => {
                 readyDeadline.addEventListener("abort", () => reject(new Error("Worker readiness timeout")), {
                     once: true,
@@ -170,6 +188,7 @@ async function main() {
         const endAt = startAt + seconds * 1000;
         const start: OnlineStart = { startAt, endAt };
         for (const worker of workers) worker.child.send(start);
+        observer.child.send(start);
         await delay(Math.max(0, startAt - Date.now()));
         const runtime = runtimeMetrics();
         const recovery: RecoveryWindow[] = [];
@@ -179,6 +198,7 @@ async function main() {
             passes: 0,
             busy: 0,
             unavailable: 0,
+            interrupted: 0,
             failed: 0,
             completed: 0,
             advanced: 0,
@@ -188,6 +208,27 @@ async function main() {
             maxAttempts: 0,
         };
         const passTimes: number[] = [];
+        const slow = slowSpans();
+        const recordPass = async () => {
+            const t = performance.now();
+            const done = captureSpan("maintenance-pass");
+            const result = await cache.runArticleMaintenance(5);
+            slow.record(done());
+            passTimes.push(performance.now() - t);
+            maintenance.passes++;
+            if (result.status === "busy") maintenance.busy++;
+            if (result.status === "unavailable") maintenance.unavailable++;
+            if (result.status === "interrupted") maintenance.interrupted++;
+            maintenance.completed += result.completed;
+            maintenance.advanced += result.advanced;
+            maintenance.failed += result.failed;
+            maintenance.maxPending = Math.max(maintenance.maxPending, result.remaining?.pendingIngest ?? 0);
+            maintenance.maxOldestAgeMs = Math.max(maintenance.maxOldestAgeMs, result.remaining?.oldestAgeMs ?? 0);
+            maintenance.maxPendingFts = Math.max(maintenance.maxPendingFts, result.pendingFts ?? 0);
+            maintenance.maxAttempts = Math.max(maintenance.maxAttempts, result.remaining?.attempts ?? 0);
+            runtime.sample();
+            return result;
+        };
         const queueWindows: Array<{
             elapsedSec: number;
             pending: number;
@@ -205,19 +246,7 @@ async function main() {
                 await beginFtsRepair(db);
                 nextRepair = rebuildEvery ? activeRepair + rebuildEvery * 1000 : Infinity;
             }
-            const t = performance.now();
-            const result = await cache.runArticleMaintenance(5);
-            passTimes.push(performance.now() - t);
-            maintenance.passes++;
-            if (result.status === "busy") maintenance.busy++;
-            if (result.status === "unavailable") maintenance.unavailable++;
-            maintenance.completed += result.completed;
-            maintenance.advanced += result.advanced;
-            maintenance.failed += result.failed;
-            maintenance.maxPending = Math.max(maintenance.maxPending, result.remaining?.pendingIngest ?? 0);
-            maintenance.maxOldestAgeMs = Math.max(maintenance.maxOldestAgeMs, result.remaining?.oldestAgeMs ?? 0);
-            maintenance.maxPendingFts = Math.max(maintenance.maxPendingFts, result.pendingFts ?? 0);
-            maintenance.maxAttempts = Math.max(maintenance.maxAttempts, result.remaining?.attempts ?? 0);
+            const result = await recordPass();
             if (activeRepair !== undefined) {
                 const state = await ftsRecoveryStatus(db);
                 if (state.phase === "ready" && !state.pending && (await readFtsAudit(db, true)).status === "verified") {
@@ -225,7 +254,6 @@ async function main() {
                     activeRepair = undefined;
                 }
             }
-            runtime.sample();
             if (now >= nextSample) {
                 queueWindows.push({
                     elapsedSec: Math.round((now - startAt) / 1000),
@@ -243,6 +271,19 @@ async function main() {
             }
             await delay(activeRepair === undefined ? 200 : 10);
         }
+        // Retain maintenance diagnostics even if a worker result or final audit fails.
+        await publishOnlineResult(join(evidenceDir, "maintenance.json"), {
+            settled,
+            recovery,
+            maintenance,
+            queueWindows,
+            passLatency: distribution(passTimes),
+            sql: sqlMetrics(),
+            slow: slow.finish(),
+            fixture,
+            pressureBefore,
+            pressureAfterFixture,
+        });
         assert(settled, "Maintenance watchdog exceeded before convergence");
         const workerDeadline = AbortSignal.timeout(20000);
         const [writer, reader] = await Promise.race([
@@ -260,33 +301,56 @@ async function main() {
         );
         // A write in flight at the end of the offer window may commit after
         // the last poll. Drain again only after both workload processes exit.
+        validateSlotResult(writer, "write", writeRate, seconds);
+        validateSlotResult(reader, "read", readRate, seconds);
         const drainStart = performance.now();
+        let drained = false;
         while (performance.now() - drainStart < 120000) {
-            const r = await cache.runArticleMaintenance(5);
-            maintenance.completed += r.completed;
-            maintenance.failed += r.failed;
-            if (r.status === "ok") break;
+            const r = await recordPass();
+            if (r.status === "ok") {
+                drained = true;
+                break;
+            }
             await delay(20);
         }
         const writes = summarizeWorker(writer, recovery);
         const reads = summarizeWorker(reader, recovery);
-        const correctness = await verifyOnlineFixture(path, size, writer.samples);
-        const passed =
-            writes.errors === 0 &&
-            reads.errors === 0 &&
-            maintenance.failed === 0 &&
-            maintenance.unavailable === 0 &&
-            (mode !== "repair" || recovery.length > 0);
-        const loadCompleted =
-            writes.skipped === 0 &&
-            reads.skipped === 0 &&
-            writes.completed === writes.slots &&
-            reads.completed === reads.slots;
+        // Preserve final audit failures in the report instead of throwing away
+        // completed measurements. No SQL or payload is copied to the error.
+        let correctness: Awaited<ReturnType<typeof verifyOnlineFixture>> | null = null;
+        let correctnessError: string | undefined;
+        try {
+            correctness = await verifyOnlineFixture(path, size, writer.samples);
+        } catch (error) {
+            correctnessError =
+                error instanceof assert.AssertionError ? "fixture-inconsistent" : "verification-unavailable";
+            console.error("Final fixture verification failed:", correctnessError);
+        }
+        const probeDeadline = AbortSignal.timeout(20000);
+        const pressure = await Promise.race([
+            observer.done,
+            new Promise<never>((_, reject) =>
+                probeDeadline.addEventListener("abort", () => reject(new Error("Observer timeout")), { once: true })
+            ),
+        ]);
+        await observer.exited;
+        assert.equal(observer.child.exitCode, 0);
+
+        const plannedRecoveries = mode === "control" ? 0 : rebuildEvery ? Math.ceil(seconds / rebuildEvery) : 1;
+        const acceptance = evaluateOnlineAcceptance({
+            writes,
+            reads,
+            maintenance,
+            drained,
+            correctnessPassed: correctness !== null,
+            completedRecoveries: recovery.length,
+            plannedRecoveries,
+        });
         const runtimeResult = runtime.finish();
         const result = {
-            result: !passed ? "failed" : loadCompleted ? "passed" : "incomplete-load",
-            correctnessPassed: passed,
-            loadCompleted,
+            ...acceptance,
+            drained,
+            plannedRecoveries,
             mode,
             size,
             page,
@@ -294,6 +358,8 @@ async function main() {
             writeRate,
             readRate,
             rebuildEvery,
+            journal,
+            diagnostics: { fixture, pressureBefore, pressureAfterFixture, pressure },
             environment: { node: process.version, cpu: os.cpus()[0]?.model, cores: os.cpus().length, sqlite: config },
             offeredLoadSeconds: (endAt - startAt) / 1000,
             elapsedThroughDrainMs: Date.now() - startAt,
@@ -310,14 +376,20 @@ async function main() {
                 queueWindows,
                 sql: sqlMetrics(),
                 runtime: runtimeResult,
+                slow: slow.finish(),
             },
             correctness,
+            ...(correctnessError ? { correctnessError } : {}),
             productionD1: false,
         };
+        await publishOnlineResult(join(evidenceDir, "result.json"), result);
         console.log("RESULT:" + JSON.stringify(result));
-        if (!passed) process.exitCode = 1;
-        else if (!loadCompleted) process.exitCode = 2;
+        if (acceptance.result === "failed") process.exitCode = 1;
+        else if (acceptance.result === "incomplete-load") process.exitCode = 2;
     } finally {
+        if (observer && observer.child.exitCode === null && observer.child.signalCode === null)
+            observer.child.kill("SIGKILL");
+        if (observer) await observer.exited;
         for (const worker of workers)
             if (worker.child.exitCode === null && worker.child.signalCode === null) worker.child.kill("SIGKILL");
         await Promise.all(workers.map((w) => w.exited));
@@ -326,13 +398,22 @@ async function main() {
     }
 }
 
-if (process.argv[2] === "worker") {
-    const [, , , path, role, rate, size, page] = process.argv;
+if (process.argv[2] === "host-observer") {
+    const start = new Promise<OnlineStart>((resolve) => process.once("message", (m) => resolve(m as OnlineStart)));
+    process.send?.({ kind: "ready" });
+    const { startAt, endAt } = await start;
+    try {
+        await publishOnlineResult(process.argv[3], await runHostProbe(startAt, endAt));
+    } finally {
+        process.disconnect?.();
+    }
+} else if (process.argv[2] === "worker") {
+    const [, , , path, role, rate, size, page, resultPath] = process.argv;
     assert(role === "read" || role === "write");
     const n = Number(page);
     assert(n === 50 || n === 100 || n === 200);
     try {
-        await runOnlineWorker(path, role, Number(rate), Number(size), n);
+        await publishOnlineResult(resultPath, await runOnlineWorker(path, role, Number(rate), Number(size), n));
     } finally {
         process.disconnect?.();
     }

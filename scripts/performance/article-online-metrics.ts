@@ -1,5 +1,7 @@
 import { performance, monitorEventLoopDelay } from "node:perf_hooks";
 
+import { slowSpans, captureSpan } from "./article-online-diagnostics";
+
 export interface NativeStatement {
     get(...params: unknown[]): unknown;
     all(...params: unknown[]): unknown[];
@@ -24,14 +26,13 @@ export function distribution(values: number[]) {
     };
 }
 
-function code(error: unknown) {
-    return typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
-        ? error.code
-        : "UNKNOWN";
+export function sqliteErrorCode(error: unknown) {
+    const value = typeof error === "object" && error !== null && "code" in error ? error.code : undefined;
+    return typeof value === "string" && /^SQLITE_[A-Z0-9_]{1,48}$/.test(value) ? value : "UNKNOWN";
 }
 
 export function isBusy(error: unknown) {
-    return /^SQLITE_(?:BUSY|LOCKED)(?:_|$)/.test(code(error));
+    return /^SQLITE_(?:BUSY|LOCKED)(?:_|$)/.test(sqliteErrorCode(error));
 }
 
 function phase(sql: string) {
@@ -60,22 +61,34 @@ export function instrumentSqlite(native: NativeSqlite) {
     const prepare = native.prepare.bind(native);
     const transaction = native.transaction.bind(native);
     const samples: Record<string, TransactionSample[]> = {};
+    const slow = slowSpans();
     let current: string | undefined;
     let failedBegins = 0;
     let busyBegins = 0;
     let busyStatements = 0;
     let busyTransactionsAfterBegin = 0;
+    const errorCodes: Record<string, number> = {};
+    const recordError = (error: unknown) => {
+        const code = sqliteErrorCode(error);
+        errorCodes[code] = (errorCodes[code] ?? 0) + 1;
+        return code;
+    };
     native.prepare = (sql: string) => {
         if (current !== undefined) {
             const kind = phase(sql);
             if (kind !== "other") current = kind;
         }
         let statement: NativeStatement;
+        const prepareDone = captureSpan("prepare:" + phase(sql));
+        let prepareError: string | undefined;
         try {
             statement = prepare(sql);
         } catch (error) {
+            prepareError = recordError(error);
             if (isBusy(error)) busyStatements++;
             throw error;
+        } finally {
+            slow.record({ ...prepareDone(), errorCode: prepareError });
         }
         return new Proxy(statement, {
             get(target, prop) {
@@ -83,11 +96,16 @@ export function instrumentSqlite(native: NativeSqlite) {
                 if (typeof value !== "function") return value;
                 if (!["get", "run", "all"].includes(String(prop))) return value.bind(target);
                 return (...params: unknown[]) => {
+                    const done = captureSpan(String(prop) + ":" + phase(sql));
+                    let statementError: string | undefined;
                     try {
                         return value.apply(target, params);
                     } catch (error) {
+                        statementError = recordError(error);
                         if (isBusy(error)) busyStatements++;
                         throw error;
+                    } finally {
+                        slow.record({ ...done(), errorCode: statementError });
                     }
                 };
             },
@@ -107,14 +125,17 @@ export function instrumentSqlite(native: NativeSqlite) {
         return {
             immediate() {
                 const start = performance.now();
+                const done = captureSpan("transaction");
                 enteredAt = undefined;
                 callbackEnded = undefined;
                 let failed = false;
+                let transactionError: string | undefined;
                 current = "other";
                 try {
                     return wrapped.immediate();
                 } catch (error) {
                     failed = true;
+                    transactionError = recordError(error);
                     if (enteredAt === undefined) {
                         failedBegins++;
                         if (isBusy(error)) busyBegins++;
@@ -122,7 +143,7 @@ export function instrumentSqlite(native: NativeSqlite) {
                     throw error;
                 } finally {
                     const end = performance.now();
-                    (samples[current ?? "other"] ??= []).push({
+                    const sample = {
                         acquireMs: (enteredAt ?? end) - start,
                         heldMs: enteredAt === undefined ? 0 : end - enteredAt,
                         wallMs: end - start,
@@ -130,6 +151,15 @@ export function instrumentSqlite(native: NativeSqlite) {
                         callbackMs: enteredAt === undefined ? 0 : (callbackEnded ?? end) - enteredAt,
                         tailMs: callbackEnded === undefined ? 0 : end - callbackEnded,
                         failed,
+                    };
+                    (samples[current ?? "other"] ??= []).push(sample);
+                    slow.record({
+                        ...done(),
+                        operation: "transaction:" + (current ?? "other"),
+                        acquireMs: sample.acquireMs,
+                        callbackMs: sample.callbackMs,
+                        tailMs: sample.tailMs,
+                        errorCode: transactionError,
                     });
                     current = undefined;
                 }
@@ -137,6 +167,8 @@ export function instrumentSqlite(native: NativeSqlite) {
         };
     };
     return () => ({
+        slow: slow.finish(),
+        errorCodes,
         failedBegins,
         busyBegins,
         busyStatements,

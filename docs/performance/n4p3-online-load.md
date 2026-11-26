@@ -61,3 +61,5 @@ Electron 生产构建通过；真实 Node/Electron 采集宿主 smoke 通过。�
 `pnpm performance:article-online --size 100000 --page 100 --seconds 1800 --rebuild-every 300 --write-rate 1 --read-rate 2`
 
 检查预定操作、累计失败/跳过、P95/P99、阶段锁时间、重建周期、event-loop delay、RSS、积压年龄/增长、停止输入后的队列收敛和逐条正确性。应另用同等负载复测不同 journal 配置及目标部署（需授权）；当前 DELETE 模式与单机模拟不能外推目标 D1 CPU、计费或生产 SLO。正式 1800 秒未执行，不关闭该验收条目。
+
+后续见 [异常停顿诊断与长测](n4p3-stall-diagnostics.md)：1800 秒已尝试但结果交接失败；已修复工具，仍需有效长测与负载准入，生产默认不变。
