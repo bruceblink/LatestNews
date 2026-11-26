@@ -1,0 +1,384 @@
+{
+  "checkedOn": "2026-11-26",
+  "release": {
+    "id": 458385650,
+    "tag": "v0.9.0",
+    "publishedAt": "2026-11-25T16:58:51Z",
+    "immutable": true,
+    "draft": false,
+    "tagObject": "17c19225dda69e88f0c7c9bd94d3bb8def8b4ecd",
+    "sourceCommit": "baacb5d292dc0bf23467f2c2b98171d402695fca",
+    "assetCount": 18,
+    "downloadedBytes": 1138699189
+  },
+  "assets": [
+    {
+      "name": "latest-linux-arm64.yml",
+      "bytes": 557,
+      "sha256": "b44ab64e9aad61c2d1a7a84398492ffd59b2e8bcefb0a0fed3a82fa5d9953bf1",
+      "sha512": "Llkvlu8uaegyuOICZUc0J1JGhb7IBoFfRD4C2YDmxWVmuuR6S5rYuQnnlv0z1uG1XJra8PzRDhXTzlHzRxZmfQ==",
+      "githubDigest": "sha256:b44ab64e9aad61c2d1a7a84398492ffd59b2e8bcefb0a0fed3a82fa5d9953bf1"
+    },
+    {
+      "name": "latest-linux.yml",
+      "bytes": 553,
+      "sha256": "06a02997256227af21d38a96bd6fc3388eb9b8bd5f33fdcbc2c2875fc65eb7bb",
+      "sha512": "10e5cCPj38ZarIxI79a56cBc8MFmW/1Iy0TgmVdzyKAj7M5gu2WEnGfN8qR2EhDKXU5MI2zG8Qv0rB8rlqWXFQ==",
+      "githubDigest": "sha256:06a02997256227af21d38a96bd6fc3388eb9b8bd5f33fdcbc2c2875fc65eb7bb"
+    },
+    {
+      "name": "latest-mac.yml",
+      "bytes": 522,
+      "sha256": "498e8c44912ec8479de627a9756ef7f9ae6923a005ddc37b16f539801d13bdff",
+      "sha512": "lb0cU0JwZSvhpjXl5e29oj7SrtHo/idryzNk4e7B/i8BzhFJwEEGFgupVhyuFO9gJ8JZHbNShTA4YtWIkOHZCw==",
+      "githubDigest": "sha256:498e8c44912ec8479de627a9756ef7f9ae6923a005ddc37b16f539801d13bdff"
+    },
+    {
+      "name": "latest.yml",
+      "bytes": 524,
+      "sha256": "053f20273f00988ff8c29c6ed36eb5fae279f5e0f61b3a7ba840968b25260b0c",
+      "sha512": "Eam4cuJOyxvIuQD2E0JTogZQzBeOM9UmNM686EMmTiAk5G7DVymoz3hXubC7J+pYtt7k7JEkVz+MlZ8GnTCSmw==",
+      "githubDigest": "sha256:053f20273f00988ff8c29c6ed36eb5fae279f5e0f61b3a7ba840968b25260b0c"
+    },
+    {
+      "name": "LatestNews-0.9.0-Linux-amd64.deb",
+      "bytes": 118603900,
+      "sha256": "3482af7ab3ef3d7aabe766e4998aa1aa5aee84a06811dda01cd32ec8d8c13fbb",
+      "sha512": "CobPzteDfdaagEijT+mYNm/SQxgLZFsLJRw6+MBoNlvhsJBttTBFbUZJsm1S7nD8zYQ238ciQBZc1RhdJjqUOw==",
+      "githubDigest": "sha256:3482af7ab3ef3d7aabe766e4998aa1aa5aee84a06811dda01cd32ec8d8c13fbb"
+    },
+    {
+      "name": "LatestNews-0.9.0-Linux-arm64.AppImage",
+      "bytes": 155247559,
+      "sha256": "b6d4f3404891843b96d6f20571cc3509752dd0a865bc9685e356e8deb1fe3715",
+      "sha512": "TdizQa6gE4pQ4oo4cZDU2QRzN4PTRDQ/xMxeB4QGvwSJ1ZWcaSFpkJX7DNvuB+T9f3aobZPMUprQtCS59dSwMA==",
+      "githubDigest": "sha256:b6d4f3404891843b96d6f20571cc3509752dd0a865bc9685e356e8deb1fe3715"
+    },
+    {
+      "name": "LatestNews-0.9.0-Linux-arm64.deb",
+      "bytes": 113504340,
+      "sha256": "ba6152aaa6c7d260c079d8b40797c43aeb54c91a97a2c6dcaef6863371c7318e",
+      "sha512": "h0xZrSbqs21cH+RddQZPBCKzSkQUwbenpMmldsrsgvnwUfnsZX1KQ4c0t9fAotVoHT9RmR8lyQJIHVIthlFrSQ==",
+      "githubDigest": "sha256:ba6152aaa6c7d260c079d8b40797c43aeb54c91a97a2c6dcaef6863371c7318e"
+    },
+    {
+      "name": "LatestNews-0.9.0-Linux-x86_64.AppImage",
+      "bytes": 154061845,
+      "sha256": "f8a5bac94b8631747567dc0379aa119d8ed37c7ea7cdc5beafc69cc80a85a389",
+      "sha512": "Bj2eE7n2M8F4jraTNvpFsb1WJUTAn2y8nlW3lhyDvRcpZziWMfco0SyFvVr9TomBEdqE8AU0fGvQDt8hGNvrWg==",
+      "githubDigest": "sha256:f8a5bac94b8631747567dc0379aa119d8ed37c7ea7cdc5beafc69cc80a85a389"
+    },
+    {
+      "name": "LatestNews-0.9.0-macOS-arm64.dmg",
+      "bytes": 158771632,
+      "sha256": "c569854f8628c0b5b39f4694290ed8c2ab7b61a6d0331ae6baa0b0e88b57906d",
+      "sha512": "pBXfb+6glNiFqY/GggBYCY5XhcRfO73W/EuMqyU009lpi+xy3XhLzY5Wjlgb7D6H/lg7XWK6d/+hx37jHsVSKQ==",
+      "githubDigest": "sha256:c569854f8628c0b5b39f4694290ed8c2ab7b61a6d0331ae6baa0b0e88b57906d"
+    },
+    {
+      "name": "LatestNews-0.9.0-macOS-arm64.dmg.blockmap",
+      "bytes": 168108,
+      "sha256": "2086a0209cda6d6861cb24c676572a20c8f0e2390fb88015a85b7e1f5fd292ea",
+      "sha512": "RAmK3GKK20BXS+DdjEpiDkVKXapEGbsJLyIit8wEoUv82Xt10nnYJpnPorJ7n2RB9oc0Hb1v/R18cpTQX3K0cQ==",
+      "githubDigest": "sha256:2086a0209cda6d6861cb24c676572a20c8f0e2390fb88015a85b7e1f5fd292ea"
+    },
+    {
+      "name": "LatestNews-0.9.0-macOS-arm64.zip",
+      "bytes": 153314173,
+      "sha256": "9632b0a7c1802aed0d04586c30921bfac2f25d6ac709f6e14290d0f44782c4b1",
+      "sha512": "4HChLTC/uZtYzso5KCAs6bAz5YjT6ojrICvhliyzqUmd1HuJVlDj2PeeHmwxohB+hwZpqnG5t2zorkFVjgFEgg==",
+      "githubDigest": "sha256:9632b0a7c1802aed0d04586c30921bfac2f25d6ac709f6e14290d0f44782c4b1"
+    },
+    {
+      "name": "LatestNews-0.9.0-macOS-arm64.zip.blockmap",
+      "bytes": 161239,
+      "sha256": "586c94f05aa56d353dc9ff544d810e0ff3f103f95325346b975955082185c823",
+      "sha512": "/gCLUeF7usbUC5Fb1PLAs88DFKvRAJ6XIxqM2JKnNOyWAMtavI02n8LbT1MOsNabhIjR1QnTVdEGLj73WRhyjg==",
+      "githubDigest": "sha256:586c94f05aa56d353dc9ff544d810e0ff3f103f95325346b975955082185c823"
+    },
+    {
+      "name": "LatestNews-0.9.0-Web.zip",
+      "bytes": 10625656,
+      "sha256": "823a7e6d7a881d851d74aec7f06aeef3dcc28c50673d72ba251fa4b178b14258",
+      "sha512": "1QWq2fARY6H80INN33zhzvm8MJCoZW0eL64JhnxWlHJSBuTz6/XrpG6S8QQT1bW+H59x1LMOi80VYvUrp11bGQ==",
+      "githubDigest": "sha256:823a7e6d7a881d851d74aec7f06aeef3dcc28c50673d72ba251fa4b178b14258"
+    },
+    {
+      "name": "LatestNews-0.9.0-Windows-arm64.exe",
+      "bytes": 134160260,
+      "sha256": "4465d99aeabbf9f0e862d07bbe8d93b07ba8cf6f8419642066182bcaf694a508",
+      "sha512": "1qVpzMxGou1w4yQAr7WmvyUUGZFJhyYgphFUluOlj89z18cyCjs3JWD3fgjYu2zxNRDxLW0q40b39t7QFuzVBg==",
+      "githubDigest": "sha256:4465d99aeabbf9f0e862d07bbe8d93b07ba8cf6f8419642066182bcaf694a508"
+    },
+    {
+      "name": "LatestNews-0.9.0-Windows-arm64.exe.blockmap",
+      "bytes": 141134,
+      "sha256": "09b6976014d6259c9bcba67745ffdb37e18b04ed85908c6b8cc08ef7503c0d80",
+      "sha512": "L7ict/jFEU7D8GImtdoIZrAOgLgAJW4C++uVP4Vx7WITdP0o7AKDG/X62diothef7FG3AthyM/t7PZJGaJz1kQ==",
+      "githubDigest": "sha256:09b6976014d6259c9bcba67745ffdb37e18b04ed85908c6b8cc08ef7503c0d80"
+    },
+    {
+      "name": "LatestNews-0.9.0-Windows-x64.exe",
+      "bytes": 139787044,
+      "sha256": "d918e8b6043b49df6e882b7b6e22b8f524dd7f0d0862fe1d7c50f495308e32e3",
+      "sha512": "sKCKTFmaQ6036sdeigrvNQJdNs1KzIKZ6lt9LhQtuaZ7FyTPCfdEiITpSufiCsYKH6ZvGA27zxq11kyPZ88hbg==",
+      "githubDigest": "sha256:d918e8b6043b49df6e882b7b6e22b8f524dd7f0d0862fe1d7c50f495308e32e3"
+    },
+    {
+      "name": "LatestNews-0.9.0-Windows-x64.exe.blockmap",
+      "bytes": 148483,
+      "sha256": "1d3e214fbe83fa68d4727ab07cd9107c5ab68e464821e90eda84a4dbed5a057e",
+      "sha512": "HurzCE7wsY174K95S9ieAmITN4w4QfeBb1EYfn68FVN7J+2eiyBuXw+DJkGqgCRtr15HKNCHJmd8zhnH7nK+Yg==",
+      "githubDigest": "sha256:1d3e214fbe83fa68d4727ab07cd9107c5ab68e464821e90eda84a4dbed5a057e"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 1660,
+      "sha256": "198008822acad680851a60603b6387834aa714868f87c8212d9d31a64a192e0d",
+      "sha512": "EFjFtybgomxvXqQzkZIU8om2+rsDJxAgjQghRwWWk5k8uVBVgeRHCigqlHPNHnlnW8o3Aq/RFHcpK7aKpueJ2A==",
+      "githubDigest": "sha256:198008822acad680851a60603b6387834aa714868f87c8212d9d31a64a192e0d"
+    }
+  ],
+  "checksumManifest": {
+    "matchedEntries": 17,
+    "regeneratedInScratchByteIdentical": true
+  },
+  "updateManifests": [
+    {
+      "name": "latest.yml",
+      "version": "0.9.0",
+      "path": "LatestNews-0.9.0-Windows-x64.exe",
+      "sha512": "sKCKTFmaQ6036sdeigrvNQJdNs1KzIKZ6lt9LhQtuaZ7FyTPCfdEiITpSufiCsYKH6ZvGA27zxq11kyPZ88hbg==",
+      "files": [
+        {
+          "url": "LatestNews-0.9.0-Windows-x64.exe",
+          "sha512": "sKCKTFmaQ6036sdeigrvNQJdNs1KzIKZ6lt9LhQtuaZ7FyTPCfdEiITpSufiCsYKH6ZvGA27zxq11kyPZ88hbg==",
+          "size": 139787044
+        },
+        {
+          "url": "LatestNews-0.9.0-Windows-arm64.exe",
+          "sha512": "1qVpzMxGou1w4yQAr7WmvyUUGZFJhyYgphFUluOlj89z18cyCjs3JWD3fgjYu2zxNRDxLW0q40b39t7QFuzVBg==",
+          "size": 134160260
+        }
+      ]
+    },
+    {
+      "name": "latest-mac.yml",
+      "version": "0.9.0",
+      "path": "LatestNews-0.9.0-macOS-arm64.dmg",
+      "sha512": "pBXfb+6glNiFqY/GggBYCY5XhcRfO73W/EuMqyU009lpi+xy3XhLzY5Wjlgb7D6H/lg7XWK6d/+hx37jHsVSKQ==",
+      "files": [
+        {
+          "url": "LatestNews-0.9.0-macOS-arm64.dmg",
+          "sha512": "pBXfb+6glNiFqY/GggBYCY5XhcRfO73W/EuMqyU009lpi+xy3XhLzY5Wjlgb7D6H/lg7XWK6d/+hx37jHsVSKQ==",
+          "size": 158771632
+        },
+        {
+          "url": "LatestNews-0.9.0-macOS-arm64.zip",
+          "sha512": "4HChLTC/uZtYzso5KCAs6bAz5YjT6ojrICvhliyzqUmd1HuJVlDj2PeeHmwxohB+hwZpqnG5t2zorkFVjgFEgg==",
+          "size": 153314173
+        }
+      ]
+    },
+    {
+      "name": "latest-linux.yml",
+      "version": "0.9.0",
+      "path": "LatestNews-0.9.0-Linux-amd64.deb",
+      "sha512": "CobPzteDfdaagEijT+mYNm/SQxgLZFsLJRw6+MBoNlvhsJBttTBFbUZJsm1S7nD8zYQ238ciQBZc1RhdJjqUOw==",
+      "files": [
+        {
+          "url": "LatestNews-0.9.0-Linux-amd64.deb",
+          "sha512": "CobPzteDfdaagEijT+mYNm/SQxgLZFsLJRw6+MBoNlvhsJBttTBFbUZJsm1S7nD8zYQ238ciQBZc1RhdJjqUOw==",
+          "size": 118603900
+        },
+        {
+          "url": "LatestNews-0.9.0-Linux-x86_64.AppImage",
+          "sha512": "Bj2eE7n2M8F4jraTNvpFsb1WJUTAn2y8nlW3lhyDvRcpZziWMfco0SyFvVr9TomBEdqE8AU0fGvQDt8hGNvrWg==",
+          "size": 154061845,
+          "blockMapSize": 162857
+        }
+      ]
+    },
+    {
+      "name": "latest-linux-arm64.yml",
+      "version": "0.9.0",
+      "path": "LatestNews-0.9.0-Linux-arm64.AppImage",
+      "sha512": "TdizQa6gE4pQ4oo4cZDU2QRzN4PTRDQ/xMxeB4QGvwSJ1ZWcaSFpkJX7DNvuB+T9f3aobZPMUprQtCS59dSwMA==",
+      "files": [
+        {
+          "url": "LatestNews-0.9.0-Linux-arm64.AppImage",
+          "sha512": "TdizQa6gE4pQ4oo4cZDU2QRzN4PTRDQ/xMxeB4QGvwSJ1ZWcaSFpkJX7DNvuB+T9f3aobZPMUprQtCS59dSwMA==",
+          "size": 155247559,
+          "blockMapSize": 163603
+        },
+        {
+          "url": "LatestNews-0.9.0-Linux-arm64.deb",
+          "sha512": "h0xZrSbqs21cH+RddQZPBCKzSkQUwbenpMmldsrsgvnwUfnsZX1KQ4c0t9fAotVoHT9RmR8lyQJIHVIthlFrSQ==",
+          "size": 113504340
+        }
+      ]
+    }
+  ],
+  "sourceRun": {
+    "id": 45649085476,
+    "desktopBuilds": {
+      "windows-x64": "success",
+      "windows-arm64": "success",
+      "linux-x64": "success",
+      "linux-arm64": "success",
+      "macos-arm64": "success"
+    },
+    "web": "success",
+    "verifySource": "success",
+    "publishRelease": "failure",
+    "dockerJob": {
+      "id": 139580897026,
+      "conclusion": "success",
+      "pushedAt": "2026-11-25T23:31:57.8281334Z",
+      "indexDigest": "sha256:e290639e2e89619d13db3f7c8021c265cf7a3c5cd4eef58100061eacc06ff6d1"
+    },
+    "releaseNote": "Recovered release did not publish a new Docker image; source run Docker success was observed later."
+  },
+  "registry": {
+    "reference": "ghcr.io/bruceblink/latestnews:0.9.0",
+    "digest": "sha256:e290639e2e89619d13db3f7c8021c265cf7a3c5cd4eef58100061eacc06ff6d1",
+    "mediaType": "application/vnd.oci.image.index.v1+json",
+    "platforms": [
+      {
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        },
+        "digest": "sha256:f42ec1023f45a0c05a38b5586e3c6de53ef41673c1199b726e1e74d1f42711a1",
+        "configDigest": "sha256:6cabd4dff8e8332d87b81c2b05e0b845edac02f4c23a924538d766a16639e723",
+        "revision": "baacb5d292dc0bf23467f2c2b98171d402695fca",
+        "version": "0.9.0",
+        "layerCount": 13
+      },
+      {
+        "platform": {
+          "architecture": "arm64",
+          "os": "linux"
+        },
+        "digest": "sha256:174d553f2501c31c8ed0f6d2b3530bdee8719a28bcdcea5caa76cde6ace043ce",
+        "configDigest": "sha256:d077e7295e0d9bc6daeffc1ed2a2cc1cbef32741c4d504c98fdfd70b02365aa3",
+        "revision": "baacb5d292dc0bf23467f2c2b98171d402695fca",
+        "version": "0.9.0",
+        "layerCount": 13
+      }
+    ],
+    "otherDescriptors": [
+      {
+        "platform": {
+          "architecture": "unknown",
+          "os": "unknown"
+        },
+        "digest": "sha256:4b18bf4c4b689b708964bdbd6adfe73538e7d9f1ceb4e15eaebc12b89358ec92",
+        "annotations": {
+          "vnd.docker.reference.digest": "sha256:f42ec1023f45a0c05a38b5586e3c6de53ef41673c1199b726e1e74d1f42711a1",
+          "vnd.docker.reference.type": "attestation-manifest"
+        }
+      },
+      {
+        "platform": {
+          "architecture": "unknown",
+          "os": "unknown"
+        },
+        "digest": "sha256:2d1a63a46f7d73c2ace61812c57a02978d1748ddd25e7c54cc6b91eb9486c9a0",
+        "annotations": {
+          "vnd.docker.reference.digest": "sha256:174d553f2501c31c8ed0f6d2b3530bdee8719a28bcdcea5caa76cde6ace043ce",
+          "vnd.docker.reference.type": "attestation-manifest"
+        }
+      }
+    ]
+  },
+  "signaturePresence": {
+    "LatestNews-0.9.0-Windows-arm64.exe": {
+      "peMachine": "0x14c",
+      "certificateTableBytes": 0,
+      "certificateTableOffset": 0,
+      "signaturePresent": false
+    },
+    "LatestNews-0.9.0-Windows-x64.exe": {
+      "peMachine": "0x14c",
+      "certificateTableBytes": 0,
+      "certificateTableOffset": 0,
+      "signaturePresent": false
+    },
+    "LatestNews-0.9.0-macOS-arm64.zip": {
+      "codeResourcesEntries": [],
+      "topLevel": [
+        "LatestNews.app"
+      ]
+    }
+  },
+  "webRuntime": {
+    "asset": "LatestNews-0.9.0-Web.zip",
+    "node": "v22.23.4",
+    "version": "0.9.0",
+    "checks": {
+      "app": {
+        "status": "ok",
+        "name": "latestnews",
+        "version": "0.9.0"
+      },
+      "cache": {
+        "status": "ok"
+      },
+      "sources": {
+        "status": "unknown",
+        "total": 60,
+        "healthy": 0,
+        "failing": 0,
+        "idle": 60,
+        "cacheDegraded": 0,
+        "updatedAt": 1795677655770
+      },
+      "articleIndex": {
+        "status": "ok",
+        "fts": "ok",
+        "pendingIngest": 0,
+        "pendingFts": 0,
+        "eventRegistry": "ok",
+        "untrackedCache": 0
+      }
+    },
+    "catalogCount": 60,
+    "archiveStatus": "ok",
+    "archiveItems": 0,
+    "htmlBytes": 3250,
+    "closed": true
+  },
+  "linuxDesktopRuntime": {
+    "asset": "LatestNews-0.9.0-Linux-amd64.deb",
+    "dpkgPackage": "latestnews-desktop",
+    "architecture": "amd64",
+    "mode": "extracted, not installed; Xvfb; isolated HOME/profile",
+    "result": "passed",
+    "version": {
+      "version": "0.9.0",
+      "packaged": true,
+      "windows": 1
+    },
+    "headlineVisible": true,
+    "httpRejected": true,
+    "configUnchanged": true,
+    "certificate": "temporary trusted CA; no certificate override",
+    "sandboxDisabled": true,
+    "requests": {
+      "/api/v1/sources": 1,
+      "/api/v1/auth/capability": 1,
+      "/api/v1/insights": 1,
+      "/api/v1/health/sources": 1
+    },
+    "pageErrors": 0,
+    "closed": true
+  },
+  "notVerified": [
+    "Linux installation/uninstallation and upgrade/rollback",
+    "AppImage FUSE/integration, Linux ARM64 native run",
+    "Windows/macOS installation, runtime and native signature verification",
+    "Docker image layer downloads and native container runtime on both architectures",
+    "Production D1 and actual upstream, production deployment"
+  ]
+}
