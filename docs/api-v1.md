@@ -65,7 +65,7 @@ curl https://news.example.com/api/v1/node
 
 历史索引的 publishedAt 为 UTC 毫秒；未知时间不输出该字段。since 接受正数秒/毫秒、带时区 ISO 时间或 UTC 日期，指定 since 时只返回已知且不早于该时刻的文章（未知时间不参与筛选结果）。原始 item 字段保持现有表示。相同规范 URL 复用已存在 articleKey；不同 URL 即使共享来源原始 ID 或指纹，也不会覆盖旧文章及事件归属。旧数据库须完成 N4-L1 迁移后再关闭 INIT_TABLE。
 
-部署健康接口 checks.articleIndex 是可选扩展，报告 status、fts、pendingIngest、pendingFts、eventRegistry 和 untrackedCache。来源缓存可用不代表历史索引完整；已知积压或修复期间历史检索可降级为 like，结果可能不完整。健康状态不代替全库完整性审计。
+部署健康接口 checks.articleIndex 是可选扩展，报告 status、fts、pendingIngest、pendingFts、eventRegistry 和 untrackedCache。来源缓存可用不代表历史索引完整；已知积压或修复期间历史检索可降级为 like，结果可能不完整。健康状态不代替全库完整性审计。 新增可选 `checks.articleIndex.ftsAudit`（status=verified/unverified/expired/failed，合法时间戳时含 auditedAt）。证据与索引代次、版本及候选 24 小时有效期绑定；无有效证据不得使用 FTS。verified 代表最近完整行一致性审核，不保证有效期内无外部损坏；pending 与 untrackedCache 仍需独立检查。
 
 ### 历史事件查询
 

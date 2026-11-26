@@ -9,6 +9,81 @@ const PAGE = 50;
 // Keep the remote D1 and incremental backlog budgets unchanged.
 const SQLITE_BUILD_PAGE = 200;
 
+// The audit certifies row consistency at a point in time, not immunity to
+// out-of-band writes. Keep a bounded validity window and fail closed on expiry.
+export const FTS_AUDIT_VERSION = 1;
+export const FTS_AUDIT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+export async function initArticleFtsAudit(db: Database) {
+    await db
+        .prepare(
+            "CREATE TABLE IF NOT EXISTS article_fts_audit (id INTEGER PRIMARY KEY CHECK(id=1), version INTEGER NOT NULL, generation TEXT NOT NULL, audited_at INTEGER NOT NULL, valid INTEGER NOT NULL CHECK(valid IN (0,1)))"
+        )
+        .run();
+}
+
+export async function getFtsTables(db: Database) {
+    const rows = (await db
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('article_search','article_fts_audit')")
+        .all()) as Array<{ name: string }>;
+    const names = new Set(rows.map((row) => row.name));
+    return { fts: names.has("article_search"), audit: names.has("article_fts_audit") };
+}
+
+export const FTS_AUDIT_GUARD = `EXISTS(SELECT 1 FROM article_fts_audit a
+    JOIN article_fts_repair r ON r.id=a.id AND r.generation=a.generation
+    WHERE a.id=1 AND r.phase='ready' AND a.version=${FTS_AUDIT_VERSION}
+    AND a.valid=1 AND typeof(a.audited_at)='integer' AND a.audited_at>=0 AND a.audited_at BETWEEN ? AND ?)`;
+
+export function ftsAuditBounds(now = Date.now()) {
+    return [now - FTS_AUDIT_MAX_AGE_MS, now];
+}
+
+export type FtsAuditStatus = {
+    status: "verified" | "unverified" | "expired" | "failed";
+    auditedAt?: number;
+};
+
+interface FtsAuditRow {
+    audited_at: number | null;
+    valid: number | null;
+}
+
+function decodeFtsAudit(row: FtsAuditRow | undefined, now: number): FtsAuditStatus {
+    const auditedAt = row?.audited_at;
+    if (typeof auditedAt !== "number" || !Number.isSafeInteger(auditedAt) || auditedAt < 0 || auditedAt > now)
+        return { status: "unverified" };
+    if (row?.valid !== 1) return { status: "failed", auditedAt };
+    return { status: auditedAt < now - FTS_AUDIT_MAX_AGE_MS ? "expired" : "verified", auditedAt };
+}
+
+export async function readFtsAudit(db: Database, available: boolean, now = Date.now()): Promise<FtsAuditStatus> {
+    if (!available) return { status: "unverified" };
+    const row = (await db
+        .prepare(
+            `SELECT a.audited_at,a.valid
+        FROM article_fts_audit a JOIN article_fts_repair r ON r.id=a.id AND r.generation=a.generation
+        WHERE a.id=1 AND r.phase='ready' AND a.version=${FTS_AUDIT_VERSION}`
+        )
+        .get()) as FtsAuditRow | undefined;
+    return decodeFtsAudit(row, now);
+}
+
+/** Health reads phase, pending keys and evidence in the same SQL snapshot. */
+export async function readFtsReadiness(db: Database, available: boolean, now = Date.now()) {
+    if (!available) return { ...(await ftsRecoveryStatus(db)), audit: { status: "unverified" } as FtsAuditStatus };
+    const row = (await db
+        .prepare(
+            `SELECT r.phase,
+        (SELECT COUNT(*) FROM article_fts_pending) AS pending,a.audited_at,a.valid
+        FROM article_fts_repair r LEFT JOIN article_fts_audit a
+        ON a.id=r.id AND a.generation=r.generation AND a.version=${FTS_AUDIT_VERSION} AND r.phase='ready'
+        WHERE r.id=1`
+        )
+        .get()) as FtsAuditRow & { phase: string; pending: number };
+    return { phase: row.phase, pending: Number(row.pending), audit: decodeFtsAudit(row, now) };
+}
+
 export async function initArticleRecovery(db: Database) {
     await db
         .prepare(
@@ -32,6 +107,7 @@ export async function initArticleRecovery(db: Database) {
         )
         .run();
     await db.prepare("INSERT OR IGNORE INTO article_fts_repair VALUES (1,'ready','','')").run();
+    await initArticleFtsAudit(db);
 }
 
 export async function probeArticleRecovery(db: Database) {
@@ -77,6 +153,35 @@ export const FTS_READY_GUARD = "EXISTS(SELECT 1 FROM article_fts_repair WHERE id
 const REPAIR_GUARD =
     "EXISTS(SELECT 1 FROM article_fts_repair WHERE id=1 AND phase='repairing' AND generation=? AND cursor=?)";
 const STATE_MATCH = "id=1 AND phase='repairing' AND generation=? AND cursor=?";
+
+/** Persist a complete audit only inside the same atomic batch as its
+ * validity/repair decision. A forced startup audit first clears old evidence;
+ * interruption or SQL failure cannot renew it. Normal maintenance audits
+ * only expired/missing evidence and never scans on each read. */
+export async function auditReadyFts(db: Database, force = false) {
+    if (force) await db.prepare("DELETE FROM article_fts_audit WHERE id=1").run();
+    const now = Date.now();
+    await executeArticleBatch(db, [
+        {
+            sql: `INSERT INTO article_fts_audit(id,version,generation,audited_at,valid)
+                SELECT 1,${FTS_AUDIT_VERSION},generation,?,NOT (${inconsistent})
+                FROM article_fts_repair WHERE id=1 AND phase='ready'
+                AND NOT EXISTS(SELECT 1 FROM article_fts_pending)
+                AND NOT ${FTS_AUDIT_GUARD}
+                ON CONFLICT(id) DO UPDATE SET version=excluded.version,generation=excluded.generation,
+                    audited_at=excluded.audited_at,valid=excluded.valid`,
+            params: [now, ...ftsAuditBounds(now)],
+        },
+        {
+            sql: `UPDATE article_fts_repair SET phase='repairing',cursor='clear',generation=?
+                WHERE id=1 AND phase='ready' AND NOT EXISTS(SELECT 1 FROM article_fts_pending)
+                AND EXISTS(SELECT 1 FROM article_fts_audit a
+                    WHERE a.id=1 AND a.generation=article_fts_repair.generation
+                    AND a.version=${FTS_AUDIT_VERSION} AND a.valid=0)`,
+            params: [newGeneration()],
+        },
+    ]);
+}
 
 export async function beginFtsRepair(db: Database) {
     await db
@@ -128,14 +233,27 @@ export async function repairFtsPage(db: Database) {
     }
     if (state.cursor === "verify") {
         await repairPendingFts(db, state.generation);
-        // Publish ready only when the transaction observes both an empty queue
-        // and a complete index. Concurrent new writes after this still journal.
-        const [ready] = await executeArticleBatch(db, [
+        // The audit row and ready transition commit together. A stale worker
+        // cannot renew proof for a generation it did not actually audit.
+        const now = Date.now();
+        const [, ready] = await executeArticleBatch(db, [
+            {
+                sql: `INSERT INTO article_fts_audit(id,version,generation,audited_at,valid)
+                    SELECT 1,${FTS_AUDIT_VERSION},generation,?,NOT (${inconsistent})
+                    FROM article_fts_repair WHERE ${STATE_MATCH}
+                    AND NOT EXISTS(SELECT 1 FROM article_fts_pending)
+                    ON CONFLICT(id) DO UPDATE SET version=excluded.version,generation=excluded.generation,
+                        audited_at=excluded.audited_at,valid=excluded.valid`,
+                params: [now, ...params],
+            },
             {
                 sql: `UPDATE article_fts_repair SET phase='ready',cursor='' WHERE ${STATE_MATCH}
-                AND CASE WHEN EXISTS(SELECT 1 FROM article_fts_pending) THEN 0 ELSE NOT (${inconsistent}) END
+                AND NOT EXISTS(SELECT 1 FROM article_fts_pending)
+                AND EXISTS(SELECT 1 FROM article_fts_audit a WHERE a.id=1
+                    AND a.generation=article_fts_repair.generation AND a.version=${FTS_AUDIT_VERSION}
+                    AND a.valid=1 AND a.audited_at=?)
                 RETURNING id`,
-                params,
+                params: [...params, now],
                 rows: true,
             },
             // If the queue is empty but verification failed, restart rather than

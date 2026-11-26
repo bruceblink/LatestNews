@@ -128,7 +128,7 @@ describe("N4-L2 durable article recovery", () => {
             let writer: ReturnType<typeof createDatabase> | undefined;
             const state = () => db.prepare("SELECT phase,cursor,generation FROM article_fts_repair WHERE id=1").get();
             const count = () => db.prepare("SELECT count(*) AS count FROM article_search").get();
-            const crashWorker = (duringTransaction: boolean) => {
+            const crashWorker = (mode: "during" | "after" | "verify") => {
                 // Use the real SQLite connector and recovery implementation in a separate process.
                 // SIGKILL bypasses graceful disposal; only the temporary fixture can be affected.
                 const child = spawnSync(
@@ -143,24 +143,25 @@ describe("N4-L2 durable article recovery", () => {
                 import sqliteConnector from "db0/connectors/better-sqlite3";
                 import { repairFtsPage } from "./server/database/article-recovery.ts";
                 const db = createDatabase(sqliteConnector({ path: process.argv[1] }));
-                if (process.argv[2] === "during") {
+                if (process.argv[2] !== "after") {
                     const native = await db.getInstance();
                     const prepare = native.prepare.bind(native);
                     native.prepare = (sql) => {
                         // The FTS insert and pending-key delete have executed, but the
                         // transaction has not advanced the cursor or committed.
-                        if (sql.startsWith("UPDATE article_fts_repair SET cursor=?") && sql.includes("RETURNING id")) {
+                        if ((process.argv[2] === "during" && sql.startsWith("UPDATE article_fts_repair SET cursor=?") && sql.includes("RETURNING id")) ||
+                            (process.argv[2] === "verify" && sql.startsWith("UPDATE article_fts_repair SET phase='ready'") && sql.includes("RETURNING id"))) {
                             process.kill(process.pid, "SIGKILL");
                         }
                         return prepare(sql);
                     };
                 }
                 const result = await repairFtsPage(db);
-                if (result.indexed !== 200 || process.argv[2] === "during") process.exit(31);
+                if (result.indexed !== 200 || process.argv[2] !== "after") process.exit(31);
                 process.kill(process.pid, "SIGKILL");
                 `,
                         path,
-                        duringTransaction ? "during" : "after",
+                        mode,
                     ],
                     { encoding: "utf8", timeout: 10000 }
                 );
@@ -188,12 +189,12 @@ describe("N4-L2 durable article recovery", () => {
                 expect(start).toMatchObject({ cursor: "build-start" });
 
                 await db.dispose();
-                crashWorker(true);
+                crashWorker("during");
                 db = createDatabase(sqliteConnector({ path }));
                 expect(await state()).toEqual(start);
                 expect(await count()).toEqual({ count: 0 });
                 await db.dispose();
-                crashWorker(false);
+                crashWorker("after");
 
                 db = createDatabase(sqliteConnector({ path }));
                 expect(await state()).toMatchObject({ phase: "repairing", cursor: expect.stringMatching(/^build:/) });
@@ -230,10 +231,15 @@ describe("N4-L2 durable article recovery", () => {
                     await repairFtsPage(db);
                 }
                 expect(await state()).toMatchObject({ cursor: "verify", generation: committed.generation });
+                const preAudit = await db.prepare("SELECT * FROM article_fts_audit").get();
                 await db.dispose();
                 await writer.dispose();
                 writer = undefined;
+                // Kill after the certificate INSERT but before the ready UPDATE.
+                crashWorker("verify");
                 db = createDatabase(sqliteConnector({ path }));
+                expect(await state()).toMatchObject({ cursor: "verify", generation: committed.generation });
+                expect(await db.prepare("SELECT * FROM article_fts_audit").get()).toEqual(preAudit);
                 const verified = new ArticleIndex(db);
                 await verified.probe();
                 expect((await verified.search({ query: "Fresh behind cursor" })).mode).toBe("like");
@@ -250,7 +256,15 @@ describe("N4-L2 durable article recovery", () => {
                 expect(await count()).toEqual({ count: 451 });
                 expect(await db.prepare("SELECT count(*) AS count FROM articles").get()).toEqual({ count: 451 });
                 expect(await db.prepare("SELECT count(*) AS count FROM article_sources").get()).toEqual({ count: 453 });
-                expect(await verified.getRecoveryStatus()).toMatchObject({ status: "ok", pendingFts: 0 });
+                expect(await verified.getRecoveryStatus()).toMatchObject({
+                    status: "ok",
+                    pendingFts: 0,
+                    ftsAudit: { status: "verified" },
+                });
+                expect(await db.prepare("SELECT generation,valid FROM article_fts_audit").get()).toEqual({
+                    generation: committed.generation,
+                    valid: 1,
+                });
                 for (const title of [changed.title, future.title, lastTitle.title]) {
                     const result = await verified.search({ query: title });
                     expect(result.mode).toBe("fts");
