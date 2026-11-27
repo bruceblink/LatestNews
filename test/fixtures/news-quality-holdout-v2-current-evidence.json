@@ -1,0 +1,4924 @@
+{
+  "schemaVersion": 1,
+  "datasetSha256": "43fd4e225559996704ecc6fd504a152c7b4011325ca6b2ca2cdd5b90f5671c79",
+  "purpose": "Current public evidence metadata only; not historical raw response retention or human judgments.",
+  "startedAt": "2026-11-27T05:59:56+00:00",
+  "finishedAt": "2026-11-27T06:03:45+00:00",
+  "maxBytes": 2097152,
+  "socketTimeoutSeconds": 8,
+  "rows": [
+    {
+      "reportId": "candidate-001",
+      "role": "article",
+      "requestUrl": "https://www.ithome.com/1/032/472.htm",
+      "status": 200,
+      "finalUrl": "https://www.ithome.com/1/032/472.htm",
+      "bytes": 26483,
+      "responseSha256": "e45d59e84cd8d873c7b9bd8ab994aa282f1325051784a32cd59e336646cd3c43",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "华为种菜游戏：鸿蒙星空元服务官宣上线，完成每日任务可抽会员等 - IT之家",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:00+00:00"
+    },
+    {
+      "reportId": "candidate-002",
+      "role": "article",
+      "requestUrl": "https://www.ithome.com/1/032/470.htm",
+      "status": 200,
+      "finalUrl": "https://www.ithome.com/1/032/470.htm",
+      "bytes": 22947,
+      "responseSha256": "d2b1ed38f12c58d5254ed615fbf968404e32a458e12c91774f212b6a51818238",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "爆料人称《GTA 6》有望在 PS6、Xbox Project Helix 上实现 120 帧运行 - IT之家",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-003",
+      "role": "article",
+      "requestUrl": "https://www.ithome.com/1/032/469.htm",
+      "status": 200,
+      "finalUrl": "https://www.ithome.com/1/032/469.htm",
+      "bytes": 25088,
+      "responseSha256": "25edb6ef7705cc5c1262f4661d5441120043a2e58c90796a60b02705e377fcea",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "小米米家智能水暖毯 Pro 开启众筹：左右双区独立调温，首发价 799 元 - IT之家",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:00+00:00"
+    },
+    {
+      "reportId": "candidate-004",
+      "role": "article",
+      "requestUrl": "https://www.ithome.com/1/032/468.htm",
+      "status": 200,
+      "finalUrl": "https://www.ithome.com/1/032/468.htm",
+      "bytes": 21285,
+      "responseSha256": "2580a57524949b7253bc2d118450498c323e2260f3d657d01bb48a813c3c4f51",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "C919 首次在济南执飞商业客运航班，南航 C919 首飞广州 — 济南航线 - IT之家",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:01+00:00"
+    },
+    {
+      "reportId": "candidate-005",
+      "role": "article",
+      "requestUrl": "https://www.ithome.com/1/032/467.htm",
+      "status": 200,
+      "finalUrl": "https://www.ithome.com/1/032/467.htm",
+      "bytes": 22817,
+      "responseSha256": "db01fd22c37ebf1ee3562db022b2589120de579d8dda955e1963e7dd2e7d4465",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "联想预热 thinkplus USB4 全功能伸缩数据线，支持 PD3.2 240W 快充 - IT之家",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:01+00:00"
+    },
+    {
+      "reportId": "candidate-006",
+      "role": "article",
+      "requestUrl": "https://www.ithome.com/1/032/466.htm",
+      "status": 200,
+      "finalUrl": "https://www.ithome.com/1/032/466.htm",
+      "bytes": 23512,
+      "responseSha256": "47d8408df6099093ba78d406e92546db6c575a4ff0848fd1778b10ff95b1cfb8",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "特斯拉 FSD 欧盟审批会议推迟至 12 月 15 日举行 - IT之家",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:03+00:00"
+    },
+    {
+      "reportId": "candidate-007",
+      "role": "article",
+      "requestUrl": "https://www.ithome.com/1/032/465.htm",
+      "status": 200,
+      "finalUrl": "https://www.ithome.com/1/032/465.htm",
+      "bytes": 23605,
+      "responseSha256": "b10d1f109461784409fd994394f103df03036bf92d18ec606b79d02b989dea4f",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "网易云音乐宣布与索尼音乐娱乐达成多年期版权合作，今年已与三大唱片公司完成续签 - IT之家",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:02+00:00"
+    },
+    {
+      "reportId": "candidate-008",
+      "role": "article",
+      "requestUrl": "https://www.ithome.com/1/032/464.htm",
+      "status": 200,
+      "finalUrl": "https://www.ithome.com/1/032/464.htm",
+      "bytes": 27879,
+      "responseSha256": "d7a32deb042ecd294acc66cac23a436d534843a1a049d177fb96035099c04b09",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "懂车帝最新回应“尊界 V800 刹车踏板支架断裂”事件：公司内部仍在等待相关结果 - IT之家",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:02+00:00"
+    },
+    {
+      "reportId": "candidate-009",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=85988",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=85988",
+      "bytes": 16746,
+      "responseSha256": "220f621e3382aaa4386b2892bbe6a5f04fd990c3efa4fdd902d769836846bfe4",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | 日本政府开发智能体打击盗版动漫",
+        "publishedMetadata": [],
+        "solidotWallTime": "2026-11-25 17:49"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-010",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=85987",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=85987",
+      "bytes": 16520,
+      "responseSha256": "9806fc02636ef35a2d763c9e8e215f50f4cb0d4c799dcb915933130a2e6f9d43",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | 男性肥胖者服用 GLP-1 药物后改善了精子质量",
+        "publishedMetadata": [],
+        "solidotWallTime": "2026-11-25 16:05"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:00+00:00"
+    },
+    {
+      "reportId": "candidate-011",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=85986",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=85986",
+      "bytes": 16616,
+      "responseSha256": "ad22eaafe0987ebf7d8f09d76078fec56e205b5d6035d3022a14308aec92fc9a",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | CIA 部分非机密信息泄漏",
+        "publishedMetadata": [],
+        "solidotWallTime": "2026-11-25 15:33"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:02+00:00"
+    },
+    {
+      "reportId": "candidate-012",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=85985",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=85985",
+      "bytes": 17267,
+      "responseSha256": "852cce20a4aff50613892d5535d699de4d926100d115e0a131f69c083445456f",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | 梅奥诊所向每天用自己的时间启动电脑的员工补发工资",
+        "publishedMetadata": [],
+        "solidotWallTime": "2026-11-25 14:54"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:21+00:00"
+    },
+    {
+      "reportId": "candidate-013",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=85983",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=85983",
+      "bytes": 17045,
+      "responseSha256": "40d350e7cc774a1f420feeb90e75dbea8b5b2bea98109ad3ed81c8c1f7f0d81a",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | 多样性影响鸟类对天敌的反应",
+        "publishedMetadata": [],
+        "solidotWallTime": "2026-11-25 14:01"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:08+00:00"
+    },
+    {
+      "reportId": "candidate-014",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=85982",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=85982",
+      "bytes": 16721,
+      "responseSha256": "e017cb0a1108d614fef78e3d02b5230e3754c3959b89caf1827b388f1f163773",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | 东北积雪天数预计将会显著减少",
+        "publishedMetadata": [],
+        "solidotWallTime": "2026-11-24 23:57"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:11+00:00"
+    },
+    {
+      "reportId": "candidate-015",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=85981",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=85981",
+      "bytes": 16761,
+      "responseSha256": "7772f71855f63e9b1817e54c8998449bee2aacdb4555cde7323070c2ca8e6a3d",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | 基因工程烟草能用于高效合成抗癌药",
+        "publishedMetadata": [],
+        "solidotWallTime": "2026-11-24 22:53"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:18+00:00"
+    },
+    {
+      "reportId": "candidate-016",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=85980",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=85980",
+      "bytes": 16978,
+      "responseSha256": "3cb9d9adf36f602ac41d3e6ed1cc5742c704236359091aec0a06e7248664ea51",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | 空气污染是痴呆症的一个诱因",
+        "publishedMetadata": [],
+        "solidotWallTime": "2026-11-24 22:40"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:20+00:00"
+    },
+    {
+      "reportId": "candidate-018",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/policy/1041957/fincen-treasury-cybersecurity-incident",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/policy/1041957/fincen-treasury-cybersecurity-incident",
+      "bytes": 397042,
+      "responseSha256": "219c76d05cd166f3d8d0bc4247e7290eb83651b6bd9579dd4af1ec6a14fa09dd",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "US financial crimes bureau discloses ‘cybersecurity incident’ | The Verge",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-25T01:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T01:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:06:24+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:38:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T09:54:40+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T23:56:44+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T19:45:51+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T23:25:46+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:03:45+00:00"
+    },
+    {
+      "reportId": "candidate-019",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/gadgets/1024777/best-gifts-for-dad-2026",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/gadgets/1024777/best-gifts-for-dad-2026",
+      "bytes": 804299,
+      "responseSha256": "95d07b9c638615a64b6fb254bc18e0e6dadc687482eb9520e9ddbb875ce134bd",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "The 32 best gifts for every type of dad | The Verge",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-13T16:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T23:59:29+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:07:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:55:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T21:48:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:03:45+00:00"
+    },
+    {
+      "reportId": "candidate-020",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/science/1041819/us-army-detonation-lead-explosives-iowa",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/science/1041819/us-army-detonation-lead-explosives-iowa",
+      "bytes": 423551,
+      "responseSha256": "e197d4013d2be6734d19d47fb1c2600a3dc8ef89623404c96b1e7fd37f92798f",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Why the US Army blew up nearly 10,000 pounds of unstable explosives in Iowa | The Verge",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T23:25:46+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T23:25:46+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T19:45:51+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T18:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T17:44:51+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-23T21:09:37+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-23T18:26:47+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-20T16:34:13+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:03:45+00:00"
+    },
+    {
+      "reportId": "candidate-021",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/tech/1041820/huawei-guilty-trade-secrets-trial",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/tech/1041820/huawei-guilty-trade-secrets-trial",
+      "bytes": 402535,
+      "responseSha256": "27e5f14b9216f842a8926ea7a26cb00011102d66f4b1e15149d8a68392edcae1",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Huawei found guilty of stealing trade secrets | The Verge",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T22:23:27+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T22:23:27+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:07:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:06:24+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T10:45:50+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T00:04:34+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T23:56:44+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:03:45+00:00"
+    },
+    {
+      "reportId": "candidate-022",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/gadgets/1021621/best-gifts-for-mom-2026",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/gadgets/1021621/best-gifts-for-mom-2026",
+      "bytes": 841250,
+      "responseSha256": "a12254d395098ddfe6b1fcd16d031e9099a5c214d226ef02f1a58b3ea624a4fa",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "The 36 best gifts for every type of mom | The Verge",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-10T16:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T21:09:59+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:07:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:55:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T21:48:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:03:45+00:00"
+    },
+    {
+      "reportId": "candidate-023",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/tech/1041571/jensen-huang-all-hands-nvidia-apology",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/tech/1041571/jensen-huang-all-hands-nvidia-apology",
+      "bytes": 430455,
+      "responseSha256": "438c41cc0d517e2a9b40b64e3c7abba6c7e8e9e5c09d67905746a41ba0e66d8b",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Jensen Huang reportedly tells Nvidia staff it’s ‘not true’ Trump got him rehired | The Verge",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T20:02:03+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T20:02:03+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T13:15:21+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T10:17:50+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T21:41:28+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:07:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:06:24+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T10:45:50+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T00:04:34+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T23:56:44+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:03:45+00:00"
+    },
+    {
+      "reportId": "candidate-024",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/policy/1041568/fisa-ndaa-blue-wave",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/policy/1041568/fisa-ndaa-blue-wave",
+      "bytes": 418177,
+      "responseSha256": "cf136f4ca9c176b42b62b0dee2f395a1c9e8ffa9cf4eb40d697bb8a7c38b0d9b",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "The clock is running out for America’s most contentious spying law | The Verge",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T20:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T20:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:06:24+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:38:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T09:54:40+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T23:56:44+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T19:45:51+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T01:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:03:45+00:00"
+    },
+    {
+      "reportId": "candidate-025",
+      "role": "article",
+      "requestUrl": "https://techcrunch.com/2026/11/24/yales-sonnenfeld-nvidia-is-a-detriment-to-u-s-industrial-might-not-a-champion/",
+      "status": 200,
+      "finalUrl": "https://techcrunch.com/2026/11/24/yales-sonnenfeld-nvidia-is-a-detriment-to-u-s-industrial-might-not-a-champion/",
+      "bytes": 248709,
+      "responseSha256": "fb75d5f6e522d17567edb89937832bc222a3438964dc13e554b549153ed42efe",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Yale's Sonnenfeld: Nvidia is a 'detriment' to US industrial might — not a champion | TechCrunch",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-25T00:12:02+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T16:12:02-08:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-026",
+      "role": "article",
+      "requestUrl": "https://techcrunch.com/2026/11/24/trump-reportedly-says-pardoning-jensen-huang-is-an-option-but-that-he-doesnt-think-it-will-be-necessary/",
+      "status": 200,
+      "finalUrl": "https://techcrunch.com/2026/11/24/trump-reportedly-says-pardoning-jensen-huang-is-an-option-but-that-he-doesnt-think-it-will-be-necessary/",
+      "bytes": 215339,
+      "responseSha256": "192b9f09fb6e49c7e59d7c084bf28d9773c8cef6c9c2be325f778de83ad6f2fc",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Trump reportedly says pardoning Jensen Huang is 'an option' | TechCrunch",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-25T00:10:27+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T16:10:27-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T11:54:57-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T05:00:00-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T10:11:46-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T16:10:27-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-23T11:31:41-08:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-027",
+      "role": "article",
+      "requestUrl": "https://techcrunch.com/2026/11/24/jensen-huang-still-thinks-a-succession-plan-creates-unnecessary-hierarchy/",
+      "status": 200,
+      "finalUrl": "https://techcrunch.com/2026/11/24/jensen-huang-still-thinks-a-succession-plan-creates-unnecessary-hierarchy/",
+      "bytes": 235104,
+      "responseSha256": "fade2595ad21e16d4d61ee59faa14542dd9527581e8b3ebd0db0adc2a4b7eac6",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Jensen Huang still thinks a succession plan creates unnecessary hierarchy | TechCrunch",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T22:27:52+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T14:27:52-08:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-028",
+      "role": "article",
+      "requestUrl": "https://techcrunch.com/2026/11/24/in-all-hands-meeting-jensen-huang-thanks-white-house-and-says-hes-in-therapy/",
+      "status": 200,
+      "finalUrl": "https://techcrunch.com/2026/11/24/in-all-hands-meeting-jensen-huang-thanks-white-house-and-says-hes-in-therapy/",
+      "bytes": 234550,
+      "responseSha256": "5f71ec76f1d3733598e1c01f0e9ac4e3ecf18e1d164722841bb310d69bf66611",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "In all-hands meeting, Jensen Huang thanks White House and says he's in therapy | TechCrunch",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T21:48:27+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T13:48:27-08:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-029",
+      "role": "article",
+      "requestUrl": "https://techcrunch.com/2026/11/24/even-the-best-ai-agents-struggle-with-everyday-life/",
+      "status": 200,
+      "finalUrl": "https://techcrunch.com/2026/11/24/even-the-best-ai-agents-struggle-with-everyday-life/",
+      "bytes": 237720,
+      "responseSha256": "47ad88a7fbebfcbae3d33f740b3544e54e674cfe41da2b0af71cd2d60115dadf",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Even the best AI agents struggle with everyday life | TechCrunch",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T21:33:29+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T13:33:29-08:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-030",
+      "role": "article",
+      "requestUrl": "https://techcrunch.com/2026/11/24/maple-raises-5-3m-to-build-ai-products-that-protect-your-data-even-from-itself/",
+      "status": 200,
+      "finalUrl": "https://techcrunch.com/2026/11/24/maple-raises-5-3m-to-build-ai-products-that-protect-your-data-even-from-itself/",
+      "bytes": 252933,
+      "responseSha256": "e884087b685c72195cc5213d82bfe14363b2ebcca273f71f5d2797ad501424ec",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Maple raises $5.3M to build AI products that protect your data, even from itself | TechCrunch",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T21:19:52+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T13:19:52-08:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-031",
+      "role": "article",
+      "requestUrl": "https://techcrunch.com/2026/11/24/dozens-of-oil-and-shipping-tankers-hacked-in-recent-weeks-per-report/",
+      "status": 200,
+      "finalUrl": "https://techcrunch.com/2026/11/24/dozens-of-oil-and-shipping-tankers-hacked-in-recent-weeks-per-report/",
+      "bytes": 210558,
+      "responseSha256": "e538820557ae0a9b2986cf7428d2b033569650a45a3928b60822f31f2e3d18a9",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Dozens of oil and shipping tankers hacked in recent weeks, per report | TechCrunch",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T21:09:04+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T13:09:04-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T10:49:52-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T09:36:51-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T06:20:28-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T10:49:52-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T09:36:51-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T07:08:37-08:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-032",
+      "role": "article",
+      "requestUrl": "https://techcrunch.com/2026/11/24/anthropic-shares-fall-below-ipo-price-a-worrying-sign-for-ai-startups/",
+      "status": 200,
+      "finalUrl": "https://techcrunch.com/2026/11/24/anthropic-shares-fall-below-ipo-price-a-worrying-sign-for-ai-startups/",
+      "bytes": 211830,
+      "responseSha256": "5ef79f44d21afaf31bd13e09decb4f3d0c5ad7de78878acf6559d5e939b73020",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Anthropic shares fall below IPO price, a worrying sign for AI startups | TechCrunch",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T18:30:42+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T10:30:42-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T08:00:00-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T11:44:24-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T09:35:58-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:03:54-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T08:00:00-08:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:44:32-08:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:00+00:00"
+    },
+    {
+      "reportId": "candidate-033",
+      "role": "article",
+      "requestUrl": "https://arstechnica.com/space/2026/11/half-of-nasas-aging-mars-fleet-knocked-offline-by-technical-issues/",
+      "status": 200,
+      "finalUrl": "https://arstechnica.com/space/2026/11/half-of-nasas-aging-mars-fleet-knocked-offline-by-technical-issues/",
+      "bytes": 160747,
+      "responseSha256": "8a99fc115848c1fe2dee8aa2fa7449c377789581929f5a392bcf66442dcdc37f",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Half of NASA's aging Mars fleet knocked offline by technical issues - Ars Technica",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T22:50:11+00:00"
+          },
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T22:50:11+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T17:50:11-05:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-034",
+      "role": "article",
+      "requestUrl": "https://arstechnica.com/ai/2026/11/whats-going-on-with-the-riemann-hypothesis/",
+      "status": 200,
+      "finalUrl": "https://arstechnica.com/ai/2026/11/whats-going-on-with-the-riemann-hypothesis/",
+      "bytes": 165192,
+      "responseSha256": "7085e871b54ed36f96314a28cf4ddb808ec4b3839d3a8e6a984ccfbb22d50706",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "What's going on with the Riemann hypothesis? - Ars Technica",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T20:34:53+00:00"
+          },
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T20:34:53+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T15:34:53-05:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T22:13:50+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-035",
+      "role": "article",
+      "requestUrl": "https://arstechnica.com/health/2026/11/measles-death-toll-rises-to-14-as-national-case-tally-nears-6000/",
+      "status": 200,
+      "finalUrl": "https://arstechnica.com/health/2026/11/measles-death-toll-rises-to-14-as-national-case-tally-nears-6000/",
+      "bytes": 157931,
+      "responseSha256": "d86f12e900a7d04ecd20483d67b554b07c1bd395a429f93527d37fb71ea81d88",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Back-to-back measles deaths is our new reality; US tally now at 14 - Ars Technica",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T20:00:18+00:00"
+          },
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T20:00:18+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T15:00:18-05:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-036",
+      "role": "article",
+      "requestUrl": "https://arstechnica.com/space/2026/11/amazon-surges-launches-with-rival-spacex-after-ula-fails-to-deliver/",
+      "status": 200,
+      "finalUrl": "https://arstechnica.com/space/2026/11/amazon-surges-launches-with-rival-spacex-after-ula-fails-to-deliver/",
+      "bytes": 162570,
+      "responseSha256": "930b4e27ccc40be28c13b1b5e2d7c22224bc473dea63d15c7522d344787d7009",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Amazon discovers Falcon 9 and Ariane 6 can deliver when nobody else can - Ars Technica",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T18:30:36+00:00"
+          },
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T18:30:36+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T13:30:36-05:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-037",
+      "role": "article",
+      "requestUrl": "https://arstechnica.com/science/2026/11/how-brewers-can-protect-beers-from-smoke-tainted-hops/",
+      "status": 200,
+      "finalUrl": "https://arstechnica.com/science/2026/11/how-brewers-can-protect-beers-from-smoke-tainted-hops/",
+      "bytes": 162662,
+      "responseSha256": "0c99750ab956ceef9b78a13d47611608962c8252fd164ae9936ce2fac21c1466",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "How brewers can protect beers from smoke-tainted hops - Ars Technica",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T18:18:37+00:00"
+          },
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T18:18:37+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T13:18:37-05:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-038",
+      "role": "article",
+      "requestUrl": "https://arstechnica.com/tech-policy/2026/11/kalshi-makes-difficult-decision-to-halt-utah-trading-after-losing-court-fights/",
+      "status": 200,
+      "finalUrl": "https://arstechnica.com/tech-policy/2026/11/kalshi-makes-difficult-decision-to-halt-utah-trading-after-losing-court-fights/",
+      "bytes": 166219,
+      "responseSha256": "96803dfbaa69df0aef58b7749dbe5c8d2f127b998d652c6e64ad15faec9f33cf",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Kalshi makes “difficult decision” to halt Utah trading after losing court fights - Ars Technica",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T18:03:58+00:00"
+          },
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T18:03:58+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T13:03:58-05:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-039",
+      "role": "article",
+      "requestUrl": "https://arstechnica.com/cars/2026/11/fake-gears-and-real-911-dna-driving-porsches-electric-718-boxster/",
+      "status": 200,
+      "finalUrl": "https://arstechnica.com/cars/2026/11/fake-gears-and-real-911-dna-driving-porsches-electric-718-boxster/",
+      "bytes": 171779,
+      "responseSha256": "3ed942221289d4204adcbb9546c226aa3072670f0b90d2fe29689b3bc25919ab",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Porsche 718 Boxster prototype drive: This electric roadster is real - Ars Technica",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T16:58:20+00:00"
+          },
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T16:58:20+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T11:58:20-05:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:00+00:00"
+    },
+    {
+      "reportId": "candidate-040",
+      "role": "article",
+      "requestUrl": "https://arstechnica.com/cars/2026/11/new-york-says-no-more-subscriptions-for-in-car-features-or-does-it/",
+      "status": 200,
+      "finalUrl": "https://arstechnica.com/cars/2026/11/new-york-says-no-more-subscriptions-for-in-car-features-or-does-it/",
+      "bytes": 159788,
+      "responseSha256": "69da126f440fba2c71eca1e183000fe6cccdb485b56e1a7f509219d6968c6f3b",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "No more heated seat subscriptions for cars in New York from 2027 - Ars Technica",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T16:20:37+00:00"
+          },
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T16:20:37+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T11:20:37-05:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T16:48:37+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:00+00:00"
+    },
+    {
+      "reportId": "candidate-041",
+      "role": "article",
+      "requestUrl": "https://gatoaitranslations.com/blog/claude-code-vs-gato-ai-translations",
+      "status": 200,
+      "finalUrl": "https://gatoaitranslations.com/blog/claude-code-vs-gato-ai-translations",
+      "bytes": 350624,
+      "responseSha256": "b605a98b0a2ecfb8d96a8107f3d921be8f34bad70723f4e30c940252c897ca97",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Claude Code vs Gato AI Translations: Translating WordPress to 100%",
+        "publishedMetadata": [
+          {
+            "field": "time.datetime",
+            "value": "2026-11-23T08:00:00.000Z"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-041",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=50641258",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=50641258",
+      "bytes": 4237,
+      "responseSha256": "a005e3030d57b4b2290de23a47abb4abb1f2bb91e6a921ac443924c5ed50a16a",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Claude Code vs. Gato AI Translations: Translating a WordPress Site to 100% | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-041",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/50641258",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/50641258",
+      "bytes": 368,
+      "responseSha256": "e8a0827a5edb737bf9d1f4a131f37456ddd4e33f0eb9b4a5abd36f87a4e5b533",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 50641258,
+          "type": "story",
+          "title": "Claude Code vs. Gato AI Translations: Translating a WordPress Site to 100%",
+          "url": "https://gatoaitranslations.com/blog/claude-code-vs-gato-ai-translations",
+          "created_at": "2026-11-25T11:48:53.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-043",
+      "role": "article",
+      "requestUrl": "https://www.businessinsider.com/ai-generated-workslop-leads-to-policies-firings-boss-fed-up-2026-11",
+      "status": 200,
+      "finalUrl": "https://www.businessinsider.com/ai-generated-workslop-leads-to-policies-firings-boss-fed-up-2026-11",
+      "bytes": 389423,
+      "responseSha256": "943e62b992004ce08055f441b4445244b7dfc8e42acb99b3640a306fad73a168",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "AI-Generated Workslop Leads to Policies, Firings - Business InsiderBusiness InsiderAccount iconAccount icon",
+        "publishedMetadata": [
+          {
+            "field": "datepublished",
+            "value": "2026-11-05T10:07:01.244Z"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-043",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=50641251",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=50641251",
+      "bytes": 5261,
+      "responseSha256": "a201396ce8022040a442bf2c87650605719d9546a2c041e8cbae94b3d74a0416",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Bosses loved AI at work – until they drowned in slop | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-043",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/50641251",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/50641251",
+      "bytes": 676,
+      "responseSha256": "f4f25f7abfd5123eb3ab1b52c2848c6c263e1de2686327a27dd6b5ec7b2f6ac8",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 50641251,
+          "type": "story",
+          "title": "Bosses loved AI at work – until they drowned in slop",
+          "url": "https://www.businessinsider.com/ai-generated-workslop-leads-to-policies-firings-boss-fed-up-2026-11",
+          "created_at": "2026-11-25T11:48:03.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-044",
+      "role": "article",
+      "requestUrl": "https://github.com/hotpath-run/hotpath/blob/main/docs/HOTPATH-EXPLAINED.md",
+      "status": 200,
+      "finalUrl": "https://github.com/hotpath-run/hotpath/blob/main/docs/HOTPATH-EXPLAINED.md",
+      "bytes": 250101,
+      "responseSha256": "a725a03eb2d8a2ab11c1a464839586c5e768525b205df9c6021db2f1375cb1f6",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "hotpath/docs/HOTPATH-EXPLAINED.md at main · hotpath-run/hotpath · GitHub",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-044",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=50641240",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=50641240",
+      "bytes": 5242,
+      "responseSha256": "61e94daaf80ef91a84ff2f4ecd89fb955f58ceaecfdf1100a68311658012407a",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Stop paying an LLM to re-plan the same agent task every day | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-044",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/50641240",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/50641240",
+      "bytes": 645,
+      "responseSha256": "0b12873f94574cc7546de951448fcbe1ab3d1cd05b36f196c29a455c3b10dad4",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 50641240,
+          "type": "story",
+          "title": "Stop paying an LLM to re-plan the same agent task every day",
+          "url": "https://github.com/hotpath-run/hotpath/blob/main/docs/HOTPATH-EXPLAINED.md",
+          "created_at": "2026-11-25T11:46:09.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-045",
+      "role": "article",
+      "requestUrl": "https://www.thebignewsletter.com/p/a-700-price-hike-on-a-key-component",
+      "status": 200,
+      "finalUrl": "https://www.thebignewsletter.com/p/a-700-price-hike-on-a-key-component",
+      "bytes": 236456,
+      "responseSha256": "65ca6df9a38d0323f2253162bfc463b9e799c785d546632a59ff28cb34895fa1",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "A 700% Price Hike on A Key Component in Gaming Consoles? Blame A 25-Year Cartel.",
+        "publishedMetadata": [
+          {
+            "field": "time.datetime",
+            "value": "2026-11-20T18:40:19.641Z"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-045",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=50641203",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=50641203",
+      "bytes": 4224,
+      "responseSha256": "c582bacb176e22bc9cc41cca6de88ee1c453bec7f1446e032fc97f57468fd5f7",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "700% Price Hike on DRAM in Gaming Consoles? Blame a 25-Year Cartel | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-045",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/50641203",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/50641203",
+      "bytes": 362,
+      "responseSha256": "0a8eed2fba7cd746099af1dda0049912a92afdf1dd6a93bfb9c8105209f76394",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 50641203,
+          "type": "story",
+          "title": "700% Price Hike on DRAM in Gaming Consoles? Blame a 25-Year Cartel",
+          "url": "https://www.thebignewsletter.com/p/a-700-price-hike-on-a-key-component",
+          "created_at": "2026-11-25T11:39:40.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-046",
+      "role": "article",
+      "requestUrl": "https://inside.java/2025/01/28/jvm-start-up/",
+      "status": 200,
+      "finalUrl": "https://inside.java/2025/01/28/jvm-start-up/",
+      "bytes": 58997,
+      "responseSha256": "a322d46d9d13ca4a7e08eb47edccb989222fc03d037b748fb4bd1a83735bf158",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "A Deep Dive into JVM Start-up - Inside.java",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-046",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=50641193",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=50641193",
+      "bytes": 4034,
+      "responseSha256": "414c9a87f1145d93db83f65abf385f4cec9e5dd8125ea686382bf4a1c97c9c82",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "A Deep Dive into JVM Startup | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-046",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/50641193",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/50641193",
+      "bytes": 295,
+      "responseSha256": "30871641471bd21038de9654a94abdcb7ec791d26808bce33b67898baf3992f8",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 50641193,
+          "type": "story",
+          "title": "A Deep Dive into JVM Startup",
+          "url": "https://inside.java/2025/01/28/jvm-start-up/",
+          "created_at": "2026-11-25T11:37:27.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-047",
+      "role": "article",
+      "requestUrl": "https://simmsreeve.com/blog/agents-are-just-string-concatenation/",
+      "status": 200,
+      "finalUrl": "https://simmsreeve.com/blog/agents-are-just-string-concatenation/",
+      "bytes": 196870,
+      "responseSha256": "06116cf771705c902cd08848fe36d6d4a60a3412466235eb58262dfa2075872f",
+      "contentType": "text/html",
+      "observed": {
+        "title": "Agents are just string concatenation · Joe Reeve",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-23"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-23"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-047",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=50641192",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=50641192",
+      "bytes": 4080,
+      "responseSha256": "f00bb304229937b4fc831d5407af32665cf8dddd20a034c8f64afff49e29869e",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Agents are just string concatenation | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-047",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/50641192",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/50641192",
+      "bytes": 322,
+      "responseSha256": "c4fb50b0e0f5541029d91cb96797e4552880c8831ef8f9fd23e0ac57dfdacd78",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 50641192,
+          "type": "story",
+          "title": "Agents are just string concatenation",
+          "url": "https://simmsreeve.com/blog/agents-are-just-string-concatenation/",
+          "created_at": "2026-11-25T11:37:25.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-048",
+      "role": "article",
+      "requestUrl": "https://spader.zone/spn/",
+      "status": 200,
+      "finalUrl": "https://spader.zone/spn/",
+      "bytes": 51924,
+      "responseSha256": "fe17959b3447b9054ee5fb5acbad904e6c0c7ec7def44967e84ee9e811f45ed4",
+      "contentType": "text/html",
+      "observed": {
+        "title": "spn is the build system that C deserves",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-048",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=50641191",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=50641191",
+      "bytes": 6305,
+      "responseSha256": "354d8801de789685ddc69b17878352d0862ac37dca2f8e8dee0fa979c2cf1e67",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Spn is the build system that C deserves | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-048",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/50641191",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/50641191",
+      "bytes": 906,
+      "responseSha256": "8df0ed30041c116ad25f6af446a8eecd4d95a828be89cce46fdfa4efbba9a5c1",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 50641191,
+          "type": "story",
+          "title": "Spn is the build system that C deserves",
+          "url": "https://spader.zone/spn/",
+          "created_at": "2026-11-25T11:37:20.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-049",
+      "role": "article",
+      "requestUrl": "https://go.dev/blog/go1.25",
+      "status": 200,
+      "finalUrl": "https://go.dev/blog/go1.25",
+      "bytes": 34128,
+      "responseSha256": "6d29f3dee607c2bc0b20829ebdc2e9c1826aa65c3e5fca684dbcc121a77b90dc",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.25 is released - The Go Programming Language",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-049",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=44882463",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=44882463",
+      "bytes": 4480,
+      "responseSha256": "235ed2de63d5c60034b885e89d0f4935cde4ff771b76031131ec87fdf4935b86",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.25 Is Released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:00+00:00"
+    },
+    {
+      "reportId": "candidate-049",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/44882463",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/44882463",
+      "bytes": 652,
+      "responseSha256": "d315464d4aa03fbb06e313c6f1bccecbb7a3759aff99d7ba32e203f61bf07344",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 44882463,
+          "type": "story",
+          "title": "Go 1.25 Is Released",
+          "url": "https://go.dev/blog/go1.25",
+          "created_at": "2025-08-12T22:21:49.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:00+00:00"
+    },
+    {
+      "reportId": "candidate-050",
+      "role": "article",
+      "requestUrl": "https://go.dev/doc/go1.25",
+      "status": 200,
+      "finalUrl": "https://go.dev/doc/go1.25",
+      "bytes": 71574,
+      "responseSha256": "c9d872d374a3d52bbd5e1fad7d99b9eb44a7dac45d7032314d8cacd0702d38fd",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.25 Release Notes - The Go Programming Language",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-050",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=44881977",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=44881977",
+      "bytes": 171241,
+      "responseSha256": "7c1b04e8d684437cae0559ac68d705434f265aa520836d85d8854fe5dec7736b",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.25 Release Notes | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:00+00:00"
+    },
+    {
+      "reportId": "candidate-050",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/44881977",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/44881977",
+      "bytes": 56682,
+      "responseSha256": "14327460b951911835ee98af3a7720e1bc3b2268b4bb2529ae3ff1b3a6d42ec1",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 44881977,
+          "type": "story",
+          "title": "Go 1.25 Release Notes",
+          "url": "https://go.dev/doc/go1.25",
+          "created_at": "2025-08-12T21:25:01.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:02+00:00"
+    },
+    {
+      "reportId": "candidate-051",
+      "role": "article",
+      "requestUrl": "https://go.dev/blog/go1.26",
+      "status": 200,
+      "finalUrl": "https://go.dev/blog/go1.26",
+      "bytes": 36988,
+      "responseSha256": "94530d8992116eb8028c6f5e397b4e33823961f9ca86bcf88c328b78e4dba4d2",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.26 is released - The Go Programming Language",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-051",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=46966346",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=46966346",
+      "bytes": 3427,
+      "responseSha256": "22f41834f63f09abd88c6f4ecf490243aa21e3f36c51e3345ede98543bbec3d7",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.26 Is Released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:01+00:00"
+    },
+    {
+      "reportId": "candidate-051",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/46966346",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/46966346",
+      "bytes": 268,
+      "responseSha256": "07e8025f533bebaf79264a20cbf5a0876970351c5b9f07456d3acf4a24c1f9c0",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 46966346,
+          "type": "story",
+          "title": "Go 1.26 Is Released",
+          "url": "https://go.dev/blog/go1.26",
+          "created_at": "2026-02-10T20:25:39.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:01+00:00"
+    },
+    {
+      "reportId": "candidate-053",
+      "role": "article",
+      "requestUrl": "https://www.phoronix.com/news/Go-1.26-Released",
+      "status": 200,
+      "finalUrl": "https://www.phoronix.com/news/Go-1.26-Released",
+      "bytes": 78738,
+      "responseSha256": "d78ca5a5bdc3e4407bc8e290d5509249fab0fae4ef67a5e17871ca108f3c35d0",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Go 1.26 Introduces Two Language Changes, New Performance Improvements - Phoronix",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-053",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=46967440",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=46967440",
+      "bytes": 3644,
+      "responseSha256": "0a8e34b223e6c3ab4b62c5885616470bbe21539877ffc030ecad11bde29679bc",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.26 Introduces Two Language Changes, New Performance Improvements | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:01+00:00"
+    },
+    {
+      "reportId": "candidate-053",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/46967440",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/46967440",
+      "bytes": 337,
+      "responseSha256": "2438d5ae953d8af500d6e017e7449bf3fb21f5c324803e7b286a37c5b0c45a88",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 46967440,
+          "type": "story",
+          "title": "Go 1.26 Introduces Two Language Changes, New Performance Improvements",
+          "url": "https://www.phoronix.com/news/Go-1.26-Released",
+          "created_at": "2026-02-10T21:52:28.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:04+00:00"
+    },
+    {
+      "reportId": "candidate-054",
+      "role": "article",
+      "requestUrl": "https://groups.google.com/g/golang-announce/c/66pojueaQek",
+      "status": 200,
+      "finalUrl": "https://groups.google.com/g/golang-announce/c/66pojueaQek",
+      "bytes": 1003276,
+      "responseSha256": "8b01568870da4623676c13c36b8d009b3c930d31c6fbe89c7b6118f4c8d26904",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "[security] Go 1.27.3 and Go 1.26.10 are released",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-054",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=50178540",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=50178540",
+      "bytes": 3644,
+      "responseSha256": "a68278306dc5dc53ca4b4c41dac9fe8d401f2afd0358820605a46fb1eb890331",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.27.3 and Go 1.26.10 are released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:02+00:00"
+    },
+    {
+      "reportId": "candidate-054",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/50178540",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:27+00:00"
+    },
+    {
+      "reportId": "candidate-056",
+      "role": "article",
+      "requestUrl": "https://groups.google.com/g/golang-nuts/c/LcB-3xh5o68",
+      "status": 200,
+      "finalUrl": "https://groups.google.com/g/golang-nuts/c/LcB-3xh5o68",
+      "bytes": 1006536,
+      "responseSha256": "5407f4bcd824ebf710c716beed3d77b6373d22dd0cecbd483537465a3d865aea",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.26 Release Candidate 1 is released",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-056",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=46294257",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=46294257",
+      "bytes": 4635,
+      "responseSha256": "eda3ce38e593c6ecd4918fae2cbfb92264dfa29e94ea4ffe56236bc8ed1ca2ea",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.26 Release Candidate 1 is released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:02+00:00"
+    },
+    {
+      "reportId": "candidate-056",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/46294257",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:12+00:00"
+    },
+    {
+      "reportId": "candidate-057",
+      "role": "article",
+      "requestUrl": "https://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2024-002.txt.asc",
+      "status": 200,
+      "finalUrl": "https://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2024-002.txt.asc",
+      "bytes": 6391,
+      "responseSha256": "e98a0fd2a7f19befdae2cb37f6350e582b0d9bd27db8aafe088e6437514280da",
+      "contentType": "text/plain",
+      "observed": {
+        "title": null,
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-057",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=40959843",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=40959843",
+      "bytes": 3709,
+      "responseSha256": "f17d9b045a8f5547c272e1980848180477d85f3206a66a98fce583cf7a7a09c1",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "NetBSD Security Advisory 2024-002 – OpenSSH CVE-2024-6387 `regreSSHion' | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:03+00:00"
+    },
+    {
+      "reportId": "candidate-057",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40959843",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:11+00:00"
+    },
+    {
+      "reportId": "candidate-058",
+      "role": "article",
+      "requestUrl": "https://www.oligo.security/blog/critical-openssh-vulnerability-cve-2024-6387-regresshion",
+      "status": 200,
+      "finalUrl": "https://www.oligo.security/blog/critical-openssh-vulnerability-cve-2024-6387-regresshion",
+      "bytes": 50733,
+      "responseSha256": "0311ec5c33f7afa495004f76982a1e6d3b034b5ad10de0ae87c81f37e0aa8869",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Critical RCE Vulnerabilities in OpenSSH (CVE-2024-6387, CVE-2024-6409) - How to Detect and Mitigate",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-058",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=40854716",
+      "status": 503,
+      "finalUrl": "https://news.ycombinator.com/item?id=40854716",
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "http-error",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:04+00:00"
+    },
+    {
+      "reportId": "candidate-058",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40854716",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:28+00:00"
+    },
+    {
+      "reportId": "candidate-059",
+      "role": "article",
+      "requestUrl": "https://www.qualys.com/regresshion-cve-2024-6387/",
+      "status": 200,
+      "finalUrl": "https://www.qualys.com/regresshion-cve-2024-6387",
+      "bytes": 344051,
+      "responseSha256": "c0d0f705f8d60bf97ad03b5e1dadbed4127ab4a2ae501de77a96d1bd7702e5a6",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "regreSSHion Bug: RCE Vulnerability in OpenSSH’s Server | Qualys",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-059",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=40863537",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=40863537",
+      "bytes": 3596,
+      "responseSha256": "1f590c19b0ee32ac146ee14906a88130dae9ce6d707d45cc35d9867a2dd110a1",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "OpenSSH Vulnerability: CVE-2024-6387 FAQs and Resources | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:08+00:00"
+    },
+    {
+      "reportId": "candidate-059",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40863537",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/40863537",
+      "bytes": 330,
+      "responseSha256": "6ba560a0a900280932e49ba8492709952d1c0d9e24ff552f49f9fc6c54e74e57",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 40863537,
+          "type": "story",
+          "title": "OpenSSH Vulnerability: CVE-2024-6387 FAQs and Resources",
+          "url": "https://www.qualys.com/regresshion-cve-2024-6387/",
+          "created_at": "2024-07-03T07:15:39.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:20+00:00"
+    },
+    {
+      "reportId": "candidate-060",
+      "role": "article",
+      "requestUrl": "https://regresshion.io/",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "URLError",
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "candidate-060",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=40851253",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=40851253",
+      "bytes": 11002,
+      "responseSha256": "0485bba6ae06c438c940ef5d9271fb7ebe5127118ed438a72c946e1e9dddee2d",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Show HN: regreSSHion.io – Quick OpenSSH vulnerability checker (CVE-2024-6387) | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:12+00:00"
+    },
+    {
+      "reportId": "candidate-060",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40851253",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:19+00:00"
+    },
+    {
+      "reportId": "candidate-061",
+      "role": "article",
+      "requestUrl": "https://pentest-tools.com/network-vulnerability-scanning/cve-2024-6387-scanner-regresshion-vulnerability",
+      "status": 200,
+      "finalUrl": "https://pentest-tools.com/network-vulnerability-scanning/network-security-scanner-online",
+      "bytes": 716256,
+      "responseSha256": "be9e813e345bffcbf64ed1903b6f59b781911625902e397e8776af5d021443c8",
+      "contentType": "text/html;charset=utf-8",
+      "observed": {
+        "title": "Online Network Vulnerability Scanner - free scans and report",
+        "publishedMetadata": [
+          {
+            "field": "time.datetime",
+            "value": "2026-11-12T12:50:23.000Z"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-061",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=40866014",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=40866014",
+      "bytes": 3726,
+      "responseSha256": "2d08f3266315318a146709e35a6c7b29764f07827d83d4a70ab63cba54e8b88f",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Free scanner for RegreSSHion (CVE-2024-6387), the OpenSSH vulnerability | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:15+00:00"
+    },
+    {
+      "reportId": "candidate-061",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40866014",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/40866014",
+      "bytes": 403,
+      "responseSha256": "6e87a23cb95b2e2bb740e925afc48be478e5763a9923af7275ebffbde3cafd30",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 40866014,
+          "type": "story",
+          "title": "Free scanner for RegreSSHion (CVE-2024-6387), the OpenSSH vulnerability",
+          "url": "https://pentest-tools.com/network-vulnerability-scanning/cve-2024-6387-scanner-regresshion-vulnerability",
+          "created_at": "2024-07-03T13:58:42.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:15+00:00"
+    },
+    {
+      "reportId": "candidate-062",
+      "role": "article",
+      "requestUrl": "https://www.openwall.com/lists/oss-security/2024/07/01/3",
+      "status": 200,
+      "finalUrl": "https://www.openwall.com/lists/oss-security/2024/07/01/3",
+      "bytes": 60479,
+      "responseSha256": "930a462421313aa8d72ea9fe8a37336b3fac868beadb4f64ffe359a02b782c3b",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "oss-security - CVE-2024-6387: RCE in OpenSSH's server, on glibc-based Linux systems",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-062",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=40844458",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=40844458",
+      "bytes": 3659,
+      "responseSha256": "8a2cd038b338088db3b9af7b812e48c3367d745f4dcea70d845e86d10c774771",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "CVE-2024-6387: RCE in OpenSSH's server, on glibc-based Linux systems | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:19+00:00"
+    },
+    {
+      "reportId": "candidate-062",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40844458",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:43+00:00"
+    },
+    {
+      "reportId": "candidate-063",
+      "role": "article",
+      "requestUrl": "https://lists.mindrot.org/pipermail/openssh-unix-announce/2025-February/000161.html",
+      "status": 200,
+      "finalUrl": "https://lists.mindrot.org/pipermail/openssh-unix-announce/2025-February/000161.html",
+      "bytes": 4995,
+      "responseSha256": "c0fd52bdba2d322366d92b728e30b2cb811c149f47affe174606856ac1aea4b3",
+      "contentType": "text/html",
+      "observed": {
+        "title": "[openssh-unix-announce] Announce: Portable OpenSSH 9.9p2 released",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-063",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=43093943",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=43093943",
+      "bytes": 3711,
+      "responseSha256": "b1b5348c42f53a8d17d0a4420f05da7cd6e6b45414c8fd128ba39ceb6ae52c40",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "OpenSSH 9.9p2 Released to Fix Vulnerabilities CVE-2025-26466 and CVE-2025-26465 | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:20+00:00"
+    },
+    {
+      "reportId": "candidate-063",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/43093943",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/43093943",
+      "bytes": 389,
+      "responseSha256": "9a407d6aea4aadaac4d10d358881bb055bbddf0ece7f9648a554a5fa8c0bcd0c",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 43093943,
+          "type": "story",
+          "title": "OpenSSH 9.9p2 Released to Fix Vulnerabilities CVE-2025-26466 and CVE-2025-26465",
+          "url": "https://lists.mindrot.org/pipermail/openssh-unix-announce/2025-February/000161.html",
+          "created_at": "2025-02-18T19:26:45.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:35+00:00"
+    },
+    {
+      "reportId": "supplement-001",
+      "role": "article",
+      "requestUrl": "https://www.ithome.com/0/922/484.htm",
+      "status": 200,
+      "finalUrl": "https://www.ithome.com/0/922/484.htm",
+      "bytes": 25464,
+      "responseSha256": "d0c9eb4ccd1873564aadf56bed2a1d9b1725517126dec0114ebab00750f99b3c",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 语言 1.26 版本正式发布：泛型限制放宽、Green Tea GC 垃圾回收器默认启用 - IT之家",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:03+00:00"
+    },
+    {
+      "reportId": "supplement-003",
+      "role": "article",
+      "requestUrl": "https://developer.cloud.tencent.com/article/2554949",
+      "status": 200,
+      "finalUrl": "https://developer.cloud.tencent.com/article/2554949",
+      "bytes": 182076,
+      "responseSha256": "eaca6bc5a3f1df0b1dc8af7ed2f0bcafaec0a0764e939dc22aaf6357c58a516e",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Go 1.25 重磅发布：性能飞跃、工具升级与新一代 GC 来袭-腾讯云开发者社区-腾讯云",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "supplement-004",
+      "role": "article",
+      "requestUrl": "https://security.scnu.edu.cn/a/20240702/74.html",
+      "status": 200,
+      "finalUrl": "https://security.scnu.edu.cn/a/20240702/74.html",
+      "bytes": 32041,
+      "responseSha256": "92e6e5ab8fbd7f9adde305741bc60574ba21d1d7ca29ebea7749375841758ed2",
+      "contentType": "text/html",
+      "observed": {
+        "title": "OpenSSH Server远程代码执行漏洞 （CVE-2024-6387）安全风险通告 - 安全课堂 - 华南师范大学网络安全专题网",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "supplement-007",
+      "role": "article",
+      "requestUrl": "https://www.ithome.com/1/031/908.htm",
+      "status": 200,
+      "finalUrl": "https://www.ithome.com/1/031/908.htm",
+      "bytes": 26083,
+      "responseSha256": "f19e657d279c3244a26fa0ebe3a322c3cd09717e676ffd8d364a6393e709f17e",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "NASA 两项火星探测任务因故障暂停：毅力号通信异常、奥德赛号剩余肼燃料仅够维持一两个月 - IT之家",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:01+00:00"
+    },
+    {
+      "reportId": "coverage-zh-79800",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=79800",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=79800",
+      "bytes": 16403,
+      "responseSha256": "a227901116c916e687900b91af7901e59630fb4b203765c37a2c5e2290611ae7",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | Linux 6.12 释出",
+        "publishedMetadata": [],
+        "solidotWallTime": "2024-11-18 11:35"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:04+00:00"
+    },
+    {
+      "reportId": "coverage-zh-80374",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=80374",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=80374",
+      "bytes": 16355,
+      "responseSha256": "7dfe7a1020e8ba1d502d23b6f14cfcd70534e43db0e53cb54180ccf55375dc39",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | Linux 6.13 释出",
+        "publishedMetadata": [],
+        "solidotWallTime": "2025-01-20 14:03"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:25+00:00"
+    },
+    {
+      "reportId": "coverage-zh-79925",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=79925",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=79925",
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": "text/html; charset=UTF-8",
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:31+00:00"
+    },
+    {
+      "reportId": "coverage-zh-82003",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=82003",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=82003",
+      "bytes": 15999,
+      "responseSha256": "015b4c78a25108907a137f3ef4f2c26fff98022fd651339f8d0fc259e2b85fa2",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | Debian 13 trixie 释出",
+        "publishedMetadata": [],
+        "solidotWallTime": "2025-08-10 12:08"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:31+00:00"
+    },
+    {
+      "reportId": "coverage-zh-80841",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=80841",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=80841",
+      "bytes": 16164,
+      "responseSha256": "48a8ac7e252ec01fb7fefb8e2a911d8910a4df08bf4190ed75ac89cb9fae3f61",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | GNOME 48 释出",
+        "publishedMetadata": [],
+        "solidotWallTime": "2025-03-20 23:24"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:36+00:00"
+    },
+    {
+      "reportId": "coverage-zh-77477",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=77477",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=77477",
+      "bytes": 15973,
+      "responseSha256": "c32f17272e846e060cd251bcf35f1c2642f4634e87c554589a0ffdea7309b6e7",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | KDE Plasma 6 释出",
+        "publishedMetadata": [],
+        "solidotWallTime": "2024-02-29 21:44"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:36+00:00"
+    },
+    {
+      "reportId": "coverage-zh-81580",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=81580",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=81580",
+      "bytes": 16081,
+      "responseSha256": "67a7071e2d1712fe764e8e8f017a722d54a9aa2602258a5b51dd7bc8605d6607",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | KDE Plasma 6.4 释出",
+        "publishedMetadata": [],
+        "solidotWallTime": "2025-06-17 21:49"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:40+00:00"
+    },
+    {
+      "reportId": "coverage-zh-82598",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=82598",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=82598",
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": "text/html; charset=UTF-8",
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:45+00:00"
+    },
+    {
+      "reportId": "coverage-zh-81058",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=81058",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=81058",
+      "bytes": 16019,
+      "responseSha256": "c2b46860af4554af7ecb49fb3b2f24130ccab92ed22a624bd9970d45766ff8ac",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | Fedora Linux 42 释出",
+        "publishedMetadata": [],
+        "solidotWallTime": "2025-04-15 23:37"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:43+00:00"
+    },
+    {
+      "reportId": "coverage-zh-78307",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=78307",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=78307",
+      "bytes": 16481,
+      "responseSha256": "ebaf744fc54d4dbc6db8f44bbcb7e04d9228b59066e682cf7aa408005b1ec255",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | XZ 5.6.2 释出，移除后门代码",
+        "publishedMetadata": [],
+        "solidotWallTime": "2024-05-30 14:38"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:47+00:00"
+    },
+    {
+      "reportId": "coverage-zh-77917",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=77917",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=77917",
+      "bytes": 16559,
+      "responseSha256": "0890c04aadee01cf2abf6ea554f65c239c336e6d856fc2fe6a433bd814fa96fd",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | XZ 后门事件可能不是一起孤立事件",
+        "publishedMetadata": [],
+        "solidotWallTime": "2024-04-17 15:08"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:55+00:00"
+    },
+    {
+      "reportId": "coverage-zh-81237",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=81237",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=81237",
+      "bytes": 16641,
+      "responseSha256": "ab3dbd9fa1d372a3798aecc02450c3e4638e0e451416bb9cece904464315eaad",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | curl 项目遭遇 AI 生成的虚假漏洞报告攻击",
+        "publishedMetadata": [],
+        "solidotWallTime": "2025-05-08 13:45"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:52+00:00"
+    },
+    {
+      "reportId": "coverage-zh-84269",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=84269",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=84269",
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": "text/html; charset=UTF-8",
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:01:01+00:00"
+    },
+    {
+      "reportId": "coverage-zh-74771",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=74771",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "URLError",
+      "capturedAt": "2026-11-27T06:01:04+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42168014",
+      "role": "article",
+      "requestUrl": "https://www.phoronix.com/news/Linux-6.12-Released",
+      "status": 200,
+      "finalUrl": "https://www.phoronix.com/news/Linux-6.12-Released",
+      "bytes": 79728,
+      "responseSha256": "2e7a0c82f727f09e78f60114f7eee77352af2b6eda2c65cb6e71c086d4402abe",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Linux 6.12 Released With Real-Time Capabilities, Sched_Ext, More AMD RDNA4 & More - Phoronix",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42168014",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=42168014",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=42168014",
+      "bytes": 5532,
+      "responseSha256": "4bab0d858bb85b58c5f363acc69521fdb32b67a73ef0a9bb31391b2e7a2e0b1d",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Linux 6.12 Released with Real-Time Capabilities, Sched_Ext, AMD RDNA4 and More | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:25+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42168014",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42168014",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:43+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42169418",
+      "role": "article",
+      "requestUrl": "https://lwn.net/Articles/997958/",
+      "status": 200,
+      "finalUrl": "https://lwn.net/Articles/997958/",
+      "bytes": 9069,
+      "responseSha256": "3c879518b7d9304fe962c073588e102a6566f5caa11dab61bf033d5cde3a2199",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "The 6.12 kernel has been released [LWN.net]",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42169418",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=42169418",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=42169418",
+      "bytes": 59396,
+      "responseSha256": "17880c9cea0bf852fc1d382e114a12f0609a8dfb12342c0c930f13f5a517070c",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Linux kernel 6.12 has been released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:28+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42169418",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42169418",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:35+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42106954",
+      "role": "article",
+      "requestUrl": "https://www.phoronix.com/news/Linux-6.12-rc7-Released",
+      "status": 200,
+      "finalUrl": "https://www.phoronix.com/news/Linux-6.12-rc7-Released",
+      "bytes": 79064,
+      "responseSha256": "87ab5934b5fc5453c4c23b236942e1322668d99549eb26cbf29461b4b7a3f650",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Linux 6.12-rc7 Released: Linux 6.12 Stable On Track For Release Next Sunday - Phoronix",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42106954",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=42106954",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=42106954",
+      "bytes": 3746,
+      "responseSha256": "3e7c1a523a667b4c9ccc62b9b6b52891f08ca77f3d6da8a09ac3e1368c235eee",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Linux 6.12-Rc7 Released: Linux 6.12 Stable on Track for Release Next Sunday | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:32+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42106954",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42106954",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:51+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42766905",
+      "role": "article",
+      "requestUrl": "https://www.phoronix.com/news/Linux-6.13-Released",
+      "status": 200,
+      "finalUrl": "https://www.phoronix.com/news/Linux-6.13-Released",
+      "bytes": 79894,
+      "responseSha256": "69cb2f4491768c37ff42bdcde63487ee42921e89e3bfa41ce6c648c468af9911",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Linux 6.13 Released With AutoFDO + Propeller, AMD Changes & Broader Apple Support - Phoronix",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42766905",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=42766905",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=42766905",
+      "bytes": 3664,
+      "responseSha256": "0297402ce0b996cb78052f6e578c680883103afea4de92f6b4edb5bf80cf050c",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Linux 6.13 Released with AutoFDO and Propeller, AMD Changes and Apple Support | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:35+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42766905",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42766905",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:51+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42490627",
+      "role": "article",
+      "requestUrl": "https://www.phoronix.com/news/Linux-6.13-rc4",
+      "status": 200,
+      "finalUrl": "https://www.phoronix.com/news/Linux-6.13-rc4",
+      "bytes": 79740,
+      "responseSha256": "77e68513aab5938377627f96523457776fda8b5f93e4d8410ce9d3c9b338a471",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Linux 6.13-rc4 Released For Kernel Testing Ahead Of The Holidays - Phoronix",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42490627",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=42490627",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=42490627",
+      "bytes": 3620,
+      "responseSha256": "841f773daea8feda2ddc1c74ce8549b62a17b2418690c829bbe72067c8f7e7e1",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Linux 6.13-Rc4 Released for Kernel Testing Ahead of the Holidays | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:35+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42490627",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42490627",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42782174",
+      "role": "article",
+      "requestUrl": "https://www.zdnet.com/article/linux-kernel-6-13-isnt-a-major-release-buts-it-still-important-heres-why/",
+      "status": 200,
+      "finalUrl": "https://www.zdnet.com/article/linux-kernel-6-13-isnt-a-major-release-buts-it-still-important-heres-why/",
+      "bytes": 270733,
+      "responseSha256": "fbfc22030b9b6aa9605776ce603dc50e3e98f445d84b583d4e969faece7aa51b",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Linux kernel 6.13 isn't a major release but's it still important - here's why - ZDNET",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2025-01-21T08:18:00-05:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42782174",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=42782174",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=42782174",
+      "bytes": 4751,
+      "responseSha256": "cdb19e3c4f2ea3b9b6e1adee693372bcf55ddae860778534556d509057b97ea9",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Linux kernel 6.13 isn't a major release but's it still important – here's why | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:36+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42782174",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42782174",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:00:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44864232",
+      "role": "article",
+      "requestUrl": "https://news.itsfoss.com/debian-13-release/",
+      "status": 200,
+      "finalUrl": "https://itsfoss.com/news/debian-13-release/",
+      "bytes": 104394,
+      "responseSha256": "a9367c2b94dadb200899cce68ea770458cc5024d8c2f0c9c3059cb48ecb87804",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Debian 13 \"Trixie\" Released: What’s New in the Latest Version?",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2025-08-11T04:20:49.000Z"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2025-11-04"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44864232",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=44864232",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=44864232",
+      "bytes": 5913,
+      "responseSha256": "6480019f387a7220628281623a7810f5b8d3fb338dc503126f1d24948a4f8b0a",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Debian 13 \"Trixie\" Released: What's New in the Latest Version? | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:37+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44864232",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/44864232",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:01:07+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44849134",
+      "role": "article",
+      "requestUrl": "https://micronews.debian.org/2025/1754772107.html",
+      "status": 200,
+      "finalUrl": "https://micronews.debian.org/2025/1754772107.html",
+      "bytes": 2899,
+      "responseSha256": "ad4a3a0e6d5711c5bdc63c93bea10ca32b62a14184e2cc1099621e5aa234be2b",
+      "contentType": "text/html",
+      "observed": {
+        "title": "Debian 13 \"trixie\" has been released, thanks to everyone involved! \"trixie\" images are available for download at https://www.debian.org/distrib/ or you can run apt full-upgrade as always ;-) #debian #debian13 #trixie #ReleasingDebianTrixie",
+        "publishedMetadata": [
+          {
+            "field": "time.datetime",
+            "value": "2025-08-09T20:41:00+02:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44849134",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=44849134",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=44849134",
+      "bytes": 4603,
+      "responseSha256": "c0c0937bc6bdd2315910600ecbe0ddbc8e37cb559d7bd568717056e7f4b8ee2b",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Debian 13 \"Trixie\" Released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:40+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44849134",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/44849134",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:01:07+00:00"
+    },
+    {
+      "reportId": "coverage-hn-45150226",
+      "role": "article",
+      "requestUrl": "https://www.debian.org/News/2025/20250906",
+      "status": 200,
+      "finalUrl": "https://www.debian.org/News/2025/20250906",
+      "bytes": 25343,
+      "responseSha256": "572e2d05c2ecda6428cc688a2d7df1e76128f200beac2371f641b55d8722dd33",
+      "contentType": "text/html",
+      "observed": {
+        "title": "Debian -- News -- Updated Debian 13: 13.1 released",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-hn-45150226",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=45150226",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=45150226",
+      "bytes": 3464,
+      "responseSha256": "95c436fc011de962b17d0c59802b91f5071e1cf11f8275e9d06c3f61de4fc6f7",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Debian 13.1 Released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:43+00:00"
+    },
+    {
+      "reportId": "coverage-hn-45150226",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/45150226",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/45150226",
+      "bytes": 289,
+      "responseSha256": "f3221903cbf7bc63c72dc67e40cf586dc95b73f44711b131fa4d5968390a7d42",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 45150226,
+          "type": "story",
+          "title": "Debian 13.1 Released",
+          "url": "https://www.debian.org/News/2025/20250906",
+          "created_at": "2025-09-06T15:37:40.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:12+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43414106",
+      "role": "article",
+      "requestUrl": "https://release.gnome.org/48/",
+      "status": 200,
+      "finalUrl": "https://release.gnome.org/48/",
+      "bytes": 33303,
+      "responseSha256": "a43a48f390c20dc17b59a5c5e9540fb462dc8a89d923d8c709291aad64b1c27f",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Introducing GNOME 48 - GNOME Release Notes ContentsMenuExpandMatrix",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43414106",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=43414106",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=43414106",
+      "bytes": 3488,
+      "responseSha256": "a04c6cb46ab0ee4784b780181fdbc1758dd4fc06b89e30cf4da5f747c148701c",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Gnome 48, \"Bengaluru\" | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:43+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43414106",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/43414106",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/43414106",
+      "bytes": 279,
+      "responseSha256": "2e59942a392dba977b075a336f3a7434dae8f8b7afd7b3c300f3894145329c19",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 43414106,
+          "type": "story",
+          "title": "Gnome 48, \"Bengaluru\"",
+          "url": "https://release.gnome.org/48/",
+          "created_at": "2025-03-19T16:25:07.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:12+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43453319",
+      "role": "article",
+      "requestUrl": "https://news.itsfoss.com/gnome-48-release/",
+      "status": 200,
+      "finalUrl": "https://itsfoss.com/news/gnome-48-release/",
+      "bytes": 90842,
+      "responseSha256": "cf5e37fc9e7e8d2c461100feadc43dd10bc3ebd9e60d2258d60628627d0d3bcd",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "GNOME 48 Released With Focus on Your Digital Wellbeing",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2025-03-20T03:00:50.000Z"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2025-03-20"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43453319",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=43453319",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=43453319",
+      "bytes": 4798,
+      "responseSha256": "068d364e91ae1f72b6cf651cfd256bc23919ae7d1d38be1aa534c105f5a4421d",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Gnome 48 Released with Focus on Your Digital Wellbeing | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:43+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43453319",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/43453319",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:01:20+00:00"
+    },
+    {
+      "reportId": "coverage-hn-39536185",
+      "role": "article",
+      "requestUrl": "https://kde.org/announcements/megarelease/6/",
+      "status": 200,
+      "finalUrl": "https://kde.org/announcements/megarelease/6/",
+      "bytes": 100736,
+      "responseSha256": "b24df46b68ece3bf7ba355a13bed64663e70a04cbfaaed8c54df2723dd2ba584",
+      "contentType": "text/html",
+      "observed": {
+        "title": "KDE MegaRelease 6 - KDE Community",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2024-02-28T00:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "coverage-hn-39536185",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=39536185",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=39536185",
+      "bytes": 41381,
+      "responseSha256": "9b2df67a2c74cbbcaaf134bb4ee294050a35fa53957efd9dd2542e12a58d0a89",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "KDE Plasma 6.0, and KDE Gear 24.02 released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:45+00:00"
+    },
+    {
+      "reportId": "coverage-hn-39536185",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/39536185",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/39536185",
+      "bytes": 15107,
+      "responseSha256": "a12339afbc59e5529caaa774e4d31039c6c20097ee36eb6967ffac50640f897a",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 39536185,
+          "type": "story",
+          "title": "KDE Plasma 6.0, and KDE Gear 24.02 released",
+          "url": "https://kde.org/announcements/megarelease/6/",
+          "created_at": "2024-02-28T10:25:51.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:02:02+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44297685",
+      "role": "article",
+      "requestUrl": "https://kde.org/announcements/plasma/6/6.4.0/",
+      "status": 200,
+      "finalUrl": "https://kde.org/announcements/plasma/6/6.4.0/",
+      "bytes": 71482,
+      "responseSha256": "52ac48f2e4ba172e10abd2bd6220358d4ea99ba4cfaa67631f94a18b118e2506",
+      "contentType": "text/html",
+      "observed": {
+        "title": "Plasma 6.4 - KDE Community",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2025-06-17T00:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44297685",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=44297685",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=44297685",
+      "bytes": 13320,
+      "responseSha256": "6edd049100526c25cff69259c26d675f8083c8b881e38141de093af1a5310a2e",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "KDE Plasma 6.4 Released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:48+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44297685",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/44297685",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:01:28+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44318666",
+      "role": "article",
+      "requestUrl": "https://www.theregister.com/2025/06/18/kde_plasma_64_released/",
+      "status": 200,
+      "finalUrl": "https://www.theregister.com/software/2025/06/18/kde-plasma-64-ships-with-major-usability-improvements/281153",
+      "bytes": 191610,
+      "responseSha256": "668df9950763a2bcc70bbbaa3ba22471643f28cc76888bba3377f7f9aef92068",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "KDE Plasma 6.4 ships with major usability improvements",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2025-06-18T16:43:11.000Z"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2025-06-18T16:43:11.000Z"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-27T02:19:31+01:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-27T02:00:00+01:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-17T10:00:00+01:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T20:04:00+01:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-21T15:35:00+01:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T19:15:00+01:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "1 day ago"
+          },
+          {
+            "field": "time.datetime",
+            "value": "1 day ago"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2 days ago"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2 days ago"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44318666",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=44318666",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=44318666",
+      "bytes": 3663,
+      "responseSha256": "b83f862452f9d279577de77a7499f2778feb6a4da253392c290fa509b3b5d4d4",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "KDE Plasma 6.4 ships with major usability and Wayland improvements | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:51+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44318666",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/44318666",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:01:28+00:00"
+    },
+    {
+      "reportId": "coverage-hn-45654102",
+      "role": "article",
+      "requestUrl": "https://kde.org/announcements/plasma/6/6.5.0/",
+      "status": 200,
+      "finalUrl": "https://kde.org/announcements/plasma/6/6.5.0/",
+      "bytes": 70054,
+      "responseSha256": "5134afbb01b753e95395a1a93052bfb044af9e548dcb7316d64dc83a338c5d28",
+      "contentType": "text/html",
+      "observed": {
+        "title": "Plasma 6.5 - KDE Community",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2025-10-21T00:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-45654102",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=45654102",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=45654102",
+      "bytes": 15177,
+      "responseSha256": "2f94c81517b531c6a32f61a0b63b1dc1bb9393c11509c18ff65ee0eb7758df98",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "KDE Plasma 6.5 Released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:51+00:00"
+    },
+    {
+      "reportId": "coverage-hn-45654102",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/45654102",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/45654102",
+      "bytes": 4337,
+      "responseSha256": "67e2c5fb328dcae2d9e3d2d289fa07b74871d8f66ae3928887f46f0b5c25e3ee",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 45654102,
+          "type": "story",
+          "title": "KDE Plasma 6.5 Released",
+          "url": "https://kde.org/announcements/plasma/6/6.5.0/",
+          "created_at": "2025-10-21T09:52:02.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:36+00:00"
+    },
+    {
+      "reportId": "coverage-hn-45449390",
+      "role": "article",
+      "requestUrl": "https://www.phoronix.com/news/KDE-Plasma-6.5-Beta-2",
+      "status": 200,
+      "finalUrl": "https://www.phoronix.com/news/KDE-Plasma-6.5-Beta-2",
+      "bytes": 78592,
+      "responseSha256": "3e88ff9b9e955a5ef30a193431aa608fbba2e8fa792b9b5256cf5e721c068d3e",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Second Beta Of KDE Plasma 6.5 Released For Testing - Phoronix",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-45449390",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=45449390",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=45449390",
+      "bytes": 3597,
+      "responseSha256": "9a4a95b538acfedb3e283f968e2304b0baab6fc1421409a61d2e94ae2d7929db",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Second Beta of KDE Plasma 6.5 Released for Testing | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:52+00:00"
+    },
+    {
+      "reportId": "coverage-hn-45449390",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/45449390",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/45449390",
+      "bytes": 330,
+      "responseSha256": "8c281f134c4ea530755765d39cf1d0955ada76f6c7bd70183d65f3f5d546a945",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 45449390,
+          "type": "story",
+          "title": "Second Beta of KDE Plasma 6.5 Released for Testing",
+          "url": "https://www.phoronix.com/news/KDE-Plasma-6.5-Beta-2",
+          "created_at": "2025-10-02T13:33:04.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:35+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43692913",
+      "role": "article",
+      "requestUrl": "https://www.phoronix.com/news/Fedora-42-Released",
+      "status": 200,
+      "finalUrl": "https://www.phoronix.com/news/Fedora-42-Released",
+      "bytes": 80836,
+      "responseSha256": "abd0ff353c27decae75db355c2f3a48c2c8486c7ed7c808fe50a197ff3aa37c8",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Fedora 42 Released As A Fantastic Update To This Leading-Edge Linux Distribution - Phoronix",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43692913",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=43692913",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=43692913",
+      "bytes": 4753,
+      "responseSha256": "cacb77b51e311772f4b87c758909497fe11032c13b64f899ffa91815f512aa52",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Fedora 42 Released as a Fantastic Update to This Leading-Edge Linux Distribution | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:55+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43692913",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/43692913",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/43692913",
+      "bytes": 753,
+      "responseSha256": "4167cdfc6350e34a2e6d495aff3b548e17dcb00dc9a0e2b6ebff2e6e073506d5",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 43692913,
+          "type": "story",
+          "title": "Fedora 42 Released as a Fantastic Update to This Leading-Edge Linux Distribution",
+          "url": "https://www.phoronix.com/news/Fedora-42-Released",
+          "created_at": "2025-04-15T14:08:34.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:40+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43706555",
+      "role": "article",
+      "requestUrl": "https://fedoramagazine.org/announcing-fedora-linux-42/",
+      "status": 200,
+      "finalUrl": "https://fedoramagazine.org/announcing-fedora-linux-42/",
+      "bytes": 70951,
+      "responseSha256": "d02883123c35424c349459a25ecce45b16f5ad84b8099a944fce1fa9f7758bed",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "The answer is 42! Fedora Linux 42, that is. - Fedora Magazine",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2025-04-15T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43706555",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=43706555",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=43706555",
+      "bytes": 3522,
+      "responseSha256": "728fd202c2503cb1d29ddf2cd787594493f78379c26d75d35998e00d52ef2866",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Fedora Linux 42 released | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43706555",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/43706555",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/43706555",
+      "bytes": 300,
+      "responseSha256": "7ccea749268d34e8dfa7e73d7acae7432d9ad8a3b6492641f98522684cdcd34e",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 43706555,
+          "type": "story",
+          "title": "Fedora Linux 42 released",
+          "url": "https://fedoramagazine.org/announcing-fedora-linux-42/",
+          "created_at": "2025-04-16T15:14:46.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:40+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43400038",
+      "role": "article",
+      "requestUrl": "https://fedoramagazine.org/announcing-fedora-linux-42-beta/",
+      "status": 200,
+      "finalUrl": "https://fedoramagazine.org/announcing-fedora-linux-42-beta/",
+      "bytes": 63282,
+      "responseSha256": "47a985eb1ea8bfc6f9277e0c5c05faaacacedb2d87134fbb38d6c41490f043b3",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Announcing Fedora Linux 42 Beta - Fedora Magazine",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2025-03-18T14:05:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43400038",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=43400038",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=43400038",
+      "bytes": 3498,
+      "responseSha256": "01f16491610452c5e7787c843371bdba04f249957f5ec2779844acfd0014984d",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Fedora Linux 42 Beta | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43400038",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/43400038",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/43400038",
+      "bytes": 305,
+      "responseSha256": "792c23ba121c3d44e31d8ad6399a2ede2a081e25775e45272ec606be9da288b2",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 43400038,
+          "type": "story",
+          "title": "Fedora Linux 42 Beta",
+          "url": "https://fedoramagazine.org/announcing-fedora-linux-42-beta/",
+          "created_at": "2025-03-18T14:42:16.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:45+00:00"
+    },
+    {
+      "reportId": "coverage-hn-40052743",
+      "role": "article",
+      "requestUrl": "https://openjsf.org/blog/openssf-openjs-alert-social-engineering-takeovers",
+      "status": 200,
+      "finalUrl": "https://openjsf.org/blog/openssf-openjs-alert-social-engineering-takeovers",
+      "bytes": 115481,
+      "responseSha256": "5b3f661617e57e29ff4308c0293a359e5718901fac8f8c9be33d1b4e76150a09",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Open Source Security (OpenSSF) and OpenJS Foundations Issue Alert for Social Engineering Takeovers of Open Source Projects | OpenJS Foundation",
+        "publishedMetadata": [
+          {
+            "field": "time.datetime",
+            "value": "2024-04-15"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "coverage-hn-40052743",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=40052743",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=40052743",
+      "bytes": 3697,
+      "responseSha256": "0b661cf14100587c6e889c9a53d44b84335c2ab4c3c71304434197204cae5053",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "OpenJS Issues Alert for Social Engineering Takeovers of Open Source Projects | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:01+00:00"
+    },
+    {
+      "reportId": "coverage-hn-40052743",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40052743",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/40052743",
+      "bytes": 376,
+      "responseSha256": "732ce5e75f517a56fe71c8af9e676b5b294491529f2863a10ffb937a8c0a0a2d",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 40052743,
+          "type": "story",
+          "title": "OpenJS Issues Alert for Social Engineering Takeovers of Open Source Projects",
+          "url": "https://openjsf.org/blog/openssf-openjs-alert-social-engineering-takeovers",
+          "created_at": "2024-04-16T14:53:03.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:43+00:00"
+    },
+    {
+      "reportId": "coverage-hn-48091737",
+      "role": "article",
+      "requestUrl": "https://daniel.haxx.se/blog/2026/05/11/mythos-finds-a-curl-vulnerability/",
+      "status": 200,
+      "finalUrl": "https://daniel.haxx.se/blog/2026/05/11/mythos-finds-a-curl-vulnerability/",
+      "bytes": 123852,
+      "responseSha256": "22146c01027832a894c4faf2b49b82a125c95534fff617ba30c47a90b4fa2f42",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Mythos finds a curl vulnerability | daniel.haxx.se",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-05-11T08:01:35+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-11T08:01:35+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-11T08:45:31+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-11T09:10:30+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-11T09:58:19+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-11T10:26:44+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-11T13:27:32+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-11T13:52:05+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-13T19:46:06+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-11T14:39:38+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-11T15:44:39+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-05-11T17:30:34+02:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    },
+    {
+      "reportId": "coverage-hn-48091737",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=48091737",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=48091737",
+      "bytes": 412871,
+      "responseSha256": "954bf0cecc45674bf634443e40090ea80c498678a0557812ad14a34a2f90a779",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Mythos Finds a Curl Vulnerability | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:04+00:00"
+    },
+    {
+      "reportId": "coverage-hn-48091737",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/48091737",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:01:51+00:00"
+    },
+    {
+      "reportId": "coverage-hn-48112855",
+      "role": "article",
+      "requestUrl": "https://lwn.net/Articles/1072325/",
+      "status": 200,
+      "finalUrl": "https://lwn.net/Articles/1072325/",
+      "bytes": 57900,
+      "responseSha256": "f1ea71cbd348f59a076946a332c6e125f862a013d4f27a009ab976b9e0187399",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Stenberg: Mythos finds a curl vulnerability [LWN.net]",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-hn-48112855",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=48112855",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=48112855",
+      "bytes": 3536,
+      "responseSha256": "80c73bdae97caecfc25ef3de02a107008747292fe837a67494962c0cdb711445",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Stenberg: Mythos Finds a Curl Vulnerability | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:07+00:00"
+    },
+    {
+      "reportId": "coverage-hn-48112855",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/48112855",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:01:53+00:00"
+    },
+    {
+      "reportId": "coverage-hn-35685635",
+      "role": "article",
+      "requestUrl": "https://daniel.haxx.se/blog/2023/04/24/deleting-system32curl-exe/",
+      "status": 200,
+      "finalUrl": "https://daniel.haxx.se/blog/2023/04/24/deleting-system32curl-exe/",
+      "bytes": 71358,
+      "responseSha256": "2883ee8508afb87b0752de0114bb531746346e90f8749fae948be1537c51305f",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "deleting system32\\curl.exe | daniel.haxx.se",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2023-04-24T11:31:25+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-04-24T11:31:25+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-04-24T12:26:09+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-04-24T14:21:33+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-04-24T14:27:02+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-04-25T08:25:54+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-05-07T04:40:10+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-04-24T16:17:07+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-04-24T17:07:50+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-05-08T00:57:42+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-05-18T04:01:39+02:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2023-05-18T12:01:35+02:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-hn-35685635",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=35685635",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=35685635",
+      "bytes": 179855,
+      "responseSha256": "0663ed16d9f7e9679b05073eca27dfd59cbece2508dd5d36a6845db3074177d9",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Deleting System32\\curl.exe | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:07+00:00"
+    },
+    {
+      "reportId": "coverage-hn-35685635",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/35685635",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/35685635",
+      "bytes": 67262,
+      "responseSha256": "bfcb459c61485958e3a4da27ac58b46d0f7326967f2dab27772d7d4865948549",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 35685635,
+          "type": "story",
+          "title": "Deleting System32\\curl.exe",
+          "url": "https://daniel.haxx.se/blog/2023/04/24/deleting-system32curl-exe/",
+          "created_at": "2023-04-24T10:13:19.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-39891607",
+      "role": "article",
+      "requestUrl": "https://arstechnica.com/security/2024/04/what-we-know-about-the-xz-utils-backdoor-that-almost-infected-the-world/",
+      "status": 200,
+      "finalUrl": "https://arstechnica.com/security/2024/04/what-we-know-about-the-xz-utils-backdoor-that-almost-infected-the-world/",
+      "bytes": 193576,
+      "responseSha256": "025018a8632c97a564e2c1758bbf7c7e455995c3116a1c394e08ac8d499e8164",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "What we know about the xz Utils backdoor that almost infected the world - Ars Technica",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2024-04-01T06:55:22+00:00"
+          },
+          {
+            "field": "article:published_time",
+            "value": "2024-04-01T06:55:22+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2024-04-01T02:55:22-04:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2024-04-01T07:16:05+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2024-04-01T07:49:20+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2024-04-01T07:50:15+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2024-04-01T07:51:47+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2024-04-01T08:20:15+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2024-04-01T09:17:04+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2024-04-01T09:18:14+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:01+00:00"
+    },
+    {
+      "reportId": "coverage-hn-39891607",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=39891607",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=39891607",
+      "bytes": 473663,
+      "responseSha256": "77082b654c55a6ad72733c1a93d117c5f2e96a8cf28e68434a500ad9d40e91c0",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "What we know about the xz Utils backdoor that almost infected the world | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:12+00:00"
+    },
+    {
+      "reportId": "coverage-hn-39891607",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/39891607",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/39891607",
+      "bytes": 191654,
+      "responseSha256": "3e5d241a66d654c4f192ad6ba88b45d051362582db7264b513e0afa8c3dae012",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 39891607,
+          "type": "story",
+          "title": "What we know about the xz Utils backdoor that almost infected the world",
+          "url": "https://arstechnica.com/security/2024/04/what-we-know-about-the-xz-utils-backdoor-that-almost-infected-the-world/",
+          "created_at": "2024-04-01T07:19:12.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-40017310",
+      "role": "article",
+      "requestUrl": "https://securelist.com/xz-backdoor-story-part-1/112354/",
+      "status": 200,
+      "finalUrl": "https://securelist.com/xz-backdoor-story-part-1/112354/",
+      "bytes": 290025,
+      "responseSha256": "93ec7d46facc7329732ef50472d9fdb913bb11aeb0ae7fbd1c9bed5c3c86b25b",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "Kaspersky analysis of the backdoor in XZ | Securelist",
+        "publishedMetadata": [
+          {
+            "field": "time.datetime",
+            "value": "2024-04-12T08:00:34+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2024-04-12T20:12:58+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2024-04-17T14:51:54+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2021-05-13T13:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2021-02-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2020-06-17T13:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2020-08-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2020-07-22T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-10-08T17:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-09-29T17:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-08-04T17:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-07-16T17:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "coverage-hn-40017310",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=40017310",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=40017310",
+      "bytes": 377296,
+      "responseSha256": "632fd9a715d661158ef0704c075fe9fbf072828682b3aa98cb6012778f5c8127",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "XZ backdoor story – Initial analysis | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:01:12+00:00"
+    },
+    {
+      "reportId": "coverage-hn-40017310",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40017310",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "TimeoutError",
+      "capturedAt": "2026-11-27T06:01:20+00:00"
+    },
+    {
+      "reportId": "coverage-gh-xz-562",
+      "role": "article",
+      "requestUrl": "https://github.com/tukaani-project/xz/releases/tag/v5.6.2",
+      "status": 200,
+      "finalUrl": "https://github.com/tukaani-project/xz/releases/tag/v5.6.2",
+      "bytes": 168181,
+      "responseSha256": "9265614c966e7d9c7d5b043aeff5beecb65e51d07a2b7436f8b198918014da48",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Release XZ Utils 5.6.2 (stable) · tukaani-project/xz · GitHub",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "coverage-gh-xz-562",
+      "role": "release-api",
+      "requestUrl": "https://api.github.com/repos/tukaani-project/xz/releases/tags/v5.6.2",
+      "status": 200,
+      "finalUrl": "https://api.github.com/repos/tukaani-project/xz/releases/tags/v5.6.2",
+      "bytes": 18718,
+      "responseSha256": "57704ed5eb030eadc8df45de5a73605371b2c97941fa98ce11331135739cbd6c",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 158034783,
+          "name": "XZ Utils 5.6.2 (stable)",
+          "tag_name": "v5.6.2",
+          "published_at": "2024-05-29T17:10:16Z",
+          "html_url": "https://github.com/tukaani-project/xz/releases/tag/v5.6.2",
+          "draft": false,
+          "prerelease": false
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:57+00:00"
+    }
+  ],
+  "supersededObservations": [
+    {
+      "reportId": "candidate-018",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/policy/1041957/fincen-treasury-cybersecurity-incident",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/policy/1041957/fincen-treasury-cybersecurity-incident",
+      "bytes": 397042,
+      "responseSha256": "219c76d05cd166f3d8d0bc4247e7290eb83651b6bd9579dd4af1ec6a14fa09dd",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "US financial crimes bureau discloses ‘cybersecurity incident’ | The VergeThe VergeThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeCloseExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandFacebookThreadsInstagramYoutubeRSSThe VergeNotificationsNotificationsNotificationsCloseFollowCloseFollowCloseFollowCloseFollowLinkShareGiftCloseFollowCloseFollowCloseFollowCloseFollowCloseFollowCloseFol",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-25T01:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T01:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:06:24+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:38:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T09:54:40+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T23:56:44+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T19:45:51+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T23:25:46+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-019",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/gadgets/1024777/best-gifts-for-dad-2026",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/gadgets/1024777/best-gifts-for-dad-2026",
+      "bytes": 804299,
+      "responseSha256": "95d07b9c638615a64b6fb254bc18e0e6dadc687482eb9520e9ddbb875ce134bd",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "The 32 best gifts for every type of dad | The VergeThe VergeThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeCloseExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandFacebookThreadsInstagramYoutubeRSSThe VergeNotificationsNotificationsNotificationsCloseFollowCloseFollowCloseFollowCloseFollowLinkShareCloseFollowCloseFollowCloseFollowCloseFollowThe VergeFacebookThreadsInstagramYoutubeRSSTh",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-13T16:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T23:59:29+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:07:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:55:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T21:48:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:58+00:00"
+    },
+    {
+      "reportId": "candidate-020",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/science/1041819/us-army-detonation-lead-explosives-iowa",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/science/1041819/us-army-detonation-lead-explosives-iowa",
+      "bytes": 423551,
+      "responseSha256": "e197d4013d2be6734d19d47fb1c2600a3dc8ef89623404c96b1e7fd37f92798f",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Why the US Army blew up nearly 10,000 pounds of unstable explosives in Iowa | The VergeThe VergeThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeCloseExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandFacebookThreadsInstagramYoutubeRSSThe VergeNotificationsNotificationsNotificationsCloseFollowCloseFollowCloseFollowCloseFollowLinkShareGiftCloseFollowCloseFollowCloseFollowCloseFollowClose",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T23:25:46+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T23:25:46+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T19:45:51+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T18:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T17:44:51+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-23T21:09:37+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-23T18:26:47+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-20T16:34:13+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-021",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/tech/1041820/huawei-guilty-trade-secrets-trial",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/tech/1041820/huawei-guilty-trade-secrets-trial",
+      "bytes": 402535,
+      "responseSha256": "945a304e452c851bad6d11b0b963f082d55ed964626a2238b92510a94bc4b585",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Huawei found guilty of stealing trade secrets | The VergeThe VergeThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeCloseExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandFacebookThreadsInstagramYoutubeRSSThe VergeNotificationsNotificationsNotificationsCloseFollowCloseFollowCloseFollowCloseFollowLinkShareGiftCloseFollowCloseFollowCloseFollowCloseFollowCloseFollowCloseFollowCloseFollowCl",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T22:23:27+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T22:23:27+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:07:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:06:24+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T10:45:50+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T00:04:34+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T23:56:44+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-022",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/gadgets/1021621/best-gifts-for-mom-2026",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/gadgets/1021621/best-gifts-for-mom-2026",
+      "bytes": 841250,
+      "responseSha256": "a12254d395098ddfe6b1fcd16d031e9099a5c214d226ef02f1a58b3ea624a4fa",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "The 36 best gifts for every type of mom | The VergeThe VergeThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeCloseExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandFacebookThreadsInstagramYoutubeRSSThe VergeNotificationsNotificationsNotificationsCloseFollowCloseFollowCloseFollowCloseFollowLinkShareCloseFollowCloseFollowCloseFollowCloseFollowThe VergeFacebookThreadsInstagramYoutubeRSSTh",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-10T16:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T21:09:59+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:07:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:55:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T21:48:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-023",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/tech/1041571/jensen-huang-all-hands-nvidia-apology",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/tech/1041571/jensen-huang-all-hands-nvidia-apology",
+      "bytes": 430455,
+      "responseSha256": "148abd51666617178dd41763f4a8be60809e13ff4fd39959a5c978cf1a2ef525",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Jensen Huang reportedly tells Nvidia staff it’s ‘not true’ Trump got him rehired | The VergeThe VergeThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeCloseExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandFacebookThreadsInstagramYoutubeRSSThe VergeNotificationsNotificationsNotificationsCloseFollowCloseFollowCloseFollowCloseFollowLinkShareGiftCloseFollowCloseFollowCloseFollowCloseFollow",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T20:02:03+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T20:02:03+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T13:15:21+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T10:17:50+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T21:41:28+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:07:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:06:24+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T10:45:50+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T00:04:34+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T23:56:44+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T05:59:59+00:00"
+    },
+    {
+      "reportId": "candidate-024",
+      "role": "article",
+      "requestUrl": "https://www.theverge.com/policy/1041568/fisa-ndaa-blue-wave",
+      "status": 200,
+      "finalUrl": "https://www.theverge.com/policy/1041568/fisa-ndaa-blue-wave",
+      "bytes": 418177,
+      "responseSha256": "2292d0c46e052a37535907f8b301041f3a9de13660101df00a2c33d78db88f86",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "The clock is running out for America’s most contentious spying law | The VergeThe VergeThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeNotificationsNotificationsHamburger Navigation ButtonThe VergeCloseExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandExpandFacebookThreadsInstagramYoutubeRSSThe VergeNotificationsNotificationsNotificationsCloseFollowCloseFollowCloseFollowCloseFollowLinkShareGiftCloseFollowCloseFollowCloseFollowCloseFollowCloseFollowClo",
+        "publishedMetadata": [
+          {
+            "field": "article:published_time",
+            "value": "2026-11-24T20:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-24T20:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T17:06:24+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T16:38:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T09:54:40+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T23:56:44+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T19:45:51+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T01:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T12:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T15:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-26T14:00:00+00:00"
+          },
+          {
+            "field": "time.datetime",
+            "value": "2026-11-25T14:00:00+00:00"
+          }
+        ],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:00:00+00:00"
+    }
+  ],
+  "refreshReason": "Original extractor joined document and inline SVG title elements; targeted re-capture after head-title parser correction."
+}
