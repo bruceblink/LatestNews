@@ -11,7 +11,14 @@ export function Toast() {
     const toastItems = useAtomValue(toastAtom);
     const [parent] = useAutoAnimate({ duration: 200 });
     return (
-        <ol ref={parent} className="toast-stack" aria-label="通知" aria-live="polite" aria-relevant="additions text">
+        <ol
+            ref={parent}
+            className="toast-stack"
+            aria-label="通知"
+            aria-live="polite"
+            aria-atomic="false"
+            aria-relevant="additions text"
+        >
             {toastItems.map((k) => (
                 <Item key={k.id} info={k} />
             ))}
@@ -19,15 +26,15 @@ export function Toast() {
     );
 }
 
-const colors = {
-    success: "green",
-    error: "red",
-    warning: "orange",
-    info: "blue",
+const icons = {
+    success: "i-ph:check-circle-duotone",
+    error: "i-ph:x-circle-duotone",
+    warning: "i-ph:warning-circle-duotone",
+    info: "i-ph:info-duotone",
 };
 
 function Item({ info }: { info: ToastItem }) {
-    const color = colors[info.type ?? "info"];
+    const type = info.type ?? "info";
     const setToastItems = useSetAtom(toastAtom);
     const hidden = useCallback(
         (dismiss = true) => {
@@ -62,8 +69,8 @@ function Item({ info }: { info: ToastItem }) {
 
     return (
         <li
-            className={clsx("toast-item bg-base rounded-lg shadow-xl relative")}
-            role={info.type === "error" ? "alert" : "status"}
+            className={clsx("toast-item", `toast-item--${type}`)}
+            role={type === "error" ? "alert" : "status"}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             onFocus={() => setHovered(true)}
@@ -71,21 +78,12 @@ function Item({ info }: { info: ToastItem }) {
                 if (!event.currentTarget.contains(event.relatedTarget)) setHovered(false);
             }}
         >
-            <div
-                className={clsx(
-                    `bg-${color}-500 dark:bg-${color} bg-op-40! p2 backdrop-blur-5 rounded-lg w-full`,
-                    "toast-item-content flex items-center gap-2"
-                )}
-            >
-                <span className={`i-ph:info color-${color}-500`} aria-hidden="true" />
-                <div className="flex justify-between w-full">
-                    <span className="op-90 dark:op-100">{info.msg}</span>
+            <div className="toast-item-content">
+                <span className={clsx("toast-icon", icons[type])} aria-hidden="true" />
+                <div className="toast-message-group">
+                    <span className="toast-message">{info.msg}</span>
                     {info.action && (
-                        <button
-                            type="button"
-                            className={`text-sm color-${color}-500 bg-base op-80 bg-op-50! px-1 rounded min-w-10 hover:bg-op-70!`}
-                            onClick={info.action.onClick}
-                        >
+                        <button type="button" className="toast-action" onClick={info.action.onClick}>
                             {info.action.label}
                         </button>
                     )}
@@ -94,7 +92,7 @@ function Item({ info }: { info: ToastItem }) {
                     type="button"
                     title="关闭通知"
                     aria-label="关闭通知"
-                    className={`toast-dismiss i-ph:x-circle-duotone color-${color}-500`}
+                    className="toast-dismiss i-ph:x"
                     onClick={() => hidden(false)}
                 />
             </div>
