@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "reviewDate": "2026-11-27",
+  "quarantineReports": {
+    "candidate-017": "Potential underlying Microsoft outage overlap with old report-037; conservative quarantine, not a human event label.",
+    "candidate-042": "Interactive artifact, no stable textual evidence established.",
+    "candidate-052": "Same article URL as candidate-051; retain V1 for duplicate-submission regression, not independent article coverage.",
+    "candidate-055": "Historical RC1 submission points to evolving final-release notes; candidate-056 remains a historical announcement candidate."
+  },
+  "quarantineQueries": {
+    "candidate-query-006": "Quarantine with candidate-017; possible overlap with old outage event."
+  },
+  "reportNotes": {
+    "candidate-002": "GTA family overlap with old report-025/026/027; verify distinct action.",
+    "candidate-025": "Nvidia topic overlap with old report-022; verify action.",
+    "candidate-036": "Amazon family overlap with old reports 018–024; verify distinct action.",
+    "candidate-044": "Mutable GitHub main URL; obtain historical commit evidence.",
+    "candidate-046": "HN submission time differs from article publication date (2025-01-28); preserve submission time.",
+    "candidate-054": "Joint release announcement; clarify main action.",
+    "candidate-058": "Check evolving article and scope of CVEs.",
+    "candidate-060": "Tool announcement, not necessarily initial vulnerability disclosure.",
+    "candidate-061": "Scanner page; verify historical evidence and main action.",
+    "candidate-063": "One announcement covers two CVEs; clarify main action."
+  },
+  "supplements": [
+    {"id":"supplement-001","cohort":"release","source":"ithome","language":"zh","title":"Go 语言 1.26 版本正式发布：泛型限制放宽、Green Tea GC 垃圾回收器默认启用","url":"https://www.ithome.com/0/922/484.htm","reportedAt":"2026-02-19T19:27:32+08:00","publisher":"IT之家","observedLocalTime":"2026/2/19 19:27:32","note":"Direct page inspected; page links to Go team GA blog. UTC+8 inferred from Chinese publisher local time; verify metadata before admission."},
+    {"id":"supplement-003","cohort":"release","source":"tencent-cloud-developer","language":"zh","title":"Go 1.25 重磅发布：性能飞跃、工具升级与新一代 GC 来袭","url":"https://developer.cloud.tencent.com/article/2554949","reportedAt":"2025-08-14T11:20:26+08:00","publisher":"腾讯云开发者社区","observedLocalTime":"2025-08-14 11:20:26","note":"Direct page inspected; original author contribution. UTC+8 inferred; offline source ID only."},
+    {"id":"supplement-004","cohort":"security","source":"scnu-security","language":"zh","title":"OpenSSH Server远程代码执行漏洞 （CVE-2024-6387）安全风险通告","url":"https://security.scnu.edu.cn/a/20240702/74.html","reportedAt":"2024-07-02T16:07:00+08:00","publisher":"华南师范大学网络安全专题网","observedLocalTime":"2024-07-02 16:07:00","note":"Direct page inspected; advisory on disclosed CVE, not necessarily independent reporting. UTC+8 inferred; offline source ID only."},
+    {"id":"supplement-007","cohort":"daily","source":"ithome","language":"zh","title":"NASA 两项火星探测任务因故障暂停：毅力号通信异常、奥德赛号剩余肼燃料仅够维持一两个月","url":"https://www.ithome.com/1/031/908.htm","reportedAt":"2026-11-25T07:00:58+08:00","publisher":"IT之家","observedLocalTime":"2026/11/25 7:00:58","note":"Direct page inspected; candidate comparison with 033, not a group label. UTC+8 inferred."}
+  ],
+  "pendingSupplements": [
+    {"id":"supplement-002","url":"https://studygolang.com/topics/18732","reason":"Page describes release date, but precise post publication timestamp not established."},
+    {"id":"supplement-005","url":"https://nic.hitsz.edu.cn/info/1083/1361.htm","reason":"Only date 2024-07-05 established; verify time and provenance."},
+    {"id":"supplement-006","url":"https://asianews.network/japan-agency-finds-over-80-of-x-posts-lagged-by-government-ai-system-infringed-copyright/","reason":"Recheck article/time and underlying event before inclusion."},
+    {"id":"supplement-008","url":"https://cert.europa.eu/publications/security-advisories/2024-066/","reason":"Recheck exact issue time, revisions and advisory scope."},
+    {"id":"supplement-009","url":"https://lists.freebsd.org/archives/freebsd-security-notifications/2025-February/000059.html","reason":"Verify mailing-list submission time versus listed branch correction times."},
+    {"id":"supplement-010","url":"https://ubuntu.com/security/notices/USN-7270-1","reason":"Publication date 2025-02-18 verified, no exact time established."},
+    {"id":"supplement-011","url":"https://www.govcert.gov.hk/tc/alerts_detail.php?id=1485","reason":"Publication date 2025-02-19 verified, no exact time established; Chinese source."},
+    {"id":"supplement-012","url":"https://www.cve.org/CVERecord?id=CVE-2025-26465","reason":"Record updated after initial publication; distinguish CVE record from news report, confirm original revision/time."}
+  ],
+  "queries": [
+    {"id":"supplement-query-001","query":"Go 1.26 正式版发布"},
+    {"id":"supplement-query-002","query":"Go 1.26 首个候选版本"},
+    {"id":"supplement-query-003","query":"Golang 1.26.0"},
+    {"id":"supplement-query-004","query":"Go 1.26.10 安全更新"},
+    {"id":"supplement-query-005","query":"OpenSSH 远程代码执行漏洞"},
+    {"id":"supplement-query-006","query":"SSH 客户端主机身份验证漏洞"},
+    {"id":"supplement-query-007","query":"CVE-2025-26466"},
+    {"id":"supplement-query-008","query":"Japan AI anime piracy detection"},
+    {"id":"supplement-query-009","query":"火星探测器暂停科学任务"},
+    {"id":"supplement-query-010","query":"OpenSH CVE-2024-6387"},
+    {"id":"supplement-query-011","query":"USB4 140W 伸缩线"},
+    {"id":"supplement-query-012","query":"Go 1.26 RC2 发布"}
+  ],
+  "blockers": [
+    "Full old/new underlying-event disjointness and tuning-exposure attestations are not confirmed.",
+    "V1 raw RSS responses were not retained; article and HN evidence require independent recheck.",
+    "Supplement page times assume UTC+8; verify authoritative timestamp/offset and retain immutable evidence.",
+    "Coverage remains below proposed cross-language and hard-case targets; no verified event/relevance labels.",
+    "New offline source IDs and complete official prepare-holdout path need project-level integration validation.",
+    "Independent human review and any final admission require a separate explicit decision."
+  ]
+}
