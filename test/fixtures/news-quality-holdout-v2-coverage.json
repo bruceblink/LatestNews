@@ -1,0 +1,1722 @@
+{
+  "schemaVersion": 1,
+  "status": "blocked-draft",
+  "selection": "Targeted historical release and security candidates; manually selected source IDs before evaluation, not event or relevance labels. Original cutoff retained. Not representative sampling.",
+  "rows": [
+    {
+      "report": {
+        "id": "coverage-zh-79800",
+        "cohort": "release",
+        "source": "solidot",
+        "language": "zh",
+        "title": "Linux 6.12 释出",
+        "url": "https://www.solidot.org/story?sid=79800",
+        "articleUrl": "https://www.solidot.org/story?sid=79800",
+        "evidenceUrl": "https://www.solidot.org/story?sid=79800",
+        "reportedAt": "2024-11-18T11:35:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=79800",
+            "finalUrl": "https://www.solidot.org/story?sid=79800",
+            "status": 200,
+            "bytes": 16365,
+            "responseSha256": "ba83e410e156b1a8b76abe6e3831c649130e1b87bc2af9c6c5ed49917bd1f059",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | Linux 6.12 释出",
+        "observedWallTime": "2024-11-18 11:35",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-80374",
+        "cohort": "release",
+        "source": "solidot",
+        "language": "zh",
+        "title": "Linux 6.13 释出",
+        "url": "https://www.solidot.org/story?sid=80374",
+        "articleUrl": "https://www.solidot.org/story?sid=80374",
+        "evidenceUrl": "https://www.solidot.org/story?sid=80374",
+        "reportedAt": "2025-01-20T14:03:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=80374",
+            "finalUrl": "https://www.solidot.org/story?sid=80374",
+            "status": 200,
+            "bytes": 16278,
+            "responseSha256": "cc87b90f90b1016f619d2062cabadf8bf307b40230bfe52cdb9f563dce03af04",
+            "capturedAt": "2026-11-27T05:42:26+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | Linux 6.13 释出",
+        "observedWallTime": "2025-01-20 14:03",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-79925",
+        "cohort": "release",
+        "source": "solidot",
+        "language": "zh",
+        "title": "Linux 6.13-rc1 释出",
+        "url": "https://www.solidot.org/story?sid=79925",
+        "articleUrl": "https://www.solidot.org/story?sid=79925",
+        "evidenceUrl": "https://www.solidot.org/story?sid=79925",
+        "reportedAt": "2024-12-02T11:34:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=79925",
+            "finalUrl": "https://www.solidot.org/story?sid=79925",
+            "status": 200,
+            "bytes": 16006,
+            "responseSha256": "70a9257b46c7ce4886f2b94d2787b5d471a46225e84049ee96f8bc78a2042f25",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | Linux 6.13-rc1 释出",
+        "observedWallTime": "2024-12-02 11:34",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-82003",
+        "cohort": "release",
+        "source": "solidot",
+        "language": "zh",
+        "title": "Debian 13 trixie 释出",
+        "url": "https://www.solidot.org/story?sid=82003",
+        "articleUrl": "https://www.solidot.org/story?sid=82003",
+        "evidenceUrl": "https://www.solidot.org/story?sid=82003",
+        "reportedAt": "2025-08-10T12:08:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=82003",
+            "finalUrl": "https://www.solidot.org/story?sid=82003",
+            "status": 200,
+            "bytes": 16093,
+            "responseSha256": "9a8004b7741d9ff80dfd419e1bb2e7e6a1ea270ca94ec03597cbe1d174cdc7a1",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | Debian 13 trixie 释出",
+        "observedWallTime": "2025-08-10 12:08",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-80841",
+        "cohort": "release",
+        "source": "solidot",
+        "language": "zh",
+        "title": "GNOME 48 释出",
+        "url": "https://www.solidot.org/story?sid=80841",
+        "articleUrl": "https://www.solidot.org/story?sid=80841",
+        "evidenceUrl": "https://www.solidot.org/story?sid=80841",
+        "reportedAt": "2025-03-20T23:24:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=80841",
+            "finalUrl": "https://www.solidot.org/story?sid=80841",
+            "status": 200,
+            "bytes": 16115,
+            "responseSha256": "015779c4fc9d3b466e2a0729af448f7859d05f19e8430f56790155ddc007402e",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | GNOME 48 释出",
+        "observedWallTime": "2025-03-20 23:24",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-77477",
+        "cohort": "release",
+        "source": "solidot",
+        "language": "zh",
+        "title": "KDE Plasma 6 释出",
+        "url": "https://www.solidot.org/story?sid=77477",
+        "articleUrl": "https://www.solidot.org/story?sid=77477",
+        "evidenceUrl": "https://www.solidot.org/story?sid=77477",
+        "reportedAt": "2024-02-29T21:44:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=77477",
+            "finalUrl": "https://www.solidot.org/story?sid=77477",
+            "status": 200,
+            "bytes": 15945,
+            "responseSha256": "372dae6281e1f727e2dcca279daa18e3cd8cf4a0b0e8408c76198ed7075d6253",
+            "capturedAt": "2026-11-27T05:42:26+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | KDE Plasma 6 释出",
+        "observedWallTime": "2024-02-29 21:44",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-81580",
+        "cohort": "release",
+        "source": "solidot",
+        "language": "zh",
+        "title": "KDE Plasma 6.4 释出",
+        "url": "https://www.solidot.org/story?sid=81580",
+        "articleUrl": "https://www.solidot.org/story?sid=81580",
+        "evidenceUrl": "https://www.solidot.org/story?sid=81580",
+        "reportedAt": "2025-06-17T21:49:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=81580",
+            "finalUrl": "https://www.solidot.org/story?sid=81580",
+            "status": 200,
+            "bytes": 16174,
+            "responseSha256": "8ff1ff6ab26caee2dcd821ec660cfdcc0c25485a2de32d91b176a04264a7801a",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | KDE Plasma 6.4 释出",
+        "observedWallTime": "2025-06-17 21:49",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-82598",
+        "cohort": "release",
+        "source": "solidot",
+        "language": "zh",
+        "title": "KDE Plasma 6.5 释出",
+        "url": "https://www.solidot.org/story?sid=82598",
+        "articleUrl": "https://www.solidot.org/story?sid=82598",
+        "evidenceUrl": "https://www.solidot.org/story?sid=82598",
+        "reportedAt": "2025-10-21T21:32:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=82598",
+            "finalUrl": "https://www.solidot.org/story?sid=82598",
+            "status": 200,
+            "bytes": 15935,
+            "responseSha256": "ff4730c00707f8472521204d8ae750826d56cb332900700ba23f1cb66fdd25ec",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | KDE Plasma 6.5 释出",
+        "observedWallTime": "2025-10-21 21:32",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-81058",
+        "cohort": "release",
+        "source": "solidot",
+        "language": "zh",
+        "title": "Fedora Linux 42 释出",
+        "url": "https://www.solidot.org/story?sid=81058",
+        "articleUrl": "https://www.solidot.org/story?sid=81058",
+        "evidenceUrl": "https://www.solidot.org/story?sid=81058",
+        "reportedAt": "2025-04-15T23:37:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=81058",
+            "finalUrl": "https://www.solidot.org/story?sid=81058",
+            "status": 200,
+            "bytes": 16001,
+            "responseSha256": "117e5d7171b46f22869ae6297bca7d55fd4bcbf957d9641da8ddb0ec303ae10e",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | Fedora Linux 42 释出",
+        "observedWallTime": "2025-04-15 23:37",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-78307",
+        "cohort": "security",
+        "source": "solidot",
+        "language": "zh",
+        "title": "XZ 5.6.2 释出，移除后门代码",
+        "url": "https://www.solidot.org/story?sid=78307",
+        "articleUrl": "https://www.solidot.org/story?sid=78307",
+        "evidenceUrl": "https://www.solidot.org/story?sid=78307",
+        "reportedAt": "2024-05-30T14:38:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=78307",
+            "finalUrl": "https://www.solidot.org/story?sid=78307",
+            "status": 200,
+            "bytes": 16535,
+            "responseSha256": "bc8b6263270f66dd9ebc3c249eb11768401923413f7e94397a001add797b1b74",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | XZ 5.6.2 释出，移除后门代码",
+        "observedWallTime": "2024-05-30 14:38",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-77917",
+        "cohort": "security",
+        "source": "solidot",
+        "language": "zh",
+        "title": "XZ 后门事件可能不是一起孤立事件",
+        "url": "https://www.solidot.org/story?sid=77917",
+        "articleUrl": "https://www.solidot.org/story?sid=77917",
+        "evidenceUrl": "https://www.solidot.org/story?sid=77917",
+        "reportedAt": "2024-04-17T15:08:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=77917",
+            "finalUrl": "https://www.solidot.org/story?sid=77917",
+            "status": 200,
+            "bytes": 16517,
+            "responseSha256": "845d150591961eef63b61ee58b2b285ab99400bf302bb68c3ab726127f40d2d1",
+            "capturedAt": "2026-11-27T05:42:26+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | XZ 后门事件可能不是一起孤立事件",
+        "observedWallTime": "2024-04-17 15:08",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-81237",
+        "cohort": "security",
+        "source": "solidot",
+        "language": "zh",
+        "title": "curl 项目遭遇 AI 生成的虚假漏洞报告攻击",
+        "url": "https://www.solidot.org/story?sid=81237",
+        "articleUrl": "https://www.solidot.org/story?sid=81237",
+        "evidenceUrl": "https://www.solidot.org/story?sid=81237",
+        "reportedAt": "2025-05-08T13:45:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=81237",
+            "finalUrl": "https://www.solidot.org/story?sid=81237",
+            "status": 200,
+            "bytes": 16614,
+            "responseSha256": "f6889084b332ad6422e55dffd0edef6e58d64baebb6b95c32664abcec138e626",
+            "capturedAt": "2026-11-27T05:42:26+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | curl 项目遭遇 AI 生成的虚假漏洞报告攻击",
+        "observedWallTime": "2025-05-08 13:45",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-84269",
+        "cohort": "security",
+        "source": "solidot",
+        "language": "zh",
+        "title": "Mythos 发现了一个 curl 漏洞",
+        "url": "https://www.solidot.org/story?sid=84269",
+        "articleUrl": "https://www.solidot.org/story?sid=84269",
+        "evidenceUrl": "https://www.solidot.org/story?sid=84269",
+        "reportedAt": "2026-05-11T21:20:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=84269",
+            "finalUrl": "https://www.solidot.org/story?sid=84269",
+            "status": 200,
+            "bytes": 16989,
+            "responseSha256": "b2402fde3e08bb63e59a2fcaf69e2204b6207c583906ec68196d7a6ed18d5802",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | Mythos 发现了一个 curl 漏洞",
+        "observedWallTime": "2026-05-11 21:20",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-zh-74771",
+        "cohort": "security",
+        "source": "solidot",
+        "language": "zh",
+        "title": "当 Windows 用户在恐慌下删除 system32\\curl.exe",
+        "url": "https://www.solidot.org/story?sid=74771",
+        "articleUrl": "https://www.solidot.org/story?sid=74771",
+        "evidenceUrl": "https://www.solidot.org/story?sid=74771",
+        "reportedAt": "2023-04-24T21:47:00+08:00",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://www.solidot.org/story?sid=74771",
+            "finalUrl": "https://www.solidot.org/story?sid=74771",
+            "status": 200,
+            "bytes": 17022,
+            "responseSha256": "503fa421e4300d2cf70645a2d85079489ab32059fff1b10892daa02794dd446e",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "奇客Solidot | 当 Windows 用户在恐慌下删除 system32\\curl.exe",
+        "observedWallTime": "2023-04-24 21:47",
+        "timePrecision": "minute",
+        "timezone": "Asia/Shanghai (assumed, not confirmed by page)",
+        "note": "Seconds serialized as 00 only to represent the lower bound of the displayed minute. Timezone and historical revision remain pending."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-42168014",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Linux 6.12 Released with Real-Time Capabilities, Sched_Ext, AMD RDNA4 and More",
+        "url": "https://news.ycombinator.com/item?id=42168014",
+        "articleUrl": "https://www.phoronix.com/news/Linux-6.12-Released",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/42168014",
+        "reportedAt": "2024-11-17T22:39:34.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/42168014",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/42168014",
+            "status": 200,
+            "bytes": 1537,
+            "responseSha256": "d5d0165a76ab9598fc033810c9af067b61d1a48ca954f1ca007d82bdbe4f1bde",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          },
+          {
+            "requestUrl": "https://www.phoronix.com/news/Linux-6.12-Released",
+            "finalUrl": "https://www.phoronix.com/news/Linux-6.12-Released",
+            "status": 200,
+            "bytes": 79728,
+            "responseSha256": "e402f52d1c2641c2dd851c5efa4eac8139ccf3bd94899ad515bafae9b8c03424",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "Linux 6.12 Released With Real-Time Capabilities, Sched_Ext, More AMD RDNA4 & More - Phoronix",
+        "observedSubmission": {
+          "id": 42168014,
+          "title": "Linux 6.12 Released with Real-Time Capabilities, Sched_Ext, AMD RDNA4 and More",
+          "url": "https://www.phoronix.com/news/Linux-6.12-Released",
+          "created_at": "2024-11-17T22:39:34.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-42169418",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Linux kernel 6.12 has been released",
+        "url": "https://news.ycombinator.com/item?id=42169418",
+        "articleUrl": "https://lwn.net/Articles/997958/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/42169418",
+        "reportedAt": "2024-11-18T03:12:44.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/42169418",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/42169418",
+            "status": 200,
+            "bytes": 5825,
+            "responseSha256": "e4251b10e1df5207e168168e0b684da97973dcfbbcf70b138b93191ea155f226",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          },
+          {
+            "requestUrl": "https://lwn.net/Articles/997958/",
+            "finalUrl": "https://lwn.net/Articles/997958/",
+            "status": 200,
+            "bytes": 6274,
+            "responseSha256": "b068f101e4d1dfab96781a40252fafdc1b4c7d5db25df3190d9881cc66a63c11",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "The 6.12 kernel has been released [LWN.net]",
+        "observedSubmission": {
+          "id": 42169418,
+          "title": "Linux kernel 6.12 has been released",
+          "url": "https://lwn.net/Articles/997958/",
+          "created_at": "2024-11-18T03:12:44.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-42106954",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Linux 6.12-Rc7 Released: Linux 6.12 Stable on Track for Release Next Sunday",
+        "url": "https://news.ycombinator.com/item?id=42106954",
+        "articleUrl": "https://www.phoronix.com/news/Linux-6.12-rc7-Released",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/42106954",
+        "reportedAt": "2024-11-11T13:25:43.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/42106954",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/42106954",
+            "status": 200,
+            "bytes": 355,
+            "responseSha256": "dcdce5a4ff2b6eee29bcbbcdb7dd897be291ebd0abec515c15ecce1d7e5e1b72",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          },
+          {
+            "requestUrl": "https://www.phoronix.com/news/Linux-6.12-rc7-Released",
+            "finalUrl": "https://www.phoronix.com/news/Linux-6.12-rc7-Released",
+            "status": 200,
+            "bytes": 79064,
+            "responseSha256": "33f581e3bf1d3c97d5c4aff1bb844f5b20ac57b43b0cda9337adfe647970588b",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "Linux 6.12-rc7 Released: Linux 6.12 Stable On Track For Release Next Sunday - Phoronix",
+        "observedSubmission": {
+          "id": 42106954,
+          "title": "Linux 6.12-Rc7 Released: Linux 6.12 Stable on Track for Release Next Sunday",
+          "url": "https://www.phoronix.com/news/Linux-6.12-rc7-Released",
+          "created_at": "2024-11-11T13:25:43.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-42766905",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Linux 6.13 Released with AutoFDO and Propeller, AMD Changes and Apple Support",
+        "url": "https://news.ycombinator.com/item?id=42766905",
+        "articleUrl": "https://www.phoronix.com/news/Linux-6.13-Released",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/42766905",
+        "reportedAt": "2025-01-20T09:53:11.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/42766905",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/42766905",
+            "status": 200,
+            "bytes": 352,
+            "responseSha256": "00761f54f19ee959d7720f507d245f1f73cedba8ffa4ec22f8158effd767764a",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          },
+          {
+            "requestUrl": "https://www.phoronix.com/news/Linux-6.13-Released",
+            "finalUrl": "https://www.phoronix.com/news/Linux-6.13-Released",
+            "status": 200,
+            "bytes": 79894,
+            "responseSha256": "dcbeb969a25d50da9900d24128ceaad3c54f0c586dc1ea299c05fbea65417a22",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "Linux 6.13 Released With AutoFDO + Propeller, AMD Changes & Broader Apple Support - Phoronix",
+        "observedSubmission": {
+          "id": 42766905,
+          "title": "Linux 6.13 Released with AutoFDO and Propeller, AMD Changes and Apple Support",
+          "url": "https://www.phoronix.com/news/Linux-6.13-Released",
+          "created_at": "2025-01-20T09:53:11.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-42490627",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Linux 6.13-Rc4 Released for Kernel Testing Ahead of the Holidays",
+        "url": "https://news.ycombinator.com/item?id=42490627",
+        "articleUrl": "https://www.phoronix.com/news/Linux-6.13-rc4",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/42490627",
+        "reportedAt": "2024-12-23T00:50:31.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/42490627",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/42490627",
+            "status": 200,
+            "bytes": 335,
+            "responseSha256": "3c6e1766bb5553bd5d97a978790139ab1be389f142a54dacc4f82cfcdf1c124d",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          },
+          {
+            "requestUrl": "https://www.phoronix.com/news/Linux-6.13-rc4",
+            "finalUrl": "https://www.phoronix.com/news/Linux-6.13-rc4",
+            "status": 200,
+            "bytes": 79740,
+            "responseSha256": "4670a52a4e14db5fed1c82724483121590e719b723cd6a213e871e7c9a5fb760",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "Linux 6.13-rc4 Released For Kernel Testing Ahead Of The Holidays - Phoronix",
+        "observedSubmission": {
+          "id": 42490627,
+          "title": "Linux 6.13-Rc4 Released for Kernel Testing Ahead of the Holidays",
+          "url": "https://www.phoronix.com/news/Linux-6.13-rc4",
+          "created_at": "2024-12-23T00:50:31.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-42782174",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Linux kernel 6.13 isn't a major release but's it still important – here's why",
+        "url": "https://news.ycombinator.com/item?id=42782174",
+        "articleUrl": "https://www.zdnet.com/article/linux-kernel-6-13-isnt-a-major-release-buts-it-still-important-heres-why/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/42782174",
+        "reportedAt": "2025-01-21T16:44:39.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/42782174",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/42782174",
+            "status": 200,
+            "bytes": 714,
+            "responseSha256": "65b23aacb0fd0ce574229edcf27fe1bde3d99f669e50092999faa85fd0b5c7aa",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://www.zdnet.com/article/linux-kernel-6-13-isnt-a-major-release-buts-it-still-important-heres-why/",
+            "finalUrl": "https://www.zdnet.com/article/linux-kernel-6-13-isnt-a-major-release-buts-it-still-important-heres-why/",
+            "status": 200,
+            "bytes": 270733,
+            "responseSha256": "1220e19ae1c40e17039ac2d77d48cc8324a482034151aafa7a6d678cd60e08d4",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "Linux kernel 6.13 isn't a major release but's it still important - here's why - ZDNET",
+        "observedSubmission": {
+          "id": 42782174,
+          "title": "Linux kernel 6.13 isn't a major release but's it still important – here's why",
+          "url": "https://www.zdnet.com/article/linux-kernel-6-13-isnt-a-major-release-buts-it-still-important-heres-why/",
+          "created_at": "2025-01-21T16:44:39.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-44864232",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Debian 13 \"Trixie\" Released: What's New in the Latest Version?",
+        "url": "https://news.ycombinator.com/item?id=44864232",
+        "articleUrl": "https://news.itsfoss.com/debian-13-release/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/44864232",
+        "reportedAt": "2025-08-11T14:07:50.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/44864232",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/44864232",
+            "status": 200,
+            "bytes": 1142,
+            "responseSha256": "56342d17a964ea1e58240c94f4cfbbcebd9706f60b85f0eeff5d0540c6429599",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          },
+          {
+            "requestUrl": "https://news.itsfoss.com/debian-13-release/",
+            "finalUrl": "https://itsfoss.com/news/debian-13-release/",
+            "status": 200,
+            "bytes": 104394,
+            "responseSha256": "a9367c2b94dadb200899cce68ea770458cc5024d8c2f0c9c3059cb48ecb87804",
+            "capturedAt": "2026-11-27T05:43:18+00:00"
+          }
+        ],
+        "observedTitle": "Debian 13 \"Trixie\" Released: What’s New in the Latest Version?",
+        "observedSubmission": {
+          "id": 44864232,
+          "title": "Debian 13 \"Trixie\" Released: What's New in the Latest Version?",
+          "url": "https://news.itsfoss.com/debian-13-release/",
+          "created_at": "2025-08-11T14:07:50.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-44849134",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Debian 13 \"Trixie\" Released",
+        "url": "https://news.ycombinator.com/item?id=44849134",
+        "articleUrl": "https://micronews.debian.org/2025/1754772107.html",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/44849134",
+        "reportedAt": "2025-08-09T19:00:29.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/44849134",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/44849134",
+            "status": 200,
+            "bytes": 708,
+            "responseSha256": "63de683a995aeb6a2738e9dea1f9763b7f758f0e717908879657f0d109233eec",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://micronews.debian.org/2025/1754772107.html",
+            "finalUrl": "https://micronews.debian.org/2025/1754772107.html",
+            "status": 200,
+            "bytes": 2899,
+            "responseSha256": "ad4a3a0e6d5711c5bdc63c93bea10ca32b62a14184e2cc1099621e5aa234be2b",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "Debian 13 \"trixie\" has been released, thanks to everyone involved! \"trixie\" images are available for download at https://www.debian.org/distrib/ or you can run apt full-upgrade as always ;-) #debian #debian13 #trixie #ReleasingDebianTrixie",
+        "observedSubmission": {
+          "id": 44849134,
+          "title": "Debian 13 \"Trixie\" Released",
+          "url": "https://micronews.debian.org/2025/1754772107.html",
+          "created_at": "2025-08-09T19:00:29.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-45150226",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Debian 13.1 Released",
+        "url": "https://news.ycombinator.com/item?id=45150226",
+        "articleUrl": "https://www.debian.org/News/2025/20250906",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/45150226",
+        "reportedAt": "2025-09-06T15:37:40.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/45150226",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/45150226",
+            "status": 200,
+            "bytes": 289,
+            "responseSha256": "f3221903cbf7bc63c72dc67e40cf586dc95b73f44711b131fa4d5968390a7d42",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://www.debian.org/News/2025/20250906",
+            "finalUrl": "https://www.debian.org/News/2025/20250906",
+            "status": 200,
+            "bytes": 25343,
+            "responseSha256": "572e2d05c2ecda6428cc688a2d7df1e76128f200beac2371f641b55d8722dd33",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "Debian -- News -- Updated Debian 13: 13.1 released",
+        "observedSubmission": {
+          "id": 45150226,
+          "title": "Debian 13.1 Released",
+          "url": "https://www.debian.org/News/2025/20250906",
+          "created_at": "2025-09-06T15:37:40.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-43414106",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Gnome 48, \"Bengaluru\"",
+        "url": "https://news.ycombinator.com/item?id=43414106",
+        "articleUrl": "https://release.gnome.org/48/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/43414106",
+        "reportedAt": "2025-03-19T16:25:07.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/43414106",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/43414106",
+            "status": 200,
+            "bytes": 279,
+            "responseSha256": "2e59942a392dba977b075a336f3a7434dae8f8b7afd7b3c300f3894145329c19",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          },
+          {
+            "requestUrl": "https://release.gnome.org/48/",
+            "finalUrl": "https://release.gnome.org/48/",
+            "status": 200,
+            "bytes": 33303,
+            "responseSha256": "a43a48f390c20dc17b59a5c5e9540fb462dc8a89d923d8c709291aad64b1c27f",
+            "capturedAt": "2026-11-27T05:42:27+00:00"
+          }
+        ],
+        "observedTitle": "Introducing GNOME 48 - GNOME Release Notes",
+        "observedSubmission": {
+          "id": 43414106,
+          "title": "Gnome 48, \"Bengaluru\"",
+          "url": "https://release.gnome.org/48/",
+          "created_at": "2025-03-19T16:25:07.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-43453319",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Gnome 48 Released with Focus on Your Digital Wellbeing",
+        "url": "https://news.ycombinator.com/item?id=43453319",
+        "articleUrl": "https://news.itsfoss.com/gnome-48-release/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/43453319",
+        "reportedAt": "2025-03-23T14:54:03.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/43453319",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/43453319",
+            "status": 200,
+            "bytes": 853,
+            "responseSha256": "502babd36492d60f372355dd2659aac6ea0b0bf51b1ac8ffe190d8af0469c82e",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://news.itsfoss.com/gnome-48-release/",
+            "finalUrl": "https://itsfoss.com/news/gnome-48-release/",
+            "status": 200,
+            "bytes": 90842,
+            "responseSha256": "cf5e37fc9e7e8d2c461100feadc43dd10bc3ebd9e60d2258d60628627d0d3bcd",
+            "capturedAt": "2026-11-27T05:43:18+00:00"
+          }
+        ],
+        "observedTitle": "GNOME 48 Released With Focus on Your Digital Wellbeing",
+        "observedSubmission": {
+          "id": 43453319,
+          "title": "Gnome 48 Released with Focus on Your Digital Wellbeing",
+          "url": "https://news.itsfoss.com/gnome-48-release/",
+          "created_at": "2025-03-23T14:54:03.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-39536185",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "KDE Plasma 6.0, and KDE Gear 24.02 released",
+        "url": "https://news.ycombinator.com/item?id=39536185",
+        "articleUrl": "https://kde.org/announcements/megarelease/6/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/39536185",
+        "reportedAt": "2024-02-28T10:25:51.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/39536185",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/39536185",
+            "status": 200,
+            "bytes": 15107,
+            "responseSha256": "a12339afbc59e5529caaa774e4d31039c6c20097ee36eb6967ffac50640f897a",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://kde.org/announcements/megarelease/6/",
+            "finalUrl": "https://kde.org/announcements/megarelease/6/",
+            "status": 200,
+            "bytes": 100736,
+            "responseSha256": "b24df46b68ece3bf7ba355a13bed64663e70a04cbfaaed8c54df2723dd2ba584",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "KDE MegaRelease 6 - KDE Community",
+        "observedSubmission": {
+          "id": 39536185,
+          "title": "KDE Plasma 6.0, and KDE Gear 24.02 released",
+          "url": "https://kde.org/announcements/megarelease/6/",
+          "created_at": "2024-02-28T10:25:51.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-44297685",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "KDE Plasma 6.4 Released",
+        "url": "https://news.ycombinator.com/item?id=44297685",
+        "articleUrl": "https://kde.org/announcements/plasma/6/6.4.0/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/44297685",
+        "reportedAt": "2025-06-17T11:03:37.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/44297685",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/44297685",
+            "status": 200,
+            "bytes": 3917,
+            "responseSha256": "214558df068873987c5752ddd329b2bd0f0d7418f40460ce02768048180d1988",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://kde.org/announcements/plasma/6/6.4.0/",
+            "finalUrl": "https://kde.org/announcements/plasma/6/6.4.0/",
+            "status": 200,
+            "bytes": 71482,
+            "responseSha256": "52ac48f2e4ba172e10abd2bd6220358d4ea99ba4cfaa67631f94a18b118e2506",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "Plasma 6.4 - KDE Community",
+        "observedSubmission": {
+          "id": 44297685,
+          "title": "KDE Plasma 6.4 Released",
+          "url": "https://kde.org/announcements/plasma/6/6.4.0/",
+          "created_at": "2025-06-17T11:03:37.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-44318666",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "KDE Plasma 6.4 ships with major usability and Wayland improvements",
+        "url": "https://news.ycombinator.com/item?id=44318666",
+        "articleUrl": "https://www.theregister.com/2025/06/18/kde_plasma_64_released/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/44318666",
+        "reportedAt": "2025-06-19T13:48:35.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/44318666",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/44318666",
+            "status": 200,
+            "bytes": 351,
+            "responseSha256": "57977d741276aa2cad459c68307ee08a4994bc1752568f34e8e07e6f0663fabc",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://www.theregister.com/2025/06/18/kde_plasma_64_released/",
+            "finalUrl": "https://www.theregister.com/software/2025/06/18/kde-plasma-64-ships-with-major-usability-improvements/281153",
+            "status": 200,
+            "bytes": 191610,
+            "responseSha256": "668df9950763a2bcc70bbbaa3ba22471643f28cc76888bba3377f7f9aef92068",
+            "capturedAt": "2026-11-27T05:43:18+00:00"
+          }
+        ],
+        "observedTitle": "KDE Plasma 6.4 ships with major usability improvements",
+        "observedSubmission": {
+          "id": 44318666,
+          "title": "KDE Plasma 6.4 ships with major usability and Wayland improvements",
+          "url": "https://www.theregister.com/2025/06/18/kde_plasma_64_released/",
+          "created_at": "2025-06-19T13:48:35.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-45654102",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "KDE Plasma 6.5 Released",
+        "url": "https://news.ycombinator.com/item?id=45654102",
+        "articleUrl": "https://kde.org/announcements/plasma/6/6.5.0/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/45654102",
+        "reportedAt": "2025-10-21T09:52:02.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/45654102",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/45654102",
+            "status": 200,
+            "bytes": 4337,
+            "responseSha256": "67e2c5fb328dcae2d9e3d2d289fa07b74871d8f66ae3928887f46f0b5c25e3ee",
+            "capturedAt": "2026-11-27T05:42:29+00:00"
+          },
+          {
+            "requestUrl": "https://kde.org/announcements/plasma/6/6.5.0/",
+            "finalUrl": "https://kde.org/announcements/plasma/6/6.5.0/",
+            "status": 200,
+            "bytes": 70054,
+            "responseSha256": "5134afbb01b753e95395a1a93052bfb044af9e548dcb7316d64dc83a338c5d28",
+            "capturedAt": "2026-11-27T05:42:29+00:00"
+          }
+        ],
+        "observedTitle": "Plasma 6.5 - KDE Community",
+        "observedSubmission": {
+          "id": 45654102,
+          "title": "KDE Plasma 6.5 Released",
+          "url": "https://kde.org/announcements/plasma/6/6.5.0/",
+          "created_at": "2025-10-21T09:52:02.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-45449390",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Second Beta of KDE Plasma 6.5 Released for Testing",
+        "url": "https://news.ycombinator.com/item?id=45449390",
+        "articleUrl": "https://www.phoronix.com/news/KDE-Plasma-6.5-Beta-2",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/45449390",
+        "reportedAt": "2025-10-02T13:33:04.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/45449390",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/45449390",
+            "status": 200,
+            "bytes": 330,
+            "responseSha256": "8c281f134c4ea530755765d39cf1d0955ada76f6c7bd70183d65f3f5d546a945",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://www.phoronix.com/news/KDE-Plasma-6.5-Beta-2",
+            "finalUrl": "https://www.phoronix.com/news/KDE-Plasma-6.5-Beta-2",
+            "status": 200,
+            "bytes": 78592,
+            "responseSha256": "d5f65fa620fe11cfa27bf35c94dca6153125b3c59e4e36a92197458f41623e43",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "Second Beta Of KDE Plasma 6.5 Released For Testing - Phoronix",
+        "observedSubmission": {
+          "id": 45449390,
+          "title": "Second Beta of KDE Plasma 6.5 Released for Testing",
+          "url": "https://www.phoronix.com/news/KDE-Plasma-6.5-Beta-2",
+          "created_at": "2025-10-02T13:33:04.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-43692913",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Fedora 42 Released as a Fantastic Update to This Leading-Edge Linux Distribution",
+        "url": "https://news.ycombinator.com/item?id=43692913",
+        "articleUrl": "https://www.phoronix.com/news/Fedora-42-Released",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/43692913",
+        "reportedAt": "2025-04-15T14:08:34.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/43692913",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/43692913",
+            "status": 200,
+            "bytes": 753,
+            "responseSha256": "4167cdfc6350e34a2e6d495aff3b548e17dcb00dc9a0e2b6ebff2e6e073506d5",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://www.phoronix.com/news/Fedora-42-Released",
+            "finalUrl": "https://www.phoronix.com/news/Fedora-42-Released",
+            "status": 200,
+            "bytes": 80836,
+            "responseSha256": "7c8a4a044aa9498957e2258f2f313d7275568b231d3fd1be9251619c798fc29c",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "Fedora 42 Released As A Fantastic Update To This Leading-Edge Linux Distribution - Phoronix",
+        "observedSubmission": {
+          "id": 43692913,
+          "title": "Fedora 42 Released as a Fantastic Update to This Leading-Edge Linux Distribution",
+          "url": "https://www.phoronix.com/news/Fedora-42-Released",
+          "created_at": "2025-04-15T14:08:34.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-43706555",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Fedora Linux 42 released",
+        "url": "https://news.ycombinator.com/item?id=43706555",
+        "articleUrl": "https://fedoramagazine.org/announcing-fedora-linux-42/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/43706555",
+        "reportedAt": "2025-04-16T15:14:46.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/43706555",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/43706555",
+            "status": 200,
+            "bytes": 300,
+            "responseSha256": "7ccea749268d34e8dfa7e73d7acae7432d9ad8a3b6492641f98522684cdcd34e",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://fedoramagazine.org/announcing-fedora-linux-42/",
+            "finalUrl": "https://fedoramagazine.org/announcing-fedora-linux-42/",
+            "status": 200,
+            "bytes": 70951,
+            "responseSha256": "d02883123c35424c349459a25ecce45b16f5ad84b8099a944fce1fa9f7758bed",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "The answer is 42! Fedora Linux 42, that is. - Fedora Magazine",
+        "observedSubmission": {
+          "id": 43706555,
+          "title": "Fedora Linux 42 released",
+          "url": "https://fedoramagazine.org/announcing-fedora-linux-42/",
+          "created_at": "2025-04-16T15:14:46.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-43400038",
+        "cohort": "release",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Fedora Linux 42 Beta",
+        "url": "https://news.ycombinator.com/item?id=43400038",
+        "articleUrl": "https://fedoramagazine.org/announcing-fedora-linux-42-beta/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/43400038",
+        "reportedAt": "2025-03-18T14:42:16.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/43400038",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/43400038",
+            "status": 200,
+            "bytes": 305,
+            "responseSha256": "792c23ba121c3d44e31d8ad6399a2ede2a081e25775e45272ec606be9da288b2",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://fedoramagazine.org/announcing-fedora-linux-42-beta/",
+            "finalUrl": "https://fedoramagazine.org/announcing-fedora-linux-42-beta/",
+            "status": 200,
+            "bytes": 63282,
+            "responseSha256": "47a985eb1ea8bfc6f9277e0c5c05faaacacedb2d87134fbb38d6c41490f043b3",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "Announcing Fedora Linux 42 Beta - Fedora Magazine",
+        "observedSubmission": {
+          "id": 43400038,
+          "title": "Fedora Linux 42 Beta",
+          "url": "https://fedoramagazine.org/announcing-fedora-linux-42-beta/",
+          "created_at": "2025-03-18T14:42:16.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-40052743",
+        "cohort": "security",
+        "source": "hackernews",
+        "language": "en",
+        "title": "OpenJS Issues Alert for Social Engineering Takeovers of Open Source Projects",
+        "url": "https://news.ycombinator.com/item?id=40052743",
+        "articleUrl": "https://openjsf.org/blog/openssf-openjs-alert-social-engineering-takeovers",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/40052743",
+        "reportedAt": "2024-04-16T14:53:03.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/40052743",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/40052743",
+            "status": 200,
+            "bytes": 376,
+            "responseSha256": "732ce5e75f517a56fe71c8af9e676b5b294491529f2863a10ffb937a8c0a0a2d",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://openjsf.org/blog/openssf-openjs-alert-social-engineering-takeovers",
+            "finalUrl": "https://openjsf.org/blog/openssf-openjs-alert-social-engineering-takeovers",
+            "status": 200,
+            "bytes": 115481,
+            "responseSha256": "40f342d2235b7e09f94bd5f2cd9b2113842be8a405795468a3f261455e8951ea",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "Open Source Security (OpenSSF) and OpenJS Foundations Issue Alert for Social Engineering Takeovers of Open Source Projects | OpenJS Foundation",
+        "observedSubmission": {
+          "id": 40052743,
+          "title": "OpenJS Issues Alert for Social Engineering Takeovers of Open Source Projects",
+          "url": "https://openjsf.org/blog/openssf-openjs-alert-social-engineering-takeovers",
+          "created_at": "2024-04-16T14:53:03.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-48091737",
+        "cohort": "security",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Mythos Finds a Curl Vulnerability",
+        "url": "https://news.ycombinator.com/item?id=48091737",
+        "articleUrl": "https://daniel.haxx.se/blog/2026/05/11/mythos-finds-a-curl-vulnerability/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/48091737",
+        "reportedAt": "2026-05-11T06:39:08.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/48091737",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/48091737",
+            "status": 200,
+            "bytes": 166810,
+            "responseSha256": "fdb8d77f8cc3118caae11c56d33f159328287d41a58f66ee1e3d0f07d883d753",
+            "capturedAt": "2026-11-27T05:42:29+00:00"
+          },
+          {
+            "requestUrl": "https://daniel.haxx.se/blog/2026/05/11/mythos-finds-a-curl-vulnerability/",
+            "finalUrl": "https://daniel.haxx.se/blog/2026/05/11/mythos-finds-a-curl-vulnerability/",
+            "status": 200,
+            "bytes": 123852,
+            "responseSha256": "f58da654395a89f39d09e109daec07e2273c96b93f360a6c204a0ca0f3d023df",
+            "capturedAt": "2026-11-27T05:42:29+00:00"
+          }
+        ],
+        "observedTitle": "Mythos finds a curl vulnerability | daniel.haxx.se",
+        "observedSubmission": {
+          "id": 48091737,
+          "title": "Mythos Finds a Curl Vulnerability",
+          "url": "https://daniel.haxx.se/blog/2026/05/11/mythos-finds-a-curl-vulnerability/",
+          "created_at": "2026-05-11T06:39:08.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-48112855",
+        "cohort": "security",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Stenberg: Mythos Finds a Curl Vulnerability",
+        "url": "https://news.ycombinator.com/item?id=48112855",
+        "articleUrl": "https://lwn.net/Articles/1072325/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/48112855",
+        "reportedAt": "2026-05-12T19:04:58.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/48112855",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/48112855",
+            "status": 200,
+            "bytes": 302,
+            "responseSha256": "06c77f24183a12ac328bf0a1189c71e3f9ba218974b6d462446f56dd529ced19",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          },
+          {
+            "requestUrl": "https://lwn.net/Articles/1072325/",
+            "finalUrl": "https://lwn.net/Articles/1072325/",
+            "status": 200,
+            "bytes": 6185,
+            "responseSha256": "0b8f04a4337db07645e8b2bdff225e5ce5e62b8de2e86d397bacd7970dbfea64",
+            "capturedAt": "2026-11-27T05:42:28+00:00"
+          }
+        ],
+        "observedTitle": "Stenberg: Mythos finds a curl vulnerability [LWN.net]",
+        "observedSubmission": {
+          "id": 48112855,
+          "title": "Stenberg: Mythos Finds a Curl Vulnerability",
+          "url": "https://lwn.net/Articles/1072325/",
+          "created_at": "2026-05-12T19:04:58.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-35685635",
+        "cohort": "security",
+        "source": "hackernews",
+        "language": "en",
+        "title": "Deleting System32\\curl.exe",
+        "url": "https://news.ycombinator.com/item?id=35685635",
+        "articleUrl": "https://daniel.haxx.se/blog/2023/04/24/deleting-system32curl-exe/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/35685635",
+        "reportedAt": "2023-04-24T10:13:19.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/35685635",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/35685635",
+            "status": 200,
+            "bytes": 67262,
+            "responseSha256": "bfcb459c61485958e3a4da27ac58b46d0f7326967f2dab27772d7d4865948549",
+            "capturedAt": "2026-11-27T05:42:29+00:00"
+          },
+          {
+            "requestUrl": "https://daniel.haxx.se/blog/2023/04/24/deleting-system32curl-exe/",
+            "finalUrl": "https://daniel.haxx.se/blog/2023/04/24/deleting-system32curl-exe/",
+            "status": 200,
+            "bytes": 71358,
+            "responseSha256": "2883ee8508afb87b0752de0114bb531746346e90f8749fae948be1537c51305f",
+            "capturedAt": "2026-11-27T05:42:29+00:00"
+          }
+        ],
+        "observedTitle": "deleting system32\\curl.exe | daniel.haxx.se",
+        "observedSubmission": {
+          "id": 35685635,
+          "title": "Deleting System32\\curl.exe",
+          "url": "https://daniel.haxx.se/blog/2023/04/24/deleting-system32curl-exe/",
+          "created_at": "2023-04-24T10:13:19.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-39891607",
+        "cohort": "security",
+        "source": "hackernews",
+        "language": "en",
+        "title": "What we know about the xz Utils backdoor that almost infected the world",
+        "url": "https://news.ycombinator.com/item?id=39891607",
+        "articleUrl": "https://arstechnica.com/security/2024/04/what-we-know-about-the-xz-utils-backdoor-that-almost-infected-the-world/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/39891607",
+        "reportedAt": "2024-04-01T07:19:12.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/39891607",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/39891607",
+            "status": 200,
+            "bytes": 191654,
+            "responseSha256": "3e5d241a66d654c4f192ad6ba88b45d051362582db7264b513e0afa8c3dae012",
+            "capturedAt": "2026-11-27T05:42:29+00:00"
+          },
+          {
+            "requestUrl": "https://arstechnica.com/security/2024/04/what-we-know-about-the-xz-utils-backdoor-that-almost-infected-the-world/",
+            "finalUrl": "https://arstechnica.com/security/2024/04/what-we-know-about-the-xz-utils-backdoor-that-almost-infected-the-world/",
+            "status": 200,
+            "bytes": 193643,
+            "responseSha256": "542e53ea8e1b614d093256d6c634a1afcc4591ed97fbd05e9e17c362b830304e",
+            "capturedAt": "2026-11-27T05:42:29+00:00"
+          }
+        ],
+        "observedTitle": "What we know about the xz Utils backdoor that almost infected the world - Ars Technica",
+        "observedSubmission": {
+          "id": 39891607,
+          "title": "What we know about the xz Utils backdoor that almost infected the world",
+          "url": "https://arstechnica.com/security/2024/04/what-we-know-about-the-xz-utils-backdoor-that-almost-infected-the-world/",
+          "created_at": "2024-04-01T07:19:12.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-hn-40017310",
+        "cohort": "security",
+        "source": "hackernews",
+        "language": "en",
+        "title": "XZ backdoor story – Initial analysis",
+        "url": "https://news.ycombinator.com/item?id=40017310",
+        "articleUrl": "https://securelist.com/xz-backdoor-story-part-1/112354/",
+        "evidenceUrl": "https://hn.algolia.com/api/v1/items/40017310",
+        "reportedAt": "2024-04-12T20:28:36.000Z",
+        "timeKind": "submission"
+      },
+      "evidence": {
+        "kind": "hn-item-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://hn.algolia.com/api/v1/items/40017310",
+            "finalUrl": "https://hn.algolia.com/api/v1/items/40017310",
+            "status": 200,
+            "bytes": 154205,
+            "responseSha256": "7208f290b7eb1f384d7097274d80ef95316b823d0b0c21fedb96a5496a39e833",
+            "capturedAt": "2026-11-27T05:42:30+00:00"
+          },
+          {
+            "requestUrl": "https://securelist.com/xz-backdoor-story-part-1/112354/",
+            "finalUrl": "https://securelist.com/xz-backdoor-story-part-1/112354/",
+            "status": 200,
+            "bytes": 290026,
+            "responseSha256": "4b8f0c7b92c77b14701aa09b8c466fc1b6caa039fd7baf8bf086153cffbe4620",
+            "capturedAt": "2026-11-27T05:42:30+00:00"
+          }
+        ],
+        "observedTitle": "Kaspersky analysis of the backdoor in XZ | Securelist",
+        "observedSubmission": {
+          "id": 40017310,
+          "title": "XZ backdoor story – Initial analysis",
+          "url": "https://securelist.com/xz-backdoor-story-part-1/112354/",
+          "created_at": "2024-04-12T20:28:36.000Z",
+          "type": "story"
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "HN created_at is submission time, not article publication time. HTTP success and title check are not historical content verification."
+      }
+    },
+    {
+      "report": {
+        "id": "coverage-gh-xz-562",
+        "cohort": "security",
+        "source": "github-release",
+        "language": "en",
+        "title": "XZ Utils 5.6.2 (stable)",
+        "url": "https://github.com/tukaani-project/xz/releases/tag/v5.6.2",
+        "articleUrl": "https://github.com/tukaani-project/xz/releases/tag/v5.6.2",
+        "evidenceUrl": "https://api.github.com/repos/tukaani-project/xz/releases/tags/v5.6.2",
+        "reportedAt": "2024-05-29T17:10:16Z",
+        "timeKind": "published"
+      },
+      "evidence": {
+        "kind": "github-release-and-publisher-page",
+        "captures": [
+          {
+            "requestUrl": "https://api.github.com/repos/tukaani-project/xz/releases/tags/v5.6.2",
+            "finalUrl": "https://api.github.com/repos/tukaani-project/xz/releases/tags/v5.6.2",
+            "status": 200,
+            "bytes": 18718,
+            "responseSha256": "57704ed5eb030eadc8df45de5a73605371b2c97941fa98ce11331135739cbd6c",
+            "capturedAt": "2026-11-27T05:42:29+00:00"
+          },
+          {
+            "requestUrl": "https://github.com/tukaani-project/xz/releases/tag/v5.6.2",
+            "finalUrl": "https://github.com/tukaani-project/xz/releases/tag/v5.6.2",
+            "status": 200,
+            "bytes": 168186,
+            "responseSha256": "be00c3e21ea20721f0072ce965d6fdd1827bb8fab3466014e3be11781680356a",
+            "capturedAt": "2026-11-27T05:42:29+00:00"
+          }
+        ],
+        "observedTitle": "Release XZ Utils 5.6.2 (stable) · tukaani-project/xz · GitHub",
+        "observedRelease": {
+          "id": 158034783,
+          "name": "XZ Utils 5.6.2 (stable)",
+          "tag_name": "v5.6.2",
+          "published_at": "2024-05-29T17:10:16Z",
+          "html_url": "https://github.com/tukaani-project/xz/releases/tag/v5.6.2",
+          "draft": false,
+          "prerelease": false
+        },
+        "timePrecision": "second",
+        "timezone": "UTC",
+        "note": "Version-specific release record. Historical revision and independent event judgment still pending."
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "coverage-query-001",
+      "query": "Linux 6.12 实时内核"
+    },
+    {
+      "id": "coverage-query-002",
+      "query": "Linux 6.13 正式版"
+    },
+    {
+      "id": "coverage-query-003",
+      "query": "Linux 6.13 RC1"
+    },
+    {
+      "id": "coverage-query-004",
+      "query": "Debian 13 trixie 发布"
+    },
+    {
+      "id": "coverage-query-005",
+      "query": "Debian 13.1 更新"
+    },
+    {
+      "id": "coverage-query-006",
+      "query": "GNOME 48 数字健康"
+    },
+    {
+      "id": "coverage-query-007",
+      "query": "KDE Plasma 6.4 Wayland"
+    },
+    {
+      "id": "coverage-query-008",
+      "query": "KDE Plasma 6.5 Beta 2"
+    },
+    {
+      "id": "coverage-query-009",
+      "query": "Fedora 42 正式版"
+    },
+    {
+      "id": "coverage-query-010",
+      "query": "Fedora 42 Beta"
+    },
+    {
+      "id": "coverage-query-011",
+      "query": "XZ 5.6.2 移除后门"
+    },
+    {
+      "id": "coverage-query-012",
+      "query": "OpenJS 维护者社会工程警告"
+    },
+    {
+      "id": "coverage-query-013",
+      "query": "curl 虚假 AI 漏洞报告"
+    },
+    {
+      "id": "coverage-query-014",
+      "query": "Mythos 发现 curl 漏洞"
+    },
+    {
+      "id": "coverage-query-015",
+      "query": "Linux 6.13 RC9"
+    }
+  ],
+  "excluded": [],
+  "blockers": [
+    "Solidot pages expose minute precision only; UTC+8 assumed and requires confirmation.",
+    "Current page/API snapshots are not original historical bytes; capture metadata does not prove independence.",
+    "Source concentration in Solidot and HN; more Chinese publishers and daily bilingual events required.",
+    "Final event disjointness and tuning exposure, independent human review and admission remain open."
+  ]
+}
