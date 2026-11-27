@@ -1,0 +1,995 @@
+{
+  "schemaVersion": 1,
+  "datasetSha256": "43fd4e225559996704ecc6fd504a152c7b4011325ca6b2ca2cdd5b90f5671c79",
+  "baseEvidenceSha256": "9215e597254f3f4b5b9e90e12e314cd228890fc98de5123015242e11aaa58010",
+  "baseFreezeSha256": "94eaf6d6da3b6fde4ac29da679fbaa364373d0f0769a7e71a51b946b525680dc",
+  "startedAt": "2026-11-27T06:10:48+00:00",
+  "finishedAt": "2026-11-27T06:10:53+00:00",
+  "purpose": "One retry per failed original position plus alternate public HN item API. Not historical evidence or admission.",
+  "rows": [
+    {
+      "reportId": "candidate-054",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/50178540",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/50178540",
+      "bytes": 323,
+      "responseSha256": "ce2a8fef59a20adffc20d32e696415f03eb1d211cff06f5f8640375abc8d4c99",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 50178540,
+          "type": "story",
+          "title": "Go 1.27.3 and Go 1.26.10 are released",
+          "url": "https://groups.google.com/g/golang-announce/c/66pojueaQek",
+          "created_at": "2026-10-21T10:22:38.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:48+00:00"
+    },
+    {
+      "reportId": "candidate-054",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/50178540.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/50178540.json",
+      "bytes": 227,
+      "responseSha256": "4908b1907b51bf2ef4e1f670f20bdf7e07ca8d126a643b92b337b9cd2bc95fb4",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 50178540,
+          "type": "story",
+          "title": "Go 1.27.3 and Go 1.26.10 are released",
+          "url": "https://groups.google.com/g/golang-announce/c/66pojueaQek",
+          "time": 1792578158
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:48+00:00"
+    },
+    {
+      "reportId": "candidate-056",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/46294257",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/46294257",
+      "bytes": 722,
+      "responseSha256": "87c8e721d713b8dbbe7f2db7a455d21f2469b1d6a41bd1a6bfee3d0775e6a255",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 46294257,
+          "type": "story",
+          "title": "Go 1.26 Release Candidate 1 is released",
+          "url": "https://groups.google.com/g/golang-nuts/c/LcB-3xh5o68",
+          "created_at": "2025-12-16T20:50:25.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:48+00:00"
+    },
+    {
+      "reportId": "candidate-056",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/46294257.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/46294257.json",
+      "bytes": 222,
+      "responseSha256": "248b2733c7fdee88521842b5674735ea728cc2fe48d4f6cb406efdc50a67e2e7",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 46294257,
+          "type": "story",
+          "title": "Go 1.26 Release Candidate 1 is released",
+          "url": "https://groups.google.com/g/golang-nuts/c/LcB-3xh5o68",
+          "time": 1765918225
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:48+00:00"
+    },
+    {
+      "reportId": "candidate-057",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40959843",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/40959843",
+      "bytes": 379,
+      "responseSha256": "a984cb348728610235c179564e845b4a61f7e9b2713098eb3ef68cb7cec4bde7",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 40959843,
+          "type": "story",
+          "title": "NetBSD Security Advisory 2024-002 – OpenSSH CVE-2024-6387 `regreSSHion'",
+          "url": "https://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2024-002.txt.asc",
+          "created_at": "2024-07-14T09:20:50.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:48+00:00"
+    },
+    {
+      "reportId": "candidate-057",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/40959843.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/40959843.json",
+      "bytes": 280,
+      "responseSha256": "8b866b28d7e2822027754532bb8080a8e295257efe7ca73ce8f3dafe8eed11fd",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 40959843,
+          "type": "story",
+          "title": "NetBSD Security Advisory 2024-002 – OpenSSH CVE-2024-6387 `regreSSHion'",
+          "url": "https://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2024-002.txt.asc",
+          "time": 1720948850
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "candidate-058",
+      "role": "discussion",
+      "requestUrl": "https://news.ycombinator.com/item?id=40854716",
+      "status": 200,
+      "finalUrl": "https://news.ycombinator.com/item?id=40854716",
+      "bytes": 3725,
+      "responseSha256": "9a065a12fb2475946962c8eadb916b6f68a8cad871a67123d4518d1b628e7156",
+      "contentType": "text/html; charset=utf-8",
+      "observed": {
+        "title": "Critical RCE Vulnerability in OpenSSH (CVE-2024-6387) – The Full Playbook | Hacker News",
+        "publishedMetadata": [],
+        "solidotWallTime": null
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:48+00:00"
+    },
+    {
+      "reportId": "candidate-058",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40854716",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/40854716",
+      "bytes": 390,
+      "responseSha256": "6d9cca2f59f4d3e085b31a1aa9323ccaa206de1796555a06d74694a7996539da",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 40854716,
+          "type": "story",
+          "title": "Critical RCE Vulnerability in OpenSSH (CVE-2024-6387) – The Full Playbook",
+          "url": "https://www.oligo.security/blog/critical-openssh-vulnerability-cve-2024-6387-regresshion",
+          "created_at": "2024-07-02T08:44:38.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:48+00:00"
+    },
+    {
+      "reportId": "candidate-058",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/40854716.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/40854716.json",
+      "bytes": 291,
+      "responseSha256": "ff795e8fe5f6e6a5d2cc411e25579a80739758457e43585ba641917eb9883691",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 40854716,
+          "type": "story",
+          "title": "Critical RCE Vulnerability in OpenSSH (CVE-2024-6387) – The Full Playbook",
+          "url": "https://www.oligo.security/blog/critical-openssh-vulnerability-cve-2024-6387-regresshion",
+          "time": 1719909878
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "candidate-060",
+      "role": "article",
+      "requestUrl": "https://regresshion.io/",
+      "status": null,
+      "finalUrl": null,
+      "bytes": null,
+      "responseSha256": null,
+      "contentType": null,
+      "observed": null,
+      "state": "network-error",
+      "error": "URLError",
+      "capturedAt": "2026-11-27T06:10:48+00:00"
+    },
+    {
+      "reportId": "candidate-060",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40851253",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/40851253",
+      "bytes": 3065,
+      "responseSha256": "fdc6773320be90879849cd55fc1e99349ae4af7cf0f7652beac8106f4efad55b",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 40851253,
+          "type": "story",
+          "title": "Show HN: regreSSHion.io – Quick OpenSSH vulnerability checker (CVE-2024-6387)",
+          "url": "https://regresshion.io/",
+          "created_at": "2024-07-01T22:00:24.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:48+00:00"
+    },
+    {
+      "reportId": "candidate-060",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/40851253.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/40851253.json",
+      "bytes": 553,
+      "responseSha256": "f19bb0b1f20196961959504d81334de7567b710461e148ccab924ea630b92dbf",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 40851253,
+          "type": "story",
+          "title": "Show HN: regreSSHion.io – Quick OpenSSH vulnerability checker (CVE-2024-6387)",
+          "url": "https://regresshion.io/",
+          "time": 1719871224
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "candidate-062",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40844458",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/40844458",
+      "bytes": 344,
+      "responseSha256": "bcc9066da1b4afa4cc10b1daea938dbc6fce05b0518fde6ab7565d69d85e27ec",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 40844458,
+          "type": "story",
+          "title": "CVE-2024-6387: RCE in OpenSSH's server, on glibc-based Linux systems",
+          "url": "https://www.openwall.com/lists/oss-security/2024/07/01/3",
+          "created_at": "2024-07-01T10:44:50.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "candidate-062",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/40844458.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/40844458.json",
+      "bytes": 232,
+      "responseSha256": "1dcbfc5239b9b28ebfbd0b0a63a64449883ac7216d767f60cfc840f507272de0",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 40844458,
+          "type": "story",
+          "title": "CVE-2024-6387: RCE in OpenSSH's server, on glibc-based Linux systems",
+          "url": "https://www.openwall.com/lists/oss-security/2024/07/01/3",
+          "time": 1719830690
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-zh-79925",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=79925",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=79925",
+      "bytes": 16034,
+      "responseSha256": "f5793b4fa197053a6161ec3859cc72d8c8c65cdf459169e73546e1487ddb2b9e",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | Linux 6.13-rc1 释出",
+        "publishedMetadata": [],
+        "solidotWallTime": "2024-12-02 11:34"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-zh-82598",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=82598",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=82598",
+      "bytes": 15914,
+      "responseSha256": "08945e080fe20d356194da186b04e95e06ded836d0dd3241aafab81439778a23",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | KDE Plasma 6.5 释出",
+        "publishedMetadata": [],
+        "solidotWallTime": "2025-10-21 21:32"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-zh-84269",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=84269",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=84269",
+      "bytes": 17008,
+      "responseSha256": "873fb491fe3d8b7e608e3dbfabcce3e9a4fa7f77cbc6cc1d554a3bc3e41dd696",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | Mythos 发现了一个 curl 漏洞",
+        "publishedMetadata": [],
+        "solidotWallTime": "2026-05-11 21:20"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:52+00:00"
+    },
+    {
+      "reportId": "coverage-zh-74771",
+      "role": "article",
+      "requestUrl": "https://www.solidot.org/story?sid=74771",
+      "status": 200,
+      "finalUrl": "https://www.solidot.org/story?sid=74771",
+      "bytes": 16999,
+      "responseSha256": "f858c6224975d36b15f46f86a0d1c7c26301122c32cfd3c92b8a2e888bc7d9da",
+      "contentType": "text/html; charset=UTF-8",
+      "observed": {
+        "title": "奇客Solidot | 当 Windows 用户在恐慌下删除 system32\\curl.exe",
+        "publishedMetadata": [],
+        "solidotWallTime": "2023-04-24 21:47"
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:51+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42168014",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42168014",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/42168014",
+      "bytes": 1537,
+      "responseSha256": "d5d0165a76ab9598fc033810c9af067b61d1a48ca954f1ca007d82bdbe4f1bde",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 42168014,
+          "type": "story",
+          "title": "Linux 6.12 Released with Real-Time Capabilities, Sched_Ext, AMD RDNA4 and More",
+          "url": "https://www.phoronix.com/news/Linux-6.12-Released",
+          "created_at": "2024-11-17T22:39:34.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42168014",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/42168014.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/42168014.json",
+      "bytes": 262,
+      "responseSha256": "c42511f1e601ad7a1edb933044dc6cab98d5b77a1004f5c0507eedefad6cc21b",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 42168014,
+          "type": "story",
+          "title": "Linux 6.12 Released with Real-Time Capabilities, Sched_Ext, AMD RDNA4 and More",
+          "url": "https://www.phoronix.com/news/Linux-6.12-Released",
+          "time": 1731883174
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42169418",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42169418",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/42169418",
+      "bytes": 5825,
+      "responseSha256": "e4251b10e1df5207e168168e0b684da97973dcfbbcf70b138b93191ea155f226",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 42169418,
+          "type": "story",
+          "title": "Linux kernel 6.12 has been released",
+          "url": "https://lwn.net/Articles/997958/",
+          "created_at": "2024-11-18T03:12:44.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42169418",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/42169418.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/42169418.json",
+      "bytes": 265,
+      "responseSha256": "b26d6860f007f31be56d2583e3c31948a66f4c08cfe915c9b5a1beeffece76ff",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 42169418,
+          "type": "story",
+          "title": "Linux kernel 6.12 has been released",
+          "url": "https://lwn.net/Articles/997958/",
+          "time": 1731899564
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42106954",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42106954",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/42106954",
+      "bytes": 355,
+      "responseSha256": "dcdce5a4ff2b6eee29bcbbcdb7dd897be291ebd0abec515c15ecce1d7e5e1b72",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 42106954,
+          "type": "story",
+          "title": "Linux 6.12-Rc7 Released: Linux 6.12 Stable on Track for Release Next Sunday",
+          "url": "https://www.phoronix.com/news/Linux-6.12-rc7-Released",
+          "created_at": "2024-11-11T13:25:43.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42106954",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/42106954.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/42106954.json",
+      "bytes": 259,
+      "responseSha256": "688334639baaca8a43f8e55dabc50c1b9a0b76f8afcc5e1c2645d094ef180f02",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 42106954,
+          "type": "story",
+          "title": "Linux 6.12-Rc7 Released: Linux 6.12 Stable on Track for Release Next Sunday",
+          "url": "https://www.phoronix.com/news/Linux-6.12-rc7-Released",
+          "time": 1731331543
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42766905",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42766905",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/42766905",
+      "bytes": 352,
+      "responseSha256": "00761f54f19ee959d7720f507d245f1f73cedba8ffa4ec22f8158effd767764a",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 42766905,
+          "type": "story",
+          "title": "Linux 6.13 Released with AutoFDO and Propeller, AMD Changes and Apple Support",
+          "url": "https://www.phoronix.com/news/Linux-6.13-Released",
+          "created_at": "2025-01-20T09:53:11.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42766905",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/42766905.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/42766905.json",
+      "bytes": 238,
+      "responseSha256": "f9674e5d27d5e0ed7e77da70b531b8732935951bfd73f7d0a7c3d22c0f68b06b",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 42766905,
+          "type": "story",
+          "title": "Linux 6.13 Released with AutoFDO and Propeller, AMD Changes and Apple Support",
+          "url": "https://www.phoronix.com/news/Linux-6.13-Released",
+          "time": 1737366791
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42490627",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42490627",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/42490627",
+      "bytes": 335,
+      "responseSha256": "3c6e1766bb5553bd5d97a978790139ab1be389f142a54dacc4f82cfcdf1c124d",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 42490627,
+          "type": "story",
+          "title": "Linux 6.13-Rc4 Released for Kernel Testing Ahead of the Holidays",
+          "url": "https://www.phoronix.com/news/Linux-6.13-rc4",
+          "created_at": "2024-12-23T00:50:31.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42490627",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/42490627.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/42490627.json",
+      "bytes": 221,
+      "responseSha256": "d7599831e274f193d5d47d867a18ad22ef5812cb7c2aa68cb5d7125ad0520136",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 42490627,
+          "type": "story",
+          "title": "Linux 6.13-Rc4 Released for Kernel Testing Ahead of the Holidays",
+          "url": "https://www.phoronix.com/news/Linux-6.13-rc4",
+          "time": 1734915031
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42782174",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/42782174",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/42782174",
+      "bytes": 714,
+      "responseSha256": "65b23aacb0fd0ce574229edcf27fe1bde3d99f669e50092999faa85fd0b5c7aa",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 42782174,
+          "type": "story",
+          "title": "Linux kernel 6.13 isn't a major release but's it still important – here's why",
+          "url": "https://www.zdnet.com/article/linux-kernel-6-13-isnt-a-major-release-buts-it-still-important-heres-why/",
+          "created_at": "2025-01-21T16:44:39.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-42782174",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/42782174.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/42782174.json",
+      "bytes": 321,
+      "responseSha256": "d4989525bb0d614176e2feb5281ff67db7e9a9a3f0bbf33ef95e8d6c3305ff3d",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 42782174,
+          "type": "story",
+          "title": "Linux kernel 6.13 isn't a major release but's it still important – here's why",
+          "url": "https://www.zdnet.com/article/linux-kernel-6-13-isnt-a-major-release-buts-it-still-important-heres-why/",
+          "time": 1737477879
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44864232",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/44864232",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/44864232",
+      "bytes": 1142,
+      "responseSha256": "56342d17a964ea1e58240c94f4cfbbcebd9706f60b85f0eeff5d0540c6429599",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 44864232,
+          "type": "story",
+          "title": "Debian 13 \"Trixie\" Released: What's New in the Latest Version?",
+          "url": "https://news.itsfoss.com/debian-13-release/",
+          "created_at": "2025-08-11T14:07:50.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44864232",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/44864232.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/44864232.json",
+      "bytes": 244,
+      "responseSha256": "5d91b5d2619d3bbd81d5ee766d7773524f8f90dac4910dee3703811179469fd2",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 44864232,
+          "type": "story",
+          "title": "Debian 13 \"Trixie\" Released: What's New in the Latest Version?",
+          "url": "https://news.itsfoss.com/debian-13-release/",
+          "time": 1754921270
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44849134",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/44849134",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/44849134",
+      "bytes": 708,
+      "responseSha256": "63de683a995aeb6a2738e9dea1f9763b7f758f0e717908879657f0d109233eec",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 44849134,
+          "type": "story",
+          "title": "Debian 13 \"Trixie\" Released",
+          "url": "https://micronews.debian.org/2025/1754772107.html",
+          "created_at": "2025-08-09T19:00:29.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44849134",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/44849134.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/44849134.json",
+      "bytes": 219,
+      "responseSha256": "cf61f70f1c7a8f036dce897951afd225f2477ff57d2fc710f67219ec261cdb0b",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 44849134,
+          "type": "story",
+          "title": "Debian 13 \"Trixie\" Released",
+          "url": "https://micronews.debian.org/2025/1754772107.html",
+          "time": 1754766029
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43453319",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/43453319",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/43453319",
+      "bytes": 853,
+      "responseSha256": "502babd36492d60f372355dd2659aac6ea0b0bf51b1ac8ffe190d8af0469c82e",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 43453319,
+          "type": "story",
+          "title": "Gnome 48 Released with Focus on Your Digital Wellbeing",
+          "url": "https://news.itsfoss.com/gnome-48-release/",
+          "created_at": "2025-03-23T14:54:03.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-43453319",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/43453319.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/43453319.json",
+      "bytes": 232,
+      "responseSha256": "c394ce907a4f2743a015f72ab043816ab8ec609db50532df75a799e00735e307",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 43453319,
+          "type": "story",
+          "title": "Gnome 48 Released with Focus on Your Digital Wellbeing",
+          "url": "https://news.itsfoss.com/gnome-48-release/",
+          "time": 1742741643
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44297685",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/44297685",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/44297685",
+      "bytes": 3917,
+      "responseSha256": "214558df068873987c5752ddd329b2bd0f0d7418f40460ce02768048180d1988",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 44297685,
+          "type": "story",
+          "title": "KDE Plasma 6.4 Released",
+          "url": "https://kde.org/announcements/plasma/6/6.4.0/",
+          "created_at": "2025-06-17T11:03:37.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44297685",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/44297685.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/44297685.json",
+      "bytes": 240,
+      "responseSha256": "deab6ce54e4d72ee30c9da88ac71028f4ce47e2c18e55c7ab6a7ee7b5b0b1860",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 44297685,
+          "type": "story",
+          "title": "KDE Plasma 6.4 Released",
+          "url": "https://kde.org/announcements/plasma/6/6.4.0/",
+          "time": 1750158217
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:49+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44318666",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/44318666",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/44318666",
+      "bytes": 351,
+      "responseSha256": "57977d741276aa2cad459c68307ee08a4994bc1752568f34e8e07e6f0663fabc",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 44318666,
+          "type": "story",
+          "title": "KDE Plasma 6.4 ships with major usability and Wayland improvements",
+          "url": "https://www.theregister.com/2025/06/18/kde_plasma_64_released/",
+          "created_at": "2025-06-19T13:48:35.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-hn-44318666",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/44318666.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/44318666.json",
+      "bytes": 255,
+      "responseSha256": "e78fb8e7a316c1f65526c423e1390ad6626ca25cca866013719b4bd3b1db7d39",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 44318666,
+          "type": "story",
+          "title": "KDE Plasma 6.4 ships with major usability and Wayland improvements",
+          "url": "https://www.theregister.com/2025/06/18/kde_plasma_64_released/",
+          "time": 1750340915
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-hn-48091737",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/48091737",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/48091737",
+      "bytes": 166810,
+      "responseSha256": "fdb8d77f8cc3118caae11c56d33f159328287d41a58f66ee1e3d0f07d883d753",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 48091737,
+          "type": "story",
+          "title": "Mythos Finds a Curl Vulnerability",
+          "url": "https://daniel.haxx.se/blog/2026/05/11/mythos-finds-a-curl-vulnerability/",
+          "created_at": "2026-05-11T06:39:08.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:53+00:00"
+    },
+    {
+      "reportId": "coverage-hn-48091737",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/48091737.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/48091737.json",
+      "bytes": 613,
+      "responseSha256": "2c42382338bed7802765504532dfbe968263c46d0976b42c75db1937b107e749",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 48091737,
+          "type": "story",
+          "title": "Mythos Finds a Curl Vulnerability",
+          "url": "https://daniel.haxx.se/blog/2026/05/11/mythos-finds-a-curl-vulnerability/",
+          "time": 1778481548
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-hn-48112855",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/48112855",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/48112855",
+      "bytes": 302,
+      "responseSha256": "06c77f24183a12ac328bf0a1189c71e3f9ba218974b6d462446f56dd529ced19",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 48112855,
+          "type": "story",
+          "title": "Stenberg: Mythos Finds a Curl Vulnerability",
+          "url": "https://lwn.net/Articles/1072325/",
+          "created_at": "2026-05-12T19:04:58.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-hn-48112855",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/48112855.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/48112855.json",
+      "bytes": 188,
+      "responseSha256": "69e8c760e31a39384764d2209451d713a593ea0b407926b54292927c0b32e1bb",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 48112855,
+          "type": "story",
+          "title": "Stenberg: Mythos Finds a Curl Vulnerability",
+          "url": "https://lwn.net/Articles/1072325/",
+          "time": 1778612698
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    },
+    {
+      "reportId": "coverage-hn-40017310",
+      "role": "hn-item",
+      "requestUrl": "https://hn.algolia.com/api/v1/items/40017310",
+      "status": 200,
+      "finalUrl": "https://hn.algolia.com/api/v1/items/40017310",
+      "bytes": 154205,
+      "responseSha256": "7208f290b7eb1f384d7097274d80ef95316b823d0b0c21fedb96a5496a39e833",
+      "contentType": "application/json",
+      "observed": {
+        "api": {
+          "id": 40017310,
+          "type": "story",
+          "title": "XZ backdoor story – Initial analysis",
+          "url": "https://securelist.com/xz-backdoor-story-part-1/112354/",
+          "created_at": "2024-04-12T20:28:36.000Z"
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:52+00:00"
+    },
+    {
+      "reportId": "coverage-hn-40017310",
+      "role": "hn-firebase",
+      "requestUrl": "https://hacker-news.firebaseio.com/v0/item/40017310.json",
+      "status": 200,
+      "finalUrl": "https://hacker-news.firebaseio.com/v0/item/40017310.json",
+      "bytes": 431,
+      "responseSha256": "4bb3e3fc47b860fd72ca90e8031c6ce8b4df4a222eb5d0eeafa71332391720bf",
+      "contentType": "application/json; charset=utf-8",
+      "observed": {
+        "api": {
+          "id": 40017310,
+          "type": "story",
+          "title": "XZ backdoor story – Initial analysis",
+          "url": "https://securelist.com/xz-backdoor-story-part-1/112354/",
+          "time": 1712953716
+        }
+      },
+      "state": "captured",
+      "error": null,
+      "capturedAt": "2026-11-27T06:10:50+00:00"
+    }
+  ]
+}

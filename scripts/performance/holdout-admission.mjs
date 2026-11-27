@@ -301,15 +301,87 @@ export async function verify(root, dir) {
     }
     return summary(files, audit);
 }
+// Supplemental evidence is a separately pinned derived view. Never replace the freeze.
+const FOLLOWUP = "test/fixtures/news-quality-holdout-v2-evidence-followup.json";
+const FOLLOWUP_SHA = "a6226f00df1f49955a349358b9b44a1f7724044c20ecd652300418c399786be2";
+export async function followupReadiness(root, dir) {
+    const base = await verify(root, dir);
+    const [datasetBytes, captureBytes, oldBytes, followupBytes] = await Promise.all([
+        readFile(join(dir, "candidate.json")),
+        readFile(join(dir, "current-evidence.json")),
+        readFile(resolve(root, OLD)),
+        readFile(resolve(root, FOLLOWUP)),
+    ]);
+    ensure(sha256(followupBytes) === FOLLOWUP_SHA, "Pinned follow-up evidence changed");
+    ensure(sha256(datasetBytes) === PINS.candidate && sha256(captureBytes) === PINS.evidence,
+        "Frozen input changed after verification");
+    const dataset = JSON.parse(datasetBytes), capture = JSON.parse(captureBytes);
+    const supplement = JSON.parse(followupBytes);
+    ensure(supplement.schemaVersion === 1 && supplement.datasetSha256 === PINS.candidate &&
+        supplement.baseEvidenceSha256 === PINS.evidence && supplement.baseFreezeSha256 === base.freezeSha256 &&
+        timestamp(supplement.startedAt) && timestamp(supplement.finishedAt) &&
+        Date.parse(supplement.startedAt) >= Date.parse(capture.finishedAt) &&
+        Date.parse(supplement.finishedAt) >= Date.parse(supplement.startedAt), "Invalid follow-up provenance");
+    const failed = new Map(capture.rows.filter(r => r.state !== "captured").map(r => [pairKey(r.reportId, r.role), r]));
+    const updates = new Map(), alternatives = new Set();
+    for (const r of supplement.rows) {
+        if (r.role === "hn-firebase") {
+            ensure(failed.has(pairKey(r.reportId, "hn-item")) && !alternatives.has(r.reportId),
+                "Unexpected alternate HN observation");
+            alternatives.add(r.reportId);
+            continue; // Only the original role can replace a failed original position.
+        }
+        const k = pairKey(r.reportId, r.role);
+        ensure(failed.has(k) && !updates.has(k) && r.requestUrl === failed.get(k).requestUrl,
+            "Unexpected primary follow-up observation");
+        updates.set(k, r);
+    }
+    ensure(updates.size === failed.size && alternatives.size === [...failed.values()].filter(r => r.role === "hn-item").length,
+        "Incomplete follow-up observation set");
+    const derived = {
+        ...capture,
+        finishedAt: supplement.finishedAt,
+        rows: capture.rows.map(r => updates.get(pairKey(r.reportId, r.role)) ?? r),
+    };
+    const audit = auditEvidence(dataset, derived, JSON.parse(oldBytes));
+    // Original RSS UTC times provide a cross-check; expansion timestamps were
+    // constructed using the assumption itself and are not independent evidence.
+    const articleById = new Map(derived.rows.filter(r => r.role === "article").map(r => [r.reportId, r]));
+    const solidotTimeChecks = dataset.reports.filter(r => r.source === "solidot").map(r => {
+        const wall = articleById.get(r.id)?.observed?.solidotWallTime ?? null;
+        const plusEight = new Date(Date.parse(r.reportedAt) + 8 * 60 * 60 * 1000).toISOString().slice(0, 16).replace("T", " ");
+        return {
+            reportId: r.id,
+            basis: r.evidenceUrl !== r.articleUrl ? "original-rss-derived-utc" : "assumed-utc-plus-eight",
+            observedWallTime: wall, utcPlusEightMinute: plusEight,
+            matches: wall === null ? null : wall === plusEight,
+        };
+    });
+    return {
+        status: "blocked-draft", automaticAdmission: false,
+        freezeSha256: base.freezeSha256, followupSha256: FOLLOWUP_SHA,
+        reports: base.reports, queries: base.queries,
+        baseAttempts: base.attempts, followupAttempts: supplement.rows.length,
+        totalObservationAttempts: base.attempts + supplement.rows.length,
+        originalPositions: derived.rows.length,
+        originalPositionsCaptured: derived.rows.filter(r => r.state === "captured").length,
+        byRoleState: audit.byRoleState, byIdentity: audit.byIdentity, byTimeSignal: audit.byTimeSignal,
+        byTitleSignal: audit.byTitleSignal, allCurrentRolesCaptured: audit.allCurrentRolesCaptured,
+        historicalFeedUnavailable: audit.historicalFeedUnavailable, aliasRisks: audit.aliasRisks,
+        reportsReadiness: audit.reports, solidotTimeChecks,
+        note: "Derived current observation view only. Alternate API identity is checked by the separate follow-up verifier; historical evidence and human declarations remain pending.",
+    };
+}
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
     const [command, root, dir, reviewPath, ...rest] = process.argv.slice(2);
-    if (!root || !dir || rest.length || !["freeze", "verify", "inspect-review"].includes(command) ||
+    if (!root || !dir || rest.length || !["freeze", "verify", "inspect-review", "followup"].includes(command) ||
         (command === "inspect-review" ? !reviewPath : reviewPath !== undefined)) {
-        console.error("Usage: node scripts/performance/holdout-admission.mjs freeze|verify <repo-root> <freeze-dir> | inspect-review <repo-root> <freeze-dir> <maintainer-review.json>");
+        console.error("Usage: node scripts/performance/holdout-admission.mjs freeze|verify|followup <repo-root> <freeze-dir> | inspect-review <repo-root> <freeze-dir> <maintainer-review.json>");
         process.exitCode = 2;
     } else {
         (async () => {
             if (command === "freeze") return freeze(root, dir);
+            if (command === "followup") return followupReadiness(root, dir);
             const result = await verify(root, dir);
             if (command === "verify") return result;
             const blank = JSON.parse(await readFile(join(dir, "admission-review.blank.json"), "utf8"));

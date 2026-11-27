@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import test, { after, before } from "node:test";
 import { rm, mkdtemp, symlink, readFile, writeFile } from "node:fs/promises";
 
-import { PINS, freeze, sha256, verify, auditEvidence, blankChecklist, inspectChecklist } from "./holdout-admission.mjs";
+import { PINS, freeze, sha256, verify, auditEvidence, blankChecklist, inspectChecklist, followupReadiness } from "./holdout-admission.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
@@ -152,4 +152,30 @@ test("synthetic checklist completion never grants automatic admission", () => {
     assert.equal(r.unresolvedDeclarations, 0);
     assert.equal(r.status, "awaiting-explicit-maintainer-decision");
     assert.equal(r.automaticAdmission, false);
+});
+
+test("pinned follow-up derives current availability without modifying the freeze", async () => {
+    const result = await followupReadiness(root, frozen);
+    assert.equal(result.status, "blocked-draft");
+    assert.equal(result.automaticAdmission, false);
+    assert.equal(result.totalObservationAttempts, 247);
+    assert.equal(result.originalPositions, 194);
+    assert.equal(result.originalPositionsCaptured, 193);
+    assert.equal(result.allCurrentRolesCaptured, 102);
+    assert.deepEqual(result.byRoleState, {
+        "article:captured": 102, "article:network-error": 1,
+        "discussion:captured": 45, "hn-item:captured": 45, "release-api:captured": 1,
+    });
+    assert.deepEqual(result.byIdentity, { matched: 46, "not-applicable": 57 });
+    assert.equal(result.historicalFeedUnavailable, 39);
+    const rss = result.solidotTimeChecks.filter(r => r.basis === "original-rss-derived-utc");
+    const assumption = result.solidotTimeChecks.filter(r => r.basis === "assumed-utc-plus-eight");
+    assert.equal(rss.length, 8);
+    assert(rss.every(r => r.matches === true));
+    assert.equal(assumption.length, 14);
+    assert(assumption.every(r => r.matches === true));
+    assert.deepEqual(result.aliasRisks, []);
+    assert.deepEqual(result.reportsReadiness.filter(x => x.article !== "captured").map(x => x.reportId), ["candidate-060"]);
+    assert(result.reportsReadiness.every(x => x.eventDisjointness === "pending-human-verification"));
+    assert.deepEqual(await verify(root, frozen), summary);
 });

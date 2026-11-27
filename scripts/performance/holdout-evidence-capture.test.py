@@ -2,6 +2,8 @@
 import importlib.util
 import json
 import unittest
+import threading
+from unittest.mock import MagicMock, patch
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location("holdout_evidence_capture", Path(__file__).with_name("holdout-evidence-capture.py"))
@@ -40,6 +42,22 @@ class CaptureTest(unittest.TestCase):
         for url in ("http://example.org/a", "https://other.org/a", "https://user@example.org/a", "https://example.org:8443/a"):
             with self.subTest(url=url), self.assertRaises(ValueError):
                 module.checked_url(url, hosts)
+
+    def test_empty_success_response_retains_fingerprint_but_not_metadata(self):
+        response = MagicMock()
+        response.status = 200
+        response.headers = {"Content-Type": "text/html"}
+        response.geturl.return_value = "https://example.org/a"
+        response.read.return_value = b""
+        response.__enter__.return_value = response
+        with patch.object(module.urllib.request, "build_opener") as opener:
+            opener.return_value.open.return_value = response
+            row = module.capture(("r1", "article", "https://example.org/a"),
+                                 {"example.org"}, {"example.org": threading.BoundedSemaphore(2)})
+        self.assertEqual(row["state"], "empty")
+        self.assertIsNone(row["observed"])
+        self.assertEqual(row["bytes"], 0)
+        self.assertEqual(row["responseSha256"], module.hashlib.sha256(b"").hexdigest())
 
     def test_role_selection_does_not_replay_mutable_rss(self):
         d = {"reports": [
