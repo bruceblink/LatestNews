@@ -89,13 +89,15 @@ class Metadata(html.parser.HTMLParser):
 
 
 def observed_metadata(body, content_type, role):
-    if role in ("hn-item", "release-api"):
+    if role in ("hn-item", "hn-firebase", "release-api"):
         raw = json.loads(body)
         if not isinstance(raw, dict):
             raise ValueError("API response is not an object")
         fields = (
             ("id", "type", "title", "url", "created_at")
             if role == "hn-item"
+            else ("id", "type", "title", "url", "time", "deleted", "dead")
+            if role == "hn-firebase"
             else ("id", "name", "tag_name", "published_at", "html_url", "draft", "prerelease")
         )
         # Restrict the retained evidence to scalar identity/time metadata.
@@ -137,8 +139,11 @@ def capture(job, hosts, semaphores):
                         result["bytes"] = len(body)
                         result["responseSha256"] = hashlib.sha256(body).hexdigest()
                         try:
-                            result["observed"] = observed_metadata(body, result["contentType"] or "", role)
-                            result["state"] = "captured" if body else "empty"
+                            if body:
+                                result["observed"] = observed_metadata(body, result["contentType"] or "", role)
+                                result["state"] = "captured"
+                            else:
+                                result["state"] = "empty"
                         except (ValueError, TypeError, UnicodeError, json.JSONDecodeError):
                             result["state"] = "metadata-error"
         except urllib.error.HTTPError as exc:
