@@ -459,7 +459,7 @@ function InsightsPage() {
                             </section>
 
                             <footer className="insights-data-footer">
-                                <span>时间范围仅影响发布时间和关键词趋势。</span>
+                                <span>时间范围影响发布时间、来源更新时间和关键词趋势。</span>
                                 <span>其他统计基于当前来源返回内容；不代表增长率。</span>
                                 {!!displayedData?.errors?.length && (
                                     <details className="insights-source-errors">
@@ -528,7 +528,7 @@ function UpdateFrequencyPanel({
             </div>
             <div className="insights-chart-metric">
                 <strong>{loading ? "—" : totalCount.toLocaleString("zh-CN")}</strong>
-                <span>条具有发布时间</span>
+                <span>条具有发布时间或来源更新时间</span>
             </div>
             {trendWindow !== selectedTrendWindow && (
                 <p className="insights-chart-snapshot-range">
@@ -591,12 +591,12 @@ function UpdateFrequencyPanel({
                     <p className="insights-chart-detail" aria-live="polite">
                         {selectedBucket
                             ? `${formatTrendBucketLabel(selectedBucket.startAt, trendWindow)} · ${selectedBucket.itemCount} 条 · ${selectedBucket.sourceCount} 个来源`
-                            : `${getTrendRangeLabel(buckets, trendWindow)} · 按发布时间统计`}
+                            : `${getTrendRangeLabel(buckets, trendWindow)} · 按发布时间或来源更新时间统计`}
                     </p>
-                    <p className="insights-chart-caveat">分桶依据文章发布时间；不表示内容增长率。</p>
+                    <p className="insights-chart-caveat">分桶依据文章发布时间或来源更新时间；不表示内容增长率。</p>
                 </>
             ) : (
-                <PanelEmpty label="当前时间范围内暂无可统计的发布时间" />
+                <PanelEmpty label="当前时间范围内暂无可统计的时间" />
             )}
         </article>
     );

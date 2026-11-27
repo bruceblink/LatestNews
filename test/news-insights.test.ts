@@ -306,9 +306,9 @@ describe("news insights", () => {
         );
 
         const openai = insights.keywordTrends[0];
-        expect(openai).toMatchObject({ term: "openai", totalCount: 3, sourceCount: 2 });
-        expect(openai.buckets.filter((bucket) => bucket.itemCount > 0)).toHaveLength(2);
-        expect(insights.updateFrequency.reduce((total, bucket) => total + bucket.itemCount, 0)).toBe(3);
+        expect(openai).toMatchObject({ term: "openai", totalCount: 4, sourceCount: 2 });
+        expect(openai.buckets.filter((bucket) => bucket.itemCount > 0)).toHaveLength(3);
+        expect(insights.updateFrequency.reduce((total, bucket) => total + bucket.itemCount, 0)).toBe(4);
         expect(insights.updateFrequency.every((bucket) => bucket.endAt > bucket.startAt)).toBe(true);
     });
 

@@ -524,7 +524,7 @@ export function createCategoryShares(items: InsightSourceItem[]): CategoryShare[
         );
 }
 
-/** Builds deterministic time buckets for items with a valid publication timestamp. */
+/** Builds deterministic time buckets from publication time or source update time. */
 export function createUpdateFrequency(
     items: InsightSourceItem[],
     options: Pick<NewsInsightOptions, "generatedAt" | "trendWindow"> = {}
@@ -536,12 +536,12 @@ export function createUpdateFrequency(
     const buckets = createEmptyBuckets(firstBucketStart, lastBucketStart, config.bucketMs);
 
     for (const item of items) {
-        const publishedAt = item.publishedAt;
-        if (publishedAt === undefined || publishedAt < generatedAt - config.durationMs || publishedAt > generatedAt) {
+        const timestamp = item.publishedAt ?? item.responseUpdatedTime;
+        if (timestamp === undefined || timestamp < generatedAt - config.durationMs || timestamp > generatedAt) {
             continue;
         }
 
-        const bucketIndex = getBucketIndex(buckets, publishedAt);
+        const bucketIndex = getBucketIndex(buckets, timestamp);
         if (bucketIndex === -1) continue;
 
         const bucket = buckets[bucketIndex];
@@ -552,7 +552,7 @@ export function createUpdateFrequency(
     return buckets.map(toInsightTimeBucket);
 }
 
-/** Aggregates top keywords into the same deterministic buckets used by update frequency. */
+/** Aggregates top keywords into the same buckets used by update frequency. */
 export function createKeywordTrends(
     items: InsightSourceItem[],
     options: Pick<NewsInsightOptions, "generatedAt" | "trendLimit" | "trendWindow"> = {}
@@ -565,12 +565,12 @@ export function createKeywordTrends(
     const trends = new Map<string, MutableKeywordTrend>();
 
     for (const item of items) {
-        const publishedAt = item.publishedAt;
-        if (publishedAt === undefined || publishedAt < generatedAt - config.durationMs || publishedAt > generatedAt) {
+        const timestamp = item.publishedAt ?? item.responseUpdatedTime;
+        if (timestamp === undefined || timestamp < generatedAt - config.durationMs || timestamp > generatedAt) {
             continue;
         }
 
-        const bucketIndex = getBucketIndex(buckets, publishedAt);
+        const bucketIndex = getBucketIndex(buckets, timestamp);
         if (bucketIndex === -1) continue;
 
         for (const term of new Set(item.terms)) {
@@ -588,7 +588,7 @@ export function createKeywordTrends(
 
             current.totalCount += 1;
             current.sourceIds.add(item.sourceId);
-            current.latestPublishedAt = maxOptional(current.latestPublishedAt, publishedAt);
+            current.latestPublishedAt = maxOptional(current.latestPublishedAt, item.publishedAt);
             bucket.itemCount += 1;
             bucket.sourceIds.add(item.sourceId);
             current.buckets.set(bucketIndex, bucket);
