@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "status": "blocked-draft",
+  "baseFreezeSha256": "94eaf6d6da3b6fde4ac29da679fbaa364373d0f0769a7e71a51b946b525680dc",
+  "baseDatasetSha256": "43fd4e225559996704ecc6fd504a152c7b4011325ca6b2ca2cdd5b90f5671c79",
+  "baseFollowupSha256": "a6226f00df1f49955a349358b9b44a1f7724044c20ecd652300418c399786be2",
+  "quarantineReports": {
+    "candidate-019": "Current publisher title and publication metadata differ from frozen record; mutable gift guide.",
+    "candidate-020": "Current publisher title describes a later action phase; historical article version unavailable.",
+    "candidate-022": "Current publisher title and publication metadata differ from frozen record; mutable gift guide.",
+    "candidate-060": "Original article unavailable after two bounded observations; HN metadata alone cannot replace article evidence."
+  },
+  "quarantineQueries": {},
+  "supplements": [
+    {
+      "report": {
+        "id": "final-zh-001",
+        "cohort": "release",
+        "source": "ithome",
+        "language": "zh",
+        "title": "Debian 13“Trixie”稳定版发布：升级 Linux 内核 6.12，正式提供 64 位 RISC-V 官方支持",
+        "url": "https://www.ithome.com/0/874/345.htm",
+        "articleUrl": "https://www.ithome.com/0/874/345.htm",
+        "reportedAt": "2025-08-10T16:05:31+08:00",
+        "timeKind": "published",
+        "evidenceUrl": "https://www.ithome.com/0/874/345.htm"
+      },
+      "evidence": {
+        "requestUrl": "https://www.ithome.com/0/874/345.htm",
+        "finalUrl": "https://www.ithome.com/0/874/345.htm",
+        "status": 200,
+        "bytes": 25759,
+        "responseSha256": "afe613a3f8dfd3fe8c1cfe8a2b6928ec74d52d572bd5a589140efc979d8bfd1a",
+        "capturedAt": "2026-11-27T06:31:15+00:00",
+        "observedTitle": "Debian 13“Trixie”稳定版发布：升级 Linux 内核 6.12，正式提供 64 位 RISC-V 官方支持 - IT之家",
+        "timeKind": "ithome-wall",
+        "observedValue": "2025/8/10 16:05:31",
+        "timeBasis": "publisher wall time; UTC+8 assumed, not independently confirmed",
+        "note": "Debian stable release; compare with release reports, without pre-labeling."
+      }
+    },
+    {
+      "report": {
+        "id": "final-zh-002",
+        "cohort": "release",
+        "source": "ithome",
+        "language": "zh",
+        "title": "Fedora Linux 42 稳定版发布：Linux 6.14 内核、GNOME 48 桌面",
+        "url": "https://www.ithome.com/0/845/556.htm",
+        "articleUrl": "https://www.ithome.com/0/845/556.htm",
+        "reportedAt": "2025-04-16T08:51:23+08:00",
+        "timeKind": "published",
+        "evidenceUrl": "https://www.ithome.com/0/845/556.htm"
+      },
+      "evidence": {
+        "requestUrl": "https://www.ithome.com/0/845/556.htm",
+        "finalUrl": "https://www.ithome.com/0/845/556.htm",
+        "status": 200,
+        "bytes": 25758,
+        "responseSha256": "611e91625985ffb246ebdbf3204148bbe04ef381bc09e453fec32ac68280459a",
+        "capturedAt": "2026-11-27T06:31:14+00:00",
+        "observedTitle": "Fedora Linux 42 稳定版发布：Linux 6.14 内核、GNOME 48 桌面 - IT之家",
+        "timeKind": "ithome-wall",
+        "observedValue": "2025/4/16 8:51:23",
+        "timeBasis": "publisher wall time; UTC+8 assumed, not independently confirmed",
+        "note": "Fedora stable release and bundled components; distinguish distribution release from GNOME release."
+      }
+    },
+    {
+      "report": {
+        "id": "final-zh-003",
+        "cohort": "release",
+        "source": "tencent-cloud-developer",
+        "language": "zh",
+        "title": "Debian 13.4 正式发布，一次安全与稳定至上的大升级",
+        "url": "https://developer.cloud.tencent.com/article/2644977",
+        "articleUrl": "https://developer.cloud.tencent.com/article/2644977",
+        "reportedAt": "2026-03-24T11:22:12Z",
+        "timeKind": "published",
+        "evidenceUrl": "https://developer.cloud.tencent.com/article/2644977"
+      },
+      "evidence": {
+        "requestUrl": "https://developer.cloud.tencent.com/article/2644977",
+        "finalUrl": "https://developer.cloud.tencent.com/article/2644977",
+        "status": 200,
+        "bytes": 97893,
+        "responseSha256": "39d4a4dd38d16b900990c2b6f77eceb588d2537334b0caacc5091f97d18a1a11",
+        "capturedAt": "2026-11-27T06:31:14+00:00",
+        "observedTitle": "Debian 13.4 正式发布，一次安全与稳定至上的大升级-腾讯云开发者社区-腾讯云",
+        "timeKind": "tencent-epoch",
+        "observedValue": 1774351332,
+        "timeBasis": "publisher embedded publishTime Unix seconds",
+        "note": "Debian point release, distinct version and later article publication time."
+      }
+    },
+    {
+      "report": {
+        "id": "final-zh-004",
+        "cohort": "daily",
+        "source": "hk01",
+        "language": "zh",
+        "title": "华为遭美国法院裁定10项罪名成立　涉隐瞒伊朗业务和窃取商业机密",
+        "url": "https://global.hk01.com/%E5%8D%B3%E6%97%B6%E5%9B%BD%E9%99%85/60414681/%E5%8D%8E%E4%B8%BA%E9%81%AD%E7%BE%8E%E5%9B%BD%E6%B3%95%E9%99%A2%E8%A3%81%E5%AE%9A10%E9%A1%B9%E7%BD%AA%E5%90%8D%E6%88%90%E7%AB%8B-%E6%B6%89%E9%9A%90%E7%9E%92%E4%BC%8A%E6%9C%97%E4%B8%9A%E5%8A%A1%E5%92%8C%E7%AA%83%E5%8F%96%E5%95%86%E4%B8%9A%E6%9C%BA%E5%AF%86",
+        "articleUrl": "https://global.hk01.com/%E5%8D%B3%E6%97%B6%E5%9B%BD%E9%99%85/60414681/%E5%8D%8E%E4%B8%BA%E9%81%AD%E7%BE%8E%E5%9B%BD%E6%B3%95%E9%99%A2%E8%A3%81%E5%AE%9A10%E9%A1%B9%E7%BD%AA%E5%90%8D%E6%88%90%E7%AB%8B-%E6%B6%89%E9%9A%90%E7%9E%92%E4%BC%8A%E6%9C%97%E4%B8%9A%E5%8A%A1%E5%92%8C%E7%AA%83%E5%8F%96%E5%95%86%E4%B8%9A%E6%9C%BA%E5%AF%86",
+        "reportedAt": "2026-11-25T02:53:14.000Z",
+        "timeKind": "published",
+        "evidenceUrl": "https://global.hk01.com/%E5%8D%B3%E6%97%B6%E5%9B%BD%E9%99%85/60414681/%E5%8D%8E%E4%B8%BA%E9%81%AD%E7%BE%8E%E5%9B%BD%E6%B3%95%E9%99%A2%E8%A3%81%E5%AE%9A10%E9%A1%B9%E7%BD%AA%E5%90%8D%E6%88%90%E7%AB%8B-%E6%B6%89%E9%9A%90%E7%9E%92%E4%BC%8A%E6%9C%97%E4%B8%9A%E5%8A%A1%E5%92%8C%E7%AA%83%E5%8F%96%E5%95%86%E4%B8%9A%E6%9C%BA%E5%AF%86"
+      },
+      "evidence": {
+        "requestUrl": "https://global.hk01.com/%E5%8D%B3%E6%97%B6%E5%9B%BD%E9%99%85/60414681/%E5%8D%8E%E4%B8%BA%E9%81%AD%E7%BE%8E%E5%9B%BD%E6%B3%95%E9%99%A2%E8%A3%81%E5%AE%9A10%E9%A1%B9%E7%BD%AA%E5%90%8D%E6%88%90%E7%AB%8B-%E6%B6%89%E9%9A%90%E7%9E%92%E4%BC%8A%E6%9C%97%E4%B8%9A%E5%8A%A1%E5%92%8C%E7%AA%83%E5%8F%96%E5%95%86%E4%B8%9A%E6%9C%BA%E5%AF%86",
+        "finalUrl": "https://global.hk01.com/%E5%8D%B3%E6%97%B6%E5%9B%BD%E9%99%85/60414681/%E5%8D%8E%E4%B8%BA%E9%81%AD%E7%BE%8E%E5%9B%BD%E6%B3%95%E9%99%A2%E8%A3%81%E5%AE%9A10%E9%A1%B9%E7%BD%AA%E5%90%8D%E6%88%90%E7%AB%8B-%E6%B6%89%E9%9A%90%E7%9E%92%E4%BC%8A%E6%9C%97%E4%B8%9A%E5%8A%A1%E5%92%8C%E7%AA%83%E5%8F%96%E5%95%86%E4%B8%9A%E6%9C%BA%E5%AF%86",
+        "status": 200,
+        "bytes": 181040,
+        "responseSha256": "21b9a18d57bbb7939a23ae7bf5d5d2e197d53f32c1e576074b6380ffc1beb5e8",
+        "capturedAt": "2026-11-27T06:31:13+00:00",
+        "observedTitle": "华为遭美国法院裁定10项罪名成立　涉隐瞒伊朗业务和窃取商业机密",
+        "timeKind": "publisher-meta",
+        "observedValue": "2026-11-25T02:53:14.000Z",
+        "timeBasis": "publisher article:published_time explicit offset",
+        "note": "Chinese coverage candidate for comparison with candidate-021; no event label."
+      }
+    }
+  ],
+  "blockers": [
+    "39 historical RSS response bodies were never retained in V1; after quarantine 36 retained reports still have this limitation. A maintainer must accept the explicit evidence policy or exclude affected reports.",
+    "Current article metadata does not establish historical article content or event disjointness.",
+    "22 Solidot wall-time observations and IT Home publisher wall-time records need timezone and precision review; two added IT Home records use assumed UTC+8.",
+    "Source concentration, actual cross-language positive coverage and hard-case independence require explicit review.",
+    "Tuning exposure must be confirmed by the dataset holder; two genuine independent reviewers required after admission."
+  ]
+}
