@@ -70,6 +70,8 @@ html {
         "PingFang SC",
         "Microsoft YaHei",
         sans-serif;
+    scrollbar-color: var(--border-strong) transparent;
+    scrollbar-width: thin;
 }
 body {
     background: var(--page-bg);

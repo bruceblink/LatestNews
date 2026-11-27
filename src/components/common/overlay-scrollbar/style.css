@@ -4,6 +4,7 @@
 }
 
 .scrollbar-hidden {
+  scrollbar-color: transparent transparent;
   scrollbar-width: none;
 }
 .scrollbar-hidden::-webkit-scrollbar {
