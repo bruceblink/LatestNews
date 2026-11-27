@@ -39,6 +39,25 @@ describe("news insights", () => {
         );
     });
 
+    it("normalizes Unix-second publication times before building time buckets", () => {
+        const publishedSeconds = Math.floor((NOW - 30 * 60 * 1000) / 1000);
+        const response = createResponse("weibo" as SourceID, "Weibo", [
+            {
+                id: "unix-seconds",
+                title: "Unix 秒时间测试",
+                url: "https://news.example.com/unix-seconds",
+                pubDate: publishedSeconds,
+            },
+        ]);
+        response.updatedTime = String(Math.floor(NOW / 1000));
+
+        const insights = createNewsInsights([response], { generatedAt: NOW, trendWindow: "24h" });
+
+        expect(insights.updateFrequency.reduce((sum, bucket) => sum + bucket.itemCount, 0)).toBe(1);
+        expect(insights.keywordTrends.every((trend) => trend.totalCount > 0)).toBe(true);
+        expect(collectInsightItems([response], { generatedAt: NOW })[0]?.publishedAt).toBe(NOW - 30 * 60 * 1000);
+    });
+
     it("extracts searchable English and Chinese terms", () => {
         expect(extractInsightTerms("OpenAI 发布 GPT-5 模型，AI芯片需求激增")).toEqual(
             expect.arrayContaining(["openai", "gpt-5", "ai", "模型", "芯片需求激增", "芯片", "需求", "激增"])

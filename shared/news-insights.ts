@@ -1,5 +1,6 @@
 import { metadata } from "./metadata";
 import dataSources from "./data-sources";
+import { articleTimestamp } from "./article-time";
 import { filterSafeNewsItemLinks } from "./news-url-policy";
 import {
     getInsightSourceWeight,
@@ -1006,14 +1007,7 @@ function addTerm(terms: Set<string>, term: string, stopWords: Set<string>) {
 }
 
 function parseNewsTime(value: number | string | undefined): number | undefined {
-    if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : undefined;
-    if (!value) return undefined;
-
-    const numericValue = Number(value);
-    if (Number.isFinite(numericValue) && numericValue > 0) return numericValue;
-
-    const parsed = Date.parse(value);
-    return Number.isFinite(parsed) ? parsed : undefined;
+    return articleTimestamp(value) ?? undefined;
 }
 
 function getRecencyScore(time: number | undefined, generatedAt: number) {
