@@ -193,6 +193,7 @@ export function SettingsPanel({ showTitle = true }: SettingsPanelProps) {
 
             {configurable && (
                 <form
+                    noValidate
                     className="settings-group"
                     aria-busy={loading || saving}
                     onSubmit={(event) => void handleSave(event)}

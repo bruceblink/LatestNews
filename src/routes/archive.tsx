@@ -111,7 +111,7 @@ function ArchivePage() {
                         <p className="m-0 text-zinc-500">只展示服务端持久归属的文章；注册时间不代表事件发生时间。</p>
                     </div>
                 ) : (
-                    <form onSubmit={submit} className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <form noValidate onSubmit={submit} className="grid grid-cols-1 gap-3 md:grid-cols-2">
                         <label className="flex min-w-0 flex-col gap-1 text-sm md:col-span-2">
                             关键词
                             <input
